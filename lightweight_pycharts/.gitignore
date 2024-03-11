@@ -1,6 +1,7 @@
 # Cache #
 ###################
 __pycache__
+*.cpython-311.pyc
 
 # Compiled source #
 ###################
