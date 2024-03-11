@@ -1,18 +1,26 @@
 import * as lwc from "../js/pkg.mjs";
+import { Color, ColorType, CrosshairMode } from "./pkg.js";
 import { py_api } from "./py_api.js";
+let var_2 = 'bottom';
+let var_5 = CrosshairMode.Magnet;
+let my_var = lwc.ColorType.Solid;
+let my_var_spoof = ColorType.Solid;
+let opts = {
+    topColor: 'rgba( 46, 220, 135, 0.4)',
+};
 window.api = new py_api();
-const chartOptions = {
+let chartOpts = {
     layout: {
         textColor: 'white',
         background: {
-            type: "solid",
-            color: 'black',
+            type: ColorType.Solid,
+            color: Color.papayawhip
         }
     }
 };
 const docwrapper = document.getElementById("wrapper");
 if (docwrapper !== null) {
-    const chart = lwc.createChart(docwrapper, chartOptions);
+    const chart = lwc.createChart(docwrapper, chartOpts);
     const candlestickSeries = chart.addCandlestickSeries({
         upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,
         wickUpColor: '#26a69a', wickDownColor: '#ef5350',

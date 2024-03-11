@@ -39,6 +39,7 @@ class js_api:
 class JS_CMD(Enum):
     JS = "js_cmd"
     SHOW = "show"
+    HIDE = "hide"
 
 
 @dataclass
@@ -84,9 +85,9 @@ class View(ABC):
     def __init__(
         self,
         hooks: MpHooks,
-        runscript: Callable[[str], None] = lambda cmd: None,
+        run_script: Callable[[str], None] = lambda cmd: None,
     ) -> None:
-        self.runscript = runscript
+        self.run_script = run_script
         self.fwd_queue = hooks.fwd_queue
         self.rtn_queue = hooks.rtn_queue
         self.start_event = hooks.start_event
@@ -115,8 +116,10 @@ class PyWv(View):
         title: str = "",
         debug: bool = False,
         api: Optional[js_api] = None,
-        **window_kwargs,
+        **kwargs,
     ) -> None:
+        if debug:
+            logger.setLevel(logging.DEBUG)
 
         # assign default js_api if it was not provided
         if api is None:
@@ -128,7 +131,7 @@ class PyWv(View):
             title=title,
             url=file_dir + "/frontend/index.html",
             js_api=self.api,
-            **window_kwargs,
+            **kwargs,
         )
 
         pyweb_window.events.loaded += lambda: self._assign_callbacks(
@@ -137,7 +140,7 @@ class PyWv(View):
         pyweb_window.events.loaded += self._manage_queue
 
         # Pass the Hooks along, runscript for pywebview is the evaluate_js() function
-        super().__init__(mp_hooks, runscript=pyweb_window.evaluate_js)
+        super().__init__(mp_hooks, run_script=pyweb_window.evaluate_js)
 
         # Wait until main process signals to start
         self.start_event.wait()
@@ -151,7 +154,7 @@ class PyWv(View):
         for name, _ in member_functions:
             # for each non-dunder method in the api, define the callback api in the javascript window
             if not (name.startswith("__") or name.endswith("__")):
-                self.runscript(f"window.api.{name} = pywebview.api.{name}")
+                self.run_script(f"window.api.{name} = pywebview.api.{name}")
 
         # Signal JS Commands can be run on this webview
         loaded_event.set()
@@ -163,8 +166,14 @@ class PyWv(View):
             cmd, args = self.fwd_queue.get()
             logger.debug("PyWv Recieved cmd: %s, args: %s", str(cmd), str(args))
 
-            if JS_CMD.JS == cmd and isinstance(args, str):
-                self.runscript(args)
+            match cmd:
+                case JS_CMD.JS:  # Execute a script verbatum
+                    if isinstance(args, str):
+                        self.run_script(args)
+                case JS_CMD.SHOW:  # Show the Window
+                    raise NotImplementedError
+                case JS_CMD.HIDE:  # Hide the Window
+                    raise NotImplementedError
 
 
 class QWebView:  # (View):

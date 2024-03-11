@@ -9,9 +9,9 @@ from .window import window
 
 __all__ = ("window",)
 
-# _LOG_LVL = logging.WARNING
+_LOG_LVL = logging.WARNING
 # _LOG_LVL = logging.INFO
-_LOG_LVL = logging.DEBUG
+# _LOG_LVL = logging.DEBUG
 
 logger = logging.getLogger("lightweight-pycharts")
 handler = logging.StreamHandler()

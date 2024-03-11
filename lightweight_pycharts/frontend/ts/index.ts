@@ -1,18 +1,46 @@
-/*@ts-ignore*/
+/* Unfortunately you can't use the lightweight charts .d.ts file as intended. This is the result of using python modules
+ * that run a local server that doesn't have access to [node_modules] like node.js does. 
+ * 
+ * This gets even more annoying since the python web server can't interpolate './pkg' to mean './pkg.js' or './pkg.mjs'
+ * The result is that you import the .d.ts into this file and have all the type hints, but hit a run-time error when launching the webserver.
+ * 
+ * I'm tired of working to solve this instead of working on the code itself so I'm just going to patch fix this. 
+ * I'm importing ../js/pkg.mjs as lwc so both ts and js have definitions for the functions in the namespace lwc, albiet w/o type hints
+ * I've then taken the pkg.d.ts, commented out the functions, and removed 'declare'from the Enums and renamed the file to pkg.ts.
+ * 
+ * The result is that the metric ton interfaces, enums, and types from the lightweight charts library can be imported
+ * from "./pkg.js". The import is "./pkg.js" and not "./pkg.ts" because typescript knows to check the .ts for interfaces
+ * and the python webview would hit a runtime import error if it had to look for a non-existant "./pkg.ts"
+ * 
+ * Additionally, I've created an Enum, Color, of all the named colors that come with the library for ease of access.
+ *//*@ts-ignore*/
 import * as lwc from "../js/pkg.mjs";
-/*@ts-ignore*/
+import { AreaStyleOptions, Color, ColorType, CrosshairMode, DeepPartial as DP, TimeChartOptions, VertAlign } from "./pkg.js";
 import { py_api } from "./py_api.js";
-/*@ts-ignore*/
+
+
+let var_2: VertAlign = 'bottom'
+let var_5 = CrosshairMode.Magnet
+
+let my_var = lwc.ColorType.Solid
+let my_var_spoof = ColorType.Solid
+
+let opts: DP<AreaStyleOptions> = {
+    topColor: 'rgba( 46, 220, 135, 0.4)',
+};
+
+// opts.crosshairMarkerBackgroundColor
+
 //Define a global python api inferface.
 declare global { interface Window { api: py_api; } }
 window.api = new py_api()
 
-const chartOptions = {
+let chartOpts: DP<TimeChartOptions> = {
     layout: {
         textColor: 'white',
         background: {
-            type: "solid",
-            color: 'black',
+            type: ColorType.Solid,
+            color: Color.papayawhip
         }
     }
 };
@@ -21,7 +49,8 @@ const chartOptions = {
 const docwrapper = document.getElementById("wrapper");
 
 if (docwrapper !== null) {
-    const chart = lwc.createChart(docwrapper, chartOptions);
+    // t.createChart(docwrapper, chartOpts_2)
+    const chart = lwc.createChart(docwrapper, chartOpts);
 
     const candlestickSeries = chart.addCandlestickSeries({
         upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,

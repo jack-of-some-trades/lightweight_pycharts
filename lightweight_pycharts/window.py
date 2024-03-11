@@ -22,6 +22,8 @@ class window:
     """
 
     def __init__(self, **kwargs) -> None:
+        if "debug" in kwargs.keys() and kwargs["debug"]:
+            logger.setLevel(logging.DEBUG)
 
         # create and then unpack the hooks directly into class variables
         mp_hooks = MpHooks()
