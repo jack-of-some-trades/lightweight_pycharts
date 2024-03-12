@@ -9,10 +9,14 @@ body {
 #wrapper {
     width: 100vw;
     height: 100vh;
-    background-color: #000;
+    background-color: #fff;
 }
 
 .header_t1 {
     color: #fff;
     background-color: #000;
+}
+
+.icon {
+    fill: fuchsia;
 }
