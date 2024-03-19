@@ -1,20 +1,19 @@
 // Function and Enum defining all the available icons uhh... "borrowed"... from Tradingview
 
-export function get_svg(icon: string, css_class?: string, scale?: number) {
+export function get_svg(icon: icons, css_class?: string, scale?: number) {
     let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
     let use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-    // svg.setAttribute("width", "28")
-    // svg.setAttribute("height", "28")
     use.setAttribute("href", "css/svg-defs.svg#" + icon)
 
+    //Define CSS Class to inherit styling from
     if (css_class) {
         use.setAttribute("class", css_class)
     } else {
         use.setAttribute("class", "icon")
     }
 
+    //Scale as desired, Default svg sizes are mostly 28px x 28px
     if (scale) {
-        // svg.setAttribute("transform", `scale(${scale})`)
         use.setAttribute("transform", `scale(${scale})`)
         svg.setAttribute("width", `${28 * scale}`)
         svg.setAttribute("height", `${28 * scale}`)

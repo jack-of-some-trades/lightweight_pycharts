@@ -3718,6 +3718,16 @@ export type VertAlign = "top" | "center" | "bottom";
  */
 export type VisiblePriceScaleOptions = PriceScaleOptions;
 
+
+/*--------------------- Additional Types -----------------------*/
+//The main functions of this library, like createCandlestick Series return some complicated types.
+//They are defined below so even though the functions return a type of any, the assigned variable and be typed.
+
+/**
+ * Represents Candlestick Series.
+ */
+export type CandlestickSeries = ISeriesApi<"Candlestick", Time, WhitespaceData<Time> | CandlestickData<Time>, CandlestickSeriesOptions, DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>>
+
 /**
  * List of all the Colors defined in the lightweight charts library mapped to a Enum
  */

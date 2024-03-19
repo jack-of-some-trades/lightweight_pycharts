@@ -1,0 +1,70 @@
+*::before {
+    margin: 5px;
+    padding: 0;
+    border: 0;
+}
+
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    min-width: 300px;
+    min-height: 200px;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #2a2e39;
+    font-family: -apple-system, BlinkMacSystemFont, "Trebuchet_MS", "Segoe UI", Roboto, Oxygen, Ubuntu,
+        Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.wrapper {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    inset: 0px;
+    overflow: hidden;
+    background-color: #2a2e39;
+    /* background-color: #2962ff; Hover Background Color */
+    border-radius: 5px;
+}
+
+.overlay {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    inset: 0px;
+    overflow: hidden;
+    z-index: 50;
+    /*Transparent since it will overlay full window*/
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.layout_main {
+    display: flex;
+    overflow: hidden;
+    position: absolute;
+    background-color: #131722;
+    /* background-color: #2962ff; Hover Background Color */
+    border-radius: 5px;
+}
+
+.chart_frame {
+    color: #000;
+}
+
+.chart_pane {
+    color: #000;
+}
+
+.separator_vert {
+    width: 0px
+}
+
+.separator_horiz {
+    height: 0px
+}

@@ -11,6 +11,7 @@ from enum import Enum
 from abc import ABC
 
 import webview
+from webview.errors import JavascriptException
 
 file_dir = os.path.dirname(os.path.abspath(__file__))
 logger = logging.getLogger("lightweight-pycharts")
@@ -29,6 +30,7 @@ class js_api:
         self.rtn_queue = mp.Queue(maxsize=1)
 
     def callback(self, msg: str) -> None:
+        "Generic Callback that passes serialized data as a string"
         logger.debug("Recieved Message from JS: %s", msg)
         self.rtn_queue.put(msg)
 
@@ -52,7 +54,8 @@ class MpHooks:
     stop_event: mp_EventClass = mp.Event()
 
 
-##### To be implemented? Maybe put in util?
+### To be implemented? Maybe put in util?
+### Should all the lightweight chart interfaces be implemented in python?
 @dataclass
 class WindowOptions:
     "All available window options"
@@ -118,57 +121,63 @@ class PyWv(View):
         api: Optional[js_api] = None,
         **kwargs,
     ) -> None:
+        # Pass Hooks and run_script to super
+        super().__init__(mp_hooks, run_script=self._handle_eval_js)
+
         if debug:
             logger.setLevel(logging.DEBUG)
+            # webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
 
         # assign default js_api if it was not provided
         if api is None:
             api = js_api()
-        api.rtn_queue = mp_hooks.rtn_queue
+        api.rtn_queue = self.rtn_queue
         self.api = api
 
-        pyweb_window = webview.create_window(
+        self.pyweb_window = webview.create_window(
             title=title,
             url=file_dir + "/frontend/index.html",
             js_api=self.api,
             **kwargs,
         )
-
-        pyweb_window.events.loaded += lambda: self._assign_callbacks(
-            mp_hooks.loaded_event
-        )
-        pyweb_window.events.loaded += self._manage_queue
-
-        # Pass the Hooks along, runscript for pywebview is the evaluate_js() function
-        super().__init__(mp_hooks, run_script=pyweb_window.evaluate_js)
+        # Tell webview to execute api func assignment and enter main loop once loaded
+        self.pyweb_window.events.loaded += self._assign_callbacks
+        self.pyweb_window.events.loaded += self._manage_queue
 
         # Wait until main process signals to start
         self.start_event.wait()
         webview.start(debug=debug)
-
-        # Webview window Closed.
         self.stop_event.set()
 
-    def _assign_callbacks(self, loaded_event: mp_EventClass):
+    def _handle_eval_js(self, cmd: str):
+        "evaluate_js() and catch errors"
+        try:
+            # runscript for pywebview is the evaluate_js() function
+            self.pyweb_window.evaluate_js(cmd)
+        except JavascriptException as e:
+            logger.error("JS Exception: \n%s", e)
+
+    def _assign_callbacks(self):
+        "Read all the functions that exist in the api and expose them to javascript"
         member_functions = inspect.getmembers(self.api, predicate=inspect.ismethod)
         for name, _ in member_functions:
-            # for each non-dunder method in the api, define the callback api in the javascript window
+            # filter out dunder methods
             if not (name.startswith("__") or name.endswith("__")):
                 self.run_script(f"window.api.{name} = pywebview.api.{name}")
 
-        # Signal JS Commands can be run on this webview
-        loaded_event.set()
+        # Signal inital setup is complete and JS Commands can be run on this webview
+        self.loaded_event.set()
 
     def _manage_queue(self):
-        logger.debug("Entered Manage_Queue")
+        "Infinite loop to manage PyWv Queue since it is launched in an isolated process"
         while 1:
             # infinate loop to recieve any command that gets put in the queue
             cmd, args = self.fwd_queue.get()
-            logger.debug("PyWv Recieved cmd: %s, args: %s", str(cmd), str(args))
 
             match cmd:
                 case JS_CMD.JS:  # Execute a script verbatum
                     if isinstance(args, str):
+                        logger.debug("PyWv JS_CMD: %s", str(args))
                         self.run_script(args)
                 case JS_CMD.SHOW:  # Show the Window
                     raise NotImplementedError
