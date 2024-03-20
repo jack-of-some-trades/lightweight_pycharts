@@ -1,6 +1,7 @@
 import * as lwc from "../js/pkg.mjs";
 import { Color, ColorType } from "./pkg.js";
 const LAYOUT_MARGIN = 5;
+const LAYOUT_CHART_MARGIN = 2;
 const LAYOUT_DIM_TOP = {
     WIDTH: `100vw`,
     HEIGHT: 38,
@@ -39,6 +40,12 @@ var Wrapper_Divs;
     Wrapper_Divs["UTIL_BAR"] = "div_bottom";
     Wrapper_Divs["CHART"] = "div_center";
 })(Wrapper_Divs || (Wrapper_Divs = {}));
+var Orientation;
+(function (Orientation) {
+    Orientation[Orientation["Horizontal"] = 0] = "Horizontal";
+    Orientation[Orientation["Vertical"] = 1] = "Vertical";
+    Orientation[Orientation["null"] = 2] = "null";
+})(Orientation || (Orientation = {}));
 var Container_Layouts;
 (function (Container_Layouts) {
     Container_Layouts[Container_Layouts["SINGLE"] = 0] = "SINGLE";
@@ -133,13 +140,27 @@ export class Container {
         this._add_frame = this._add_frame.bind(this);
         this._add_flex_frame = this._add_flex_frame.bind(this);
         this._add_flex_separator = this._add_flex_separator.bind(this);
-        this.set_layout(Container_Layouts.DOUBLE_HORIZ);
+        this.set_layout(Container_Layouts.DOUBLE_VERT);
     }
     resize() {
         let this_width = this.div.clientWidth;
         let this_height = this.div.clientHeight;
+        this.flex_divs.forEach((flex_item) => {
+            if (flex_item.isFrame) {
+                flex_item.div.style.width = `${this_width * flex_item.flex_width - LAYOUT_CHART_MARGIN}px`;
+                flex_item.div.style.height = `${this_height * flex_item.flex_height}px`;
+            }
+            else if (flex_item.orientation === Orientation.Vertical) {
+                flex_item.div.style.width = `${LAYOUT_CHART_MARGIN}px`;
+                flex_item.div.style.height = `${this_height * flex_item.flex_height}px`;
+            }
+            else if (flex_item.orientation === Orientation.Horizontal) {
+                flex_item.div.style.width = `${this_width * flex_item.flex_width}px`;
+                flex_item.div.style.height = `${LAYOUT_CHART_MARGIN}px`;
+            }
+        });
         this.frames.forEach((frame) => {
-            frame.resize(this_width, this_height);
+            frame.resize();
         });
     }
     set_layout(layout = Container_Layouts.SINGLE) {
@@ -151,14 +172,14 @@ export class Container {
             case Container_Layouts.DOUBLE_VERT:
                 {
                     this._add_flex_frame(0.5, 1);
-                    this._add_flex_separator(true, 1);
+                    this._add_flex_separator(Orientation.Vertical, 1);
                     this._add_flex_frame(0.5, 1);
                 }
                 break;
             case Container_Layouts.DOUBLE_HORIZ:
                 {
                     this._add_flex_frame(1, 0.5);
-                    this._add_flex_separator(false, 1);
+                    this._add_flex_separator(Orientation.Horizontal, 1);
                     this._add_flex_frame(1, 0.5);
                 }
                 break;
@@ -186,22 +207,19 @@ export class Container {
             div: child_div,
             isFrame: true,
             flex_width: flex_width,
-            flex_height: flex_height
+            flex_height: flex_height,
+            orientation: Orientation.null
         });
     }
-    _add_flex_separator(vertical, size) {
+    _add_flex_separator(type, size) {
         let child_div = document.createElement('div');
-        if (vertical) {
-            child_div.classList.add('separator_vert');
-        }
-        else {
-            child_div.classList.add('separator_horiz');
-        }
+        child_div.classList.add('separator');
         this.flex_divs.push({
-            div: document.createElement('div'),
+            div: child_div,
             isFrame: false,
-            flex_height: (vertical ? size : 0),
-            flex_width: (vertical ? 0 : size),
+            flex_height: (type === Orientation.Vertical ? size : 0),
+            flex_width: (type === Orientation.Horizontal ? size : 0),
+            orientation: type
         });
     }
     _add_frame(specs) {
@@ -238,11 +256,9 @@ export class Frame {
             this.panes.push(new Pane(child_div));
         }
     }
-    resize(width, height) {
-        let this_width = width * this.flex_width;
-        let this_height = height * this.flex_height;
-        this.div.style.width = `${this_width}px`;
-        this.div.style.height = `${this_height}px`;
+    resize() {
+        let this_width = this.div.clientWidth;
+        let this_height = this.div.clientHeight;
         this.panes.forEach(pane => {
             pane.resize(this_width, this_height);
         });

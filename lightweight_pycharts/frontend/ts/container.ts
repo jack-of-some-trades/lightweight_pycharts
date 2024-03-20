@@ -18,6 +18,7 @@ import { CandlestickSeries, Color, ColorType, DeepPartial as DP, IChartApi, Layo
 
 // ---------------- Base Layout Dimensions ---------------- //
 const LAYOUT_MARGIN = 5
+const LAYOUT_CHART_MARGIN = 2
 const LAYOUT_DIM_TOP = {
     WIDTH: `100vw`,
     HEIGHT: 38,
@@ -60,6 +61,12 @@ enum Wrapper_Divs {
     CHART = 'div_center'
 }
 
+enum Orientation {
+    Horizontal,
+    Vertical,
+    null
+}
+
 enum Container_Layouts {
     SINGLE,
     DOUBLE_VERT,
@@ -77,7 +84,8 @@ interface flex_div {
     div: HTMLDivElement,
     isFrame: boolean,
     flex_width: number,
-    flex_height: number
+    flex_height: number,
+    orientation: Orientation
 }
 
 
@@ -229,7 +237,7 @@ export class Container {
         this._add_flex_separator = this._add_flex_separator.bind(this)
 
         //Set default Layout
-        this.set_layout(Container_Layouts.DOUBLE_HORIZ)
+        this.set_layout(Container_Layouts.DOUBLE_VERT)
     }
 
     /**
@@ -238,13 +246,35 @@ export class Container {
     resize() {
         let this_width = this.div.clientWidth
         let this_height = this.div.clientHeight
+
+        //Resize Frame & Serparator Divs
+        this.flex_divs.forEach((flex_item) => {
+            if (flex_item.isFrame) {
+                //Margin is subtracted from width to ensure size row wrap functions correctly
+                flex_item.div.style.width = `${this_width * flex_item.flex_width - LAYOUT_CHART_MARGIN}px`
+                flex_item.div.style.height = `${this_height * flex_item.flex_height}px`
+            } else if (flex_item.orientation === Orientation.Vertical) {
+                //vertical Separators have fixed width
+                flex_item.div.style.width = `${LAYOUT_CHART_MARGIN}px`
+                flex_item.div.style.height = `${this_height * flex_item.flex_height}px`
+            } else if (flex_item.orientation === Orientation.Horizontal) {
+                //Horizontal Separators have fixed height
+                flex_item.div.style.width = `${this_width * flex_item.flex_width}px`
+                flex_item.div.style.height = `${LAYOUT_CHART_MARGIN}px`
+            }
+        })
+
+        //Resize all contents of each Frame
         this.frames.forEach((frame) => {
-            frame.resize(this_width, this_height)
+            frame.resize()
         });
     }
 
+    /** 
+     * Create and condifure all the necessary frames & separators for a given layout.
+     */
     set_layout(layout: Container_Layouts = Container_Layouts.SINGLE) {
-        // ---- Clear Previous Layout ----
+        // ------------ Clear Previous Layout ------------
         this.flex_divs.forEach((item) => {
             //Remove all the divs from the document
             this.div.removeChild(item.div)
@@ -252,16 +282,16 @@ export class Container {
         //erase all original flex_divs
         this.flex_divs.length = 0
 
-        // ---- Create Layout ----
+        // ------------ Create Layout ------------
         switch (layout) {
             case Container_Layouts.DOUBLE_VERT: {
                 this._add_flex_frame(0.5, 1)
-                this._add_flex_separator(true, 1)
+                this._add_flex_separator(Orientation.Vertical, 1)
                 this._add_flex_frame(0.5, 1)
             } break;
             case Container_Layouts.DOUBLE_HORIZ: {
                 this._add_flex_frame(1, 0.5)
-                this._add_flex_separator(false, 1)
+                this._add_flex_separator(Orientation.Horizontal, 1)
                 this._add_flex_frame(1, 0.5)
             } break;
             default:
@@ -269,7 +299,7 @@ export class Container {
                 this._add_flex_frame(1, 1)
         }
 
-        // ---- Append Children ----
+        // ------------ Append Children ------------
         this.flex_divs.forEach((flex_item, index) => {
             if (flex_item.isFrame) {
                 if (index < this.frames.length) {
@@ -293,23 +323,21 @@ export class Container {
             div: child_div,
             isFrame: true,
             flex_width: flex_width,
-            flex_height: flex_height
+            flex_height: flex_height,
+            orientation: Orientation.null
         })
     }
 
-    _add_flex_separator(vertical: boolean, size: number) {
+    _add_flex_separator(type: Orientation, size: number) {
         let child_div = document.createElement('div')
-        if (vertical) {
-            child_div.classList.add('separator_vert')
-        } else {
-            child_div.classList.add('separator_horiz')
-        }
+        child_div.classList.add('separator')
 
         this.flex_divs.push({
-            div: document.createElement('div'),
+            div: child_div,
             isFrame: false,
-            flex_height: (vertical ? size : 0),
-            flex_width: (vertical ? 0 : size),
+            flex_height: (type === Orientation.Vertical ? size : 0),
+            flex_width: (type === Orientation.Horizontal ? size : 0),
+            orientation: type
         })
     }
 
@@ -371,12 +399,9 @@ export class Frame {
         }
     }
 
-    resize(width: number, height: number) {
-        let this_width = width * this.flex_width
-        let this_height = height * this.flex_height
-
-        this.div.style.width = `${this_width}px`
-        this.div.style.height = `${this_height}px`
+    resize() {
+        let this_width = this.div.clientWidth
+        let this_height = this.div.clientHeight
 
         this.panes.forEach(pane => {
             pane.resize(this_width, this_height)

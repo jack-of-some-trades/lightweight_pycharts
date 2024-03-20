@@ -54,17 +54,17 @@ body {
 }
 
 .chart_frame {
+    flex: 1 1 auto;
     color: #000;
+    border-radius: 5px;
 }
 
 .chart_pane {
     color: #000;
+    border-radius: 5px;
 }
 
-.separator_vert {
-    width: 0px
-}
-
-.separator_horiz {
-    height: 0px
+.separator {
+    flex-shrink: 0;
+    background-color: #2a2e39;
 }
