@@ -13,7 +13,7 @@
  * and the python webview would hit a runtime import error if it had to look for a non-existant "./pkg.ts"
  * 
  * Additionally, I've created an Enum, Color, of all the named colors that come with the library for ease of access.
- *//*@ts-ignore*/
+ */
 import { Container, Frame, Pane, Wrapper } from "./container.js";
 import { py_api } from "./py_api.js";
 
@@ -30,11 +30,13 @@ declare global {
     }
 }
 
-// Define The global interface.
+// Define The global Python <--> Js api interface.
 window.api = new py_api();
 
 //Define the global Wrapper (Assumes you want a full window and not just a chart)
 window.wrapper = new Wrapper();
 
-//Define A Chart Container
+//Define Container Constructor.
+//Potentally useful for standalone implementation that
+//Doesn't use or create a Wrapper Object *cough cough* QWebView *Cough*
 window.Container

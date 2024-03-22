@@ -45,7 +45,6 @@ body {
 }
 
 .layout_main {
-    display: flex;
     overflow: hidden;
     position: absolute;
     background-color: #131722;

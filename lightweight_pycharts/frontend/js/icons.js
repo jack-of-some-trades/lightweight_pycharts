@@ -94,4 +94,7 @@ export var icons;
     icons["box_open"] = "box_open";
     icons["box_fullscreen"] = "box_fullscreen";
     icons["box_maximize"] = "box_maximize";
+    icons["layout_single"] = "layout_single";
+    icons["layout_double_vert"] = "layout_double_vert";
+    icons["layout_double_horiz"] = "layout_double_horiz";
 })(icons || (icons = {}));

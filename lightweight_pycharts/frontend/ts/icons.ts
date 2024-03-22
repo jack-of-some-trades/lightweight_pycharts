@@ -108,4 +108,9 @@ export enum icons {
     box_open = "box_open",
     box_fullscreen = "box_fullscreen",
     box_maximize = "box_maximize",
+
+    layout_single = "layout_single",
+    layout_double_vert = "layout_double_vert",
+    layout_double_horiz = "layout_double_horiz",
+
 }

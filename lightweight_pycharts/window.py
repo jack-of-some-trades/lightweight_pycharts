@@ -1,5 +1,6 @@
 """ Python Classes that handle the various GUI Widgets """
 
+import time
 import logging
 import multiprocessing as mp
 
@@ -24,6 +25,10 @@ class window:
     def __init__(self, **kwargs) -> None:
         if "debug" in kwargs.keys() and kwargs["debug"]:
             logger.setLevel(logging.DEBUG)
+
+        # Setting default since window has quite a few things populated by default
+        if "min_size" not in kwargs.keys():
+            kwargs["min_size"] = (400, 250)
 
         # create and then unpack the hooks directly into class variables
         mp_hooks = MpHooks()
