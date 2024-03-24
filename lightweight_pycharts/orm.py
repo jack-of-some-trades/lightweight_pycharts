@@ -2,9 +2,31 @@
     All Hail Our Overlord, ChatGPT.
 """
 
-from dataclasses import dataclass
-from typing import TypeAlias, Optional, Literal, Union, Dict, Any
-from enum import Enum
+from dataclasses import dataclass, field, is_dataclass, asdict
+from typing import TypeAlias, Optional, Literal, Union, Any
+from enum import Enum, IntEnum, StrEnum
+from json import JSONEncoder, dumps
+
+
+class ORM_JSONEncoder(JSONEncoder):
+    "Enhanced JSON Encoder that encodes DataClasses as dicts and Color as JS rgba()"
+
+    def default(self, o):
+        if isinstance(o, Color):
+            return repr(o)
+        if is_dataclass(o):
+            return asdict(o)
+        return super().default(o)
+
+
+def dump(obj: Any) -> str:
+    "Enchanced JSON.dumps() to serialize all ORM Objects"
+    return str(dumps(obj, cls=ORM_JSONEncoder))
+
+
+def load(obj: str) -> Any:
+    "Enchanced JSON.loads() to load all ORM Objects"
+    raise NotImplementedError
 
 
 # pylint: disable=line-too-long
@@ -47,7 +69,7 @@ Time: TypeAlias = Union[UTCTimestamp, BusinessDay, str]
 # region --------------------------------------- API Enums --------------------------------------- #
 
 
-class SeriesType(Enum):
+class SeriesType(StrEnum):
     """
     Represents the type of options for each series type.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriestype
@@ -61,7 +83,7 @@ class SeriesType(Enum):
     Histogram = "Histogram"
 
 
-class ColorType(Enum):
+class ColorType(StrEnum):
     """
     Represents a type of color.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/enums/ColorType
@@ -71,7 +93,7 @@ class ColorType(Enum):
     VerticalGradient = "gradient"
 
 
-class CrosshairMode(Enum):
+class CrosshairMode(IntEnum):
     """
     Represents the crosshair mode.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/enums/CrosshairMode
@@ -83,7 +105,7 @@ class CrosshairMode(Enum):
     Hidden = 2
 
 
-class LastPriceAnimationMode(Enum):
+class LastPriceAnimationMode(IntEnum):
     """
     Represents the type of the last price animation for series such as area or line.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/enums/LastPriceAnimationMode
@@ -94,7 +116,7 @@ class LastPriceAnimationMode(Enum):
     OnDataUpdate = 2
 
 
-class LineStyle(Enum):
+class LineStyle(IntEnum):
     """
     Represents the possible line styles.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/enums/LineStyle
@@ -107,7 +129,7 @@ class LineStyle(Enum):
     SparseDotted = 4
 
 
-class LineType(Enum):
+class LineType(IntEnum):
     """
     Represents the possible line types.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/enums/LineType
@@ -118,7 +140,7 @@ class LineType(Enum):
     Curved = 2
 
 
-class MismatchDirection(Enum):
+class MismatchDirection(IntEnum):
     """
     Search direction if no data found at provided index
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/enums/MismatchDirection
@@ -129,7 +151,7 @@ class MismatchDirection(Enum):
     NearestRight = 1
 
 
-class PriceLineSource(Enum):
+class PriceLineSource(IntEnum):
     """
     Represents the source of data to be used for the horizontal price line.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/enums/PriceLineSource
@@ -139,7 +161,7 @@ class PriceLineSource(Enum):
     LastVisible = 1
 
 
-class PriceScaleMode(Enum):
+class PriceScaleMode(IntEnum):
     """
     Represents the price scale mode.
     Docs:https://tradingview.github.io/lightweight-charts/docs/api/enums/PriceScaleMode
@@ -151,7 +173,7 @@ class PriceScaleMode(Enum):
     IndexedTo100 = 3
 
 
-class TickMarkType(Enum):
+class TickMarkType(IntEnum):
     """
     Represents the type of a tick mark on the time axis.
     Docs:https://tradingview.github.io/lightweight-charts/docs/api/enums/TickMarkType
@@ -164,7 +186,7 @@ class TickMarkType(Enum):
     TimeWithSeconds = 4
 
 
-class TrackingModeExitMode(Enum):
+class TrackingModeExitMode(IntEnum):
     """
     Determine how to exit the tracking mode.
 
@@ -177,7 +199,7 @@ class TrackingModeExitMode(Enum):
     OnNextTap = 1
 
 
-class SeriesMarkerPosition(Enum):
+class SeriesMarkerPosition(StrEnum):
     """
     Represents the position of a series marker relative to a bar.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriesmarkerposition
@@ -188,7 +210,7 @@ class SeriesMarkerPosition(Enum):
     In = "inBar"
 
 
-class SeriesMarkerShape(Enum):
+class SeriesMarkerShape(StrEnum):
     """
     Represents the shape of a series marker.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriesmarkershape
@@ -205,22 +227,25 @@ class SeriesMarkerShape(Enum):
 # region --------------------------------------- Misc Dataclass / Interfaces --------------------------------------- #
 
 
-@dataclass
+# Note, this object cannot be a dataclass otherwise json.dumps()
+# dumps this out as a dict. For functionality we need to call repr() on dumps()
 class Color:
     """
-    RBGa Color ORM Dataclass. To instatiate use Color.from_rgb() or Color.from_hex()
+    RBGa Color Class. To instatiate use Color.from_rgb() or Color.from_hex()
     Original Object: https://www.w3schools.com/cssref/func_rgba.php
     """
 
-    _r: int
-    _b: int
-    _g: int
-    _a: float
+    def __init__(self, r: int, b: int, g: int, a: float):
+        self._r = r
+        self._b = b
+        self._g = g
+        self._a = a
 
     @classmethod
     def from_rgb(cls, r: int, b: int, g: int, a: float = 1):
         "Instantiate a new Color Instance from RGB Values"
         new_inst = cls(0, 0, 0, 0)
+        # Pass variables after construction to Value Check them w/ setter funcs
         new_inst.r = r
         new_inst.g = g
         new_inst.b = b
@@ -253,11 +278,6 @@ class Color:
     # @classmethod
     # def from_jdict(cls, j_dict: dict):
     #     "Instantiate a new Color Instance from a Loaded JSON Dict"
-    #     raise NotImplementedError
-
-    # @classmethod
-    # def from_literal(cls, color: str):
-    #     "Instantiate a new Color Instance from a Literal Color String"
     #     raise NotImplementedError
 
     # region // -------------- Color Getters & Setters -------------- //
@@ -310,6 +330,10 @@ class Color:
         self._a = a
 
     # endregion
+
+    def __repr__(self):
+        "Javascript RGBA Representation of Class Params."
+        return f"rgba({self._r},{self._g},{self._b},{self._a})"
 
 
 @dataclass
@@ -438,7 +462,7 @@ class MouseEventParams:
     time: Optional[Time] = None
     logical: Optional[int] = None
     point: Optional[Point] = None
-    series_data: Dict[Any, Any] = {}  # todo: Update to the Series Data Objects
+    series_data = {}  # todo: Update to the Series Data Objects
     hovered_series: Optional[str] = None  # todo: Implement
     hovered_object_id: Optional[str] = None  # todo: Implement
     source_event: Optional[TouchMouseEventData] = None
@@ -631,13 +655,13 @@ class SeriesOptionsCommon:
     priceLineColor: Optional[Color] = None
     priceLineStyle: LineStyle = LineStyle.Dashed
     priceLineSource: PriceLineSource = PriceLineSource.LastBar
-    priceFormat: PriceFormat = PriceFormat(type="price", precision=2, minMove=0.01)
+    priceFormat: PriceFormat = field(default_factory=PriceFormat)
 
     # BaseLine is for 'IndexTo' and Percent Modes
     baseLineVisible: bool = True
     baseLineWidth: LineWidth = 1
     baseLineStyle: LineStyle = LineStyle.Solid
-    baseLineColor: Color = Color.from_hex("#B2B5BE")
+    baseLineColor: Color = field(default_factory=lambda: Color.from_hex("#B2B5BE"))
     # autoscaleInfoProvider: removed to keep JS Funcitons in JS files. May Enable this later though.
 
 
@@ -650,8 +674,8 @@ class BarStyleOptions(SeriesOptionsCommon):
 
     thinBars: bool = True
     openVisible: bool = True
-    upColor: Color = Color.from_hex("#26a69a")
-    downColor: Color = Color.from_hex("#ef5350")
+    upColor: Color = field(default_factory=lambda: Color.from_hex("#26a69a"))
+    downColor: Color = field(default_factory=lambda: Color.from_hex("#ef5350"))
 
 
 @dataclass
@@ -661,18 +685,18 @@ class CandlestickStyleOptions(SeriesOptionsCommon):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/CandlestickStyleOptions
     """
 
-    upColor: Color = Color.from_hex("#26a69a")
-    downColor: Color = Color.from_hex("#ef5350")
+    upColor: Color = field(default_factory=lambda: Color.from_hex("#26a69a"))
+    downColor: Color = field(default_factory=lambda: Color.from_hex("#ef5350"))
 
     borderVisible: bool = True
-    borderColor: Color = Color.from_hex("#378658")
-    borderUpColor: Color = Color.from_hex("#26a69a")
-    borderDownColor: Color = Color.from_hex("#ef5350")
+    borderColor: Color = field(default_factory=lambda: Color.from_hex("#378658"))
+    borderUpColor: Color = field(default_factory=lambda: Color.from_hex("#26a69a"))
+    borderDownColor: Color = field(default_factory=lambda: Color.from_hex("#ef5350"))
 
     wickVisible: bool = True
-    wickColor: Color = Color.from_hex("#737375")
-    wickUpColor: Color = Color.from_hex("#26a69a")
-    wickDownColor: Color = Color.from_hex("#ef5350")
+    wickColor: Color = field(default_factory=lambda: Color.from_hex("#737375"))
+    wickUpColor: Color = field(default_factory=lambda: Color.from_hex("#26a69a"))
+    wickDownColor: Color = field(default_factory=lambda: Color.from_hex("#ef5350"))
 
 
 @dataclass
@@ -686,7 +710,7 @@ class LineStyleOptions(SeriesOptionsCommon):
     lineWidth: int = 3
     lineType: LineType = LineType.Simple
     lineStyle: LineStyle = LineStyle.Solid
-    color: Color = Color.from_hex("#2196f3")
+    color: Color = field(default_factory=lambda: Color.from_hex("#2196f3"))
 
     pointMarkersVisible: bool = False
     pointMarkersRadius: Optional[int] = None
@@ -707,7 +731,7 @@ class HistogramStyleOptions(SeriesOptionsCommon):
     """
 
     base: float = 0
-    color: Color = Color.from_hex("#26a69a")
+    color: Color = field(default_factory=lambda: Color.from_hex("#26a69a"))
 
 
 @dataclass
@@ -717,14 +741,14 @@ class AreaStyleOptions(SeriesOptionsCommon):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AreaStyleOptions
     """
 
-    lineColor: Color = Color.from_hex("#33D778")
+    lineColor: Color = field(default_factory=lambda: Color.from_hex("#33D778"))
     lineStyle: LineStyle = LineStyle.Solid
     lineType: LineType = LineType.Simple
     lineWidth: LineWidth = 3
     lineVisible: bool = True
 
-    topColor: Color = Color.from_rgb(46, 220, 135, 0.4)
-    bottomColor: Color = Color.from_rgb(40, 221, 100, 0)
+    topColor: Color = field(default_factory=lambda: Color.from_rgb(46, 220, 135, 0.4))
+    bottomColor: Color = field(default_factory=lambda: Color.from_rgb(40, 221, 100, 0))
 
     crosshairMarkerVisible: bool = True
     crosshairMarkerRadius: int = 4
@@ -745,19 +769,29 @@ class BaselineStyleOptions(SeriesOptionsCommon):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BaselineStyleOptions
     """
 
-    baseValue: BaseValuePrice = BaseValuePrice(price=0)
+    baseValue: BaseValuePrice = field(default_factory=lambda: BaseValuePrice(price=0))
     lineVisible: bool = True
     lineWidth: LineWidth = 3
     lineType: LineType = LineType.Simple
     lineStyle: LineStyle = LineStyle.Solid
 
-    topLineColor: Color = Color.from_rgb(38, 166, 154, 1)
-    topFillColor1: Color = Color.from_rgb(38, 166, 154, 0.28)
-    topFillColor2: Color = Color.from_rgb(38, 166, 154, 0.05)
+    topLineColor: Color = field(default_factory=lambda: Color.from_rgb(38, 166, 154, 1))
+    topFillColor1: Color = field(
+        default_factory=lambda: Color.from_rgb(38, 166, 154, 0.28)
+    )
+    topFillColor2: Color = field(
+        default_factory=lambda: Color.from_rgb(38, 166, 154, 0.05)
+    )
 
-    bottomLineColor: Color = Color.from_rgb(239, 83, 80, 1)
-    bottomFillColor1: Color = Color.from_rgb(239, 83, 80, 0.05)
-    bottomFillColor2: Color = Color.from_rgb(239, 83, 80, 0.28)
+    bottomLineColor: Color = field(
+        default_factory=lambda: Color.from_rgb(239, 83, 80, 1)
+    )
+    bottomFillColor1: Color = field(
+        default_factory=lambda: Color.from_rgb(239, 83, 80, 0.05)
+    )
+    bottomFillColor2: Color = field(
+        default_factory=lambda: Color.from_rgb(239, 83, 80, 0.28)
+    )
 
     pointMarkersVisible: bool = False
     pointMarkersRadius: Optional[int] = None
@@ -792,8 +826,8 @@ class PriceScaleMargins:
     Docs:https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceScaleMargins
     """
 
-    top: float
-    bottom: float
+    top: float = 0.2
+    bottom: float = 0.1
 
 
 @dataclass
@@ -828,10 +862,10 @@ class OverlayPriceScaleOptions:
 
     minimumWidth: int = 0
     mode: PriceScaleMode = PriceScaleMode.Normal
-    scaleMargins: PriceScaleMargins = PriceScaleMargins(top=0.2, bottom=0.1)
+    scaleMargins: PriceScaleMargins = field(default_factory=PriceScaleMargins)
 
     borderVisible: bool = True
-    borderColor: Color = Color.from_hex("#2B2B43")
+    borderColor: Color = field(default_factory=lambda: Color.from_hex("#2B2B43"))
 
     alignLabels: bool = True
     entireTextOnly: bool = False
@@ -924,7 +958,7 @@ class GridLineOptions:
 
     visible: bool = True
     style: LineStyle = LineStyle.Solid
-    color: Color = Color.from_hex("#D6DCDE")
+    color: Color = field(default_factory=lambda: Color.from_hex("#D6DCDE"))
 
 
 @dataclass
@@ -934,8 +968,8 @@ class GridOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/GridOptions
     """
 
-    vertLines: GridLineOptions = GridLineOptions()
-    horzLines: GridLineOptions = GridLineOptions()
+    vertLines: GridLineOptions = field(default_factory=GridLineOptions)
+    horzLines: GridLineOptions = field(default_factory=GridLineOptions)
 
 
 @dataclass
@@ -987,11 +1021,13 @@ class CrosshairLineOptions:
 
     visible: bool = True
     width: int = 1
-    color: Color = Color.from_hex("#758696")
+    color: Color = field(default_factory=lambda: Color.from_hex("#758696"))
     style: LineStyle = LineStyle.LargeDashed
 
     labelVisible: bool = True
-    labelBackgroundColor: Color = Color.from_hex("#4c525e")
+    labelBackgroundColor: Color = field(
+        default_factory=lambda: Color.from_hex("#4c525e")
+    )
 
 
 @dataclass
@@ -1002,8 +1038,8 @@ class CrosshairOptions:
     """
 
     mode: CrosshairMode = CrosshairMode.Normal
-    vertLine: CrosshairLineOptions = CrosshairLineOptions()
-    horzLine: CrosshairLineOptions = CrosshairLineOptions()
+    vertLine: CrosshairLineOptions = field(default_factory=CrosshairLineOptions)
+    horzLine: CrosshairLineOptions = field(default_factory=CrosshairLineOptions)
 
 
 @dataclass
@@ -1049,7 +1085,7 @@ class HorzScaleOptions:
     allowBoldLabels: bool = True
     secondsVisible: bool = True
     borderVisible: bool = True
-    borderColor: Color = Color.from_hex("#2B2B43")
+    borderColor: Color = field(default_factory=lambda: Color.from_hex("#2B2B43"))
 
     ticksVisible: bool = False
     tickMarkMaxCharacterLength: Optional[int] = None
@@ -1062,10 +1098,13 @@ class LayoutOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LayoutOptions
     """
 
-    background: Background = Background(
-        type=ColorType.Solid, color=Color.from_hex("#FFFFFF")
+    background: Background = field(
+        default_factory=lambda: Background(
+            type=ColorType.Solid,
+            color=Color.from_hex("#FFFFFF"),
+        )
     )
-    textColor: Color = Color.from_hex("#191919")
+    textColor: Color = field(default_factory=lambda: Color.from_hex("#191919"))
     fontSize: int = 12
     fontFamily: str = (
         "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif"
@@ -1090,7 +1129,7 @@ class WatermarkOptions:
     Tutorial: https://tradingview.github.io/lightweight-charts/tutorials/how_to/watermark
     """
 
-    color: Color = Color.from_rgb(0, 0, 0, 0)
+    color: Color = field(default_factory=lambda: Color.from_rgb(0, 0, 0, 0))
     visible: bool = False
     text: str = ""
     fontSize: int = 48
@@ -1114,19 +1153,29 @@ class ChartOptionsBase:
     width: int = 0
     height: int = 0
     autoSize: bool = False
-    watermark: WatermarkOptions = WatermarkOptions()
-    layout: LayoutOptions = LayoutOptions()
-    leftPriceScale: PriceScaleOptions = PriceScaleOptions(visible=False)
-    rightPriceScale: PriceScaleOptions = PriceScaleOptions()
-    overlayPriceScales: OverlayPriceScaleOptions = OverlayPriceScaleOptions()
-    timeScale: HorzScaleOptions = HorzScaleOptions()
-    crosshair: CrosshairOptions = CrosshairOptions()
-    grid: GridOptions = GridOptions()
-    handleScroll: Union[HandleScrollOptions, bool] = HandleScrollOptions()
-    handleScale: Union[HandleScaleOptions, bool] = HandleScaleOptions()
-    kineticScroll: KineticScrollOptions = KineticScrollOptions()
-    trackingMode: TrackingModeOptions = TrackingModeOptions()
-    localization: LocalizationOptionsBase = LocalizationOptionsBase()
+    watermark: WatermarkOptions = field(default_factory=WatermarkOptions)
+    layout: LayoutOptions = field(default_factory=LayoutOptions)
+    leftPriceScale: PriceScaleOptions = field(
+        default_factory=lambda: PriceScaleOptions(visible=False)
+    )
+    rightPriceScale: PriceScaleOptions = field(default_factory=PriceScaleOptions)
+    overlayPriceScales: OverlayPriceScaleOptions = field(
+        default_factory=OverlayPriceScaleOptions
+    )
+    timeScale: HorzScaleOptions = field(default_factory=HorzScaleOptions)
+    crosshair: CrosshairOptions = field(default_factory=CrosshairOptions)
+    grid: GridOptions = field(default_factory=GridOptions)
+    handleScroll: Union[HandleScrollOptions, bool] = field(
+        default_factory=HandleScrollOptions
+    )
+    handleScale: Union[HandleScaleOptions, bool] = field(
+        default_factory=HandleScaleOptions
+    )
+    kineticScroll: KineticScrollOptions = field(default_factory=KineticScrollOptions)
+    trackingMode: TrackingModeOptions = field(default_factory=TrackingModeOptions)
+    localization: LocalizationOptionsBase = field(
+        default_factory=LocalizationOptionsBase
+    )
 
 
 class ColorLiteral(Enum):
@@ -1297,6 +1346,7 @@ class PyWebViewWindowOptions:
     zoomable: bool = False
     draggable: bool = False
     vibrancy: bool = False
+    debug: bool = False
     # server
     # server_args
     # localization

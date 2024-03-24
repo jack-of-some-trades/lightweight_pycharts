@@ -5,9 +5,10 @@ https://github.com/jack-of-some-trades/lightweight-pycharts
 """
 
 import logging
+from .orm import *
 from .window import window
 
-__all__ = ("window",)
+__all__ = ("window", "orm")
 
 _LOG_LVL = logging.WARNING
 # _LOG_LVL = logging.INFO
