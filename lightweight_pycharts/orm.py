@@ -1,4 +1,4 @@
-""" Object Relational Mapping for all of the various types defined within the Lightweight Charts API 
+""" Object Relational Mapping for all of the various types defined within the Lightweight Charts API.
     All Hail Our Overlord, ChatGPT.
 """
 
@@ -1327,20 +1327,26 @@ class ColorLiteral(Enum):
 
 
 @dataclass
-class PyWebViewWindowOptions:
-    "All available 'PyWebview' Window Options"
+class PyWebViewOptions:
+    """
+    All** available 'PyWebview' Create_Window Options
+
+    ** At Somepoint in the future this may be expanded to include server options
+    and window.start() Options.
+    """
+
     title: str = ""
     x: int = 100
     y: int = 100
     width: int = 800
-    height: int = 800
-    resizeable: bool = True
+    height: int = 600
+    resizable: bool = True
     fullscreen: bool = False
     min_size: tuple[int, int] = (400, 250)
     hidden: bool = False
     on_top: bool = False
     confirm_close: bool = False
-    Background_color: str = "#FFFFFF"
+    background_color: str = "#FFFFFF"
     transparent: bool = False
     text_select: bool = False
     zoomable: bool = False
@@ -1350,3 +1356,6 @@ class PyWebViewWindowOptions:
     # server
     # server_args
     # localization
+
+    def asdict(self) -> dict[str, Any]:
+        return asdict(self)

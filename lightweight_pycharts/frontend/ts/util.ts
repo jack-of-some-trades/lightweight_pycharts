@@ -33,7 +33,7 @@ export enum Container_Layouts {
     // QUAD
 }
 
-// ---------------- Interfaces ---------------- //
+// ---------------- Container/Layout/Pane Super Object Interfaces ---------------- //
 
 export interface flex_div {
     div: HTMLDivElement,
@@ -47,10 +47,6 @@ export interface chart_id {
 
 }
 
-
-export interface chart_id {
-
-}
 
 // ---------------- Base Layout Dimensions ---------------- //
 export const LAYOUT_MARGIN = 5
