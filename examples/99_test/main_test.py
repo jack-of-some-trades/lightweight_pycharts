@@ -10,7 +10,9 @@ import lightweight_pycharts as lwc
 
 async def main():
     window = lwc.Window(debug=True)
-    window.queue_test()
+    # window.queue_test()
+
+    window.containers[0].set_layout(lwc.orm.Container_Layouts.DOUBLE_HORIZ)
 
     # Sleep to halt main process since window process is Daemon
     await asyncio.sleep(500)

@@ -14,9 +14,12 @@
  * 
  * Additionally, I've created an Enum, Color, of all the named colors that come with the library for ease of access.
  */
-import { Container, Frame, Pane, Wrapper } from "./container.js";
+import { Container } from "./container.js";
+import { Frame } from "./frame.js";
+import { Pane } from "./pane.js";
 import { py_api } from "./py_api.js";
 import { Container_Layouts } from "./util.js";
+import { Wrapper } from "./wrapper.js";
 
 //Declare Global interface. All Following declarations will be accessable to the python run_script() function
 declare global {
