@@ -1,5 +1,6 @@
 //@ts-ignore
 import { Pane } from "./pane.js";
+import { SeriesData } from "./pkg.js";
 
 /**
  * @member Div: Div That Contains Pane's and pane seprators. Can be Null since 
@@ -44,6 +45,10 @@ export class Frame {
         return new_pane
     }
 
+    set_data(dtype: string, data: SeriesData[]) {
+        this.panes[0].set_data(dtype, data)
+    }
+
     /**
      * Resize All Children Panes
      */
@@ -64,4 +69,5 @@ export class Frame {
             pane.fitcontent()
         });
     }
+
 }

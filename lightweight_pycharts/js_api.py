@@ -7,14 +7,14 @@ import multiprocessing as mp
 from multiprocessing.synchronize import Event as mp_EventClass
 from dataclasses import dataclass
 from typing import Callable, Optional, Protocol
-from enum import Enum
 from abc import ABC, abstractmethod
 
 import webview
+import pandas as pd
 from webview.errors import JavascriptException
 
+from .js_cmd import JS_CMD
 import lightweight_pycharts.orm as orm
-from lightweight_pycharts.js_cmd import JS_CMD
 import lightweight_pycharts.js_cmd as cmds
 
 file_dir = dirname(abspath(__file__))
@@ -158,6 +158,9 @@ class View(ABC):
             case JS_CMD.SET_LAYOUT:
                 self._type_check(args, (str, orm.Container_Layouts))
                 self.run_script(cmds.set_layout(args[0], args[1]))
+            case JS_CMD.SET_DATA:
+                self._type_check(args, (str, pd.DataFrame))
+                self.run_script(cmds.set_data(args[0], args[1].lwc_df))
             case _:
                 logger.warning("Unknown Command: %s", js_cmd)
 

@@ -23,6 +23,9 @@ export class Frame {
         this.resize();
         return new_pane;
     }
+    set_data(dtype, data) {
+        this.panes[0].set_data(dtype, data);
+    }
     resize() {
         let this_width = this.div.clientWidth;
         let this_height = this.div.clientHeight;

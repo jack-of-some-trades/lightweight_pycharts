@@ -51,7 +51,7 @@ export const LAYOUT_DIM_CENTER = {
     TOP: LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
     LEFT: LAYOUT_DIM_LEFT.WIDTH + LAYOUT_MARGIN
 };
-export function isWhitespaceData(data) {
+function isWhitespaceData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -59,7 +59,7 @@ export function isWhitespaceData(data) {
     optional_keys_len += keys.includes('customValues') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 1);
 }
-export function isSingleValueData(data) {
+function isSingleValueData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -68,7 +68,7 @@ export function isSingleValueData(data) {
     optional_keys_len += keys.includes('customValues') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
 }
-export function isOhlcData(data) {
+function isOhlcData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -80,7 +80,7 @@ export function isOhlcData(data) {
     optional_keys_len += keys.includes('low') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3);
 }
-export function isCandlestickData(data) {
+function isCandlestickData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -95,7 +95,7 @@ export function isCandlestickData(data) {
     optional_keys_len += keys.includes('wickColor') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3);
 }
-export function isBarData(data) {
+function isBarData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -108,7 +108,7 @@ export function isBarData(data) {
     optional_keys_len += keys.includes('color') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3);
 }
-export function isHistogramData(data) {
+function isHistogramData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -118,7 +118,7 @@ export function isHistogramData(data) {
     optional_keys_len += keys.includes('color') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
 }
-export function isLineData(data) {
+function isLineData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -128,7 +128,7 @@ export function isLineData(data) {
     optional_keys_len += keys.includes('color') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
 }
-export function isBaselineData(data) {
+function isBaselineData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
@@ -143,7 +143,7 @@ export function isBaselineData(data) {
     optional_keys_len += keys.includes('bottomLineColor') ? 1 : 0;
     return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
 }
-export function isAreaData(data) {
+function isAreaData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;

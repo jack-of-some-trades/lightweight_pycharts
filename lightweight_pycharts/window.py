@@ -2,8 +2,10 @@
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Any
 import multiprocessing as mp
+
+import pandas as pd
 
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD
@@ -160,6 +162,13 @@ class Frame:
     def _add_pane(self):
         new_id = self.pane_ids.generate()
         self.panes.append(Pane(new_id, self))
+
+    def set_data(self, data: pd.DataFrame | list[dict[str, Any]]):
+        "Sets the data of the main series of this frame"
+        if not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame(data)
+
+        self._fwd_queue.put((JS_CMD.SET_DATA, self.js_id, data))
 
 
 class Pane:

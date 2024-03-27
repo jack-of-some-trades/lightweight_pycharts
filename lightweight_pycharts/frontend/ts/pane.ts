@@ -50,87 +50,70 @@ export class Pane {
         ]
 
         this.add_candlestick_series()
-        this.set_data(this.series[0], data)
+        this.set_data("OHLC", data)
     }
 
     /**
      * Sets The Data of a Series to the data list given.
-     * @param series The Data Series to be updated. Can be any of the base SeriesAPI types 
-     * @param data List of Data, The type of **\*the first data point\*** should match the series type. There is some type checking, but not extensive
-     * 
-     * This function will ensure the data type matches the given series only up to OHLC vs Single Value. Beyond that it will not catch a mis-match of data type.
-     * 
-     * i.e. if the first data point is of generic Single Value, but the second data point is Baseline Data then the function will blindly
-     * set the given Baseline Data to an Area, Line, Baseline, or Histogram Series. The Effect is that the specific color params given are ignored.
-     * 
-     * The only way around this would be to check every data point and that level of extensive type checking isn't necessary since the additional
-     * values are just ignored anyway.
-     * 
+     * @param dtype The type of data Series given
+     * @param data The List of Data. It is trusted that this data actually matches the dtype given
+     * @param series The Data Series to be updated. Can be any of the base SeriesAPI types
      */
-    set_data(series: Series, data: SeriesData[]) {
+    set_data(dtype: string, data: SeriesData[], series: Series = this.series[0]) {
         if (data.length == 0) {
             //Delete Present Data if none was given.
             series.setData([])
             return
         }
         let data_set: boolean = false
+        console.log(data[0])
+        series.setData(data)
 
-        //Check Against Most Restrictive Data/Series Types
-        if (u.isCandlestickData(data[0])) {
-            if (series.seriesType() == 'Candlestick') {
-                //Data and Series Type match so set the data
-                series.setData(data)
-                data_set = true
-            }
-        } else if (u.isBarData(data[0])) {
-            if (series.seriesType() == 'Bar') {
-                //Data and Series Type match so set the data
-                series.setData(data)
-                data_set = true
-            }
-        } else if (u.isLineData(data[0]) || u.isAreaData(data[0])) {
-            //Area and Line Data are identical in structure
-            if (series.seriesType() == 'Line' || series.seriesType() == 'Area') {
-                //Data and Series Type match so set the data
-                series.setData(data)
-                data_set = true
-            }
-        } else if (u.isBaselineData(data[0])) {
-            if (series.seriesType() == 'Baseline') {
-                //Data and Series Type match so set the data
-                series.setData(data)
-                data_set = true
-            }
-        } else if (u.isHistogramData(data[0])) {
-            if (series.seriesType() == 'Histogram') {
-                //Data and Series Type match so set the data
-                series.setData(data)
-                data_set = true
-            }
-        }
 
-        //If not already set, Check against more basic data types
-        if (!data_set) {
-            if (u.isOhlcData(data[0])) {
-                if (series.seriesType() == 'Candlestick' || series.seriesType() == 'Bar') {
+        switch (series.seriesType()) {
+            case "Candlestick":
+                if (dtype == 'OHLC' || dtype == 'Bar' || dtype == 'Candlestick') {
                     series.setData(data)
                     data_set = true
                 }
-
-            } else if (u.isSingleValueData(data[0])) {
-                let options = ['Line', 'Area', 'Baseline', 'Histogram']
-                if (options.includes(series.seriesType())) {
+                break;
+            case "Bar":
+                if (dtype == 'OHLC' || dtype == 'Bar') {
                     series.setData(data)
                     data_set = true
                 }
-            }
-
+                break;
+            case "Line":
+                if (dtype == 'SingleValueData' || dtype == 'Line' || dtype == 'LineorHistogram') {
+                    series.setData(data)
+                    data_set = true
+                }
+                break;
+            case "Histogram":
+                if (dtype == 'SingleValueData' || dtype == 'Histogram' || dtype == 'LineorHistogram') {
+                    series.setData(data)
+                    data_set = true
+                }
+                break;
+            case "Area":
+                if (dtype == 'SingleValueData' || dtype == 'Area') {
+                    series.setData(data)
+                    data_set = true
+                }
+                break;
+            case "Baseline":
+                if (dtype == 'SingleValueData' || dtype == 'Baseline') {
+                    series.setData(data)
+                    data_set = true
+                }
+                break;
+        }
+        if (dtype == 'WhitespaceData') {
+            series.setData(data)
+            data_set = true
         }
 
-        if (data_set)
-            //Implies that the series given was part of this chart, though that may not actually be the case.
-            this.chart.timeScale().fitContent()
-        else
+        if (!data_set)
             console.warn("Failed to set data on Pane.set_data() function call.")
     }
 

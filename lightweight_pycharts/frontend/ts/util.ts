@@ -83,13 +83,16 @@ export const LAYOUT_DIM_CENTER = {
 
 
 // ---------------- Series Data Type Checking Functions ---------------- //
+//These are actually flawed. May be no need to fix these either.. 
+//There is series data type checking on the python side and that check is better since it checks the whole
+//list of data, not just the first datapoint.
 
 /**
  * Checks if the given datatype is WhitespaceData.
  * @param data The data type to be tested
  * @returns true if data matches the WhitespaceData interface and has no extra parameters; false otherwise.
  */
-export function isWhitespaceData(data: SeriesData): data is WhitespaceData {
+function isWhitespaceData(data: SeriesData): data is WhitespaceData {
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
     let optional_keys_len = 0
@@ -108,7 +111,7 @@ export function isWhitespaceData(data: SeriesData): data is WhitespaceData {
  * @param data The data type to be tested
  * @returns true if data matches the SingleValueData interface and has no extra parameters; false otherwise.
  */
-export function isSingleValueData(data: SeriesData): data is SingleValueData {
+function isSingleValueData(data: SeriesData): data is SingleValueData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -126,7 +129,7 @@ export function isSingleValueData(data: SeriesData): data is SingleValueData {
  * @param data The data type to be tested
  * @returns true if data matches the OhlcData interface and has no extra parameters; false otherwise.
  */
-export function isOhlcData(data: SeriesData): data is OhlcData {
+function isOhlcData(data: SeriesData): data is OhlcData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -148,7 +151,7 @@ export function isOhlcData(data: SeriesData): data is OhlcData {
  * @param data The data type to be tested
  * @returns true if data matches the CandlestickData interface and has no extra parameters; false otherwise.
  */
-export function isCandlestickData(data: SeriesData): data is CandlestickData {
+function isCandlestickData(data: SeriesData): data is CandlestickData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -172,7 +175,7 @@ export function isCandlestickData(data: SeriesData): data is CandlestickData {
  * @param data The data type to be tested
  * @returns true if data matches the BarData interface and has no extra parameters; false otherwise.
  */
-export function isBarData(data: SeriesData): data is BarData {
+function isBarData(data: SeriesData): data is BarData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -194,7 +197,7 @@ export function isBarData(data: SeriesData): data is BarData {
  * @param data The data type to be tested
  * @returns true if data matches the HistogramData interface and has no extra parameters; false otherwise.
  */
-export function isHistogramData(data: SeriesData): data is HistogramData {
+function isHistogramData(data: SeriesData): data is HistogramData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -213,7 +216,7 @@ export function isHistogramData(data: SeriesData): data is HistogramData {
  * @param data The data type to be tested
  * @returns true if data matches the LineData interface and has no extra parameters; false otherwise.
  */
-export function isLineData(data: SeriesData): data is LineData {
+function isLineData(data: SeriesData): data is LineData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -232,7 +235,7 @@ export function isLineData(data: SeriesData): data is LineData {
  * @param data The data type to be tested
  * @returns true if data matches the BaselineData interface and has no extra parameters; false otherwise.
  */
-export function isBaselineData(data: SeriesData): data is BaselineData {
+function isBaselineData(data: SeriesData): data is BaselineData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -256,7 +259,7 @@ export function isBaselineData(data: SeriesData): data is BaselineData {
  * @param data The data type to be tested
  * @returns true if data matches the AreaData interface and has no extra parameters; false otherwise.
  */
-export function isAreaData(data: SeriesData): data is AreaData {
+function isAreaData(data: SeriesData): data is AreaData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0

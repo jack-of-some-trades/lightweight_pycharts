@@ -25,62 +25,59 @@ export class Pane {
             { time: '2018-12-31', open: 109.87, high: 114.69, low: 85.66, close: 111.26 },
         ];
         this.add_candlestick_series();
-        this.set_data(this.series[0], data);
+        this.set_data("OHLC", data);
     }
-    set_data(series, data) {
+    set_data(dtype, data, series = this.series[0]) {
         if (data.length == 0) {
             series.setData([]);
             return;
         }
         let data_set = false;
-        if (u.isCandlestickData(data[0])) {
-            if (series.seriesType() == 'Candlestick') {
-                series.setData(data);
-                data_set = true;
-            }
-        }
-        else if (u.isBarData(data[0])) {
-            if (series.seriesType() == 'Bar') {
-                series.setData(data);
-                data_set = true;
-            }
-        }
-        else if (u.isLineData(data[0]) || u.isAreaData(data[0])) {
-            if (series.seriesType() == 'Line' || series.seriesType() == 'Area') {
-                series.setData(data);
-                data_set = true;
-            }
-        }
-        else if (u.isBaselineData(data[0])) {
-            if (series.seriesType() == 'Baseline') {
-                series.setData(data);
-                data_set = true;
-            }
-        }
-        else if (u.isHistogramData(data[0])) {
-            if (series.seriesType() == 'Histogram') {
-                series.setData(data);
-                data_set = true;
-            }
-        }
-        if (!data_set) {
-            if (u.isOhlcData(data[0])) {
-                if (series.seriesType() == 'Candlestick' || series.seriesType() == 'Bar') {
+        console.log(data[0]);
+        series.setData(data);
+        switch (series.seriesType()) {
+            case "Candlestick":
+                if (dtype == 'OHLC' || dtype == 'Bar' || dtype == 'Candlestick') {
                     series.setData(data);
                     data_set = true;
                 }
-            }
-            else if (u.isSingleValueData(data[0])) {
-                let options = ['Line', 'Area', 'Baseline', 'Histogram'];
-                if (options.includes(series.seriesType())) {
+                break;
+            case "Bar":
+                if (dtype == 'OHLC' || dtype == 'Bar') {
                     series.setData(data);
                     data_set = true;
                 }
-            }
+                break;
+            case "Line":
+                if (dtype == 'SingleValueData' || dtype == 'Line' || dtype == 'LineorHistogram') {
+                    series.setData(data);
+                    data_set = true;
+                }
+                break;
+            case "Histogram":
+                if (dtype == 'SingleValueData' || dtype == 'Histogram' || dtype == 'LineorHistogram') {
+                    series.setData(data);
+                    data_set = true;
+                }
+                break;
+            case "Area":
+                if (dtype == 'SingleValueData' || dtype == 'Area') {
+                    series.setData(data);
+                    data_set = true;
+                }
+                break;
+            case "Baseline":
+                if (dtype == 'SingleValueData' || dtype == 'Baseline') {
+                    series.setData(data);
+                    data_set = true;
+                }
+                break;
         }
-        if (data_set)
-            this.chart.timeScale().fitContent();
-        else
+        if (dtype == 'WhitespaceData') {
+            series.setData(data);
+            data_set = true;
+        }
+        if (!data_set)
             console.warn("Failed to set data on Pane.set_data() function call.");
     }
     add_candlestick_series(options) {

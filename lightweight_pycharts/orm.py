@@ -2,10 +2,15 @@
     All Hail Our Overlord, ChatGPT.
 """
 
+import logging
 from dataclasses import dataclass, field, is_dataclass, asdict
 from typing import TypeAlias, Optional, Literal, Union, Any
 from enum import Enum, IntEnum, StrEnum
 from json import JSONEncoder, dumps
+
+import pandas as pd
+
+logger = logging.getLogger("lightweight-pycharts-view")
 
 
 class ORM_JSONEncoder(JSONEncoder):
@@ -73,6 +78,7 @@ class SeriesType(StrEnum):
     """
     Represents the type of options for each series type.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriestype
+    The Value of these Enums is used when setting the data in Javascript. See JS Pane.set_data()
     """
 
     Bar = "Bar"
@@ -81,6 +87,45 @@ class SeriesType(StrEnum):
     Baseline = "Baseline"
     Line = "Line"
     Histogram = "Histogram"
+    OHLC_Data = "OHLC"
+    SingleValueData = "SingleValueData"
+    WhitespaceData = "WhitespaceData"
+    LineorHist = "LineorHistogram"  # Datatypes are indestinguishable
+
+    @property
+    def params(self) -> set[str]:
+        """
+        Returns a set of the unique properties of that type. Properties of a Types' parent are omitted
+        e.g. SeriesType.Bar = {'color'} because properties of OHLC_Data and WhitespaceData are omited.
+        """
+        match self:
+            case SeriesType.Bar:
+                return {"color"}
+            case SeriesType.Candlestick:  # Candlestick is an extention of Bar
+                return {"wickcolor", "bordercolor"}
+            case SeriesType.Area:
+                return {"linecolor", "topcolor", "bottomcolor"}
+            case SeriesType.Baseline:
+                return {
+                    "toplinecolor",
+                    "topfillcolor1",
+                    "topfillcolor2",
+                    "bottomlinecolor",
+                    "bottomfillcolor1",
+                    "bottomfillcolor2",
+                }
+            case SeriesType.LineorHist:
+                return {"color"}
+            case SeriesType.Line:
+                return {"color"}
+            case SeriesType.Histogram:
+                return {"color"}
+            case SeriesType.SingleValueData:
+                return {"value"}
+            case SeriesType.OHLC_Data:
+                return {"open", "high", "low", "close"}
+            case SeriesType.WhitespaceData:
+                return {"time"}
 
 
 class ColorType(StrEnum):
@@ -524,10 +569,112 @@ class SeriesMarker:
 
 # endregion
 
+# region --------------------------------------- Pandas Series Data Types --------------------------------------- #
+
+
+@pd.api.extensions.register_dataframe_accessor("lwc_df")
+class Series_DF:
+    "Pandas DataFrame Extention to Typecheck for Lightweight_PyCharts"
+
+    def __init__(self, pandas_df: pd.DataFrame):
+        rename_dict = self._validate_names(pandas_df)
+        if len(rename_dict) > 0:
+            pandas_df.rename(columns=rename_dict, inplace=True)
+
+        self.type = self._determine_type(pandas_df)
+        pandas_df.drop(columns=["volume", "unnamed: 0"])
+        self._df = pandas_df
+
+    @staticmethod
+    def _validate_names(obj: pd.DataFrame) -> dict[str, str]:
+        """
+        Standardize common column names.
+
+        Additional datafields,
+        (e.g. wickColor, lineColor, topFillColor1), must be entered verbatum to be used.
+        """
+        rename_map = {}
+        obj.columns = list(map(str.lower, obj.columns))
+        column_names = set(obj.columns)
+        Series_DF._col_name_check(
+            column_names, rename_map, ["time", "t", "dt", "date", "datetime"], True
+        )
+        Series_DF._col_name_check(column_names, rename_map, ["open", "o", "first"])
+        Series_DF._col_name_check(column_names, rename_map, ["close", "c", "last"])
+        Series_DF._col_name_check(column_names, rename_map, ["high", "h", "max"])
+        Series_DF._col_name_check(column_names, rename_map, ["low", "l", "min"])
+        Series_DF._col_name_check(
+            column_names, rename_map, ["value", "v", "val", "data"]
+        )
+
+        return rename_map
+
+    @staticmethod
+    def _col_name_check(
+        column_names: set[str],
+        rename_map: dict[str, str],
+        expected_names: list[str],
+        required: bool = False,
+    ):
+        """
+        Checks if the first name in 'expected_names' is present in column_names,
+        if it isn't then either an error is thrown or the rename map is updated
+        """
+        name_intersect = list(column_names.intersection(expected_names))
+        if required and len(name_intersect) == 0:
+            raise AttributeError(f"Must have a '{expected_names[0]}' column")
+        elif len(name_intersect) > 1:
+            raise AttributeError(
+                f"Can have only one '{expected_names[0]}' type of column"
+            )
+        elif len(name_intersect) == 1 and name_intersect[0] != expected_names[0]:
+            # Remap if necessary
+            rename_map[name_intersect[0]] = expected_names[0]
+
+    @staticmethod
+    def _determine_type(obj: pd.DataFrame) -> SeriesType:
+        "Checks the column names and returns the most strict applicable series type"
+        col_names = set(obj.columns)
+        if len(col_names.intersection(SeriesType.OHLC_Data.params)) == 4:
+            remainder = col_names.difference(SeriesType.OHLC_Data.params, "time")
+
+            if len(remainder.intersection(SeriesType.Candlestick.params)) > 0:
+                return SeriesType.Candlestick
+            elif len(remainder.intersection(SeriesType.Bar.params)) > 0:
+                return SeriesType.Bar
+            else:
+                return SeriesType.OHLC_Data
+
+        if len(col_names.intersection({"close"})) == 1:
+            # DataFrame was given 'close' but lacks Open, high, & low. rename to value and treat as singlevalue
+            # remainder of library should ignore the Open, high, & low columns
+            obj.rename(columns={"close": "value"}, inplace=True)
+
+        if len(col_names.intersection(SeriesType.SingleValueData.params)) == 1:
+            remainder = col_names.difference(SeriesType.SingleValueData.params, "time")
+
+            if len(remainder.intersection(SeriesType.LineorHist.params)) > 0:
+                return SeriesType.LineorHist
+            elif len(remainder.intersection(SeriesType.Area.params)) > 0:
+                return SeriesType.Area
+            elif len(remainder.intersection(SeriesType.Baseline.params)) > 0:
+                return SeriesType.Baseline
+            else:
+                return SeriesType.SingleValueData
+
+        else:
+            # if nothing else returned then only whitespace remains
+            return SeriesType.WhitespaceData
+
+    @property
+    def json(self) -> str:
+        "Convert to JSON suitable for plotting in a Javascript Lightweight Chart"
+        return self._df.to_json(orient="records")
+
+
+# endregion
+
 # region --------------------------------------- Series Data Types --------------------------------------- #
-
-
-# These will carry potentially large amounts of data. May end up changing these to Classes that inherit from PANDAS Dataframes
 
 
 @dataclass
