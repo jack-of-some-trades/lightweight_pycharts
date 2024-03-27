@@ -3,6 +3,7 @@ import * as lwc from "../js/pkg.mjs";
 import { CandlestickSeriesOptions, DeepPartial as DP, IChartApi, Series, SeriesData, TimeChartOptions } from "./pkg.js";
 import * as u from "./util.js";
 import { Container_Layouts, Orientation, Wrapper_Divs, flex_div } from "./util.js";
+//import { Container_Layouts, Orientation, Wrapper_Divs, flex_div } from "./util.js";
 
 /** Overall Structure:
  * Wrapper (Container (Frame[s] (Pane[s] (lwc.chart))))
@@ -25,8 +26,7 @@ import { Container_Layouts, Orientation, Wrapper_Divs, flex_div } from "./util.j
  * @member containers An Array of container objects. Analogous to tabs of a window.
  */
 export class Wrapper {
-    container: Container
-    // containers: Container[] = []
+    containers: Container[] = []
 
     div: HTMLDivElement
     div_top: HTMLDivElement
@@ -106,8 +106,6 @@ export class Wrapper {
         this.add_container = this.add_container.bind(this)
 
         //Initilize Window regions and perform initial resize
-        this.container = new Container(this)    //Temporary until add_container() is written
-        window.active_container = this.container
         this.resize()
 
         //Setup resize listener
@@ -150,7 +148,9 @@ export class Wrapper {
         this.div_bottom.style.width = `${center_width}px`
 
         //Resize Active Charting window (Ensures proper resize execution)
-        window.active_container.resize()
+        if (window.active_container) {
+            window.active_container.resize()
+        }
     }
 
     /**
@@ -229,7 +229,13 @@ export class Wrapper {
     /**
      * Generate a new container and makes it the window's active container 
      */
-    add_container() { }
+    add_container(id: string): Container {
+        let tmp_ref = new Container(this.get_div(Wrapper_Divs.CHART), id)
+        this.containers.push(tmp_ref)
+        tmp_ref.resize()
+        window.active_container = tmp_ref
+        return tmp_ref
+    }
 }
 
 
@@ -241,22 +247,22 @@ export class Wrapper {
  * @member flex_divs An array of Flex_Divs. Stores all Frame and Separator Divs
  */
 export class Container {
+    id: string
     div: HTMLDivElement
     frames: Frame[] = []
     flex_divs: flex_div[] = []
 
-    constructor(parent_wrapper: Wrapper) {
-        this.div = parent_wrapper.get_div(Wrapper_Divs.CHART)
+    constructor(parent_div: HTMLDivElement, id: string) {
+        this.id = id
+        this.div = parent_div
         this.div.style.flexWrap = `wrap`    //Flex-Wrap used to position layouts
 
         //Bind Funcitons to ensure expected 'this' functionality
+        this.add_frame = this.add_frame.bind(this)
         this.set_layout = this.set_layout.bind(this)
-        this._add_frame = this._add_frame.bind(this)
+        this._create_frame = this._create_frame.bind(this)
         this._add_flex_frame = this._add_flex_frame.bind(this)
         this._add_flex_separator = this._add_flex_separator.bind(this)
-
-        //Set default Layout
-        this.set_layout(Container_Layouts.DOUBLE_VERT)
     }
 
     /**
@@ -289,10 +295,46 @@ export class Container {
         });
     }
 
-    /** 
-     * Create and condifure all the necessary frames & separators for a given layout.
+    /**
+     * Creates or assigns a Frame in the current container
+     * Assignment gives a name to a currently anonomous frame
      */
-    set_layout(layout: Container_Layouts = Container_Layouts.SINGLE) {
+    add_frame(new_id: string): Frame {
+        let rtn_frame = undefined
+        this.frames.some(frame => {
+            //If a Frame has been generated with no name (e.g. by set_layout),
+            //then assign that as the new frame, otherwise generate it
+            if (frame.id == '') {
+                frame.id = new_id
+                rtn_frame = frame
+                //return true breaks execution of 'some'.
+                //Why you can break a forEach ill never know.
+                return true
+            }
+        });
+        if (rtn_frame)
+            return rtn_frame
+
+        console.log('create null Frame. Current Frame len:', this.frames.length)
+        //Need to actually create a new Frame
+        //This is kinda temporary, later this should actually create a frame
+        //and just adjust the flex size of this element and another.
+        let null_div = document.createElement('div')
+        null_div.style.display = 'none'
+        let new_specs: flex_div = {
+            div: null_div,
+            isFrame: true,
+            flex_width: 0,
+            flex_height: 0,
+            orientation: Orientation.null
+        }
+        return this._create_frame(new_specs, new_id)
+    }
+
+    /** 
+     * Create and configure all the necessary frames & separators for a given layout.
+     */
+    set_layout(layout: Container_Layouts) {
         // ------------ Clear Previous Layout ------------
         this.flex_divs.forEach((item) => {
             //Remove all the divs from the document
@@ -324,19 +366,24 @@ export class Container {
                 if (index < this.frames.length) {
                     //Frames are persistent through layout changes.
                     //Update Existing Frames to new layout before creating new ones.
-                    this.frames[index].div = flex_item.div
+                    console.log('frame reassign')
+                    this.frames[index].reassign_div(flex_item.div)
                     this.frames[index].flex_width = flex_item.flex_width
                     this.frames[index].flex_height = flex_item.flex_height
                 } else {
-                    this._add_frame(flex_item)
+                    //Create an unnamed frame under the assumtion
+                    //Python will come in and rename the ID of this later.
+                    this._create_frame(flex_item)
                 }
             }
             this.div.appendChild(flex_item.div)
         })
+        this.resize()
+        this.fitcontent()
     }
 
     /**
-     * Creates a Flex Div for a Chart Frame
+     * Creates a Flex Div for a Chart Frame. The Frame must be created seprately
      */
     _add_flex_frame(flex_width: number, flex_height: number) {
         let child_div = document.createElement('div')
@@ -367,12 +414,15 @@ export class Container {
     }
 
     /**
-     * Creates a new Frame that's tied to the given DIV element in specs
+     * Creates a new Frame that's tied to the given DIV element in specs.
      */
-    _add_frame(specs: flex_div) {
-        if (specs.isFrame) {
-            this.frames.push(new Frame(specs.div, specs.flex_width, specs.flex_height))
-        }
+    _create_frame(specs: flex_div, id: string = ''): Frame {
+        console.log('new frame id:', id)
+        let new_frame = new Frame(id, specs.div, specs.flex_width, specs.flex_height)
+        console.dir(new_frame)
+        this.frames.push(new_frame)
+        console.dir(this.frames.length)
+        return new_frame
     }
 
     hide() {
@@ -382,6 +432,15 @@ export class Container {
     show() {
         this.div.style.display = 'flex'
     }
+
+    /**
+     * Fit the content of all child Frames
+     */
+    fitcontent() {
+        this.frames.forEach(frame => {
+            frame.fitcontent()
+        });
+    }
 }
 
 /**
@@ -389,7 +448,7 @@ export class Container {
  */
 export class Frame {
     //The class that contains all the data to be displayed
-    id: string = ''
+    id: string
     div: HTMLDivElement
     is_active: boolean = true
     flex_width: number
@@ -400,26 +459,34 @@ export class Frame {
 
     private panes: Pane[] = []
 
-    constructor(div: HTMLDivElement, flex_width: number = 1, flex_height: number = 1) {
+    constructor(id: string, div: HTMLDivElement, flex_width: number = 1, flex_height: number = 1) {
+        this.id = id
         this.div = div
         this.flex_width = flex_width
         this.flex_height = flex_height
+        console.log("div creation", div)
 
         //Bind Functions
         this.add_pane = this.add_pane.bind(this)
-
-        //Add First Pane
-        this.add_pane()
     }
 
     reassign_div(div: HTMLDivElement) {
+        console.log("div reassignement", div)
         this.div = div
+        this.panes.forEach(pane => {
+            this.div.appendChild(pane.div)
+        });
     }
 
-    add_pane() {
+    add_pane(id: string = ''): Pane {
         let child_div = document.createElement('div')
         this.div.appendChild(child_div)
-        this.panes.push(new Pane(child_div))
+        console.log(`Adding Pane: ${this.div}`)
+
+        let new_pane = new Pane(id, child_div)
+        this.panes.push(new_pane)
+        this.resize()
+        return new_pane
     }
 
     /**
@@ -432,7 +499,15 @@ export class Frame {
         this.panes.forEach(pane => {
             pane.resize(this_width, this_height)
         });
+    }
 
+    /**
+     * Fit the content of all Child Panes
+     */
+    fitcontent() {
+        this.panes.forEach(pane => {
+            pane.fitcontent()
+        });
     }
 }
 
@@ -447,11 +522,13 @@ export class Pane {
     private series: Series[] = []
 
     constructor(
+        id: string,
         div: HTMLDivElement,
         flex_width: number = 1,
         flex_height: number = 1,
         chart_opts: DP<TimeChartOptions> = u.DEFAULT_PYCHART_OPTS
     ) {
+        this.id = id
         this.div = div
         this.flex_width = flex_width
         this.flex_height = flex_height
@@ -580,5 +657,12 @@ export class Pane {
         this.div.style.width = `${this_width}px`
         this.div.style.height = `${this_height}px`
         this.chart.resize(this_width, this_height)
+    }
+
+    /**
+     * Auto Fit the content of the Pane
+     */
+    fitcontent() {
+        this.chart.timeScale().fitContent()
     }
 }

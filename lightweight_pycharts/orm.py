@@ -1178,6 +1178,68 @@ class ChartOptionsBase:
     )
 
 
+@dataclass
+class PyWebViewOptions:
+    """
+    All** available 'PyWebview' Create_Window Options
+
+    ** At Somepoint in the future this may be expanded to include server options
+    and window.start() Options.
+    """
+
+    title: str = ""
+    x: int = 100
+    y: int = 100
+    width: int = 800
+    height: int = 600
+    resizable: bool = True
+    fullscreen: bool = False
+    min_size: tuple[int, int] = (400, 250)
+    hidden: bool = False
+    on_top: bool = False
+    confirm_close: bool = False
+    background_color: str = "#FFFFFF"
+    transparent: bool = False
+    text_select: bool = False
+    zoomable: bool = False
+    draggable: bool = False
+    vibrancy: bool = False
+    debug: bool = False
+    # server
+    # server_args
+    # localization
+
+    def asdict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+# endregion
+
+# region --------------------------------------- Lightweight PyCharts Specific ORM Mappings --------------------------------------- #
+# All things (Other than Color) that are defined by this library that aren't part of the original lightweight charts API
+
+# The Value of the Following Enums aren't used, the name itself used.
+# The name is passed over to Javascript which then
+# accesses the globally scoped Typescript Enum of the same name.
+
+
+class Container_Layouts(Enum):
+    "1:1 Mapping of util.ts Container_Layouts Enum"
+    SINGLE = 0
+    DOUBLE_VERT = 1
+    DOUBLE_HORIZ = 2
+
+    @property
+    def num_frames(self) -> int:
+        "Function that returns the number of Frames this layout contains"
+        if self.name.startswith("SINGLE"):
+            return 1
+        elif self.name.startswith("DOUBLE"):
+            return 2
+        else:
+            return 0
+
+
 class ColorLiteral(Enum):
     "An Enumeration of all the colors given in the Lightweight Charts API. Return Object is an orm.Color"
     khaki = Color.from_hex("#f0e68c")
@@ -1324,38 +1386,3 @@ class ColorLiteral(Enum):
     mediumslateblue = Color.from_hex("#7b68ee")
     plum = Color.from_hex("#dda0dd")
     mediumspringgreen = Color.from_hex("#00fa9a")
-
-
-@dataclass
-class PyWebViewOptions:
-    """
-    All** available 'PyWebview' Create_Window Options
-
-    ** At Somepoint in the future this may be expanded to include server options
-    and window.start() Options.
-    """
-
-    title: str = ""
-    x: int = 100
-    y: int = 100
-    width: int = 800
-    height: int = 600
-    resizable: bool = True
-    fullscreen: bool = False
-    min_size: tuple[int, int] = (400, 250)
-    hidden: bool = False
-    on_top: bool = False
-    confirm_close: bool = False
-    background_color: str = "#FFFFFF"
-    transparent: bool = False
-    text_select: bool = False
-    zoomable: bool = False
-    draggable: bool = False
-    vibrancy: bool = False
-    debug: bool = False
-    # server
-    # server_args
-    # localization
-
-    def asdict(self) -> dict[str, Any]:
-        return asdict(self)

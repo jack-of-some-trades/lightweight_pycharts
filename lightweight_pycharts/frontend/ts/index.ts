@@ -16,7 +16,7 @@
  */
 import { Container, Frame, Pane, Wrapper } from "./container.js";
 import { py_api } from "./py_api.js";
-
+import { Container_Layouts } from "./util.js";
 
 //Declare Global interface. All Following declarations will be accessable to the python run_script() function
 declare global {
@@ -26,17 +26,19 @@ declare global {
         active_pane: Pane,
         active_frame: Frame,
         active_container: Container,
-        Container: { new(): Container },
+        Container: { new(div: HTMLDivElement, id: string): Container },
+
+        Container_Layouts: typeof Container_Layouts
     }
 }
 
 // Define The global Python <--> Js api interface.
 window.api = new py_api();
-
-//Define the global Wrapper (Assumes you want a full window and not just a chart)
+//Define the global Wrapper (Only one per window)
 window.wrapper = new Wrapper();
 
-//Define Container Constructor.
-//Potentally useful for standalone implementation that
-//Doesn't use or create a Wrapper Object *cough cough* QWebView *Cough*
-window.Container
+//Define Global Constructors
+window.Container = Container
+
+//Enums that will be used by Python need to be placed into the Global Scope
+window.Container_Layouts = Container_Layouts

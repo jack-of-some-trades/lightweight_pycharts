@@ -3,6 +3,7 @@ import * as u from "./util.js";
 import { Container_Layouts, Orientation, Wrapper_Divs } from "./util.js";
 export class Wrapper {
     constructor() {
+        this.containers = [];
         this.div = document.createElement('div');
         this.div.id = 'layout_wrapper';
         this.div.classList.add('wrapper');
@@ -57,8 +58,6 @@ export class Wrapper {
         this.show_section = this.show_section.bind(this);
         this.hide_section = this.hide_section.bind(this);
         this.add_container = this.add_container.bind(this);
-        this.container = new Container(this);
-        window.active_container = this.container;
         this.resize();
         window.addEventListener('resize', this.resize);
     }
@@ -88,7 +87,9 @@ export class Wrapper {
         this.div_center.style.height = `${center_height}px`;
         this.div_center.style.width = `${center_width}px`;
         this.div_bottom.style.width = `${center_width}px`;
-        window.active_container.resize();
+        if (window.active_container) {
+            window.active_container.resize();
+        }
     }
     get_div(section) {
         switch (section) {
@@ -142,19 +143,26 @@ export class Wrapper {
         }
         this.resize();
     }
-    add_container() { }
+    add_container(id) {
+        let tmp_ref = new Container(this.get_div(Wrapper_Divs.CHART), id);
+        this.containers.push(tmp_ref);
+        tmp_ref.resize();
+        window.active_container = tmp_ref;
+        return tmp_ref;
+    }
 }
 export class Container {
-    constructor(parent_wrapper) {
+    constructor(parent_div, id) {
         this.frames = [];
         this.flex_divs = [];
-        this.div = parent_wrapper.get_div(Wrapper_Divs.CHART);
+        this.id = id;
+        this.div = parent_div;
         this.div.style.flexWrap = `wrap`;
+        this.add_frame = this.add_frame.bind(this);
         this.set_layout = this.set_layout.bind(this);
-        this._add_frame = this._add_frame.bind(this);
+        this._create_frame = this._create_frame.bind(this);
         this._add_flex_frame = this._add_flex_frame.bind(this);
         this._add_flex_separator = this._add_flex_separator.bind(this);
-        this.set_layout(Container_Layouts.DOUBLE_VERT);
     }
     resize() {
         let this_width = this.div.clientWidth;
@@ -177,7 +185,30 @@ export class Container {
             frame.resize();
         });
     }
-    set_layout(layout = Container_Layouts.SINGLE) {
+    add_frame(new_id) {
+        let rtn_frame = undefined;
+        this.frames.some(frame => {
+            if (frame.id == '') {
+                frame.id = new_id;
+                rtn_frame = frame;
+                return true;
+            }
+        });
+        if (rtn_frame)
+            return rtn_frame;
+        console.log('create null Frame. Current Frame len:', this.frames.length);
+        let null_div = document.createElement('div');
+        null_div.style.display = 'none';
+        let new_specs = {
+            div: null_div,
+            isFrame: true,
+            flex_width: 0,
+            flex_height: 0,
+            orientation: Orientation.null
+        };
+        return this._create_frame(new_specs, new_id);
+    }
+    set_layout(layout) {
         this.flex_divs.forEach((item) => {
             this.div.removeChild(item.div);
         });
@@ -203,16 +234,19 @@ export class Container {
         this.flex_divs.forEach((flex_item, index) => {
             if (flex_item.isFrame) {
                 if (index < this.frames.length) {
-                    this.frames[index].div = flex_item.div;
+                    console.log('frame reassign');
+                    this.frames[index].reassign_div(flex_item.div);
                     this.frames[index].flex_width = flex_item.flex_width;
                     this.frames[index].flex_height = flex_item.flex_height;
                 }
                 else {
-                    this._add_frame(flex_item);
+                    this._create_frame(flex_item);
                 }
             }
             this.div.appendChild(flex_item.div);
         });
+        this.resize();
+        this.fitcontent();
     }
     _add_flex_frame(flex_width, flex_height) {
         let child_div = document.createElement('div');
@@ -236,10 +270,13 @@ export class Container {
             orientation: type
         });
     }
-    _add_frame(specs) {
-        if (specs.isFrame) {
-            this.frames.push(new Frame(specs.div, specs.flex_width, specs.flex_height));
-        }
+    _create_frame(specs, id = '') {
+        console.log('new frame id:', id);
+        let new_frame = new Frame(id, specs.div, specs.flex_width, specs.flex_height);
+        console.dir(new_frame);
+        this.frames.push(new_frame);
+        console.dir(this.frames.length);
+        return new_frame;
     }
     hide() {
         this.div.style.display = 'none';
@@ -247,25 +284,38 @@ export class Container {
     show() {
         this.div.style.display = 'flex';
     }
+    fitcontent() {
+        this.frames.forEach(frame => {
+            frame.fitcontent();
+        });
+    }
 }
 export class Frame {
-    constructor(div, flex_width = 1, flex_height = 1) {
-        this.id = '';
+    constructor(id, div, flex_width = 1, flex_height = 1) {
         this.is_active = true;
         this.panes = [];
+        this.id = id;
         this.div = div;
         this.flex_width = flex_width;
         this.flex_height = flex_height;
+        console.log("div creation", div);
         this.add_pane = this.add_pane.bind(this);
-        this.add_pane();
     }
     reassign_div(div) {
+        console.log("div reassignement", div);
         this.div = div;
+        this.panes.forEach(pane => {
+            this.div.appendChild(pane.div);
+        });
     }
-    add_pane() {
+    add_pane(id = '') {
         let child_div = document.createElement('div');
         this.div.appendChild(child_div);
-        this.panes.push(new Pane(child_div));
+        console.log(`Adding Pane: ${this.div}`);
+        let new_pane = new Pane(id, child_div);
+        this.panes.push(new_pane);
+        this.resize();
+        return new_pane;
     }
     resize() {
         let this_width = this.div.clientWidth;
@@ -274,11 +324,17 @@ export class Frame {
             pane.resize(this_width, this_height);
         });
     }
+    fitcontent() {
+        this.panes.forEach(pane => {
+            pane.fitcontent();
+        });
+    }
 }
 export class Pane {
-    constructor(div, flex_width = 1, flex_height = 1, chart_opts = u.DEFAULT_PYCHART_OPTS) {
+    constructor(id, div, flex_width = 1, flex_height = 1, chart_opts = u.DEFAULT_PYCHART_OPTS) {
         this.id = '';
         this.series = [];
+        this.id = id;
         this.div = div;
         this.flex_width = flex_width;
         this.flex_height = flex_height;
@@ -366,5 +422,8 @@ export class Pane {
         this.div.style.width = `${this_width}px`;
         this.div.style.height = `${this_height}px`;
         this.chart.resize(this_width, this_height);
+    }
+    fitcontent() {
+        this.chart.timeScale().fitContent();
     }
 }

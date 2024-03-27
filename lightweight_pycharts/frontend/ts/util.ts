@@ -2,10 +2,9 @@ import { AreaData, AreaStyleOptions, BarData, BarStyleOptions, BaselineData, Bas
 
 
 // ---------------- Enums ---------------- //
-
 /**
  * Enum that corresponds to the different static divs of the window wrapper
- */
+*/
 export enum Wrapper_Divs {
     TOP_BAR = 'div_top',
     DRAW_TOOLS = 'div_left',

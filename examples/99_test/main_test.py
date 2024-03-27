@@ -9,13 +9,11 @@ import lightweight_pycharts as lwc
 
 
 async def main():
-    window = lwc.Window(debug=True, hidden=True)
-    await asyncio.sleep(1)
-    window.show()
-    await asyncio.sleep(1)
-    window.Example_function()
+    window = lwc.Window(debug=True)
+    window.queue_test()
+
     # Sleep to halt main process since window process is Daemon
-    await asyncio.sleep(50)
+    await asyncio.sleep(500)
 
 
 # lightweight_pycharts Spawns a new Process to manage the display
