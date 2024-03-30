@@ -1,4 +1,4 @@
-import { AreaData, AreaStyleOptions, BarData, BarStyleOptions, BaselineData, BaselineStyleOptions, CandlestickData, CandlestickStyleOptions, Color, ColorType, CrosshairMode, DeepPartial as DP, HistogramData, HistogramStyleOptions, LastPriceAnimationMode, LineData, LineStyle, LineStyleOptions, LineType, OhlcData, PriceLineSource, PriceScaleMode, SeriesData, SeriesOptionsCommon, SingleValueData, TimeChartOptions, WhitespaceData } from "./pkg.js";
+import { AnySeries, AnySeriesData, AreaData, AreaStyleOptions, BarData, BarStyleOptions, BaselineData, BaselineStyleOptions, CandlestickData, CandlestickStyleOptions, Color, ColorType, CrosshairMode, DeepPartial as DP, HistogramData, HistogramStyleOptions, LastPriceAnimationMode, LineData, LineStyle, LineStyleOptions, LineType, OhlcData, PriceLineSource, PriceScaleMode, SeriesOptionsCommon, SingleValueData, TimeChartOptions, WhitespaceData } from "./pkg.js";
 
 
 // ---------------- Enums ---------------- //
@@ -23,33 +23,60 @@ export enum Container_Layouts {
     SINGLE,
     DOUBLE_VERT,
     DOUBLE_HORIZ,
-    // TRIPLE_VERT,
-    // TRIPLE_VERT_TOP,
-    // TRIPLE_VERT_BOT,
-    // TRIPLE_HORIZ,
-    // TRIPLE_HORIZ_LEFT,
-    // TRIPLE_HORIZ_RIGHT,
-    // QUAD
+    TRIPLE_VERT,
+    TRIPLE_VERT_LEFT,
+    TRIPLE_VERT_RIGHT,
+    TRIPLE_HORIZ,
+    TRIPLE_HORIZ_TOP,
+    TRIPLE_HORIZ_BOTTOM,
+    QUAD_HORIZ,
+    QUAD_VERT,
+    QUAD_LEFT,
+    QUAD_RIGHT,
+    QUAD_TOP,
+    QUAD_BOTTOM
 }
 
 // ---------------- Container/Layout/Pane Super Object Interfaces ---------------- //
 
+/**
+ * interface that represents a portion of a Frame's Layout. Could be either a Frame or a Frame Separator
+ */
 export interface flex_div {
     div: HTMLDivElement,
     isFrame: boolean,
     flex_width: number,
     flex_height: number,
-    orientation: Orientation
+    orientation: Orientation,
+    resize_pos: flex_div[],
+    resize_neg: flex_div[],
 }
 
-export interface chart_id {
+/**
+ * interface describing a source of data, be it a single series of OHLC data, or an indicator
+ * that has mutiple sub-series or drawing primitives
+ */
+export interface source {
+    id: string
+    title: string
+    expose: boolean
+    series: series_id[]
+}
 
+/**
+ * interface to wrap around a Series Data type with additional information
+ */
+export interface series_id {
+    id: string
+    expose: boolean
+    series_obj: AnySeries
 }
 
 
 // ---------------- Base Layout Dimensions ---------------- //
 export const LAYOUT_MARGIN = 5
-export const LAYOUT_CHART_MARGIN = 2
+export const LAYOUT_CHART_MARGIN = 4
+export const LAYOUT_CHART_SEP_BORDER = 2
 export const LAYOUT_DIM_TOP = {
     WIDTH: `100vw`,
     HEIGHT: 38,
@@ -81,77 +108,71 @@ export const LAYOUT_DIM_CENTER = {
     LEFT: LAYOUT_DIM_LEFT.WIDTH + LAYOUT_MARGIN
 }
 
+//Minimum flex Widths/Heights of each frame
+export const MIN_FRAME_WIDTH = 0.15
+export const MIN_FRAME_HEIGHT = 0.1
 
 // ---------------- Series Data Type Checking Functions ---------------- //
-//These are actually flawed. May be no need to fix these either.. 
-//There is series data type checking on the python side and that check is better since it checks the whole
-//list of data, not just the first datapoint.
 
 /**
- * Checks if the given datatype is WhitespaceData.
+ * Checks if the given datatype implements the WhitespaceData interface.
  * @param data The data type to be tested
- * @returns true if data matches the WhitespaceData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the WhitespaceData interface; false otherwise. Extra Parameters are ignored
  */
-function isWhitespaceData(data: SeriesData): data is WhitespaceData {
+export function isWhitespaceData(data: AnySeriesData): data is WhitespaceData {
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
-    let optional_keys_len = 0
 
     //Check all the Optional and expected key arguments that exist in the object.
     mandatory_keys_len += keys.includes('time') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
 
-    //Ensure Total and Mandatory key lengths match expected values
-    //(If Total doesn't match it means there are excess keys and should match an extended interface)
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 1)
+    //Ensure Mandatory key lengths match expected values and,
+    //If there are optional keys, at least one of them is present
+    return (mandatory_keys_len == 1)
 }
 
 /**
- * Checks if the given datatype is SingleValueData.
+ * Checks if the given datatype implements the SingleValueData interface.
  * @param data The data type to be tested
- * @returns true if data matches the SingleValueData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the SingleValueData interface; false otherwise.
  */
-function isSingleValueData(data: SeriesData): data is SingleValueData {
+export function isSingleValueData(data: AnySeriesData): data is SingleValueData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
-    let optional_keys_len = 0
 
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('value') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2)
+    return (mandatory_keys_len == 2)
 }
 
 /**
- * Checks if the given datatype is OhlcData.
+ * Checks if the given datatype implements the OhlcData interface.
  * @param data The data type to be tested
- * @returns true if data matches the OhlcData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the OhlcData interface; false otherwise. Extra Parameters are ignored
  */
-function isOhlcData(data: SeriesData): data is OhlcData {
+export function isOhlcData(data: AnySeriesData): data is OhlcData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
-    let optional_keys_len = 0
 
     //OHLC Needs Open and Close to plot, High and Low aren't necessary
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('open') ? 1 : 0
     mandatory_keys_len += keys.includes('close') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
-    optional_keys_len += keys.includes('high') ? 1 : 0
-    optional_keys_len += keys.includes('low') ? 1 : 0
+    // optional_keys_len += keys.includes('high') ? 1 : 0
+    // optional_keys_len += keys.includes('low') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3)
+    return (mandatory_keys_len == 3)
 }
 
 /**
- * Checks if the given datatype is CandlestickData.
+ * Checks if the given datatype implements the CandlestickData interface.
  * @param data The data type to be tested
- * @returns true if data matches the CandlestickData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the CandlestickData interface; false otherwise. Extra Parameters are ignored
  */
-function isCandlestickData(data: SeriesData): data is CandlestickData {
+export function isCandlestickData(data: AnySeriesData): data is CandlestickData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -160,22 +181,21 @@ function isCandlestickData(data: SeriesData): data is CandlestickData {
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('open') ? 1 : 0
     mandatory_keys_len += keys.includes('close') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
     optional_keys_len += keys.includes('high') ? 1 : 0
     optional_keys_len += keys.includes('low') ? 1 : 0
     optional_keys_len += keys.includes('color') ? 1 : 0
     optional_keys_len += keys.includes('borderColor') ? 1 : 0
     optional_keys_len += keys.includes('wickColor') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3)
+    return (mandatory_keys_len == 3 && optional_keys_len > 0)
 }
 
 /**
- * Checks if the given datatype is BarData.
+ * Checks if the given datatype implements the BarData interface.
  * @param data The data type to be tested
- * @returns true if data matches the BarData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the BarData interface; false otherwise. Extra Parameters are ignored
  */
-function isBarData(data: SeriesData): data is BarData {
+export function isBarData(data: AnySeriesData): data is BarData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -184,20 +204,19 @@ function isBarData(data: SeriesData): data is BarData {
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('open') ? 1 : 0
     mandatory_keys_len += keys.includes('close') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
     optional_keys_len += keys.includes('high') ? 1 : 0
     optional_keys_len += keys.includes('low') ? 1 : 0
     optional_keys_len += keys.includes('color') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3)
+    return (mandatory_keys_len == 3 && optional_keys_len > 0)
 }
 
 /**
- * Checks if the given datatype is HistogramData.
+ * Checks if the given datatype implements the HistogramData interface.
  * @param data The data type to be tested
- * @returns true if data matches the HistogramData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the HistogramData interface; false otherwise. Extra Parameters are ignored
  */
-function isHistogramData(data: SeriesData): data is HistogramData {
+export function isHistogramData(data: AnySeriesData): data is HistogramData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -205,18 +224,17 @@ function isHistogramData(data: SeriesData): data is HistogramData {
 
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('value') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
     optional_keys_len += keys.includes('color') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2)
+    return (mandatory_keys_len == 2 && optional_keys_len > 0)
 }
 
 /**
- * Checks if the given datatype is LineData.
+ * Checks if the given datatype implements the LineData interface.
  * @param data The data type to be tested
- * @returns true if data matches the LineData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the LineData interface; false otherwise. Extra Parameters are ignored
  */
-function isLineData(data: SeriesData): data is LineData {
+export function isLineData(data: AnySeriesData): data is LineData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -224,18 +242,17 @@ function isLineData(data: SeriesData): data is LineData {
 
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('value') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
     optional_keys_len += keys.includes('color') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2)
+    return (mandatory_keys_len == 2 && optional_keys_len > 0)
 }
 
 /**
- * Checks if the given datatype is BaselineData.
+ * Checks if the given datatype implements the BaselineData interface.
  * @param data The data type to be tested
- * @returns true if data matches the BaselineData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the BaselineData interface; false otherwise. Extra Parameters are ignored
  */
-function isBaselineData(data: SeriesData): data is BaselineData {
+export function isBaselineData(data: AnySeriesData): data is BaselineData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -243,7 +260,6 @@ function isBaselineData(data: SeriesData): data is BaselineData {
 
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('value') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
     optional_keys_len += keys.includes('topFillColor1') ? 1 : 0
     optional_keys_len += keys.includes('topFillColor2') ? 1 : 0
     optional_keys_len += keys.includes('topLineColor') ? 1 : 0
@@ -251,15 +267,15 @@ function isBaselineData(data: SeriesData): data is BaselineData {
     optional_keys_len += keys.includes('bottomFillColor2') ? 1 : 0
     optional_keys_len += keys.includes('bottomLineColor') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2)
+    return (mandatory_keys_len == 2 && optional_keys_len > 0)
 }
 
 /**
- * Checks if the given datatype is AreaData.
+ * Checks if the given datatype implements the AreaData interface.
  * @param data The data type to be tested
- * @returns true if data matches the AreaData interface and has no extra parameters; false otherwise.
+ * @returns true if data matches the AreaData interface; false otherwise. Extra Parameters are ignored
  */
-function isAreaData(data: SeriesData): data is AreaData {
+export function isAreaData(data: AnySeriesData): data is AreaData {
     // See `isWhitespaceData` for code comments.
     let keys = Object.keys(data)
     let mandatory_keys_len = 0
@@ -267,12 +283,11 @@ function isAreaData(data: SeriesData): data is AreaData {
 
     mandatory_keys_len += keys.includes('time') ? 1 : 0
     mandatory_keys_len += keys.includes('value') ? 1 : 0
-    optional_keys_len += keys.includes('customValues') ? 1 : 0
     optional_keys_len += keys.includes('lineColor') ? 1 : 0
     optional_keys_len += keys.includes('topColor') ? 1 : 0
     optional_keys_len += keys.includes('bottomColor') ? 1 : 0
 
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2)
+    return (mandatory_keys_len == 2 && optional_keys_len > 0)
 }
 
 

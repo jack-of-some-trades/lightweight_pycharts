@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Optional, Any
+from typing import Optional, Union, Any
 import multiprocessing as mp
 
 import pandas as pd
@@ -26,7 +26,7 @@ class Window:
         - Interval Switcher     *TBI
         - Watchlist, etc.       *TBI
 
-    Window contains a 'Frame' object for every tab.
+    Window contains a 'Container' object for every tab.
     """
 
     def __init__(
@@ -71,8 +71,8 @@ class Window:
 
         # -------- Create Subobjects  -------- #
         self.js_id = "wrapper"
-        self.container_ids = ID_List("c")
-        self.containers: list[Container] = []
+        self._container_ids = ID_List("c")
+        self._containers: list[Container] = []
         self.new_tab()
 
         if blocking:
@@ -87,7 +87,7 @@ class Window:
                 rsp = self._rtn_queue.get()
                 logger.info("Recieved Message from View: %s", rsp)
 
-    def queue_test(self):
+    def _queue_test(self):
         self._fwd_queue.put((JS_CMD.JS_CODE, "api.callback(`weeeeeeeee`)"))
 
     def show(self):
@@ -98,15 +98,36 @@ class Window:
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.HIDE)
 
+    @property
+    def containers(self) -> list["Container"]:
+        "return list of all current containers"
+        return self._containers
+
+    @property
+    def container_ids(self) -> list[ID_List]:
+        "return list of all current container IDs"
+        return self._container_ids
+
     def new_tab(self) -> "Container":
         """
         Add a new Tab to the Window interface
         :returns: A Container obj that represents the Tab's Contents
         """
-        new_id = self.container_ids.generate()
+        new_id = self._container_ids.generate()
         new_container = Container(new_id, self._fwd_queue)
-        self.containers.append(new_container)
+        self._containers.append(new_container)
         return new_container
+
+    def get_container(self, _id: Union[int, str]) -> Optional["Container"]:
+        "Return the container that either matchs the given js_id string, or the integer tab number"
+        if isinstance(_id, int):
+            if _id >= 0 and _id < len(self.containers):
+                return self._containers[_id]
+        else:
+            for container in self._containers:
+                if _id == container.js_id:
+                    return container
+        return None
 
 
 class Container:
@@ -114,7 +135,7 @@ class Container:
     def __init__(self, js_id: str, fwd_queue: mp.Queue) -> None:
         self._fwd_queue = fwd_queue
         self.js_id = js_id
-        self.layout_type = orm.Container_Layouts.DOUBLE_VERT
+        self.layout_type = orm.Container_Layouts.QUAD_HORIZ
         self.frame_ids = ID_List(f"{js_id}_f")
         self.frames: list[Frame] = []
 
@@ -163,13 +184,6 @@ class Frame:
         new_id = self.pane_ids.generate()
         self.panes.append(Pane(new_id, self))
 
-    def set_data(self, data: pd.DataFrame | list[dict[str, Any]]):
-        "Sets the data of the main series of this frame"
-        if not isinstance(data, pd.DataFrame):
-            data = pd.DataFrame(data)
-
-        self._fwd_queue.put((JS_CMD.SET_DATA, self.js_id, data))
-
 
 class Pane:
     """An individual charting window, can contain seriesCommon objects and indicators"""
@@ -178,5 +192,20 @@ class Pane:
         self._fwd_queue = parent._fwd_queue
         self.parent = parent
         self.js_id = js_id
+        self.sources = []
 
         self._fwd_queue.put((JS_CMD.NEW_PANE, js_id, self.parent.js_id))
+
+    def set_data(self, data: pd.DataFrame | list[dict[str, Any]]):
+        "Sets the main source of data for this Pane"
+        if not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame(data)
+
+        self._fwd_queue.put((JS_CMD.SET_DATA, self.js_id, data))
+
+    def add_source(self, data: pd.DataFrame | list[dict[str, Any]]):
+        """Creates a new source of data for the Pane. Sources are analogous to Ticker Data or indicators"""
+
+
+class Source:
+    """A Source Object. Sources contain various Series Elements"""

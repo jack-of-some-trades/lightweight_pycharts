@@ -18,9 +18,22 @@ export var Container_Layouts;
     Container_Layouts[Container_Layouts["SINGLE"] = 0] = "SINGLE";
     Container_Layouts[Container_Layouts["DOUBLE_VERT"] = 1] = "DOUBLE_VERT";
     Container_Layouts[Container_Layouts["DOUBLE_HORIZ"] = 2] = "DOUBLE_HORIZ";
+    Container_Layouts[Container_Layouts["TRIPLE_VERT"] = 3] = "TRIPLE_VERT";
+    Container_Layouts[Container_Layouts["TRIPLE_VERT_LEFT"] = 4] = "TRIPLE_VERT_LEFT";
+    Container_Layouts[Container_Layouts["TRIPLE_VERT_RIGHT"] = 5] = "TRIPLE_VERT_RIGHT";
+    Container_Layouts[Container_Layouts["TRIPLE_HORIZ"] = 6] = "TRIPLE_HORIZ";
+    Container_Layouts[Container_Layouts["TRIPLE_HORIZ_TOP"] = 7] = "TRIPLE_HORIZ_TOP";
+    Container_Layouts[Container_Layouts["TRIPLE_HORIZ_BOTTOM"] = 8] = "TRIPLE_HORIZ_BOTTOM";
+    Container_Layouts[Container_Layouts["QUAD_HORIZ"] = 9] = "QUAD_HORIZ";
+    Container_Layouts[Container_Layouts["QUAD_VERT"] = 10] = "QUAD_VERT";
+    Container_Layouts[Container_Layouts["QUAD_LEFT"] = 11] = "QUAD_LEFT";
+    Container_Layouts[Container_Layouts["QUAD_RIGHT"] = 12] = "QUAD_RIGHT";
+    Container_Layouts[Container_Layouts["QUAD_TOP"] = 13] = "QUAD_TOP";
+    Container_Layouts[Container_Layouts["QUAD_BOTTOM"] = 14] = "QUAD_BOTTOM";
 })(Container_Layouts || (Container_Layouts = {}));
 export const LAYOUT_MARGIN = 5;
-export const LAYOUT_CHART_MARGIN = 2;
+export const LAYOUT_CHART_MARGIN = 4;
+export const LAYOUT_CHART_SEP_BORDER = 2;
 export const LAYOUT_DIM_TOP = {
     WIDTH: `100vw`,
     HEIGHT: 38,
@@ -51,109 +64,97 @@ export const LAYOUT_DIM_CENTER = {
     TOP: LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
     LEFT: LAYOUT_DIM_LEFT.WIDTH + LAYOUT_MARGIN
 };
-function isWhitespaceData(data) {
+export const MIN_FRAME_WIDTH = 0.15;
+export const MIN_FRAME_HEIGHT = 0.1;
+export function isWhitespaceData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
-    let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 1);
+    return (mandatory_keys_len == 1);
 }
-function isSingleValueData(data) {
+export function isSingleValueData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
-    let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
     mandatory_keys_len += keys.includes('value') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
+    return (mandatory_keys_len == 2);
 }
-function isOhlcData(data) {
+export function isOhlcData(data) {
+    let keys = Object.keys(data);
+    let mandatory_keys_len = 0;
+    mandatory_keys_len += keys.includes('time') ? 1 : 0;
+    mandatory_keys_len += keys.includes('open') ? 1 : 0;
+    mandatory_keys_len += keys.includes('close') ? 1 : 0;
+    return (mandatory_keys_len == 3);
+}
+export function isCandlestickData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
     mandatory_keys_len += keys.includes('open') ? 1 : 0;
     mandatory_keys_len += keys.includes('close') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
-    optional_keys_len += keys.includes('high') ? 1 : 0;
-    optional_keys_len += keys.includes('low') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3);
-}
-function isCandlestickData(data) {
-    let keys = Object.keys(data);
-    let mandatory_keys_len = 0;
-    let optional_keys_len = 0;
-    mandatory_keys_len += keys.includes('time') ? 1 : 0;
-    mandatory_keys_len += keys.includes('open') ? 1 : 0;
-    mandatory_keys_len += keys.includes('close') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
     optional_keys_len += keys.includes('high') ? 1 : 0;
     optional_keys_len += keys.includes('low') ? 1 : 0;
     optional_keys_len += keys.includes('color') ? 1 : 0;
     optional_keys_len += keys.includes('borderColor') ? 1 : 0;
     optional_keys_len += keys.includes('wickColor') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3);
+    return (mandatory_keys_len == 3 && optional_keys_len > 0);
 }
-function isBarData(data) {
+export function isBarData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
     mandatory_keys_len += keys.includes('open') ? 1 : 0;
     mandatory_keys_len += keys.includes('close') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
     optional_keys_len += keys.includes('high') ? 1 : 0;
     optional_keys_len += keys.includes('low') ? 1 : 0;
     optional_keys_len += keys.includes('color') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 3);
+    return (mandatory_keys_len == 3 && optional_keys_len > 0);
 }
-function isHistogramData(data) {
+export function isHistogramData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
     mandatory_keys_len += keys.includes('value') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
     optional_keys_len += keys.includes('color') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
+    return (mandatory_keys_len == 2 && optional_keys_len > 0);
 }
-function isLineData(data) {
+export function isLineData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
     mandatory_keys_len += keys.includes('value') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
     optional_keys_len += keys.includes('color') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
+    return (mandatory_keys_len == 2 && optional_keys_len > 0);
 }
-function isBaselineData(data) {
+export function isBaselineData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
     mandatory_keys_len += keys.includes('value') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
     optional_keys_len += keys.includes('topFillColor1') ? 1 : 0;
     optional_keys_len += keys.includes('topFillColor2') ? 1 : 0;
     optional_keys_len += keys.includes('topLineColor') ? 1 : 0;
     optional_keys_len += keys.includes('bottomFillColor1') ? 1 : 0;
     optional_keys_len += keys.includes('bottomFillColor2') ? 1 : 0;
     optional_keys_len += keys.includes('bottomLineColor') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
+    return (mandatory_keys_len == 2 && optional_keys_len > 0);
 }
-function isAreaData(data) {
+export function isAreaData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
     let optional_keys_len = 0;
     mandatory_keys_len += keys.includes('time') ? 1 : 0;
     mandatory_keys_len += keys.includes('value') ? 1 : 0;
-    optional_keys_len += keys.includes('customValues') ? 1 : 0;
     optional_keys_len += keys.includes('lineColor') ? 1 : 0;
     optional_keys_len += keys.includes('topColor') ? 1 : 0;
     optional_keys_len += keys.includes('bottomColor') ? 1 : 0;
-    return (keys.length == (optional_keys_len + mandatory_keys_len) && mandatory_keys_len == 2);
+    return (mandatory_keys_len == 2 && optional_keys_len > 0);
 }
 const DEFAULT_CHART_OPTS = {
     width: 0,

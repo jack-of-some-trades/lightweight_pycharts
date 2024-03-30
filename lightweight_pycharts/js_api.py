@@ -99,6 +99,13 @@ class View(ABC):
     @abstractmethod
     def _assign_callbacks(self): ...
 
+    @staticmethod
+    def _type_check(args: tuple, expected_type: tuple):
+        """Run-time Type Checking for items put through the queue."""
+        for _i, exp_type in enumerate(expected_type):
+            if not isinstance(args[_i], exp_type):
+                raise TypeError(f"arg[{_i}] expected to be {exp_type}, ")
+
     def _manage_queue(self):
         "Infinite loop to manage Process Queue since it is launched in an isolated process"
         while not self.stop_event.is_set():
@@ -121,21 +128,18 @@ class View(ABC):
                 continue
 
             try:
-                self._execute_cmd_type_check(cmd, *args)
+                self._execute_cmd(cmd, *args)
             except IndexError:
                 logger.error("incorrect number of args given for command: %s", cmd)
-            except TypeError:
+            except TypeError as e:
                 logger.error(
-                    "incorrect Type of args given for command: %s: %s",
+                    "incorrect Type of args given for command: %s: Given %s: %s",
                     cmd,
                     [type(arg) for arg in args],
+                    e,
                 )
 
     def _execute_cmd(self, js_cmd: JS_CMD, *args):
-        "Execute commands with no Type Checking"
-        raise NotImplementedError
-
-    def _execute_cmd_type_check(self, js_cmd: JS_CMD, *args):
         "Execute commands with Type Checking"
         match js_cmd:
             case JS_CMD.JS_CODE:  # Execute a script verbatum
@@ -163,13 +167,6 @@ class View(ABC):
                 self.run_script(cmds.set_data(args[0], args[1].lwc_df))
             case _:
                 logger.warning("Unknown Command: %s", js_cmd)
-
-    @staticmethod
-    def _type_check(args: tuple, expected_type: tuple):
-        """Run-time Type Checking for items put through the queue."""
-        for _i, exp_type in enumerate(expected_type):
-            if not isinstance(args[_i], exp_type):
-                raise TypeError
 
 
 class PyWv(View):

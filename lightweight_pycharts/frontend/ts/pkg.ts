@@ -3728,13 +3728,18 @@ export type VisiblePriceScaleOptions = PriceScaleOptions;
 /**
  * Represents A Generic Series Type.
  */
-export type Series = CandlestickSeries | BarSeries | HistogramSeries | AreaSeries | LineSeries | BaselineSeries // | CustomSeries
+export type AnySeries = CandlestickSeries | BarSeries | HistogramSeries | AreaSeries | LineSeries | BaselineSeries // | CustomSeries
 
 /**
  * Represents any type of Data that could be sent to, or retrieved from, a data series
  */
-export type SeriesData<HorzScaleItem = Time> = SingleValueData<HorzScaleItem> | OhlcData<HorzScaleItem> | CandlestickData<HorzScaleItem> | BarData<HorzScaleItem> | HistogramData<HorzScaleItem> | LineData<HorzScaleItem> | BaselineData<HorzScaleItem> | AreaData<HorzScaleItem> | CustomData<HorzScaleItem>
+export type AnySeriesData<HorzScaleItem = Time> = SingleValueData<HorzScaleItem> | OhlcData<HorzScaleItem> | CandlestickData<HorzScaleItem> | BarData<HorzScaleItem> | HistogramData<HorzScaleItem> | LineData<HorzScaleItem> | BaselineData<HorzScaleItem> | AreaData<HorzScaleItem> | CustomData<HorzScaleItem>
 
+
+/**
+ * Represents any type of Series Options
+ */
+export type AnySeriesOptions = SeriesOptionsCommon | CandlestickSeriesOptions | BarSeriesOptions | HistogramSeriesOptions | LineSeriesOptions | BaselineSeriesOptions | AreaSeriesOptions
 
 /* --------------------- SeriesAPI Types ----------------------- */
 

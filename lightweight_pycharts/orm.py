@@ -30,7 +30,7 @@ def dump(obj: Any) -> str:
 
 
 def load(obj: str) -> Any:
-    "Enchanced JSON.loads() to load all ORM Objects"
+    "Enchanced JSON.loads() to load ORM Objects"
     raise NotImplementedError
 
 
@@ -582,7 +582,6 @@ class Series_DF:
             pandas_df.rename(columns=rename_dict, inplace=True)
 
         self.type = self._determine_type(pandas_df)
-        pandas_df.drop(columns=["volume", "unnamed: 0"])
         self._df = pandas_df
 
     @staticmethod
@@ -1375,6 +1374,18 @@ class Container_Layouts(Enum):
     SINGLE = 0
     DOUBLE_VERT = 1
     DOUBLE_HORIZ = 2
+    TRIPLE_VERT = 3
+    TRIPLE_VERT_LEFT = 4
+    TRIPLE_VERT_RIGHT = 5
+    TRIPLE_HORIZ = 6
+    TRIPLE_HORIZ_TOP = 7
+    TRIPLE_HORIZ_BOTTOM = 8
+    QUAD_HORIZ = 9
+    QUAD_VERT = 10
+    QUAD_LEFT = 11
+    QUAD_RIGHT = 12
+    QUAD_TOP = 13
+    QUAD_BOTTOM = 14
 
     @property
     def num_frames(self) -> int:
@@ -1383,6 +1394,10 @@ class Container_Layouts(Enum):
             return 1
         elif self.name.startswith("DOUBLE"):
             return 2
+        elif self.name.startswith("TRIPLE"):
+            return 3
+        elif self.name.startswith("QUAD"):
+            return 4
         else:
             return 0
 

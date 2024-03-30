@@ -26,6 +26,7 @@ export class Pane {
         ];
         this.add_candlestick_series();
         this.set_data("OHLC", data);
+        let new_data;
     }
     set_data(dtype, data, series = this.series[0]) {
         if (data.length == 0) {
@@ -33,8 +34,6 @@ export class Pane {
             return;
         }
         let data_set = false;
-        console.log(data[0]);
-        series.setData(data);
         switch (series.seriesType()) {
             case "Candlestick":
                 if (dtype == 'OHLC' || dtype == 'Bar' || dtype == 'Candlestick') {

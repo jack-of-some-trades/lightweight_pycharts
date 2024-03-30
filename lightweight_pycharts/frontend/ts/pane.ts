@@ -1,6 +1,7 @@
 //@ts-ignore
 import * as lwc from "../js/pkg.mjs";
-import { CandlestickSeriesOptions, DeepPartial as DP, IChartApi, Series, SeriesData, TimeChartOptions } from "./pkg.js";
+import { Legend } from "./legend.js";
+import { AnySeries, AnySeriesData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions } from "./pkg.js";
 import * as u from "./util.js";
 
 
@@ -10,9 +11,10 @@ export class Pane {
     div: HTMLDivElement
     flex_width: number
     flex_height: number
+    legend?: Legend
+    series: AnySeries[] = []
 
     private chart: IChartApi
-    private series: Series[] = []
 
     constructor(
         id: string,
@@ -35,7 +37,6 @@ export class Pane {
         this.add_candlestick_series = this.add_candlestick_series.bind(this)
         // this. = this..bind(this)
 
-
         let data = [
             { time: '2018-12-22', open: 75.16, high: 82.84, low: 36.16, close: 45.72 },
             { time: '2018-12-23', open: 45.12, high: 53.90, low: 45.12, close: 48.09 },
@@ -51,6 +52,8 @@ export class Pane {
 
         this.add_candlestick_series()
         this.set_data("OHLC", data)
+
+        let new_data: AnySeriesData
     }
 
     /**
@@ -59,16 +62,13 @@ export class Pane {
      * @param data The List of Data. It is trusted that this data actually matches the dtype given
      * @param series The Data Series to be updated. Can be any of the base SeriesAPI types
      */
-    set_data(dtype: string, data: SeriesData[], series: Series = this.series[0]) {
+    set_data(dtype: string, data: AnySeriesData[], series: AnySeries = this.series[0]) {
         if (data.length == 0) {
             //Delete Present Data if none was given.
             series.setData([])
             return
         }
         let data_set: boolean = false
-        console.log(data[0])
-        series.setData(data)
-
 
         switch (series.seriesType()) {
             case "Candlestick":

@@ -13,16 +13,12 @@ import lightweight_pycharts.orm as orm
 
 async def main():
     window = lwc.Window(debug=True)
-    # window.queue_test()
-
-    # window.containers[0].set_layout(orm.Container_Layouts.DOUBLE_HORIZ)
-
     df = pd.read_csv("examples/data/ohlcv.csv")
 
     await asyncio.sleep(2)
-    window.containers[0].frames[0].set_data(df)
+    window.containers[0].frames[0].panes[0].set_data(df)
     # Sleep to halt main process since window process is Daemon
-    await asyncio.sleep(50)
+    await asyncio.sleep(500)
 
 
 # lightweight_pycharts Spawns a new Process to manage the display

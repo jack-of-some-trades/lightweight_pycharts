@@ -1,12 +1,10 @@
 import { Pane } from "./pane.js";
 export class Frame {
-    constructor(id, div, flex_width = 1, flex_height = 1) {
+    constructor(id, div) {
         this.is_active = true;
         this.panes = [];
         this.id = id;
         this.div = div;
-        this.flex_width = flex_width;
-        this.flex_height = flex_height;
         this.add_pane = this.add_pane.bind(this);
     }
     reassign_div(div) {
@@ -22,9 +20,6 @@ export class Frame {
         this.panes.push(new_pane);
         this.resize();
         return new_pane;
-    }
-    set_data(dtype, data) {
-        this.panes[0].set_data(dtype, data);
     }
     resize() {
         let this_width = this.div.clientWidth;

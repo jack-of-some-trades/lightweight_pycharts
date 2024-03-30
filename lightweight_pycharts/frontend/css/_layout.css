@@ -1,11 +1,8 @@
 *::before {
+    box-sizing: border-box;
     margin: 5px;
     padding: 0;
-    border: 0;
-}
-
-*::after {
-    box-sizing: border-box;
+    border-width: 0;
 }
 
 body {
@@ -52,10 +49,35 @@ body {
     border-radius: 5px;
 }
 
+.legend {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: hidden;
+
+    z-index: 40;
+    left: 10px;
+    top: 10px;
+    flex-direction: column;
+    background-color: #0000;
+}
+
+.legend_source {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+.legend_toggler {
+    width: 40px;
+    height: 30px;
+}
+
 .chart_frame {
     flex: 1 1 auto;
     color: #000;
     border-radius: 5px;
+    border: 4px;
+    border-color: #aaa;
 }
 
 .chart_pane {
@@ -65,5 +87,14 @@ body {
 
 .separator {
     flex-shrink: 0;
+    overflow: visible;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: solid #2a2e39 1px;
     background-color: #2a2e39;
+}
+
+.separator:hover {
+    border-color: #434d6698;
+    background-color: #434d66;
 }
