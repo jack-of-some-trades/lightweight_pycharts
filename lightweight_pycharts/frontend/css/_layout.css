@@ -3,7 +3,43 @@
     margin: 5px;
     padding: 0;
     border-width: 0;
+    z-index: 0;
 }
+
+/* --------------- Color Variables --------------- */
+:root {
+    --background-fill: #2a2e39;
+    --layout-main-fill: #131722;
+
+    --separator-color: #222631;
+    --text-color: #b2b5be;
+
+    --chart-border: var(--background-fill);
+    --chart-border-hover: #434d66;
+    --chart-background: var(--background-fill);
+    --chart-separator-fill: var(--background-fill);
+    --chart-separator-hover: #434d66;
+
+    --overlay-fill: #1e222d;
+    --overlay-shadow: #2e63f52a;
+
+    --icon-color: #d1d4dc;
+    --icon-hover-color: #2a2e39;
+    --icon-active-color: #2962ff;
+    --icon-background-color: #0000;
+
+    --topbar-icon-hover-color: var(--icon-hover-color);
+    --topbar-icon-active-color: var(--icon-active-color);
+    --topbar-icon-background-color: var(--icon-background-color);
+    --topbar-separator-color: var(--separator-color);
+
+    --toolbar-icon-hover-color: var(--icon-hover-color);
+    --toolbar-icon-active-color: var(--icon-active-color);
+    --toolbar-icon-background-color: var(--icon-background-color);
+    --toolbar-separator-color: var(--separator-color);
+}
+
+/* #region --------------- Base Classes --------------- */
 
 body {
     margin: 0px;
@@ -14,7 +50,7 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background-color: #2a2e39;
+    background-color: var(--background-fill);
     font-family: -apple-system, BlinkMacSystemFont, "Trebuchet_MS", "Segoe UI", Roboto, Oxygen, Ubuntu,
         Cantarell, "Helvetica Neue", sans-serif;
 }
@@ -25,29 +61,145 @@ body {
     height: 100vh;
     inset: 0px;
     overflow: hidden;
-    background-color: #2a2e39;
-    /* background-color: #2962ff; Hover Background Color */
+    background-color: var(--background-fill);
     border-radius: 5px;
 }
 
-.overlay {
+.overlay_manager {
     position: absolute;
+    inset: 0px;
     width: 100vw;
     height: 100vh;
-    inset: 0px;
+    background-color: #0000;
+    pointer-events: none;
     overflow: hidden;
     z-index: 50;
-    /*Transparent since it will overlay full window*/
-    background-color: rgba(0, 0, 0, 0);
 }
+
+.overlay_menu {
+    display: none;
+    pointer-events: none;
+
+    z-index: inherit;
+    position: fixed;
+    width: auto;
+    height: auto;
+    /* border: solid var(--chart-border) 2px; */
+    border-radius: 5px;
+    background-color: var(--overlay-fill);
+    box-shadow: 1px 1px 1px 1px var(--overlay-shadow);
+
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.overlay_menu_active {
+    display: flex;
+    pointer-events: all;
+}
+
+/* #endregion */
+
+/* #region --------------- Main Container Layout --------------- */
 
 .layout_main {
     overflow: hidden;
     position: absolute;
-    background-color: #131722;
-    /* background-color: #2962ff; Hover Background Color */
+    background-color: var(--layout-main-fill);
     border-radius: 5px;
 }
+
+.layout_flex {
+    justify-content: flex-start;
+    align-content: center;
+}
+
+.layout_container_row {
+    flex-direction: row;
+    background-color: var(--background-fill);
+    column-gap: 1px;
+    row-gap: 0px;
+}
+
+.layout_container_col {
+    flex-direction: column;
+    background-color: var(--background-fill);
+    column-gap: 0px;
+    row-gap: 1px;
+}
+
+/* #endregion */
+
+/* #region --------------- Icon Params --------------- */
+
+.icon {
+    border-radius: 5px;
+    color: var(--icon-color);
+    background-color: var(--icon-background-color);
+}
+
+.icon_l_margin {
+    margin-left: 5px;
+}
+
+.icon_h_margin {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.icon_v_margin {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.icon_hover:hover {
+    background-color: var(--icon-hover-color);
+}
+
+.icon_text {
+    text-align: center;
+    text-wrap: nowrap;
+    color: var(--text-color);
+    margin: 0px 10px;
+}
+
+/* #endregion */
+
+/* #region --------------- Chart Params --------------- */
+
+.chart_frame {
+    box-sizing: border-box;
+    border: solid var(--chart-border) 2px;
+    flex: 1 1 auto;
+    border-radius: 2px;
+    background-color: var(--background-fill);
+}
+
+.chart_frame_active {
+    border-color: var(--chart-border-hover);
+}
+
+.chart_pane {
+    border-radius: 5px;
+}
+
+.chart_separator {
+    flex-shrink: 0;
+    overflow: visible;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: solid var(--chart-separator-fill) 1px;
+    background-color: var(--background-fill);
+}
+
+.chart_separator:hover {
+    border-color: var(--chart-separator-hover);
+    background-color: var(--chart-separator-hover);
+}
+
+/* #endregion */
+
+/* #region --------------- Legend Params --------------- */
 
 .legend {
     display: flex;
@@ -72,29 +224,93 @@ body {
     height: 30px;
 }
 
-.chart_frame {
-    flex: 1 1 auto;
-    color: #000;
-    border-radius: 5px;
-    border: 4px;
-    border-color: #aaa;
-}
+/* #endregion */
 
-.chart_pane {
-    color: #000;
-    border-radius: 5px;
-}
+/* #region --------------- Topbar Params --------------- */
 
-.separator {
+.topbar_separator {
+    width: 2px;
+    background-color: var(--toolbar-separator-color);
     flex-shrink: 0;
-    overflow: visible;
-    box-sizing: border-box;
-    border-radius: 10px;
-    border: solid #2a2e39 1px;
-    background-color: #2a2e39;
 }
 
-.separator:hover {
-    border-color: #434d6698;
-    background-color: #434d66;
+.topbar_icon {
+    background-color: var(--topbar-icon-background-color);
 }
+
+.topbar_icon:hover {
+    background-color: var(--topbar-icon-hover-color);
+}
+
+
+/* #endregion */
+
+/* #region --------------- Toolbar Params --------------- */
+
+.toolbar {
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.toolbar_top {
+    flex: 1 1 100px;
+    overflow-y: hidden;
+    justify-content: flex-start;
+}
+
+.toolbar_bottom {
+    flex: 1 1 10px;
+    overflow-y: hidden;
+    justify-content: flex-end;
+}
+
+.toolbar_separator {
+    height: 2px;
+    background-color: var(--toolbar-separator-color);
+    flex-shrink: 0;
+}
+
+.toolbar_item {
+    width: -webkit-fill-available;
+    height: 34px;
+    padding-left: 4px;
+    flex-direction: row;
+    justify-content: flex-start;
+    background-color: var(--toolbar-icon-background-color);
+}
+
+.toolbar_toggler {
+    width: 38px;
+    height: 38px;
+    background-color: var(--toolbar-icon-background-color);
+}
+
+.toolbar_menu_button {
+    width: 8px;
+    height: 28px;
+    border-radius: 5px;
+    align-items: center;
+}
+
+.toolbar_menu_button:hover {
+    background-color: var(--chart-border-hover);
+}
+
+.menu_item {
+    width: -webkit-fill-available;
+    margin: 4px 2px;
+    padding-left: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.menu_item:hover {
+    background-color: var(--chart-border-hover);
+}
+
+/* #endregion */
+
+/* --------------- Sidebar Params --------------- */

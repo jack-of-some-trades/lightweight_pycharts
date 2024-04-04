@@ -8,7 +8,7 @@ export class Frame {
     //The class that contains all the data to be displayed
     id: string
     div: HTMLDivElement
-    is_active: boolean = true
+    is_focus: boolean = false
 
     private panes: Pane[] = []
 
@@ -16,8 +16,28 @@ export class Frame {
         this.id = id
         this.div = div
 
+
         //Bind Functions
         this.add_pane = this.add_pane.bind(this)
+
+        //Add Active Frame Listener
+        this.div.addEventListener('mousedown', this.assign_active_frame.bind(this))
+    }
+
+    assign_active_frame() {
+        if (!window.active_frame) {
+            this.is_focus = true
+            window.active_frame = this
+            window.active_frame.div.classList.add('chart_frame_active')
+
+        } else if (window.active_frame.id != this.id) {
+            window.active_frame.is_focus = false
+            window.active_frame.div.classList.remove('chart_frame_active')
+
+            this.is_focus = true
+            window.active_frame = this
+            window.active_frame.div.classList.add('chart_frame_active')
+        }
     }
 
     /**
@@ -29,6 +49,9 @@ export class Frame {
         this.panes.forEach(pane => {
             this.div.appendChild(pane.div)
         });
+
+        //Update Active Frame Listener
+        this.div.addEventListener('mousedown', this.assign_active_frame.bind(this))
     }
 
     /**

@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from time import sleep
 from typing import Optional, Union, Any
 import multiprocessing as mp
 
@@ -33,6 +34,7 @@ class Window:
         self,
         options: Optional[orm.PyWebViewOptions] = None,
         blocking: bool = False,
+        daemon: bool = True,
         **kwargs,
     ) -> None:
         # -------- Setup and start the Pywebview subprocess  -------- #
@@ -56,7 +58,7 @@ class Window:
         self._loaded_event = mp_hooks.loaded_event
 
         kwargs["mp_hooks"] = mp_hooks  # Pass the hooks along to PyWv
-        self._view_process = mp.Process(target=PyWv, kwargs=kwargs, daemon=True)
+        self._view_process = mp.Process(target=PyWv, kwargs=kwargs, daemon=daemon)
         self._view_process.start()
 
         # Wait for PyWebview to load before continuing
@@ -67,7 +69,10 @@ class Window:
             )
 
         # Begin Listening for any responses from PyWV Process
-        self._queue_manager = asyncio.create_task(self._manage_queue())
+        if blocking:
+            self._manage_queue_block()
+        else:
+            self._queue_manager = asyncio.create_task(self._manage_queue())
 
         # -------- Create Subobjects  -------- #
         self.js_id = "wrapper"
@@ -75,17 +80,26 @@ class Window:
         self._containers: list[Container] = []
         self.new_tab()
 
-        if blocking:
-            asyncio.gather(self._queue_manager)
+    def _manage_queue_block(self):
+        logger.debug("Entered Blocking Queue Manager")
+        while not self._stop_event.is_set():
+            if self._rtn_queue.empty():
+                sleep(0.05)
+            else:
+                rsp = self._rtn_queue.get()
+                logger.info("Recieved Message from View: %s", rsp)
 
     async def _manage_queue(self):
-        logger.info("Entered Queue Manager")
+        logger.debug("Entered Queue Manager")
         while not self._stop_event.is_set():
             if self._rtn_queue.empty():
                 await asyncio.sleep(0.05)
             else:
                 rsp = self._rtn_queue.get()
                 logger.info("Recieved Message from View: %s", rsp)
+
+    async def await_close(self):
+        await self._queue_manager
 
     def _queue_test(self):
         self._fwd_queue.put((JS_CMD.JS_CODE, "api.callback(`weeeeeeeee`)"))
@@ -135,7 +149,7 @@ class Container:
     def __init__(self, js_id: str, fwd_queue: mp.Queue) -> None:
         self._fwd_queue = fwd_queue
         self.js_id = js_id
-        self.layout_type = orm.Container_Layouts.QUAD_HORIZ
+        self.layout_type = orm.Container_Layouts.TRIPLE_HORIZ_TOP
         self.frame_ids = ID_List(f"{js_id}_f")
         self.frames: list[Frame] = []
 

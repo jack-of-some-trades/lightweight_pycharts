@@ -1,24 +1,39 @@
-export function get_svg(icon, css_class, scale) {
+export function get_svg(icon, css_class, scale = 1) {
     let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
     use.setAttribute("href", "css/svg-defs.svg#" + icon);
+    svg.classList.add("icon");
     if (css_class) {
-        use.setAttribute("class", css_class);
+        css_class.forEach(item => {
+            svg.classList.add(item);
+        });
     }
-    else {
-        use.setAttribute("class", "icon");
-    }
-    if (scale) {
-        use.setAttribute("transform", `scale(${scale})`);
-        svg.setAttribute("width", `${28 * scale}`);
-        svg.setAttribute("height", `${28 * scale}`);
-    }
-    else {
-        svg.setAttribute("width", "28");
-        svg.setAttribute("height", "28");
-    }
+    size(use, svg, icon, scale);
     svg.appendChild(use);
     return svg;
+}
+export function get_url(icon) {
+    return "css/svg-defs.svg#" + icon;
+}
+function size(use, svg, icon, scale) {
+    let width = 29;
+    let height = 29;
+    let view_width = 29;
+    let view_height = 29;
+    switch (icon) {
+        case (icons.menu_arrow_ew):
+            {
+                width = 8;
+                height = 10;
+                view_width = 10;
+                view_height = 18;
+            }
+            break;
+    }
+    use.setAttribute("transform", `scale(${scale})`);
+    svg.setAttribute("viewBox", `0 0 ${view_width * scale} ${view_height * scale}`);
+    svg.setAttribute("width", `${width * scale}`);
+    svg.setAttribute("height", `${height * scale}`);
 }
 export var icons;
 (function (icons) {
@@ -27,6 +42,7 @@ export var icons;
     icons["menu_ext"] = "menu_ext";
     icons["menu_search"] = "menu_search";
     icons["menu_search_quick"] = "search_quick";
+    icons["menu_arrow_ew"] = "menu_arrow_ew";
     icons["candle_heiken_ashi"] = "candle_heiken_ashi";
     icons["candle_regular"] = "candle_regular";
     icons["candle_bar"] = "candle_bar";

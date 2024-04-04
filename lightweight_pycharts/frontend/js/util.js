@@ -1,4 +1,5 @@
-import { Color, ColorType, CrosshairMode, LastPriceAnimationMode, LineStyle, LineType, PriceLineSource, PriceScaleMode } from "./pkg.js";
+import { get_svg } from "./icons.js";
+import { ColorType, CrosshairMode, LastPriceAnimationMode, LineStyle, LineType, PriceLineSource, PriceScaleMode } from "./pkg.js";
 export var Wrapper_Divs;
 (function (Wrapper_Divs) {
     Wrapper_Divs["TOP_BAR"] = "div_top";
@@ -38,13 +39,17 @@ export const LAYOUT_DIM_TOP = {
     WIDTH: `100vw`,
     HEIGHT: 38,
     LEFT: 0,
-    TOP: 0
+    TOP: 0,
+    V_BUFFER: 8,
+    H_BUFFER: 2,
 };
 export const LAYOUT_DIM_LEFT = {
-    WIDTH: 52,
+    WIDTH: 46,
     HEIGHT: -1,
     TOP: LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
-    LEFT: 0
+    LEFT: 0,
+    V_BUFFER: 3,
+    H_BUFFER: 6,
 };
 export const LAYOUT_DIM_RIGHT = {
     WIDTH: 52,
@@ -66,6 +71,38 @@ export const LAYOUT_DIM_CENTER = {
 };
 export const MIN_FRAME_WIDTH = 0.15;
 export const MIN_FRAME_HEIGHT = 0.1;
+export function overlay_menu(overlay_div, parent_div, items) {
+    let overlay_menu = document.createElement('div');
+    overlay_menu.classList.add('overlay_menu');
+    parent_div.addEventListener('click', () => {
+        overlay_menu.classList.add('overlay_menu_active');
+        overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`;
+        overlay_menu.style.left = `${parent_div.getBoundingClientRect().right + 1}px`;
+    });
+    document.addEventListener('mousedown', () => {
+        overlay_menu.classList.remove('overlay_menu_active');
+    });
+    overlay_menu.addEventListener('mousedown', (event) => { event.stopPropagation(); });
+    items.forEach((item) => {
+        let item_div = document.createElement('div');
+        item_div.classList.add('menu_item');
+        let text = document.createElement('div');
+        text.classList.add('icon_text');
+        text.innerHTML = item.label;
+        item_div.appendChild(get_svg(item.icon));
+        item_div.appendChild(text);
+        item_div.addEventListener('click', () => {
+            overlay_menu.classList.remove('overlay_menu_active');
+            if (parent_div.firstElementChild)
+                parent_div.removeChild(parent_div.firstElementChild);
+            parent_div.insertBefore(get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild);
+            if (item.func)
+                item.func();
+        });
+        overlay_menu.appendChild(item_div);
+    });
+    overlay_div.appendChild(overlay_menu);
+}
 export function isWhitespaceData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
@@ -290,10 +327,19 @@ const DEFAULT_CHART_OPTS = {
 export const DEFAULT_PYCHART_OPTS = {
     layout: {
         background: {
-            type: ColorType.Solid,
-            color: Color.black
+            type: ColorType.VerticalGradient,
+            topColor: '#171c27',
+            bottomColor: '#131722'
         },
-        textColor: 'white',
+        textColor: '#b2b5be',
+    },
+    grid: {
+        vertLines: {
+            color: '#222631'
+        },
+        horzLines: {
+            color: '#222631'
+        }
     },
     rightPriceScale: {
         mode: PriceScaleMode.Logarithmic,
@@ -302,7 +348,7 @@ export const DEFAULT_PYCHART_OPTS = {
         mode: CrosshairMode.Normal,
     },
     kineticScroll: {
-        mouse: true
+        touch: true
     },
 };
 const DEFAULT_SERIES_OPTS = {

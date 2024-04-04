@@ -5,52 +5,9 @@
     <title>lightweight-charts-python</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="/css/_layout.css">
-    <style>
-        #right_panel {
-            position: absolute;
-            width: 96px;
-            padding-left: 4px;
-            height: 100%;
-            right: 0;
-            background-color: #f0f0ff;
-        }
-
-        #right_panel::after {
-            content: '';
-            background-color: #ccc;
-            position: absolute;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            cursor: ew-resize;
-        }
-    </style>
 </head>
 
 <body>
-    <div id="right_panel"></div>
-    <script>
-        const BORDER_SIZE = 4;
-        const panel = document.getElementById("right_panel");
-
-        let m_pos;
-        function resize(e) {
-            const dx = m_pos - e.x;
-            m_pos = e.x;
-            panel.style.width = (parseInt(getComputedStyle(panel, '').width) + dx) + "px";
-        }
-
-        panel.addEventListener("mousedown", function (e) {
-            if (e.offsetX < BORDER_SIZE) {
-                m_pos = e.x;
-                document.addEventListener("mousemove", resize);
-            }
-        });
-
-        document.addEventListener("mouseup", function () {
-            document.removeEventListener("mousemove", resize);
-        });
-    </script>
     <script type="module" src="/js/index.js"></script>
 </body>
 

@@ -1,6 +1,6 @@
+import { Frame } from "./frame.js";
 import * as u from "./util.js";
 import { Container_Layouts, Orientation } from "./util.js";
-import { Frame } from "./frame.js";
 export class Container {
     constructor(parent_div, id) {
         this.frames = [];
@@ -63,20 +63,20 @@ export class Container {
     resize() {
         let this_width = this.div.clientWidth;
         let this_height = this.div.clientHeight;
-        let horiz_offset = (this.div.style.flexDirection == 'row') ? u.LAYOUT_CHART_MARGIN : 0;
-        let vert_offset = (this.div.style.flexDirection == 'column') ? u.LAYOUT_CHART_MARGIN : 0;
+        let horiz_offset = (this.div.classList.contains('layout_container_row')) ? u.LAYOUT_CHART_MARGIN : u.LAYOUT_CHART_SEP_BORDER;
+        let vert_offset = (this.div.classList.contains('layout_container_col')) ? u.LAYOUT_CHART_MARGIN : u.LAYOUT_CHART_SEP_BORDER;
         this.flex_divs.forEach((flex_item) => {
             if (flex_item.isFrame) {
                 flex_item.div.style.width = `${this_width * flex_item.flex_width - horiz_offset}px`;
                 flex_item.div.style.height = `${this_height * flex_item.flex_height - vert_offset}px`;
             }
             else if (flex_item.orientation === Orientation.Vertical) {
-                flex_item.div.style.width = `${u.LAYOUT_CHART_MARGIN}px`;
-                flex_item.div.style.height = `${this_height * flex_item.flex_height}px`;
+                flex_item.div.style.width = `${u.LAYOUT_CHART_SEP_BORDER}px`;
+                flex_item.div.style.height = `${this_height * flex_item.flex_height - vert_offset}px`;
             }
             else if (flex_item.orientation === Orientation.Horizontal) {
-                flex_item.div.style.width = `${this_width * flex_item.flex_width}px`;
-                flex_item.div.style.height = `${u.LAYOUT_CHART_MARGIN}px`;
+                flex_item.div.style.width = `${this_width * flex_item.flex_width - horiz_offset}px`;
+                flex_item.div.style.height = `${u.LAYOUT_CHART_SEP_BORDER}px`;
             }
         });
         this.frames.forEach((frame) => {
@@ -127,7 +127,6 @@ export class Container {
             this.div.appendChild(flex_item.div);
         });
         this.resize();
-        this.fitcontent();
     }
     _add_flex_frame(flex_width, flex_height) {
         let child_div = document.createElement('div');
@@ -146,7 +145,7 @@ export class Container {
     }
     _add_flex_separator(type, size) {
         let child_div = document.createElement('div');
-        child_div.classList.add('separator');
+        child_div.classList.add('chart_separator');
         child_div.style.cursor = (type === Orientation.Vertical ? 'ew-resize' : 'ns-resize');
         let new_flexdiv = {
             div: child_div,
@@ -187,7 +186,7 @@ export class Container {
         switch (layout) {
             case Container_Layouts.DOUBLE_VERT:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(0.5, 1);
                     let s1 = this._add_flex_separator(Orientation.Vertical, 1);
                     let f2 = this._add_flex_frame(0.5, 1);
@@ -197,7 +196,7 @@ export class Container {
                 break;
             case Container_Layouts.DOUBLE_HORIZ:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(1, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Horizontal, 1);
                     let f2 = this._add_flex_frame(1, 0.5);
@@ -207,7 +206,7 @@ export class Container {
                 break;
             case Container_Layouts.TRIPLE_VERT:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(0.333, 1);
                     let s1 = this._add_flex_separator(Orientation.Vertical, 1);
                     let f2 = this._add_flex_frame(0.333, 1);
@@ -221,7 +220,7 @@ export class Container {
                 break;
             case Container_Layouts.TRIPLE_VERT_LEFT:
                 {
-                    this.div.style.flexDirection = 'column';
+                    this.div.classList.replace('layout_container_row', 'layout_container_col');
                     let f1 = this._add_flex_frame(0.5, 1);
                     let s1 = this._add_flex_separator(Orientation.Vertical, 1);
                     let f2 = this._add_flex_frame(0.5, 0.5);
@@ -235,7 +234,7 @@ export class Container {
                 break;
             case Container_Layouts.TRIPLE_VERT_RIGHT:
                 {
-                    this.div.style.flexDirection = 'column';
+                    this.div.classList.replace('layout_container_row', 'layout_container_col');
                     let f1 = this._add_flex_frame(0.5, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Horizontal, 0.5);
                     let f2 = this._add_flex_frame(0.5, 0.5);
@@ -249,7 +248,7 @@ export class Container {
                 break;
             case Container_Layouts.TRIPLE_HORIZ:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(1, 0.333);
                     let s1 = this._add_flex_separator(Orientation.Horizontal, 1);
                     let f2 = this._add_flex_frame(1, 0.333);
@@ -263,7 +262,7 @@ export class Container {
                 break;
             case Container_Layouts.TRIPLE_HORIZ_TOP:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(1, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Horizontal, 1);
                     let f2 = this._add_flex_frame(0.5, 0.5);
@@ -277,7 +276,7 @@ export class Container {
                 break;
             case Container_Layouts.TRIPLE_HORIZ_BOTTOM:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(0.5, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Vertical, 0.5);
                     let f2 = this._add_flex_frame(0.5, 0.5);
@@ -291,7 +290,7 @@ export class Container {
                 break;
             case Container_Layouts.QUAD_HORIZ:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(0.5, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Vertical, 0.5);
                     let f2 = this._add_flex_frame(0.5, 0.5);
@@ -309,7 +308,7 @@ export class Container {
                 break;
             case Container_Layouts.QUAD_VERT:
                 {
-                    this.div.style.flexDirection = 'column';
+                    this.div.classList.replace('layout_container_row', 'layout_container_col');
                     let f1 = this._add_flex_frame(0.5, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Horizontal, 0.5);
                     let f2 = this._add_flex_frame(0.5, 0.5);
@@ -327,7 +326,7 @@ export class Container {
                 break;
             case Container_Layouts.QUAD_LEFT:
                 {
-                    this.div.style.flexDirection = 'column';
+                    this.div.classList.replace('layout_container_row', 'layout_container_col');
                     let f1 = this._add_flex_frame(0.5, 1);
                     let s1 = this._add_flex_separator(Orientation.Vertical, 1);
                     let f2 = this._add_flex_frame(0.5, 0.333);
@@ -345,7 +344,7 @@ export class Container {
                 break;
             case Container_Layouts.QUAD_RIGHT:
                 {
-                    this.div.style.flexDirection = 'column';
+                    this.div.classList.replace('layout_container_row', 'layout_container_col');
                     let f1 = this._add_flex_frame(0.5, 0.333);
                     let s1 = this._add_flex_separator(Orientation.Horizontal, 0.5);
                     let f2 = this._add_flex_frame(0.5, 0.333);
@@ -363,7 +362,7 @@ export class Container {
                 break;
             case Container_Layouts.QUAD_TOP:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(1, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Horizontal, 1);
                     let f2 = this._add_flex_frame(0.333, 0.5);
@@ -381,7 +380,7 @@ export class Container {
                 break;
             case Container_Layouts.QUAD_BOTTOM:
                 {
-                    this.div.style.flexDirection = 'row';
+                    this.div.classList.replace('layout_container_col', 'layout_container_row');
                     let f1 = this._add_flex_frame(0.333, 0.5);
                     let s1 = this._add_flex_separator(Orientation.Vertical, 0.5);
                     let f2 = this._add_flex_frame(0.333, 0.5);

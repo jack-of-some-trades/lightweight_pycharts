@@ -17,8 +17,9 @@ async def main():
 
     await asyncio.sleep(2)
     window.containers[0].frames[0].panes[0].set_data(df)
-    # Sleep to halt main process since window process is Daemon
-    await asyncio.sleep(500)
+
+    # Halt main process since window process is Daemon by default
+    await window.await_close()
 
 
 # lightweight_pycharts Spawns a new Process to manage the display

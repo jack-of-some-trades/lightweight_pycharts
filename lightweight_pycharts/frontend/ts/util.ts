@@ -1,4 +1,5 @@
-import { AnySeries, AnySeriesData, AreaData, AreaStyleOptions, BarData, BarStyleOptions, BaselineData, BaselineStyleOptions, CandlestickData, CandlestickStyleOptions, Color, ColorType, CrosshairMode, DeepPartial as DP, HistogramData, HistogramStyleOptions, LastPriceAnimationMode, LineData, LineStyle, LineStyleOptions, LineType, OhlcData, PriceLineSource, PriceScaleMode, SeriesOptionsCommon, SingleValueData, TimeChartOptions, WhitespaceData } from "./pkg.js";
+import { get_svg, icons } from "./icons.js";
+import { AnySeries, AnySeriesData, AreaData, AreaStyleOptions, BarData, BarStyleOptions, BaselineData, BaselineStyleOptions, CandlestickData, CandlestickStyleOptions, ColorType, CrosshairMode, DeepPartial as DP, HistogramData, HistogramStyleOptions, LastPriceAnimationMode, LineData, LineStyle, LineStyleOptions, LineType, OhlcData, PriceLineSource, PriceScaleMode, SeriesOptionsCommon, SingleValueData, TimeChartOptions, WhitespaceData } from "./pkg.js";
 
 
 // ---------------- Enums ---------------- //
@@ -72,6 +73,15 @@ export interface series_id {
     series_obj: AnySeries
 }
 
+/**
+ * Interface used when creating selectable menus
+ */
+export interface menu_item {
+    label: string,
+    icon: icons,
+    func?: CallableFunction
+}
+
 
 // ---------------- Base Layout Dimensions ---------------- //
 export const LAYOUT_MARGIN = 5
@@ -81,13 +91,17 @@ export const LAYOUT_DIM_TOP = {
     WIDTH: `100vw`,
     HEIGHT: 38,
     LEFT: 0,
-    TOP: 0
+    TOP: 0,
+    V_BUFFER: 8,
+    H_BUFFER: 2,
 }
 export const LAYOUT_DIM_LEFT = {
-    WIDTH: 52,
+    WIDTH: 46,
     HEIGHT: -1, //Dynamically set
     TOP: LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
-    LEFT: 0
+    LEFT: 0,
+    V_BUFFER: 3,
+    H_BUFFER: 6,
 }
 export const LAYOUT_DIM_RIGHT = {
     WIDTH: 52,
@@ -111,6 +125,63 @@ export const LAYOUT_DIM_CENTER = {
 //Minimum flex Widths/Heights of each frame
 export const MIN_FRAME_WIDTH = 0.15
 export const MIN_FRAME_HEIGHT = 0.1
+
+
+// ---------------- Generic Utility Functions ---------------- //
+
+
+/**
+ * Generate an overlay menu from the given menu_item interfaces
+ * @param parent_div Div Element that should make this menu visible when clicked
+ * @param items List of menu_item(s) to add to the menu
+ */
+export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivElement, items: menu_item[]) {
+    let overlay_menu = document.createElement('div')
+    overlay_menu.classList.add('overlay_menu')
+
+    //Event listener to add visibility and interactivity
+    parent_div.addEventListener('click', () => {
+        overlay_menu.classList.add('overlay_menu_active')
+        overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`
+        overlay_menu.style.left = `${parent_div.getBoundingClientRect().right + 1}px`
+    })
+
+    //Event Listener to Remove visibility and interactivity
+    document.addEventListener('mousedown', () => {
+        overlay_menu.classList.remove('overlay_menu_active')
+    })
+    //Stop the Propogation of the document mousedown event when it originates somewhere in this menu
+    overlay_menu.addEventListener('mousedown', (event) => { event.stopPropagation() })
+
+    //Append each of the requested items
+    items.forEach((item) => {
+        let item_div = document.createElement('div')
+        item_div.classList.add('menu_item')
+
+        let text = document.createElement('div')
+        text.classList.add('icon_text')
+        text.innerHTML = item.label
+
+        item_div.appendChild(get_svg(item.icon))
+        item_div.appendChild(text)
+
+        //Setup click behavior
+        item_div.addEventListener('click', () => {
+            overlay_menu.classList.remove('overlay_menu_active')//Remove Visibility
+
+            if (parent_div.firstElementChild)   //Update Menu Icon
+                parent_div.removeChild(parent_div.firstElementChild)
+            parent_div.insertBefore(get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild)
+
+            if (item.func)
+                item.func()
+        })
+
+        overlay_menu.appendChild(item_div)
+    });
+
+    overlay_div.appendChild(overlay_menu)
+}
 
 // ---------------- Series Data Type Checking Functions ---------------- //
 
@@ -441,19 +512,29 @@ const DEFAULT_CHART_OPTS: DP<TimeChartOptions> = {
 export const DEFAULT_PYCHART_OPTS: DP<TimeChartOptions> = {
     layout: {                   // ---- Layout Options ----
         background: {
-            type: ColorType.Solid,
-            color: Color.black
+            type: ColorType.VerticalGradient,
+            topColor: '#171c27',
+            bottomColor: '#131722'
         },
-        textColor: 'white',
+        textColor: '#b2b5be',
+    },
+    grid: {
+        vertLines: {
+            color: '#222631'
+        },
+        horzLines: {
+            color: '#222631'
+        }
     },
     rightPriceScale: {          // ---- VisiblePriceScaleOptions ---- 
         mode: PriceScaleMode.Logarithmic,
+        // borderColor: '#161a25',
     },
     crosshair: {                // ---- Crosshair Options ---- 
         mode: CrosshairMode.Normal,
     },
     kineticScroll: {            // ---- Kinetic Scroll ---- 
-        mouse: true
+        touch: true
     },
 }
 

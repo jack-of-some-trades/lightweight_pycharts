@@ -1,4 +1,5 @@
 import { Container } from "./container.js";
+import { toolbox } from "./toolbox.js";
 import * as u from "./util.js";
 import { Wrapper_Divs } from "./util.js";
 export class Wrapper {
@@ -8,9 +9,13 @@ export class Wrapper {
         this.div.id = 'layout_wrapper';
         this.div.classList.add('wrapper');
         document.body.appendChild(this.div);
+        this.div_overlay = document.createElement('div');
+        this.div_overlay.id = 'overlay_manager';
+        this.div_overlay.classList.add('overlay_manager');
+        document.body.appendChild(this.div_overlay);
         this.div_top = document.createElement('div');
         this.div_top.id = 'layout_top';
-        this.div_top.classList.add('layout_main');
+        this.div_top.classList.add('layout_main', 'layout_flex');
         this.div_top.style.height = `${u.LAYOUT_DIM_TOP.HEIGHT}px`;
         this.div_top.style.width = u.LAYOUT_DIM_TOP.WIDTH;
         this.div_top.style.left = `${u.LAYOUT_DIM_TOP.LEFT}px`;
@@ -19,7 +24,7 @@ export class Wrapper {
         this.div.appendChild(this.div_top);
         this.div_left = document.createElement('div');
         this.div_left.id = 'layout_left';
-        this.div_left.classList.add('layout_main');
+        this.div_left.classList.add('layout_main', 'layout_flex');
         this.div_left.style.height = `${u.LAYOUT_DIM_LEFT.HEIGHT}px`;
         this.div_left.style.width = `${u.LAYOUT_DIM_LEFT.WIDTH}px`;
         this.div_left.style.left = `${u.LAYOUT_DIM_LEFT.LEFT}px`;
@@ -28,7 +33,7 @@ export class Wrapper {
         this.div.appendChild(this.div_left);
         this.div_right = document.createElement('div');
         this.div_right.id = 'layout_right';
-        this.div_right.classList.add('layout_main');
+        this.div_right.classList.add('layout_main', 'layout_flex');
         this.div_right.style.height = `${u.LAYOUT_DIM_RIGHT.HEIGHT}px`;
         this.div_right.style.width = `${u.LAYOUT_DIM_RIGHT.WIDTH}px`;
         this.div_right.style.right = `${u.LAYOUT_DIM_RIGHT.RIGHT}px`;
@@ -46,13 +51,14 @@ export class Wrapper {
         this.div.appendChild(this.div_bottom);
         this.div_center = document.createElement('div');
         this.div_center.id = 'layout_center';
-        this.div_center.classList.add('layout_main');
+        this.div_center.classList.add('layout_main', 'layout_container_row');
         this.div_center.style.height = `${u.LAYOUT_DIM_CENTER.HEIGHT}px`;
         this.div_center.style.width = `${u.LAYOUT_DIM_CENTER.WIDTH}px`;
         this.div_center.style.left = `${u.LAYOUT_DIM_CENTER.LEFT}px`;
         this.div_center.style.top = `${u.LAYOUT_DIM_CENTER.TOP}px`;
         this.div_center.style.display = 'flex';
         this.div.appendChild(this.div_center);
+        this.tool_box = new toolbox(this);
         this.resize = this.resize.bind(this);
         this.get_div = this.get_div.bind(this);
         this.show_section = this.show_section.bind(this);
