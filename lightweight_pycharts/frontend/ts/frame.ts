@@ -61,6 +61,7 @@ export class Frame {
      */
     add_pane(id: string = ''): Pane {
         let child_div = document.createElement('div')
+        child_div.classList.add('chart_pane')
         this.div.appendChild(child_div)
 
         let new_pane = new Pane(id, child_div)

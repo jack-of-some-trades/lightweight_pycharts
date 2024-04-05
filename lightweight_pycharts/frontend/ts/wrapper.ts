@@ -37,6 +37,8 @@ export class Wrapper {
 
     tool_box: toolbox
 
+    private resizeTimeoutID: number | null = null;
+
     constructor() {
         //Create Main container
         this.div = document.createElement('div')
@@ -114,6 +116,7 @@ export class Wrapper {
         this.show_section = this.show_section.bind(this)
         this.hide_section = this.hide_section.bind(this)
         this.add_container = this.add_container.bind(this)
+        this.resize_debounce = this.resize_debounce.bind(this)
 
         //Initilize Window regions and perform initial resize
         this.resize()
@@ -246,4 +249,20 @@ export class Wrapper {
         window.active_container = tmp_ref
         return tmp_ref
     }
+
+    /**
+     * Ran into an issue where the chart wasn't repainting correctly. Issue was elsewhere, so this is
+     * deprecated. Leaving it just in case
+     */
+    resize_debounce() {
+        if (this.resizeTimeoutID !== null) {
+            clearTimeout(this.resizeTimeoutID)
+            this.resizeTimeoutID = null
+            this.resize()
+        }
+        else {
+            this.resizeTimeoutID = setTimeout(this.resize_debounce, 1000);
+        }
+    }
+
 }

@@ -5,6 +5,7 @@ import { Wrapper_Divs } from "./util.js";
 export class Wrapper {
     constructor() {
         this.containers = [];
+        this.resizeTimeoutID = null;
         this.div = document.createElement('div');
         this.div.id = 'layout_wrapper';
         this.div.classList.add('wrapper');
@@ -64,6 +65,7 @@ export class Wrapper {
         this.show_section = this.show_section.bind(this);
         this.hide_section = this.hide_section.bind(this);
         this.add_container = this.add_container.bind(this);
+        this.resize_debounce = this.resize_debounce.bind(this);
         this.resize();
         window.addEventListener('resize', this.resize);
     }
@@ -155,5 +157,15 @@ export class Wrapper {
         tmp_ref.resize();
         window.active_container = tmp_ref;
         return tmp_ref;
+    }
+    resize_debounce() {
+        if (this.resizeTimeoutID !== null) {
+            clearTimeout(this.resizeTimeoutID);
+            this.resizeTimeoutID = null;
+            this.resize();
+        }
+        else {
+            this.resizeTimeoutID = setTimeout(this.resize_debounce, 1000);
+        }
     }
 }

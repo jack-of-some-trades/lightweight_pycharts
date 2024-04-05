@@ -20,6 +20,7 @@
     --chart-separator-fill: var(--background-fill);
     --chart-separator-hover: #434d66;
 
+
     --overlay-fill: #1e222d;
     --overlay-shadow: #2e63f52a;
 
@@ -181,6 +182,7 @@ body {
 
 .chart_pane {
     border-radius: 5px;
+    position: absolute;
 }
 
 .chart_separator {
@@ -195,6 +197,25 @@ body {
 .chart_separator:hover {
     border-color: var(--chart-separator-hover);
     background-color: var(--chart-separator-hover);
+}
+
+.chart_watermark_white,
+.chart_watermark_black {
+    z-index: 1;
+    opacity: 0.3;
+    position: absolute;
+    inset: 0px;
+    background-size: calc(80%) calc(80%);
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.chart_watermark_black {
+    background-image: url(watermark_black.svg);
+}
+
+.chart_watermark_white {
+    background-image: url(watermark_white.svg);
 }
 
 /* #endregion */
