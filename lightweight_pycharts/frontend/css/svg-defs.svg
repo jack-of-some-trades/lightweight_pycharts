@@ -1,6 +1,5 @@
 <!-- #region ________________ Menu icons ________________ -->
 
-
 <svg id="menu" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 28 28" width='28' height="28">
     <path fill="currentColor" d="M6 7h16a1 1 0 1 1 0 2H6z" ></path>
     <path fill="currentColor" d="M6 13h16a1 1 0 1 1 0 2H6z"></path>

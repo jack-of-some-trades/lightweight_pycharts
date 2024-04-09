@@ -6,7 +6,7 @@ export class icon_manager {
         fetch('./css/svg-defs.svg').then((resp) => resp.text().then((svg_file_text) => {
             let parser = new DOMParser();
             icon_manager.svg_doc = parser.parseFromString(svg_file_text, "text/html");
-        })).then(() => setTimeout(icon_manager.update_svgs, 100));
+        })).then(() => setTimeout(icon_manager.update_svgs, 20));
         icon_manager.svg_doc = null;
         icon_manager.instance = this;
         return this;
@@ -16,20 +16,18 @@ export class icon_manager {
         svgs.forEach(svg => {
             svg.classList.remove('replace');
             if (svg.classList.length > 0)
-                svg.replaceWith(icon_manager.instance.get_svg(svg.id, svg.classList.toString().split(' ')));
+                svg.replaceWith(icon_manager.get_svg(svg.id, svg.classList.toString().split(' ')));
             else
-                svg.replaceWith(icon_manager.instance.get_svg(svg.id));
+                svg.replaceWith(icon_manager.get_svg(svg.id));
         });
     }
     static get_svg(icon, css_classes = []) {
-        return icon_manager.instance.get_svg(icon, css_classes);
-    }
-    get_svg(icon, css_classes = []) {
         if (icon_manager.svg_doc) {
             let icon_svg = icon_manager.svg_doc.querySelector(`#${icon}`);
+            icon_svg = icon_svg.cloneNode(true);
             icon_svg.classList.add('icon');
             css_classes.forEach(class_name => { icon_svg.classList.add(class_name); });
-            return icon_svg.cloneNode(true);
+            return icon_svg;
         }
         else {
             let tmp_icon_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");

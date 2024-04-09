@@ -1,4 +1,4 @@
-// Function and Enum defining all the available icons uhh... "borrowed"... from Tradingview
+// Class and Enum defining all the available icons uhh... "borrowed"... from Tradingview
 
 /**
  * Singleton Class to manage loading of the svg icons
@@ -20,8 +20,9 @@ export class icon_manager {
                 icon_manager.svg_doc = parser.parseFromString(svg_file_text, "text/html")
             })).then(() => setTimeout(
                 //Once the Document is loaded, update all svgs. Delay is added to avoid race conditions
+                //between updating svgs and a get_svg() function call placing a 'replace' SVG tag in the document.
                 icon_manager.update_svgs,
-                100
+                20
             ))
 
         icon_manager.svg_doc = null
@@ -30,24 +31,17 @@ export class icon_manager {
     }
 
     /**
-     * Pulls all the SVGS from a document and updates those with the 'replace' class tag
+     * Pulls all the SVGS with a 'replace' tag from the document and updates them with the true SVG file
      */
     static update_svgs() {
         let svgs = document.querySelectorAll("svg.replace")
         svgs.forEach(svg => {
             svg.classList.remove('replace')
             if (svg.classList.length > 0)
-                svg.replaceWith(icon_manager.instance.get_svg(svg.id as icons, svg.classList.toString().split(' ')))
+                svg.replaceWith(icon_manager.get_svg(svg.id as icons, svg.classList.toString().split(' ')))
             else
-                svg.replaceWith(icon_manager.instance.get_svg(svg.id as icons))
+                svg.replaceWith(icon_manager.get_svg(svg.id as icons))
         });
-    }
-
-    /**
-     * Static class method that calls get_svg() so a referene to the singleton class instance is not needed.
-     */
-    static get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
-        return icon_manager.instance.get_svg(icon, css_classes)
     }
 
     /**
@@ -56,14 +50,15 @@ export class icon_manager {
      * @param css_classes a list of classes that should be applied to the SVG Element
      * @returns SVGSVGElement
      */
-    get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
+    static get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
         if (icon_manager.svg_doc) {
             let icon_svg = icon_manager.svg_doc.querySelector(`#${icon}`) as SVGSVGElement
+            //Ensure a clone of the element is edited and returned, not a reference
+            icon_svg = icon_svg.cloneNode(true) as SVGSVGElement
+
             icon_svg.classList.add('icon')
             css_classes.forEach(class_name => { icon_svg.classList.add(class_name) });
-            //Ensure a clone of the element is returned, not a reference
-            return icon_svg.cloneNode(true) as SVGSVGElement
-
+            return icon_svg
         } else {
             let tmp_icon_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
             tmp_icon_svg.id = icon
