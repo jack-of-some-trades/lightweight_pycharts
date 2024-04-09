@@ -1,4 +1,4 @@
-import { get_svg, icons } from "./icons.js";
+import { icon_manager, icons } from "./icons.js";
 import { AnySeries, AnySeriesData, AreaData, AreaStyleOptions, BarData, BarStyleOptions, BaselineData, BaselineStyleOptions, CandlestickData, CandlestickStyleOptions, ColorType, CrosshairMode, DeepPartial as DP, HistogramData, HistogramStyleOptions, LastPriceAnimationMode, LineData, LineStyle, LineStyleOptions, LineType, OhlcData, PriceLineSource, PriceScaleMode, SeriesOptionsCommon, SingleValueData, TimeChartOptions, UTCTimestamp, WhitespaceData } from "./pkg.js";
 
 
@@ -38,7 +38,7 @@ export enum Container_Layouts {
     QUAD_BOTTOM
 }
 
-// ---------------- Container/Layout/Pane Super Object Interfaces ---------------- //
+// #region ---------------- Container/Layout/Pane Super Object Interfaces ---------------- //
 
 /**
  * interface that represents a portion of a Frame's Layout. Could be either a Frame or a Frame Separator
@@ -78,12 +78,16 @@ export interface series_id {
  */
 export interface menu_item {
     label: string,
-    icon: icons,
+    icon?: icons,
+    icon_str?: string,
     func?: CallableFunction
+    star?: boolean,
 }
 
+//#endregion
 
 // ---------------- Base Layout Dimensions ---------------- //
+
 export const LAYOUT_MARGIN = 5
 export const LAYOUT_CHART_MARGIN = 4
 export const LAYOUT_CHART_SEP_BORDER = 2
@@ -127,30 +131,63 @@ export const MIN_FRAME_WIDTH = 0.15
 export const MIN_FRAME_HEIGHT = 0.1
 
 
-// ---------------- Generic Utility Functions ---------------- //
+// #region ---------------- Generic Utility Functions ---------------- //
 
+export enum menu_location {
+    TOP_RIGHT,
+    TOP_LEFT,
+    BOTTOM_RIGHT,
+}
 
 /**
  * Generate an overlay menu from the given menu_item interfaces
  * @param parent_div Div Element that should make this menu visible when clicked
  * @param items List of menu_item(s) to add to the menu
  */
-export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivElement, items: menu_item[]) {
+export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivElement, items: menu_item[], update_icon: boolean, id: string, loc: menu_location) {
     let overlay_menu = document.createElement('div')
+    overlay_menu.id = id + '_menu'
     overlay_menu.classList.add('overlay_menu')
 
-    //Event listener to add visibility and interactivity
+
+    let set_menu_loc = () => { }
+    switch (loc) {
+        case (menu_location.BOTTOM_RIGHT): {
+            set_menu_loc = () => {
+                overlay_menu.style.top = `${parent_div.getBoundingClientRect().bottom + 1}px`
+                overlay_menu.style.left = `${parent_div.getBoundingClientRect().right - overlay_menu.getBoundingClientRect().width}px`
+            }
+        } break;
+        case (menu_location.TOP_LEFT): {
+            set_menu_loc = () => {
+                overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`
+                overlay_menu.style.right = `${parent_div.getBoundingClientRect().left - 1}px`
+            }
+        } break;
+        case (menu_location.TOP_RIGHT): {
+            set_menu_loc = () => {
+                overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`
+                overlay_menu.style.left = `${parent_div.getBoundingClientRect().right + 1}px`
+            }
+        } break;
+    }
+
+    //Event listener to toggle visibility and interactivity
     parent_div.addEventListener('click', () => {
-        overlay_menu.classList.add('overlay_menu_active')
-        overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`
-        overlay_menu.style.left = `${parent_div.getBoundingClientRect().right + 1}px`
+        if (overlay_menu.classList.contains('overlay_menu_active'))
+            overlay_menu.classList.remove('overlay_menu_active')
+        else {
+            overlay_menu.classList.add('overlay_menu_active')
+            set_menu_loc()
+        }
     })
 
-    //Event Listener to Remove visibility and interactivity
+    //Global Event Listener to Remove visibility and interactivity
     document.addEventListener('mousedown', () => {
         overlay_menu.classList.remove('overlay_menu_active')
     })
-    //Stop the Propogation of the document mousedown event when it originates somewhere in this menu
+    //Stop the Propogation of the global mousedown event when it originates somewhere in this menu
+    parent_div.addEventListener('mousedown', (event) => { event.stopPropagation() })
     overlay_menu.addEventListener('mousedown', (event) => { event.stopPropagation() })
 
     //Append each of the requested items
@@ -159,19 +196,33 @@ export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivEle
         item_div.classList.add('menu_item')
 
         let text = document.createElement('div')
-        text.classList.add('icon_text')
+        text.classList.add('menu_text')
         text.innerHTML = item.label
 
-        item_div.appendChild(get_svg(item.icon))
+        if (item.icon)
+            item_div.appendChild(icon_manager.get_svg(item.icon))
         item_div.appendChild(text)
+
+        if (item.star) {
+            item_div.appendChild(toggle_star(item_div,
+                () => {
+                    console.log('active')
+                },
+                () => {
+                    console.log('deactive')
+                }
+            ))
+        }
 
         //Setup click behavior
         item_div.addEventListener('click', () => {
             overlay_menu.classList.remove('overlay_menu_active')//Remove Visibility
 
-            if (parent_div.firstElementChild)   //Update Menu Icon
-                parent_div.removeChild(parent_div.firstElementChild)
-            parent_div.insertBefore(get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild)
+            if (update_icon && item.icon) {
+                if (parent_div.firstElementChild)   //Update Menu Icon
+                    parent_div.removeChild(parent_div.firstElementChild)
+                parent_div.insertBefore(icon_manager.get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild)
+            }
 
             if (item.func)
                 item.func()
@@ -182,6 +233,38 @@ export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivEle
 
     overlay_div.appendChild(overlay_menu)
 }
+
+/**
+ * Create a Toggleable 
+ */
+function toggle_star(parent_div: HTMLDivElement, activate_func: CallableFunction, deactivate_func: CallableFunction): HTMLDivElement {
+    let wrapper = document.createElement('div')
+    wrapper.classList.add('menu_item_star')
+    wrapper.appendChild(icon_manager.get_svg(icons.star))
+
+    //Visible only on mouse over
+    // parent_div.addEventListener('mouseenter', () => { wrapper.style.display = 'flex' })
+    // parent_div.addEventListener('mouseleave', () => { wrapper.style.display = 'none' })
+
+    wrapper.addEventListener('mousedown', (event) => { event.stopPropagation() })
+    wrapper.addEventListener('click', () => {
+        let icon = wrapper.firstChild as SVGSVGElement
+        if (icon.classList.contains('star_active')) {
+            icon.classList.remove('star_active')
+            icon.classList.add('icon')
+            deactivate_func()
+        } else {
+            icon.classList.remove('icon')
+            icon.classList.add('star_active')
+            activate_func()
+        }
+    })
+
+    return wrapper
+
+}
+
+//#endregion
 
 // #region ---------------- Series Data Type Checking Functions ---------------- //
 

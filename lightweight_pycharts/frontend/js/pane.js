@@ -16,6 +16,7 @@ export class Pane {
         this.watermark_div = null;
         this.watermark_series = null;
         this.create_screensaver();
+        this.add_candlestick_series();
     }
     set_data(dtype, data, series = this.series[0]) {
         if (data.length === 0) {
@@ -83,10 +84,13 @@ export class Pane {
         let this_height = height * this.flex_height;
         this.div.style.width = `${this_width}px`;
         this.div.style.height = `${this_height}px`;
-        this.chart.resize(this_width, this_height, true);
         if (this.watermark_div) {
+            this.chart.resize(this_width, this_height, true);
             this.watermark_div.style.width = `${this.chart_div.clientWidth}px`;
             this.watermark_div.style.height = `${this.chart_div.clientHeight}px`;
+        }
+        else {
+            this.chart.resize(this_width, this_height, false);
         }
     }
     fitcontent() {

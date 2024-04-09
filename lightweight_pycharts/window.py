@@ -48,6 +48,10 @@ class Window:
         # Setting default since window has quite a few things populated by default
         if "min_size" not in kwargs.keys():
             kwargs["min_size"] = (400, 250)
+        if "width" not in kwargs.keys():
+            kwargs["width"] = 1600
+        if "height" not in kwargs.keys():
+            kwargs["height"] = 800
 
         # create and then unpack the hooks directly into class variables
         mp_hooks = MpHooks()
@@ -149,7 +153,7 @@ class Container:
     def __init__(self, js_id: str, fwd_queue: mp.Queue) -> None:
         self._fwd_queue = fwd_queue
         self.js_id = js_id
-        self.layout_type = orm.Container_Layouts.TRIPLE_HORIZ_TOP
+        self.layout_type = orm.Container_Layouts.SINGLE
         self.frame_ids = ID_List(f"{js_id}_f")
         self.frames: list[Frame] = []
 

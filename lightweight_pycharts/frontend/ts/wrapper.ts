@@ -1,6 +1,7 @@
 //@ts-ignore
 import { Container } from "./container.js";
 import { toolbox } from "./toolbox.js";
+import { topbar } from "./topbar.js";
 import * as u from "./util.js";
 import { Wrapper_Divs } from "./util.js";
 
@@ -35,6 +36,7 @@ export class Wrapper {
     div_center: HTMLDivElement
     div_overlay: HTMLDivElement
 
+    top_bar: topbar
     tool_box: toolbox
 
     private resizeTimeoutID: number | null = null;
@@ -108,6 +110,7 @@ export class Wrapper {
         this.div_center.style.display = 'flex'
         this.div.appendChild(this.div_center)
 
+        this.top_bar = new topbar(this)
         this.tool_box = new toolbox(this)
 
         //Bind Funcitons to ensure expected 'this' functionality

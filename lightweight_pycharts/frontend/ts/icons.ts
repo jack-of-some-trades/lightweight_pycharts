@@ -1,85 +1,131 @@
 // Function and Enum defining all the available icons uhh... "borrowed"... from Tradingview
 
-export function get_svg(icon: icons, css_class?: string[], scale: number = 1): SVGSVGElement {
-    let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-    let use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-    use.setAttribute("href", "css/svg-defs.svg#" + icon)
+/**
+ * Singleton Class to manage loading of the svg icons
+ */
+export class icon_manager {
+    private static instance: icon_manager
+    private static svg_doc: Document | null
 
-    //Define CSS Class to inherit styling from
-    svg.classList.add("icon")
-    if (css_class) {
-        css_class.forEach(item => {
-            svg.classList.add(item)
+    constructor() {
+        if (icon_manager.instance) {
+            //Instance already created
+            return icon_manager.instance
+        }
+
+        fetch('./css/svg-defs.svg').then((resp) => resp.text().then(
+            (svg_file_text) => {
+                //After loading, parse the .svg into a document object
+                let parser = new DOMParser()
+                icon_manager.svg_doc = parser.parseFromString(svg_file_text, "text/html")
+            })).then(() => setTimeout(
+                //Once the Document is loaded, update all svgs. Delay is added to avoid race conditions
+                icon_manager.update_svgs,
+                100
+            ))
+
+        icon_manager.svg_doc = null
+        icon_manager.instance = this
+        return this
+    }
+
+    /**
+     * Pulls all the SVGS from a document and updates those with the 'replace' class tag
+     */
+    static update_svgs() {
+        let svgs = document.querySelectorAll("svg.replace")
+        svgs.forEach(svg => {
+            svg.classList.remove('replace')
+            if (svg.classList.length > 0)
+                svg.replaceWith(icon_manager.instance.get_svg(svg.id as icons, svg.classList.toString().split(' ')))
+            else
+                svg.replaceWith(icon_manager.instance.get_svg(svg.id as icons))
         });
     }
-    //Scale as desired, Default svg sizes are mostly 28px x 28px
-    size(use, svg, icon, scale)
-    svg.appendChild(use)
-    return svg
-}
 
-export function get_url(icon: icons) {
-    return "css/svg-defs.svg#" + icon
-}
-
-/**
- * Function to set the size of the SVG being retrieved.
- * @param use svg use element to modify
- * @param svg svg element to modify
- * @param icon icon being retrieved
- */
-function size(use: SVGUseElement, svg: SVGSVGElement, icon: icons, scale: number) {
-    let width = 29
-    let height = 29
-    let view_width = 29
-    let view_height = 29
-    switch (icon) {
-        case (icons.menu_arrow_ew): {
-            width = 8
-            height = 10
-            view_width = 10
-            view_height = 18
-        } break;
+    /**
+     * Static class method that calls get_svg() so a referene to the singleton class instance is not needed.
+     */
+    static get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
+        return icon_manager.instance.get_svg(icon, css_classes)
     }
-    use.setAttribute("transform", `scale(${scale})`)
-    svg.setAttribute("viewBox", `0 0 ${view_width * scale} ${view_height * scale}`)
-    svg.setAttribute("width", `${width * scale}`)
-    svg.setAttribute("height", `${height * scale}`)
 
+    /**
+     * Get's an SVG from the loaded SVG reference document. If the document isn't loaded, a temporary icon is returned instead
+     * @param icon The icon to be loaded
+     * @param css_classes a list of classes that should be applied to the SVG Element
+     * @returns SVGSVGElement
+     */
+    get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
+        if (icon_manager.svg_doc) {
+            let icon_svg = icon_manager.svg_doc.querySelector(`#${icon}`) as SVGSVGElement
+            icon_svg.classList.add('icon')
+            css_classes.forEach(class_name => { icon_svg.classList.add(class_name) });
+            //Ensure a clone of the element is returned, not a reference
+            return icon_svg.cloneNode(true) as SVGSVGElement
+
+        } else {
+            let tmp_icon_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+            tmp_icon_svg.id = icon
+            tmp_icon_svg.classList.add('replace') //Flag that SVG_doc not loaded, and this needs to be updated later
+            css_classes.forEach(class_name => { tmp_icon_svg.classList.add(class_name) });
+            return tmp_icon_svg
+        }
+    }
 }
 
 export enum icons {
     menu = 'menu',
     menu_add = 'menu_add',
     menu_ext = "menu_ext",
+    menu_ext_small = "menu_ext_small",
     menu_search = 'menu_search',
-    menu_search_quick = "search_quick",
+    menu_search_quick = "menu_search_quick",
     menu_arrow_ew = 'menu_arrow_ew',
-
-    candle_heiken_ashi = "candle_heiken_ashi",
-    candle_regular = "candle_regular",
-    candle_bar = "candle_bar",
-    candle_hollow = "candle_hollow",
-
-    indicator = "indicator",
-    indicator_template = "indicator_template",
-
-    undo = "undo",
-    redo = "redo",
-    copy = "copy",
-    edit = "edit",
-    add_section = "add_section",
+    menu_arrow_ns = 'menu_arrow_ns',
+    menu_arrow_up_down = "menu_arrow_up_down",
 
     cursor_cross = "cursor_cross",
     cursor_dot = "cursor_dot",
     cursor_arrow = "cursor_arrow",
     cursor_erase = "cursor_erase",
 
+    candle_heiken_ashi = "candle_heiken_ashi",
+    candle_regular = "candle_regular",
+    candle_bar = "candle_bar",
+    candle_hollow = "candle_hollow",
+    candle_volume = "candle_volume",
+
+    series_line = "series_line",
+    series_line_markers = "series_line_markers",
+    series_step_line = "series_step_line",
+    series_area = "series_area",
+    series_baseline = "series_baseline",
+    series_histogram = "series_histogram",
+
+    indicator = "indicator",
+    indicator_template = "indicator_template",
+    indicator_on_stratagy = "indicator_on_stratagy",
+    eye_normal = "eye_normal",
+    eye_crossed = "eye_crossed",
+    eye_loading = "eye_loading",
+    eye_loading_animated = "eye_loading_animated",
+
+    undo = "undo",
+    redo = "redo",
+    copy = "copy",
+    edit = "edit",
+    close = "close",
+    reset = "reset",
+    close_small = "close_small",
+    settings = "settings",
+    settings_small = "settings_small",
+    add_section = "add_section",
+
     fib_retrace = "fib_retrace",
     fib_extend = "fib_extend",
     trend_line = "trend_line",
     trend_ray = "trend_ray",
-    trend_arrow = "trend_arrow",
     trend_extended = "trend_extended",
     horiz_line = "horiz_line",
     horiz_ray = "horiz_ray",
@@ -91,11 +137,13 @@ export enum icons {
     polyline = "polyline",
     magnet = "magnet",
     magnet_strong = "magnet_strong",
+    anchored_vwap = "anchored_vwap",
 
+    link = "link",
     star = "star",
     trash = "trash",
-    close = "close",
     snapshot = "snapshot",
+    text_note = "text_note",
     lock_unlocked = "lock_unlocked",
     lock_locked = "lock_locked",
     ruler = "ruler",
@@ -106,17 +154,13 @@ export enum icons {
     range_price = "range_price",
     range_date = "range_date",
     range_price_date = "range_price_date",
-    settings = "settings",
-
-    eye_normal = "eye_normal",
-    eye_crossed = "eye_crossed",
-    eye_loading = "eye_loading",
-    eye_loading_animated = "eye_loading_animated",
 
     watchlist = "watchlist",
+    data_window = "data_window",
     calendar = "calendar",
     calendar_to_date = "calendar_to_date",
     alert = "alert",
+    alert_large = "alert_large",
     alert_add = "alert_add",
     alert_notification = "alert_notification",
     replay = "replay",
@@ -127,13 +171,19 @@ export enum icons {
     question_mark = "question_mark",
     pie_chart = "pie_chart",
 
-    box = "box",
-    box_open = "box_open",
     box_fullscreen = "box_fullscreen",
-    box_maximize = "box_maximize",
 
     layout_single = "layout_single",
     layout_double_vert = "layout_double_vert",
     layout_double_horiz = "layout_double_horiz",
-
+    layout_triple_horiz = "layout_triple_horiz",
+    layout_triple_vert = "layout_triple_vert",
+    layout_triple_left = "layout_triple_left",
+    layout_triple_right = "layout_triple_right",
+    layout_triple_bottom = "layout_triple_bottom",
+    layout_quad = "layout_quad",
+    layout_quad_top = "layout_quad_top",
+    layout_quad_left = "layout_quad_left",
+    layout_quad_vert = "layout_quad_vert",
+    layout_quad_horiz = "layout_quad_horiz",
 }

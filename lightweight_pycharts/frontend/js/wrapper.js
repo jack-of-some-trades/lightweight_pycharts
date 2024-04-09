@@ -1,5 +1,6 @@
 import { Container } from "./container.js";
 import { toolbox } from "./toolbox.js";
+import { topbar } from "./topbar.js";
 import * as u from "./util.js";
 import { Wrapper_Divs } from "./util.js";
 export class Wrapper {
@@ -59,6 +60,7 @@ export class Wrapper {
         this.div_center.style.top = `${u.LAYOUT_DIM_CENTER.TOP}px`;
         this.div_center.style.display = 'flex';
         this.div.appendChild(this.div_center);
+        this.top_bar = new topbar(this);
         this.tool_box = new toolbox(this);
         this.resize = this.resize.bind(this);
         this.get_div = this.get_div.bind(this);

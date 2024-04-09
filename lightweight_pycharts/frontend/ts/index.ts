@@ -16,6 +16,7 @@
  */
 import { Container } from "./container.js";
 import { Frame } from "./frame.js";
+import { icon_manager } from "./icons.js";
 import { Pane } from "./pane.js";
 import { py_api } from "./py_api.js";
 import { Container_Layouts } from "./util.js";
@@ -26,6 +27,7 @@ declare global {
     interface Window {
         api: py_api,
         wrapper: Wrapper,
+        svg_manager: icon_manager
         active_pane: Pane,
         active_frame: Frame,
         active_container: Container,
@@ -37,6 +39,9 @@ declare global {
 
 // Define The global Python <--> Js api interface.
 window.api = new py_api();
+//Construct Icon Manager
+window.svg_manager = new icon_manager();
+
 //Define the global Wrapper (Only one per window)
 window.wrapper = new Wrapper();
 

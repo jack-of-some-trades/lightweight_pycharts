@@ -1,5 +1,5 @@
-import { get_svg, icons } from "./icons.js"
-import { LAYOUT_DIM_LEFT, Wrapper_Divs, overlay_menu } from "./util.js"
+import { icon_manager, icons } from "./icons.js"
+import { LAYOUT_DIM_LEFT, Wrapper_Divs, menu_location, overlay_menu } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
 export class toolbox {
@@ -34,7 +34,7 @@ export class toolbox {
         let menu_sel = document.createElement('div')
         menu_sel.classList.add('toolbar_menu_button', 'icon_hover', 'icon_v_margin')
         menu_sel.style.display = 'none'
-        menu_sel.appendChild(get_svg(icons.menu_arrow_ew))
+        menu_sel.appendChild(icon_manager.get_svg(icons.menu_arrow_ew))
 
         //Menu Visibility Listeners
         parent.addEventListener('mouseenter', () => {
@@ -53,9 +53,10 @@ export class toolbox {
      */
     crosshair_selector(): HTMLDivElement {
         let selector_div = document.createElement('div')
+        selector_div.id = 'crosshair_selector'
         selector_div.classList.add('toolbar', 'toolbar_item')
 
-        selector_div.appendChild(get_svg(icons.cursor_cross, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(icon_manager.get_svg(icons.cursor_cross, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
         selector_div.appendChild(this.menu_selector(selector_div))
 
         let items = [
@@ -65,7 +66,7 @@ export class toolbox {
         ]
 
         //Create Selection Menu
-        overlay_menu(this.overlay_div, selector_div, items)
+        overlay_menu(this.overlay_div, selector_div, items, true, 'crosshair_selector', menu_location.TOP_RIGHT)
 
         return selector_div
     }
@@ -75,7 +76,7 @@ export class toolbox {
      */
     separator(): HTMLDivElement {
         let new_div = document.createElement('div')
-        new_div.classList.add('toolbar', 'toolbar_separator')
+        new_div.classList.add('toolbar_separator')
         new_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH - 2 * LAYOUT_DIM_LEFT.H_BUFFER}px`
         new_div.style.margin = `${LAYOUT_DIM_LEFT.V_BUFFER}px ${LAYOUT_DIM_LEFT.H_BUFFER}px`
         return new_div

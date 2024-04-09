@@ -1,4 +1,4 @@
-import { get_svg } from "./icons.js";
+import { icon_manager, icons } from "./icons.js";
 import { ColorType, CrosshairMode, LastPriceAnimationMode, LineStyle, LineType, PriceLineSource, PriceScaleMode } from "./pkg.js";
 export var Wrapper_Divs;
 (function (Wrapper_Divs) {
@@ -71,37 +71,105 @@ export const LAYOUT_DIM_CENTER = {
 };
 export const MIN_FRAME_WIDTH = 0.15;
 export const MIN_FRAME_HEIGHT = 0.1;
-export function overlay_menu(overlay_div, parent_div, items) {
+export var menu_location;
+(function (menu_location) {
+    menu_location[menu_location["TOP_RIGHT"] = 0] = "TOP_RIGHT";
+    menu_location[menu_location["TOP_LEFT"] = 1] = "TOP_LEFT";
+    menu_location[menu_location["BOTTOM_RIGHT"] = 2] = "BOTTOM_RIGHT";
+})(menu_location || (menu_location = {}));
+export function overlay_menu(overlay_div, parent_div, items, update_icon, id, loc) {
     let overlay_menu = document.createElement('div');
+    overlay_menu.id = id + '_menu';
     overlay_menu.classList.add('overlay_menu');
+    let set_menu_loc = () => { };
+    switch (loc) {
+        case (menu_location.BOTTOM_RIGHT):
+            {
+                set_menu_loc = () => {
+                    overlay_menu.style.top = `${parent_div.getBoundingClientRect().bottom + 1}px`;
+                    overlay_menu.style.left = `${parent_div.getBoundingClientRect().right - overlay_menu.getBoundingClientRect().width}px`;
+                };
+            }
+            break;
+        case (menu_location.TOP_LEFT):
+            {
+                set_menu_loc = () => {
+                    overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`;
+                    overlay_menu.style.right = `${parent_div.getBoundingClientRect().left - 1}px`;
+                };
+            }
+            break;
+        case (menu_location.TOP_RIGHT):
+            {
+                set_menu_loc = () => {
+                    overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`;
+                    overlay_menu.style.left = `${parent_div.getBoundingClientRect().right + 1}px`;
+                };
+            }
+            break;
+    }
     parent_div.addEventListener('click', () => {
-        overlay_menu.classList.add('overlay_menu_active');
-        overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`;
-        overlay_menu.style.left = `${parent_div.getBoundingClientRect().right + 1}px`;
+        if (overlay_menu.classList.contains('overlay_menu_active'))
+            overlay_menu.classList.remove('overlay_menu_active');
+        else {
+            overlay_menu.classList.add('overlay_menu_active');
+            set_menu_loc();
+        }
     });
     document.addEventListener('mousedown', () => {
         overlay_menu.classList.remove('overlay_menu_active');
     });
+    parent_div.addEventListener('mousedown', (event) => { event.stopPropagation(); });
     overlay_menu.addEventListener('mousedown', (event) => { event.stopPropagation(); });
     items.forEach((item) => {
         let item_div = document.createElement('div');
         item_div.classList.add('menu_item');
         let text = document.createElement('div');
-        text.classList.add('icon_text');
+        text.classList.add('menu_text');
         text.innerHTML = item.label;
-        item_div.appendChild(get_svg(item.icon));
+        if (item.icon)
+            item_div.appendChild(icon_manager.get_svg(item.icon));
         item_div.appendChild(text);
+        if (item.star) {
+            item_div.appendChild(toggle_star(item_div, () => {
+                console.log('active');
+            }, () => {
+                console.log('deactive');
+            }));
+        }
         item_div.addEventListener('click', () => {
             overlay_menu.classList.remove('overlay_menu_active');
-            if (parent_div.firstElementChild)
-                parent_div.removeChild(parent_div.firstElementChild);
-            parent_div.insertBefore(get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild);
+            if (update_icon && item.icon) {
+                if (parent_div.firstElementChild)
+                    parent_div.removeChild(parent_div.firstElementChild);
+                parent_div.insertBefore(icon_manager.get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild);
+            }
             if (item.func)
                 item.func();
         });
         overlay_menu.appendChild(item_div);
     });
     overlay_div.appendChild(overlay_menu);
+}
+function toggle_star(parent_div, activate_func, deactivate_func) {
+    let wrapper = document.createElement('div');
+    wrapper.classList.add('menu_item_star');
+    wrapper.appendChild(icon_manager.get_svg(icons.star));
+    wrapper.addEventListener('mousedown', (event) => { event.stopPropagation(); });
+    wrapper.addEventListener('click', () => {
+        let icon = wrapper.firstChild;
+        if (icon.classList.contains('star_active')) {
+            icon.classList.remove('star_active');
+            icon.classList.add('icon');
+            deactivate_func();
+        }
+        else {
+            icon.classList.remove('icon');
+            icon.classList.add('star_active');
+            activate_func();
+        }
+    });
+    return wrapper;
 }
 export function isWhitespaceData(data) {
     let keys = Object.keys(data);
