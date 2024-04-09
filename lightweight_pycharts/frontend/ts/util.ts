@@ -154,20 +154,20 @@ export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivEle
     switch (loc) {
         case (menu_location.BOTTOM_RIGHT): {
             set_menu_loc = () => {
-                overlay_menu.style.top = `${parent_div.getBoundingClientRect().bottom + 1}px`
-                overlay_menu.style.left = `${parent_div.getBoundingClientRect().right - overlay_menu.getBoundingClientRect().width}px`
+                overlay_menu.style.top = `${Math.max(parent_div.getBoundingClientRect().bottom + 1, 0)}px`
+                overlay_menu.style.left = `${Math.max(parent_div.getBoundingClientRect().right - overlay_menu.getBoundingClientRect().width, 0)}px`
             }
         } break;
         case (menu_location.TOP_LEFT): {
             set_menu_loc = () => {
-                overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`
-                overlay_menu.style.right = `${parent_div.getBoundingClientRect().left - 1}px`
+                overlay_menu.style.top = `${Math.max(parent_div.getBoundingClientRect().top, 0)}px`
+                overlay_menu.style.right = `${Math.max(parent_div.getBoundingClientRect().left - 1, 0)}px`
             }
         } break;
         case (menu_location.TOP_RIGHT): {
             set_menu_loc = () => {
-                overlay_menu.style.top = `${parent_div.getBoundingClientRect().top}px`
-                overlay_menu.style.left = `${parent_div.getBoundingClientRect().right + 1}px`
+                overlay_menu.style.top = `${Math.max(parent_div.getBoundingClientRect().top, 0)}px`
+                overlay_menu.style.left = `${Math.max(parent_div.getBoundingClientRect().right + 1, 0)}px`
             }
         } break;
     }
@@ -192,16 +192,23 @@ export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivEle
 
     //Append each of the requested items
     items.forEach((item) => {
+        //Make Wrapper
         let item_div = document.createElement('div')
         item_div.classList.add('menu_item')
 
-        let text = document.createElement('div')
+        let sel_wrap = document.createElement('span')
+        sel_wrap.classList.add('menu_selectable')
+
+        if (item.icon) {
+            sel_wrap.appendChild(icon_manager.get_svg(item.icon))
+        }
+
+        let text = document.createElement('span')
         text.classList.add('menu_text')
         text.innerHTML = item.label
+        sel_wrap.appendChild(text)
 
-        if (item.icon)
-            item_div.appendChild(icon_manager.get_svg(item.icon))
-        item_div.appendChild(text)
+        item_div.appendChild(sel_wrap)
 
         if (item.star) {
             item_div.appendChild(toggle_star(item_div,
@@ -213,6 +220,7 @@ export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivEle
                 }
             ))
         }
+
 
         //Setup click behavior
         item_div.addEventListener('click', () => {
@@ -240,22 +248,30 @@ export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivEle
 function toggle_star(parent_div: HTMLDivElement, activate_func: CallableFunction, deactivate_func: CallableFunction): HTMLDivElement {
     let wrapper = document.createElement('div')
     wrapper.classList.add('menu_item_star')
-    wrapper.appendChild(icon_manager.get_svg(icons.star))
+    let icon = icon_manager.get_svg(icons.star, ["icon_hover", "icon_hidden"])
+    wrapper.appendChild(icon)
 
     //Visible only on mouse over
-    // parent_div.addEventListener('mouseenter', () => { wrapper.style.display = 'flex' })
-    // parent_div.addEventListener('mouseleave', () => { wrapper.style.display = 'none' })
+    parent_div.addEventListener('mouseenter', () => { (wrapper.firstChild as SVGSVGElement).style.visibility = 'visible' })
+    parent_div.addEventListener('mouseleave', () => {
+        let icon = wrapper.firstChild as SVGSVGElement
+        if (!icon.classList.contains('star_active')) {
+            icon.style.visibility = 'hidden'
+        }
+    })
 
     wrapper.addEventListener('mousedown', (event) => { event.stopPropagation() })
     wrapper.addEventListener('click', () => {
         let icon = wrapper.firstChild as SVGSVGElement
         if (icon.classList.contains('star_active')) {
-            icon.classList.remove('star_active')
-            icon.classList.add('icon')
+            icon.replaceWith(icon_manager.get_svg(icons.star, ["icon_hover"]))
+            icon = wrapper.firstChild as SVGSVGElement
+            icon.style.visibility = 'hidden'
             deactivate_func()
         } else {
-            icon.classList.remove('icon')
-            icon.classList.add('star_active')
+            icon.replaceWith(icon_manager.get_svg(icons.star_filled, ["star_active", "icon_hover"]))
+            icon = wrapper.firstChild as SVGSVGElement
+            icon.style.color = 'var(--star-active-color)'
             activate_func()
         }
     })

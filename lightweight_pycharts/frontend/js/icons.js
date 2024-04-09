@@ -99,6 +99,7 @@ export var icons;
     icons["anchored_vwap"] = "anchored_vwap";
     icons["link"] = "link";
     icons["star"] = "star";
+    icons["star_filled"] = "star_filled";
     icons["trash"] = "trash";
     icons["snapshot"] = "snapshot";
     icons["text_note"] = "text_note";

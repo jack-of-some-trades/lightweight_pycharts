@@ -136,6 +136,7 @@ export enum icons {
 
     link = "link",
     star = "star",
+    star_filled = "star_filled",
     trash = "trash",
     snapshot = "snapshot",
     text_note = "text_note",
