@@ -1,7 +1,8 @@
-# Cache #
+# Folders and Cache #
 ###################
 __pycache__
 *.cpython-311.pyc
+misc_resources
 
 # Compiled source #
 ###################
