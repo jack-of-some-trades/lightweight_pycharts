@@ -45,29 +45,21 @@ class Window:
         if "debug" in kwargs.keys() and kwargs["debug"]:
             logger.setLevel(logging.DEBUG)
 
-        # Setting default since window has quite a few things populated by default
-        if "min_size" not in kwargs.keys():
-            kwargs["min_size"] = (400, 250)
-        if "width" not in kwargs.keys():
-            kwargs["width"] = 1600
-        if "height" not in kwargs.keys():
-            kwargs["height"] = 800
-
         # create and then unpack the hooks directly into class variables
         mp_hooks = MpHooks()
         self._fwd_queue = mp_hooks.fwd_queue
         self._rtn_queue = mp_hooks.rtn_queue
         self._start_event = mp_hooks.start_event
         self._stop_event = mp_hooks.stop_event
-        self._loaded_event = mp_hooks.loaded_event
+        self._js_loaded_event = mp_hooks.js_loaded_event
 
         kwargs["mp_hooks"] = mp_hooks  # Pass the hooks along to PyWv
         self._view_process = mp.Process(target=PyWv, kwargs=kwargs, daemon=daemon)
         self._view_process.start()
 
         # Wait for PyWebview to load before continuing
-        # Loaded_event set in PyWv._assign_callbacks()
-        if not self._loaded_event.wait(timeout=10):
+        # js_loaded_event set in PyWv._assign_callbacks()
+        if not self._js_loaded_event.wait(timeout=10):
             raise TimeoutError(
                 "Failed to load PyWebView in a reasonable amount of time."
             )

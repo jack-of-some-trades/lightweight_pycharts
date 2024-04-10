@@ -33,6 +33,26 @@ class js_api:
         # Pass in a temporary Object that we will overwrite later.
         # This is really just used to silence linter errors
         self.rtn_queue = mp.Queue(maxsize=1)
+        self.view_window: View
+
+    def __set_view_window__(self, view_window: "View"):
+        # For some reason this assignment can't be done in the constructor.
+        # If you try that then py_webview never loads? The assignment can only be
+        # done after the py_webivew window has loaded
+        self.view_window = view_window
+
+    def loaded(self) -> None:
+        """Called on start-up. Indicates that all javascript assets, not just the JS api, have loaded"""
+        self.view_window.show()  # api.loaded_check() in py_api.ts is the actual function that calls this
+
+    def close(self) -> None:
+        self.view_window.close()
+
+    def maximize(self) -> None:
+        self.view_window.maximize()
+
+    def minimize(self) -> None:
+        self.view_window.minimize()
 
     def callback(self, msg: str) -> None:
         "Generic Callback that passes serialized data as a string"
@@ -49,7 +69,7 @@ class MpHooks:
     fwd_queue: mp.Queue = mp.Queue()
     rtn_queue: mp.Queue = mp.Queue()
     start_event: mp_EventClass = mp.Event()
-    loaded_event: mp_EventClass = mp.Event()
+    js_loaded_event: mp_EventClass = mp.Event()
     stop_event: mp_EventClass = mp.Event()
 
 
@@ -71,7 +91,7 @@ class View(ABC):
         fwd_queue:      Multiprocessing Queue That transfers data from "__main_mp__" to "__view_mp__"
         rtn_queue:      Multiprocessing Queue That transfers data from "__view_mp__" to "__main_mp__"
         start_event:    Multiprocessing Event that is set by "__main_mp__" to syncronize all windows being loaded
-        loaded_event:   Multiprocessing Event that is set by "__view_mp__" to indicate javascript window has been loaded
+        js_loaded_event:   Multiprocessing Event that is set by "__view_mp__" to indicate javascript window has been loaded
                         and javascript commands can be sent via View.runscript() Method
         stop_event:     Multiprocessing Event that is set by either __main_mp__ or __view_mp__ to signal application shutdown
 
@@ -87,15 +107,19 @@ class View(ABC):
         self.fwd_queue = hooks.fwd_queue
         self.rtn_queue = hooks.rtn_queue
         self.start_event = hooks.start_event
-        self.loaded_event = hooks.loaded_event
+        self.js_loaded_event = hooks.js_loaded_event
         self.stop_event = hooks.stop_event
 
     @abstractmethod
     def show(self): ...
-
     @abstractmethod
     def hide(self): ...
-
+    @abstractmethod
+    def close(self): ...
+    @abstractmethod
+    def minimize(self): ...
+    @abstractmethod
+    def maximize(self): ...
     @abstractmethod
     def _assign_callbacks(self): ...
 
@@ -205,13 +229,27 @@ class PyWv(View):
         api.rtn_queue = self.rtn_queue
         self.api = api
 
+        # hide by default since seeing window elements poping in is ugly.
+        # Typescript calls API Show function when all elements are loaded.
+        if "hidden" not in kwargs.keys():
+            kwargs["hidden"] = True
+        # Setting default since window has quite a few things populated by default
+        if "min_size" not in kwargs.keys():
+            kwargs["min_size"] = (400, 250)
+        if "width" not in kwargs.keys():
+            kwargs["width"] = 1600
+        if "height" not in kwargs.keys():
+            kwargs["height"] = 800
+
         self.pyweb_window = webview.create_window(
             title=title,
             url=file_dir + "/frontend/index.html",
             js_api=self.api,
             **kwargs,
         )
+
         # Tell webview to execute api func assignment and enter main loop once loaded
+        self.pyweb_window.events.loaded += lambda: api.__set_view_window__(self)
         self.pyweb_window.events.loaded += self._assign_callbacks
         self.pyweb_window.events.loaded += self._manage_queue
 
@@ -237,8 +275,22 @@ class PyWv(View):
             if not (name.startswith("__") or name.endswith("__")):
                 self.run_script(f"window.api.{name} = pywebview.api.{name}")
 
-        # Signal inital setup is complete and JS Commands can be run on this webview
-        self.loaded_event.set()
+        # Signal to both python and javascript listeners that inital setup is complete
+        self.js_loaded_event.set()
+        self.run_script("window.api.loaded_check()")
+
+    def close(self):
+        self.pyweb_window.destroy()
+
+    def maximize(self):
+        # This doesn't work due to a py_webview bug.
+        if self.pyweb_window.maximized:
+            self.pyweb_window.minimize()
+        else:
+            self.pyweb_window.maximize()
+
+    def minimize(self):
+        self.pyweb_window.minimize()
 
     def show(self):
         self.pyweb_window.show()

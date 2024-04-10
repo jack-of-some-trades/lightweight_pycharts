@@ -65,10 +65,10 @@ export class topbar {
         let wrap_div;
         switch (icon) {
             case icons.panel_right:
-                wrap_div = Wrapper_Divs.DRAW_TOOLS;
+                wrap_div = Wrapper_Divs.NAV_BAR;
                 break;
             case icons.panel_bottom:
-                wrap_div = Wrapper_Divs.DRAW_TOOLS;
+                wrap_div = Wrapper_Divs.UTIL_BAR;
                 break;
             default:
                 icon = icons.panel_left;
@@ -90,6 +90,26 @@ export class topbar {
                 }
         });
         return toggle_btn;
+    }
+    button(icon) {
+        let btn = document.createElement('div');
+        btn.appendChild(icon_manager.get_svg(icon, ['icon_hover']));
+        btn.classList.add('topbar_menu_button');
+        btn.style.margin = '4px';
+        switch (icon) {
+            case icons.close:
+                btn.addEventListener('click', () => { window.api.close(); });
+                break;
+            case icons.minimize:
+                btn.addEventListener('click', () => { window.api.minimize(); });
+                break;
+            case icons.maximize:
+                btn.addEventListener('click', () => { window.api.maximize(); });
+                break;
+            default:
+                btn.addEventListener('click', () => { window.api.callback(`button ${icon} pressed!`); });
+        }
+        return btn;
     }
     separator() {
         let new_div = document.createElement('div');

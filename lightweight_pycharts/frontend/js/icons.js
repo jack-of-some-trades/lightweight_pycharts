@@ -20,6 +20,7 @@ export class icon_manager {
             else
                 svg.replaceWith(icon_manager.get_svg(svg.id));
         });
+        icon_manager.loaded = true;
     }
     static get_svg(icon, css_classes = []) {
         if (icon_manager.svg_doc) {
@@ -38,6 +39,7 @@ export class icon_manager {
         }
     }
 }
+icon_manager.loaded = false;
 export var icons;
 (function (icons) {
     icons["menu"] = "menu";
@@ -84,6 +86,8 @@ export var icons;
     icons["settings"] = "settings";
     icons["settings_small"] = "settings_small";
     icons["add_section"] = "add_section";
+    icons["maximize"] = "maximize";
+    icons["minimize"] = "minimize";
     icons["fib_retrace"] = "fib_retrace";
     icons["fib_extend"] = "fib_extend";
     icons["trend_line"] = "trend_line";

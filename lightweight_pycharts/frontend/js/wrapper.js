@@ -5,6 +5,7 @@ import * as u from "./util.js";
 import { Wrapper_Divs } from "./util.js";
 export class Wrapper {
     constructor() {
+        this.loaded = false;
         this.containers = [];
         this.resizeTimeoutID = null;
         this.div = document.createElement('div');
@@ -70,6 +71,7 @@ export class Wrapper {
         this.resize_debounce = this.resize_debounce.bind(this);
         this.resize();
         window.addEventListener('resize', this.resize);
+        this.loaded = true;
     }
     resize() {
         let width = window.innerWidth;

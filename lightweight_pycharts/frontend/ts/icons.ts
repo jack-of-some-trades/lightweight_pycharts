@@ -4,6 +4,7 @@
  * Singleton Class to manage loading of the svg icons
  */
 export class icon_manager {
+    static loaded: boolean = false
     private static instance: icon_manager
     private static svg_doc: Document | null
 
@@ -42,6 +43,7 @@ export class icon_manager {
             else
                 svg.replaceWith(icon_manager.get_svg(svg.id as icons))
         });
+        icon_manager.loaded = true
     }
 
     /**
@@ -120,6 +122,8 @@ export enum icons {
     settings = "settings",
     settings_small = "settings_small",
     add_section = "add_section",
+    maximize = "maximize",
+    minimize = "minimize",
 
     fib_retrace = "fib_retrace",
     fib_extend = "fib_extend",

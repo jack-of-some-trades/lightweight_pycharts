@@ -26,6 +26,7 @@ import { Wrapper_Divs } from "./util.js";
  * @member containers An Array of container objects. Analogous to tabs of a window.
  */
 export class Wrapper {
+    loaded: boolean = false
     containers: Container[] = []
 
     div: HTMLDivElement
@@ -126,6 +127,7 @@ export class Wrapper {
 
         //Setup resize listener
         window.addEventListener('resize', this.resize)
+        this.loaded = true;
     }
 
     /**
