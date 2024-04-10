@@ -213,26 +213,30 @@ export function overlay_menu(overlay_div: HTMLDivElement, parent_div: HTMLDivEle
         if (item.star) {
             item_div.appendChild(toggle_star(item_div,
                 () => {
-                    console.log('active')
+                    console.log('Add Icon to Fav List')
                 },
                 () => {
-                    console.log('deactive')
+                    console.log('Remove Icon from fav List')
                 }
             ))
         }
 
 
-        //Setup click behavior
-        item_div.addEventListener('click', () => {
-            overlay_menu.classList.remove('overlay_menu_active')//Remove Visibility
+        //Setup click behavior on the selecatble wrapper
+        sel_wrap.addEventListener('click', () => {
+            overlay_menu.classList.remove('overlay_menu_active') //Remove Visibility
 
-            if (update_icon && item.icon) {
-                if (parent_div.firstElementChild)   //Update Menu Icon
-                    parent_div.removeChild(parent_div.firstElementChild)
-                parent_div.insertBefore(icon_manager.get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild)
+            if (update_icon) {
+                if (item.icon) {
+                    //Update SVG Icon retaining Classes from the previous icon
+                    let old_icon = parent_div.firstElementChild as SVGSVGElement
+                    old_icon.replaceWith(icon_manager.get_svg(item.icon, old_icon.classList.toString().split(" ")))
+                } else {
+                    //Update Text Icon
+                }
             }
 
-            if (item.func)
+            if (item.func) //Call Icon's activate Function
                 item.func()
         })
 

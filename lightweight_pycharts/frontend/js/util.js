@@ -136,17 +136,20 @@ export function overlay_menu(overlay_div, parent_div, items, update_icon, id, lo
         item_div.appendChild(sel_wrap);
         if (item.star) {
             item_div.appendChild(toggle_star(item_div, () => {
-                console.log('active');
+                console.log('Add Icon to Fav List');
             }, () => {
-                console.log('deactive');
+                console.log('Remove Icon from fav List');
             }));
         }
-        item_div.addEventListener('click', () => {
+        sel_wrap.addEventListener('click', () => {
             overlay_menu.classList.remove('overlay_menu_active');
-            if (update_icon && item.icon) {
-                if (parent_div.firstElementChild)
-                    parent_div.removeChild(parent_div.firstElementChild);
-                parent_div.insertBefore(icon_manager.get_svg(item.icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']), parent_div.firstChild);
+            if (update_icon) {
+                if (item.icon) {
+                    let old_icon = parent_div.firstElementChild;
+                    old_icon.replaceWith(icon_manager.get_svg(item.icon, old_icon.classList.toString().split(" ")));
+                }
+                else {
+                }
             }
             if (item.func)
                 item.func();

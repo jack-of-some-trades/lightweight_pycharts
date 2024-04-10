@@ -130,6 +130,10 @@ body {
     background-color: var(--icon-hover-color);
 }
 
+.icon_active {
+    background-color: var(--icon-active-color);
+}
+
 .icon_text,
 .menu_text {
     height: -webkit-fill-available;
@@ -282,7 +286,7 @@ body {
 .topbar_menu_button {
     display: flex;
     width: auto;
-    height: -webkit-fill-available;
+    height: 80%;
     border-radius: 5px;
     align-items: center;
 }

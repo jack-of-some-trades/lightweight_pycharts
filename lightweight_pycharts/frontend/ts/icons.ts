@@ -80,6 +80,10 @@ export enum icons {
     menu_arrow_ns = 'menu_arrow_ns',
     menu_arrow_up_down = "menu_arrow_up_down",
 
+    panel_left = "panel_left",
+    panel_right = "panel_right",
+    panel_bottom = "panel_bottom",
+
     cursor_cross = "cursor_cross",
     cursor_dot = "cursor_dot",
     cursor_arrow = "cursor_arrow",
