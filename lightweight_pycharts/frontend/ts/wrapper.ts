@@ -1,4 +1,3 @@
-//@ts-ignore
 import { Container } from "./container.js";
 import { toolbox } from "./toolbox.js";
 import { topbar } from "./topbar.js";

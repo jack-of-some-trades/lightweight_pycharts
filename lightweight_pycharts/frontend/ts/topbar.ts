@@ -19,8 +19,8 @@ export class topbar {
         right_div.classList.add('topbar', 'topbar_right')
         right_div.appendChild(this.separator())
         right_div.appendChild(this.panel_toggle(parent, icons.panel_left))
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_right))
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_bottom))
+        right_div.appendChild(this.panel_toggle(parent, icons.panel_right, false))
+        right_div.appendChild(this.panel_toggle(parent, icons.panel_bottom, false))
 
         this_div.appendChild(left_div)
         this_div.appendChild(right_div)
@@ -113,8 +113,12 @@ export class topbar {
         }
 
         let svg = icon_manager.get_svg(icon, ['icon_hover'])
-        if (active_start)
+        if (active_start) {
             svg.classList.add('icon_active')
+            parent.show_section(wrap_div)
+        } else {
+            parent.hide_section(wrap_div)
+        }
         toggle_btn.appendChild(svg)
 
         toggle_btn.addEventListener('click', () => {

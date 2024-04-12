@@ -1,5 +1,5 @@
 import { icon_manager, icons } from "./icons.js";
-import { ColorType, CrosshairMode, LastPriceAnimationMode, LineStyle, LineType, PriceLineSource, PriceScaleMode } from "./pkg.js";
+import { ColorType, CrosshairMode, LastPriceAnimationMode, LineStyle, LineType, PriceLineSource, PriceScaleMode } from "./lib/pkg.js";
 export var Wrapper_Divs;
 (function (Wrapper_Divs) {
     Wrapper_Divs["TOP_BAR"] = "div_top";

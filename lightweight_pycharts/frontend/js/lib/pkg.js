@@ -1,3 +1,4 @@
+import * as lwc from '../../js/lib/pkg.mjs';
 export var ColorType;
 (function (ColorType) {
     ColorType["Solid"] = "solid";
@@ -60,6 +61,21 @@ export var TrackingModeExitMode;
     TrackingModeExitMode[TrackingModeExitMode["OnTouchEnd"] = 0] = "OnTouchEnd";
     TrackingModeExitMode[TrackingModeExitMode["OnNextTap"] = 1] = "OnNextTap";
 })(TrackingModeExitMode || (TrackingModeExitMode = {}));
+export function createChart(container, options) {
+    return lwc.createChart(container, options);
+}
+export function createChartEx(container, horzScaleBehavior, options) {
+    return lwc.createChartEx(container, horzScaleBehavior, options);
+}
+export function isBusinessDay(time) {
+    return lwc.isBusinessDay(time);
+}
+export function isUTCTimestamp(time) {
+    return lwc.isUTCTimestamp(time);
+}
+export function version() {
+    return lwc.version();
+}
 export var Color;
 (function (Color) {
     Color["khaki"] = "#f0e68c";

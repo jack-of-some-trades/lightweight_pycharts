@@ -1,4 +1,5 @@
-import * as lwc from "../js/pkg.mjs";
+import { createChart } from "./lib/pkg.js";
+import { TrendLine } from "./plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 export class Pane {
     constructor(id, div, flex_width = 1, flex_height = 1, chart_opts = u.DEFAULT_PYCHART_OPTS) {
@@ -8,17 +9,19 @@ export class Pane {
         this.div = div;
         this.flex_width = flex_width;
         this.flex_height = flex_height;
-        this.chart = lwc.createChart(this.div, chart_opts);
+        this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.div.getElementsByTagName('td')[1].firstChild;
         this.resize = this.resize.bind(this);
         this.set_data = this.set_data.bind(this);
         this.add_candlestick_series = this.add_candlestick_series.bind(this);
         this.watermark_div = null;
         this.watermark_series = null;
-        this.create_screensaver();
-        this.add_candlestick_series();
+        this.main_series = this.chart.addCandlestickSeries();
     }
-    set_data(dtype, data, series = this.series[0]) {
+    set_main_series(series) {
+        this.main_series = series;
+    }
+    set_data(dtype, data, series = this.main_series) {
         if (data.length === 0) {
             series.setData([]);
             this.create_screensaver();
@@ -78,6 +81,20 @@ export class Pane {
     }
     add_candlestick_series(options) {
         this.series.push(this.chart.addCandlestickSeries(options));
+    }
+    create_line() {
+        const data = this.main_series.data();
+        const dataLength = data.length;
+        const point1 = {
+            time: data[dataLength - 50].time,
+            price: data[dataLength - 50].close * 0.9,
+        };
+        const point2 = {
+            time: data[dataLength - 5].time,
+            price: data[dataLength - 5].close * 1.10,
+        };
+        const trend = new TrendLine(this.chart, this.main_series, point1, point2);
+        this.main_series.attachPrimitive(trend);
     }
     resize(width, height) {
         let this_width = width * this.flex_width;

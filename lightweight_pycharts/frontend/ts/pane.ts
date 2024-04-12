@@ -1,9 +1,7 @@
-//@ts-ignore
-import * as lwc from "../js/pkg.mjs";
 import { Legend } from "./legend.js";
-import { AnySeries, AnySeriesData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions } from "./pkg.js";
+import { AnySeries, AnySeriesData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
+import { TrendLine } from "./plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
-
 
 //The portion of a chart where things are actually drawn
 export class Pane {
@@ -12,6 +10,7 @@ export class Pane {
     flex_width: number
     flex_height: number
     legend?: Legend
+    main_series: AnySeries
     series: AnySeries[] = []
 
     private chart_div: HTMLDivElement
@@ -19,6 +18,7 @@ export class Pane {
 
     private watermark_div: HTMLDivElement | null
     private watermark_series: AnySeries | null
+
 
     constructor(
         id: string,
@@ -33,7 +33,7 @@ export class Pane {
         this.flex_height = flex_height
 
         //Only One Chart per pane, so this is the only definition needed
-        this.chart = lwc.createChart(this.div, chart_opts);
+        this.chart = createChart(this.div, chart_opts);
         //Next line grabs the Div that the lightweight charts API generates
         this.chart_div = this.div.getElementsByTagName('td')[1].firstChild as HTMLDivElement
 
@@ -45,9 +45,11 @@ export class Pane {
 
         this.watermark_div = null
         this.watermark_series = null
-        //This is only temporary
-        this.create_screensaver()
-        this.add_candlestick_series()
+        this.main_series = this.chart.addCandlestickSeries()
+    }
+
+    set_main_series(series: AnySeries) {
+        this.main_series = series
     }
 
     /**
@@ -56,7 +58,7 @@ export class Pane {
      * @param data The List of Data. It is trusted that this data actually matches the dtype given
      * @param series The Data Series to be updated. Can be any of the base SeriesAPI types
      */
-    set_data(dtype: string, data: AnySeriesData[], series: AnySeries = this.series[0]) {
+    set_data(dtype: string, data: AnySeriesData[], series: AnySeries = this.main_series) {
         if (data.length === 0) {
             //Delete Present Data if none was given.
             series.setData([])
@@ -67,6 +69,15 @@ export class Pane {
         } else if (this.watermark_div) {
             this.remove_screensaver()
         }
+
+        // console.log('making stuff')
+        // const customSeriesView = new RoundedCandleSeries()
+        // console.log('made series')
+        // let new_series = this.chart.addCustomSeries(customSeriesView)
+        // console.log('added series')
+        // new_series.setData(data)
+        // console.log('dafaq?')
+        // return
 
         let data_set: boolean = false
         switch (series.seriesType()) {
@@ -118,6 +129,21 @@ export class Pane {
 
     add_candlestick_series(options?: DP<CandlestickSeriesOptions>) {
         this.series.push(this.chart.addCandlestickSeries(options))
+    }
+
+    create_line() {
+        const data = this.main_series.data();
+        const dataLength = data.length
+        const point1 = {
+            time: data[dataLength - 50].time,
+            price: data[dataLength - 50].close * 0.9,
+        };
+        const point2 = {
+            time: data[dataLength - 5].time,
+            price: data[dataLength - 5].close * 1.10,
+        };
+        const trend = new TrendLine(this.chart, this.main_series, point1, point2);
+        this.main_series.attachPrimitive(trend);
     }
 
     /**
