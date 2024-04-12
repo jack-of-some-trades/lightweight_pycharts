@@ -5,7 +5,7 @@ import { CanvasRenderingTarget2D } from "./fancy-canvas.js";
 //@ts-ignore
 import * as lwc from '../../js/lib/pkg.mjs';
 
-export declare const customSeriesDefaultOptions: CustomSeriesOptions;
+export const customSeriesDefaultOptions: CustomSeriesOptions = lwc.customSeriesDefaultOptions;
 
 /**
  * Represents a type of color.
