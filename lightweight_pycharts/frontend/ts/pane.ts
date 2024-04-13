@@ -1,5 +1,6 @@
 import { Legend } from "./legend.js";
-import { AnySeries, AnySeriesData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
+import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
+import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import { TrendLine } from "./plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 
@@ -45,7 +46,7 @@ export class Pane {
 
         this.watermark_div = null
         this.watermark_series = null
-        this.main_series = this.chart.addCandlestickSeries()
+        this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries())
     }
 
     set_main_series(series: AnySeries) {
@@ -70,18 +71,11 @@ export class Pane {
             this.remove_screensaver()
         }
 
-        // console.log('making stuff')
-        // const customSeriesView = new RoundedCandleSeries()
-        // console.log('made series')
-        // let new_series = this.chart.addCustomSeries(customSeriesView)
-        // console.log('added series')
-        // new_series.setData(data)
-        // console.log('dafaq?')
-        // return
-
         let data_set: boolean = false
         switch (series.seriesType()) {
             case "Candlestick":
+                //The input dtype is used instead of the 'util.is*dataype*()' functions since
+                //the dtype input originates from pandas where the whole list is checked, not just the first element
                 if (dtype == 'OHLC' || dtype == 'Bar' || dtype == 'Candlestick') {
                     series.setData(data)
                     data_set = true
@@ -117,8 +111,12 @@ export class Pane {
                     data_set = true
                 }
                 break;
+            default: //Custom Datatype
+                //Can't type check this so it will just blindly be applied. gl.
+                series.setData(data)
+                data_set = true
         }
-        if (dtype == 'WhitespaceData') {
+        if (!data_set && dtype == 'WhitespaceData') {
             series.setData(data)
             data_set = true
         }
@@ -132,8 +130,9 @@ export class Pane {
     }
 
     create_line() {
-        const data = this.main_series.data();
+        const data = this.main_series.data() as CandlestickData[]
         const dataLength = data.length
+        console.log(data[0].time)
         const point1 = {
             time: data[dataLength - 50].time,
             price: data[dataLength - 50].close * 0.9,

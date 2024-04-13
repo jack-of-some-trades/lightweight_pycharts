@@ -2,27 +2,64 @@ import { icon_manager, icons } from "./icons.js"
 import { LAYOUT_DIM_LEFT, Wrapper_Divs, menu_location, overlay_menu } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
+/**
+ * Singleton class that Constructs the Left-side ToolBox
+ */
 export class toolbox {
-    overlay_div: HTMLDivElement
+    static loaded: boolean = false
+    static instance: toolbox                //@ts-ignore *Ignoring div not created error
+    private div: HTMLDivElement             //@ts-ignore *Happens b/c of "return toolbox.instance"
+    private overlay_div: HTMLDivElement
+
+    private top_div: HTMLDivElement | undefined
+    private bottom_div: HTMLDivElement | undefined
 
     constructor(parent: Wrapper) {
-        let this_div = parent.get_div(Wrapper_Divs.DRAW_TOOLS)
+        if (toolbox.instance) {
+            //Return Instance already created
+            return toolbox.instance
+        }
+        toolbox.instance = this
+        toolbox.instance.create_toolbar = this.create_toolbar.bind(toolbox.instance)
+        this.div = parent.get_div(Wrapper_Divs.DRAW_TOOLS)
+        this.div.style.flexDirection = 'column'
         this.overlay_div = parent.div_overlay
-        this_div.style.flexDirection = 'column'
 
-        let top_div = document.createElement('div')
-        top_div.classList.add('toolbar', 'toolbar_top')
-        top_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`
+        this.create_toolbar()
+        toolbox.loaded = true
+        // Remainder is left just in case a favorites functionality is added to the toolbar
+        // fetch('./fmt/toolbox.json')
+        //     .then((resp) => resp.json())
+        //     .then((json_fmt) => {
+        //         this.create_toolbar(json_fmt) 
+        //         toolbox.loaded = true
+        //     })
+    }
 
-        top_div.appendChild(this.crosshair_selector())
-        top_div.appendChild(this.separator())
+    create_toolbar() {
+        if (this.top_div) this.top_div.remove()
+        if (this.bottom_div) this.bottom_div.remove()
 
-        let bottom_div = document.createElement('div')
-        bottom_div.classList.add('toolbar', 'toolbar_bottom')
-        bottom_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`
+        this.top_div = document.createElement('div')
+        this.top_div.classList.add('toolbar', 'toolbar_top')
+        this.top_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`
 
-        this_div.appendChild(top_div)
-        this_div.appendChild(bottom_div)
+        this.top_div.appendChild(this.crosshair_selector())
+        this.top_div.appendChild(this.separator())
+        this.top_div.appendChild(this.line_tools_selector())
+        this.top_div.appendChild(this.fib_tools_selector())
+        this.top_div.appendChild(this.measure_tool_selector())
+        this.top_div.appendChild(this.separator())
+        this.top_div.appendChild(this.ruler_button())
+        this.top_div.appendChild(this.magnet_button())
+
+        // No use for bottom justified content yet.
+        // this.bottom_div = document.createElement('div')
+        // this.bottom_div.classList.add('toolbar', 'toolbar_bottom')
+        // this.bottom_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`
+
+        this.div.appendChild(this.top_div)
+        // this.div.appendChild(this.bottom_div)
     }
 
     /**
@@ -56,17 +93,120 @@ export class toolbox {
         selector_div.id = 'crosshair_selector'
         selector_div.classList.add('toolbar', 'toolbar_item')
 
-        selector_div.appendChild(icon_manager.get_svg(icons.cursor_cross, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
-        selector_div.appendChild(this.menu_selector(selector_div))
-
         let items = [
-            { label: 'Dot', icon: icons.cursor_dot },
             { label: 'Cross', icon: icons.cursor_cross },
+            { label: 'Dot', icon: icons.cursor_dot },
             { label: 'Arrow', icon: icons.cursor_arrow },
         ]
 
+        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(this.menu_selector(selector_div))
+
         //Create Selection Menu
-        overlay_menu(this.overlay_div, selector_div, items, true, 'crosshair_selector', menu_location.TOP_RIGHT)
+        overlay_menu(this.overlay_div, selector_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT)
+
+        return selector_div
+    }
+
+    /**
+     * Makes a Menu for Selecting Linear Trend Tools
+     */
+    line_tools_selector(): HTMLDivElement {
+        let selector_div = document.createElement('div')
+        selector_div.id = 'linetools_selector'
+        selector_div.classList.add('toolbar', 'toolbar_item')
+
+        let items = [
+            { label: 'Trend Line', icon: icons.trend_line },
+            { label: 'Horizontal Ray', icon: icons.horiz_ray },
+            { label: 'Horizontal Line', icon: icons.horiz_line },
+            { label: 'Vertical Line', icon: icons.vert_line },
+            { label: 'Polyline', icon: icons.polyline },
+            { label: 'Parallel Channel', icon: icons.channel_parallel },
+            { label: 'Disjoint Channel', icon: icons.channel_disjoint },
+        ]
+
+        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(this.menu_selector(selector_div))
+
+        //Create Selection Menu
+        overlay_menu(this.overlay_div, selector_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT)
+
+        return selector_div
+    }
+
+    /**
+     * Makes a Menu for Selecting Fib Tools
+     */
+    fib_tools_selector(): HTMLDivElement {
+        let selector_div = document.createElement('div')
+        selector_div.id = 'fibtools_selector'
+        selector_div.classList.add('toolbar', 'toolbar_item')
+
+        let items = [
+            { label: 'Fibinachi Retrace', icon: icons.fib_retrace },
+            { label: 'Fibinachi Extend', icon: icons.fib_extend },
+        ]
+
+        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(this.menu_selector(selector_div))
+
+        //Create Selection Menu
+        overlay_menu(this.overlay_div, selector_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT)
+
+        return selector_div
+    }
+
+    /**
+     * Makes a Menu for Selecting Range
+     */
+    measure_tool_selector() {
+        let selector_div = document.createElement('div')
+        selector_div.id = 'measuretools_selector'
+        selector_div.classList.add('toolbar', 'toolbar_item')
+
+        let items = [
+            { label: 'Price Range', icon: icons.range_price },
+            { label: 'Date Range', icon: icons.range_date },
+            { label: 'Price and Date Meaure', icon: icons.range_price_date },
+            { label: 'Bars Pattern', icon: icons.bar_pattern },
+            { label: 'Bar Ghost Feed', icon: icons.bar_ghost_feed },
+
+        ]
+
+        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(this.menu_selector(selector_div))
+
+        //Create Selection Menu
+        overlay_menu(this.overlay_div, selector_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT)
+
+        return selector_div
+    }
+
+    /**
+     * Makes a Button for quick access to the ruler
+     */
+    ruler_button() {
+        let selector_div = document.createElement('div')
+        selector_div.id = 'measuretools_selector'
+        selector_div.classList.add('toolbar', 'toolbar_item')
+        selector_div.appendChild(icon_manager.get_svg(icons.ruler, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+
+        //selector_div.addEventListener('click', RangeTool())
+
+        return selector_div
+    }
+
+    /**
+     * Makes a Button for toggling the magnet effect
+     */
+    magnet_button() {
+        let selector_div = document.createElement('div')
+        selector_div.id = 'measuretools_selector'
+        selector_div.classList.add('toolbar', 'toolbar_item')
+        selector_div.appendChild(icon_manager.get_svg(icons.magnet, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+
+        //selector_div.addEventListener('click', RangeTool())
 
         return selector_div
     }

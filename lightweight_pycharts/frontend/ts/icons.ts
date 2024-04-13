@@ -14,6 +14,10 @@ export class icon_manager {
             return icon_manager.instance
         }
 
+        //This method of loading SVGs works pretty well, but it is a little slow
+        //Something about fetch() causes a small delay. You could use the <svg><use href=></svg>
+        //method, but that has it's own, far more cubursome, issue of needing to hardcode
+        //the viewport, width, and height sizing of the <svg> tag.
         fetch('./css/svg-defs.svg').then((resp) => resp.text().then(
             (svg_file_text) => {
                 //After loading, parse the .svg into a document object

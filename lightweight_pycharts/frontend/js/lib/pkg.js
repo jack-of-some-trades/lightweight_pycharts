@@ -1,4 +1,5 @@
 import * as lwc from '../../js/lib/pkg.mjs';
+export const customSeriesDefaultOptions = lwc.customSeriesDefaultOptions;
 export var ColorType;
 (function (ColorType) {
     ColorType["Solid"] = "solid";

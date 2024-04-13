@@ -304,6 +304,9 @@ export function isWhitespaceData(data: AnySeriesData): data is WhitespaceData {
     //If there are optional keys, at least one of them is present
     return (mandatory_keys_len == 1)
 }
+export function isWhitespaceDataList(data: AnySeriesData[]): data is WhitespaceData[] {
+    return isWhitespaceData(data[0])
+}
 
 /**
  * Checks if the given datatype implements the SingleValueData interface.
@@ -319,6 +322,9 @@ export function isSingleValueData(data: AnySeriesData): data is SingleValueData 
     mandatory_keys_len += keys.includes('value') ? 1 : 0
 
     return (mandatory_keys_len == 2)
+}
+export function isSingleValueDataList(data: AnySeriesData[]): data is SingleValueData[] {
+    return isSingleValueData(data[0])
 }
 
 /**
@@ -339,6 +345,9 @@ export function isOhlcData(data: AnySeriesData): data is OhlcData {
     // optional_keys_len += keys.includes('low') ? 1 : 0
 
     return (mandatory_keys_len == 3)
+}
+export function isOhlcDataList(data: AnySeriesData[]): data is OhlcData[] {
+    return isOhlcData(data[0])
 }
 
 /**
@@ -363,6 +372,9 @@ export function isCandlestickData(data: AnySeriesData): data is CandlestickData 
 
     return (mandatory_keys_len == 3 && optional_keys_len > 0)
 }
+export function isCandlestickDataList(data: AnySeriesData[]): data is CandlestickData[] {
+    return isCandlestickData(data[0])
+}
 
 /**
  * Checks if the given datatype implements the BarData interface.
@@ -384,6 +396,9 @@ export function isBarData(data: AnySeriesData): data is BarData {
 
     return (mandatory_keys_len == 3 && optional_keys_len > 0)
 }
+export function isBarDataList(data: AnySeriesData[]): data is BarData[] {
+    return isBarData(data[0])
+}
 
 /**
  * Checks if the given datatype implements the HistogramData interface.
@@ -402,6 +417,9 @@ export function isHistogramData(data: AnySeriesData): data is HistogramData {
 
     return (mandatory_keys_len == 2 && optional_keys_len > 0)
 }
+export function isHistogramDataList(data: AnySeriesData[]): data is HistogramData[] {
+    return isHistogramData(data[0])
+}
 
 /**
  * Checks if the given datatype implements the LineData interface.
@@ -419,6 +437,9 @@ export function isLineData(data: AnySeriesData): data is LineData {
     optional_keys_len += keys.includes('color') ? 1 : 0
 
     return (mandatory_keys_len == 2 && optional_keys_len > 0)
+}
+export function isLineDataList(data: AnySeriesData[]): data is LineData[] {
+    return isLineData(data[0])
 }
 
 /**
@@ -443,6 +464,9 @@ export function isBaselineData(data: AnySeriesData): data is BaselineData {
 
     return (mandatory_keys_len == 2 && optional_keys_len > 0)
 }
+export function isBaselineDataList(data: AnySeriesData[]): data is BaselineData[] {
+    return isBaselineData(data[0])
+}
 
 /**
  * Checks if the given datatype implements the AreaData interface.
@@ -462,6 +486,9 @@ export function isAreaData(data: AnySeriesData): data is AreaData {
     optional_keys_len += keys.includes('bottomColor') ? 1 : 0
 
     return (mandatory_keys_len == 2 && optional_keys_len > 0)
+}
+export function isAreaDataList(data: AnySeriesData[]): data is AreaData[] {
+    return isAreaData(data[0])
 }
 
 // #endregion

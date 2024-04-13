@@ -1,4 +1,5 @@
 import { createChart } from "./lib/pkg.js";
+import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import { TrendLine } from "./plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 export class Pane {
@@ -16,7 +17,7 @@ export class Pane {
         this.add_candlestick_series = this.add_candlestick_series.bind(this);
         this.watermark_div = null;
         this.watermark_series = null;
-        this.main_series = this.chart.addCandlestickSeries();
+        this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries());
     }
     set_main_series(series) {
         this.main_series = series;
@@ -71,8 +72,11 @@ export class Pane {
                     data_set = true;
                 }
                 break;
+            default:
+                series.setData(data);
+                data_set = true;
         }
-        if (dtype == 'WhitespaceData') {
+        if (!data_set && dtype == 'WhitespaceData') {
             series.setData(data);
             data_set = true;
         }
@@ -85,6 +89,7 @@ export class Pane {
     create_line() {
         const data = this.main_series.data();
         const dataLength = data.length;
+        console.log(data[0].time);
         const point1 = {
             time: data[dataLength - 50].time,
             price: data[dataLength - 50].close * 0.9,

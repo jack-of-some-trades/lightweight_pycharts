@@ -249,6 +249,7 @@ class PyWv(View):
         )
 
         # Tell webview to execute api func assignment and enter main loop once loaded
+        # Order of these function calls matter
         self.pyweb_window.events.loaded += lambda: api.__set_view_window__(self)
         self.pyweb_window.events.loaded += self._assign_callbacks
         self.pyweb_window.events.loaded += self._manage_queue
