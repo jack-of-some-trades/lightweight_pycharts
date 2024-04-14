@@ -17,7 +17,7 @@ export class overlay_manager {
         document.body.appendChild(this.div);
         overlay_manager.instance = this;
     }
-    static menu(parent_div, items, update_icon, id, loc) {
+    static menu(parent_div, items, update_icon, id, loc, on_sel) {
         if (items.length === 0)
             return;
         let overlay_menu = document.createElement('div');
@@ -48,16 +48,16 @@ export class overlay_manager {
                     sub_menu.classList.add('overlay_sub_menu');
                 }
                 sub_menu.style.display = item.separator_vis ? 'flex' : 'none';
-                overlay_menu.appendChild(overlay_manager.make_separator(sub_menu, item));
+                overlay_menu.appendChild(overlay_manager.make_section_title(sub_menu, item));
             }
             else {
-                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, parent_div, update_icon));
+                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, parent_div, on_sel));
             }
         });
         overlay_menu.appendChild(sub_menu);
         overlay_manager.instance.div.appendChild(overlay_menu);
     }
-    static make_separator(sub_menu, item) {
+    static make_section_title(sub_menu, item) {
         var _a;
         let title_bar = document.createElement('div');
         title_bar.classList.add('menu_item', 'overlay_menu_separator');
@@ -86,7 +86,7 @@ export class overlay_manager {
         });
         return title_bar;
     }
-    static make_item(item, menu, parent_div, update_icon) {
+    static make_item(item, menu, parent_div, on_sel) {
         let item_div = document.createElement('div');
         item_div.classList.add('menu_item');
         let sel_wrap = document.createElement('span');
@@ -102,16 +102,7 @@ export class overlay_manager {
             this.make_toggle_star(item_div, item);
         sel_wrap.addEventListener('click', () => {
             menu.classList.remove('overlay_menu_active');
-            if (update_icon) {
-                if (item.icon) {
-                    let old_icon = parent_div.firstElementChild;
-                    old_icon.replaceWith(icon_manager.get_svg(item.icon, old_icon.classList.toString().split(" ")));
-                }
-                else {
-                }
-            }
-            if (item.func)
-                item.func();
+            on_sel(item.data);
         });
         return item_div;
     }

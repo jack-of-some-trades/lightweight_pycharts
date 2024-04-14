@@ -97,41 +97,42 @@ export class topbar {
         let menu_button = this.menu_selector()
 
         let items = [
-            { label: '5 Minute', icon_str: '5m', star: true },
-            { label: '15 Minute', icon_str: '15m', star: true },
+            { label: '5 Minute', data: '5m', star: true, star_act: this.tf_star_act.bind(this, '5m'), star_deact: this.tf_star_deact.bind(this, '5m') },
+            { label: '15 Minute', data: '15m', star: true },
             { label: 'Single Layouts', separator: true },
-            { label: '30 Minute', icon_str: '30m', star: true },
+            { label: '30 Minute', data: '30m', star: true },
         ]
 
-        overlay_manager.menu(menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT)
+        overlay_manager.menu(menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.tf_sel)
 
         switcher_div.appendChild(menu_button)
         return switcher_div
     }
 
-    candle_switcher() { }
-
-    indicators() { }
+    tf_sel(arg: any) { console.log(`selected ${arg}`) }
+    tf_star_act(data: string) { console.log(`Activated ${data}`) }
+    tf_star_deact(data: string) { console.log(`Deactivated ${data}`) }
 
     layout_switcher(): HTMLDivElement {
         let switcher_div = document.createElement('div')
         switcher_div.id = 'layout_switcher'
         switcher_div.classList.add('topbar', 'topbar_container')
-
         let menu_button = this.menu_selector()
 
         let items: menu_item[] = [
             { label: 'Single Layouts', separator: true },
-            { label: '5 Minute', icon_str: '5m', star: true, star_act: () => { console.log('activate') }, star_deact: () => { console.log('deactivate') } },
-            { label: '15 Minute', icon_str: '15m', star: true },
-            { label: '30 Minute', icon_str: '30m', star: true },
+            { label: '5 Minute', data: '5m', star: true },
+            { label: '15 Minute', data: '15m', star: true },
+            { label: '30 Minute', data: '30m', star: true },
         ]
-
-        overlay_manager.menu(menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT)
+        overlay_manager.menu(menu_button, items, false, 'layout_selector', menu_location.BOTTOM_RIGHT, this.layout_sel)
 
         switcher_div.appendChild(menu_button)
         return switcher_div
     }
+    layout_sel() { }
+    layout_star_act() { }
+    layout_star_deact() { }
 
     /**
      * Create a Topbar Toggleable div that shows/hides a layout panel
@@ -188,16 +189,13 @@ export class topbar {
         btn.style.margin = '4px'
         switch (icon) {
             case icons.close:
-                btn.addEventListener('click', () => { window.api.close() })
-                break;
+                btn.addEventListener('click', () => { window.api.close() }); break;
             case icons.minimize:
-                btn.addEventListener('click', () => { window.api.minimize() })
-                break;
+                btn.addEventListener('click', () => { window.api.minimize() }); break;
             case icons.maximize:
-                btn.addEventListener('click', () => { window.api.maximize() })
-                break;
+                btn.addEventListener('click', () => { window.api.maximize() }); break;
             default:
-                btn.addEventListener('click', () => { window.api.callback(`button ${icon} pressed!`) })
+                btn.addEventListener('click', () => { console.log(`button ${icon} pressed!`) })
         }
         return btn
     }

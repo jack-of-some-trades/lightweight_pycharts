@@ -172,8 +172,12 @@ body {
 }
 
 .chart_pane {
-    border-radius: 5px;
+    border: solid var(--chart-border) 1px;
     position: absolute;
+}
+
+.chart_pane_active {
+    border-color: var(--accent-color);
 }
 
 .chart_separator {

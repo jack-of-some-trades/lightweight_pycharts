@@ -100,13 +100,15 @@ export class toolbox {
         ]
 
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
-        selector_div.appendChild(this.menu_selector(selector_div))
+        let menu_div = this.menu_selector(selector_div)
+        selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(selector_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(menu_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT, this.on_crosshair_sel)
 
         return selector_div
     }
+    on_crosshair_sel() { }
 
     /**
      * Makes a Menu for Selecting Linear Trend Tools
@@ -127,13 +129,15 @@ export class toolbox {
         ]
 
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
-        selector_div.appendChild(this.menu_selector(selector_div))
+        let menu_div = this.menu_selector(selector_div)
+        selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(selector_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(menu_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT, this.on_line_tools_sel)
 
         return selector_div
     }
+    on_line_tools_sel() { }
 
     /**
      * Makes a Menu for Selecting Fib Tools
@@ -149,13 +153,15 @@ export class toolbox {
         ]
 
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
-        selector_div.appendChild(this.menu_selector(selector_div))
+        let menu_div = this.menu_selector(selector_div)
+        selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(selector_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(menu_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT, this.on_fib_tools_sel)
 
         return selector_div
     }
+    on_fib_tools_sel() { }
 
     /**
      * Makes a Menu for Selecting Range
@@ -168,20 +174,21 @@ export class toolbox {
         let items = [
             { label: 'Price Range', icon: icons.range_price },
             { label: 'Date Range', icon: icons.range_date },
-            { label: 'Price and Date Meaure', icon: icons.range_price_date },
+            { label: 'Price and Date Measure', icon: icons.range_price_date },
             { label: 'Bars Pattern', icon: icons.bar_pattern },
             { label: 'Bar Ghost Feed', icon: icons.bar_ghost_feed },
-
         ]
 
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
-        selector_div.appendChild(this.menu_selector(selector_div))
+        let menu_div = this.menu_selector(selector_div)
+        selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(selector_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(menu_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT, this.on_measure_tool_sel)
 
         return selector_div
     }
+    on_measure_tool_sel() { }
 
     /**
      * Makes a Button for quick access to the ruler

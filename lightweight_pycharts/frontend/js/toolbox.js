@@ -54,10 +54,12 @@ export class toolbox {
             { label: 'Arrow', icon: icons.cursor_arrow },
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
-        selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_manager.menu(selector_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT);
+        let menu_div = this.menu_selector(selector_div);
+        selector_div.appendChild(menu_div);
+        overlay_manager.menu(menu_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT, this.on_crosshair_sel);
         return selector_div;
     }
+    on_crosshair_sel() { }
     line_tools_selector() {
         let selector_div = document.createElement('div');
         selector_div.id = 'linetools_selector';
@@ -72,10 +74,12 @@ export class toolbox {
             { label: 'Disjoint Channel', icon: icons.channel_disjoint },
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
-        selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_manager.menu(selector_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT);
+        let menu_div = this.menu_selector(selector_div);
+        selector_div.appendChild(menu_div);
+        overlay_manager.menu(menu_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT, this.on_line_tools_sel);
         return selector_div;
     }
+    on_line_tools_sel() { }
     fib_tools_selector() {
         let selector_div = document.createElement('div');
         selector_div.id = 'fibtools_selector';
@@ -85,10 +89,12 @@ export class toolbox {
             { label: 'Fibinachi Extend', icon: icons.fib_extend },
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
-        selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_manager.menu(selector_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT);
+        let menu_div = this.menu_selector(selector_div);
+        selector_div.appendChild(menu_div);
+        overlay_manager.menu(menu_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT, this.on_fib_tools_sel);
         return selector_div;
     }
+    on_fib_tools_sel() { }
     measure_tool_selector() {
         let selector_div = document.createElement('div');
         selector_div.id = 'measuretools_selector';
@@ -96,15 +102,17 @@ export class toolbox {
         let items = [
             { label: 'Price Range', icon: icons.range_price },
             { label: 'Date Range', icon: icons.range_date },
-            { label: 'Price and Date Meaure', icon: icons.range_price_date },
+            { label: 'Price and Date Measure', icon: icons.range_price_date },
             { label: 'Bars Pattern', icon: icons.bar_pattern },
             { label: 'Bar Ghost Feed', icon: icons.bar_ghost_feed },
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
-        selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_manager.menu(selector_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT);
+        let menu_div = this.menu_selector(selector_div);
+        selector_div.appendChild(menu_div);
+        overlay_manager.menu(menu_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT, this.on_measure_tool_sel);
         return selector_div;
     }
+    on_measure_tool_sel() { }
     ruler_button() {
         let selector_div = document.createElement('div');
         selector_div.id = 'measuretools_selector';

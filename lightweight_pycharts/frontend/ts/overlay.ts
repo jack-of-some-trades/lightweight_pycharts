@@ -3,9 +3,9 @@ import { icon_manager, icons } from "./icons.js"
 /**
  * Interface used when creating selectable menus
  * @param label Label Text for the selectable item or separator
+ * @param data any type of data. This is passed back to the menu's 'on_sel' function
  * @param icon SVG icon to represent the item
  * @param icon_str Text that could be used in place of the SVG icon
- * @param func CallableFunction that gets called when menu item is selected
  * @param star Boolean to represent if the item should have a toggleable 'favorites' star
  * @param star_selected Boolean starting state of the star. true == selected. default: false
  * @param star_act CallableFunction to be called when star is activated
@@ -15,13 +15,13 @@ import { icon_manager, icons } from "./icons.js"
  */
 export interface menu_item {
     label: string,
+    data?: any,
     icon?: icons,
-    icon_str?: string,
-    func?: CallableFunction,
     star?: boolean,
     star_selected?: boolean,
     star_act?: CallableFunction,
     star_deact?: CallableFunction,
+
     separator?: boolean,
     separator_vis?: boolean,
 }
@@ -57,7 +57,7 @@ export class overlay_manager {
      * @param parent_div Div Element that should make this menu visible when clicked
      * @param items List of menu_item(s) to add to the menu
      */
-    static menu(parent_div: HTMLDivElement, items: menu_item[], update_icon: boolean, id: string, loc: menu_location) {
+    static menu(parent_div: HTMLDivElement, items: menu_item[], update_icon: boolean, id: string, loc: menu_location, on_sel: CallableFunction) {
         if (items.length === 0) return //bc fuck bugs.
 
         let overlay_menu = document.createElement('div')
@@ -97,9 +97,9 @@ export class overlay_manager {
                     sub_menu.classList.add('overlay_sub_menu')
                 }
                 sub_menu.style.display = item.separator_vis ? 'flex' : 'none'
-                overlay_menu.appendChild(overlay_manager.make_separator(sub_menu, item))
+                overlay_menu.appendChild(overlay_manager.make_section_title(sub_menu, item))
             } else {
-                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, parent_div, update_icon))
+                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, parent_div, on_sel))
             }
         });
 
@@ -109,7 +109,10 @@ export class overlay_manager {
         overlay_manager.instance.div.appendChild(overlay_menu)
     }
 
-    private static make_separator(sub_menu: HTMLDivElement, item: menu_item): HTMLDivElement {
+    /**
+     * Make the Title Bar, with toggleable show/hide, for a menu_sub section
+     */
+    private static make_section_title(sub_menu: HTMLDivElement, item: menu_item): HTMLDivElement {
         let title_bar = document.createElement('div')
         title_bar.classList.add('menu_item', 'overlay_menu_separator')
 
@@ -143,7 +146,10 @@ export class overlay_manager {
         return title_bar
     }
 
-    private static make_item(item: menu_item, menu: HTMLDivElement, parent_div: HTMLDivElement, update_icon: boolean): HTMLDivElement {
+    /**
+     * Make the selectable Div for a given menu item
+     */
+    private static make_item(item: menu_item, menu: HTMLDivElement, parent_div: HTMLDivElement, on_sel: CallableFunction): HTMLDivElement {
         let item_div = document.createElement('div')
         item_div.classList.add('menu_item') //Make Item Wrapper
 
@@ -166,20 +172,7 @@ export class overlay_manager {
         //Setup click behavior on the selectable wrapper
         sel_wrap.addEventListener('click', () => {
             menu.classList.remove('overlay_menu_active') //Remove Visibility from entire menu
-
-            //update host icon if needed.
-            if (update_icon) {
-                if (item.icon) {
-                    //Update SVG Icon retaining Classes from the previous icon
-                    let old_icon = parent_div.firstElementChild as SVGSVGElement
-                    old_icon.replaceWith(icon_manager.get_svg(item.icon, old_icon.classList.toString().split(" ")))
-                } else {
-                    //Update Text Icon (e.g. The Timeframe indicator is a text icon)
-                }
-            }
-
-            if (item.func) //Call Icon's activate Function
-                item.func()
+            on_sel(item.data)
         })
 
         return item_div
@@ -217,7 +210,7 @@ export class overlay_manager {
     }
 
     /**
-     * Create a Toggleable star for the given menu item if it is needed.
+     * Create a Toggleable star for the given menu item.
      */
     static make_toggle_star(parent_div: HTMLDivElement, item: menu_item) {
         let wrapper = document.createElement('div')
@@ -245,15 +238,13 @@ export class overlay_manager {
                 icon = wrapper.firstChild as SVGSVGElement
                 icon.style.visibility = 'hidden'
 
-                if (item.star_deact)
-                    item.star_deact()
+                if (item.star_deact) item.star_deact()
             } else {
                 icon.replaceWith(icon_manager.get_svg(icons.star_filled, ["star_active", "icon_hover"]))
                 icon = wrapper.firstChild as SVGSVGElement
                 icon.style.color = 'var(--star-active-color)'
 
-                if (item.star_act)
-                    item.star_act()
+                if (item.star_act) item.star_act()
             }
         })
 
