@@ -98,7 +98,13 @@ class Window:
         await self._queue_manager
 
     def _queue_test(self):
-        self._fwd_queue.put((JS_CMD.JS_CODE, "api.callback(`weeeeeeeee`)"))
+        self._fwd_queue.put(
+            (
+                JS_CMD.JS_CODE,
+                "api.callback(`weeeeeeeee`)",
+                "api.callback(`weeeeeeeeeeeeeeeee`)",
+            )
+        )
 
     def show(self):
         "Show the PyWebView Window"

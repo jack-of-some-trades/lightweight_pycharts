@@ -14,8 +14,6 @@ import lightweight_pycharts.orm as orm
 async def main():
     window = lwc.Window(debug=True)
     df = pd.read_csv("examples/data/ohlcv.csv")
-
-    await asyncio.sleep(2)
     window.containers[0].frames[0].panes[0].set_data(df)
 
     # Halt main process since window process is Daemon by default

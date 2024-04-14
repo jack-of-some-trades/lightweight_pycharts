@@ -123,13 +123,6 @@ class View(ABC):
     @abstractmethod
     def _assign_callbacks(self): ...
 
-    @staticmethod
-    def _type_check(args: tuple, expected_type: tuple):
-        """Run-time Type Checking for items put through the queue."""
-        for _i, exp_type in enumerate(expected_type):
-            if not isinstance(args[_i], exp_type):
-                raise TypeError(f"arg[{_i}] expected to be {exp_type}, ")
-
     def _manage_queue(self):
         "Infinite loop to manage Process Queue since it is launched in an isolated process"
         while not self.stop_event.is_set():
@@ -164,33 +157,32 @@ class View(ABC):
                 )
 
     def _execute_cmd(self, js_cmd: JS_CMD, *args):
-        "Execute commands with Type Checking"
-        match js_cmd:
-            case JS_CMD.JS_CODE:  # Execute a script verbatum
-                for arg in args:
-                    if isinstance(arg, str):
-                        self.run_script(arg)
-            case JS_CMD.SHOW:  # Show the Window
+        "Execute command with Argument Pattern Matching"
+        cmd = ""
+        match js_cmd, *args:
+            # case JS_CMD.JS_CODE, Callable(), *scripts:
+            # Unfortunately this doesn't work since Callables are not pickleable
+            # and thus cannot make it through the process queue
+            case JS_CMD.JS_CODE, *scripts:
+                for script in scripts:
+                    cmd += (script + ";") if isinstance(script, str) else ""
+            case JS_CMD.SHOW, *_:
                 self.show()
-            case JS_CMD.HIDE:  # Hide the Window
+            case JS_CMD.HIDE, *_:
                 self.hide()
-            case JS_CMD.NEW_CONTAINER:
-                self._type_check(args, (str,))
-                self.run_script(cmds.new_container(args[0]))
-            case JS_CMD.NEW_FRAME:
-                self._type_check(args, (str, str))
-                self.run_script(cmds.new_frame(args[0], args[1]))
-            case JS_CMD.NEW_PANE:
-                self._type_check(args, (str, str))
-                self.run_script(cmds.new_pane(args[0], args[1]))
-            case JS_CMD.SET_LAYOUT:
-                self._type_check(args, (str, orm.Container_Layouts))
-                self.run_script(cmds.set_layout(args[0], args[1]))
-            case JS_CMD.SET_DATA:
-                self._type_check(args, (str, pd.DataFrame))
-                self.run_script(cmds.set_data(args[0], args[1].lwc_df))
+            case JS_CMD.NEW_CONTAINER, str(), *_:
+                cmd = cmds.new_container(args[0])
+            case JS_CMD.NEW_FRAME, str(), str(), *_:
+                cmd = cmds.new_frame(args[0], args[1])
+            case JS_CMD.NEW_PANE, str(), str(), *_:
+                cmd = cmds.new_pane(args[0], args[1])
+            case JS_CMD.SET_LAYOUT, str(), orm.Container_Layouts(), *_:
+                cmd = cmds.set_layout(args[0], args[1])
+            case JS_CMD.SET_DATA, str(), pd.DataFrame(), *_:
+                cmd = cmds.set_data(args[0], args[1].lwc_df)
             case _:
-                logger.warning("Unknown Command: %s", js_cmd)
+                raise TypeError
+        self.run_script(cmd)
 
 
 class PyWv(View):
