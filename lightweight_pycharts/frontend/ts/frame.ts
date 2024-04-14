@@ -16,14 +16,13 @@ export class Frame {
         this.id = id
         this.div = div
 
-
-        //Bind Functions
-        this.add_pane = this.add_pane.bind(this)
-
         //Add Active Frame Listener
         this.div.addEventListener('mousedown', this.assign_active_frame.bind(this))
     }
 
+    /**
+     * Update Global 'active_frame' reference to this instance. 
+     */
     assign_active_frame() {
         if (!window.active_frame) {
             this.is_focus = true
@@ -31,11 +30,11 @@ export class Frame {
             window.active_frame.div.classList.add('chart_frame_active')
 
         } else if (window.active_frame.id != this.id) {
-            window.active_frame.is_focus = false
+            window.active_frame.is_focus = false    //Unset old object's focus
             window.active_frame.div.classList.remove('chart_frame_active')
 
             this.is_focus = true
-            window.active_frame = this
+            window.active_frame = this              //Set this object's focus
             window.active_frame.div.classList.add('chart_frame_active')
         }
     }

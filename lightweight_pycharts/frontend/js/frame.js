@@ -5,7 +5,6 @@ export class Frame {
         this.panes = [];
         this.id = id;
         this.div = div;
-        this.add_pane = this.add_pane.bind(this);
         this.div.addEventListener('mousedown', this.assign_active_frame.bind(this));
     }
     assign_active_frame() {

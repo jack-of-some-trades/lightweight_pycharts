@@ -109,21 +109,13 @@ export class Wrapper {
         this.top_bar = new topbar(this)
         this.tool_box = new toolbox(this)
 
-        // //Bind Funcitons to ensure expected 'this' functionality
-        this.resize = this.resize.bind(this)
-        // this.get_div = this.get_div.bind(this)
-        // this.show_section = this.show_section.bind(this)
-        // this.hide_section = this.hide_section.bind(this)
-        // this.add_container = this.add_container.bind(this)
-        // this.resize_debounce = this.resize_debounce.bind(this)
-
         //Initilize Window regions and perform initial resize
         this.resize()
         this.hide_section(Wrapper_Divs.NAV_BAR) /* Hiding Bar until it has some functionality */
         this.hide_section(Wrapper_Divs.UTIL_BAR) /* Hiding Bar until it has some functionality */
 
         //Setup resize listener
-        window.addEventListener('resize', this.resize)
+        window.addEventListener('resize', this.resize.bind(this))
         this.loaded = true;
     }
 
@@ -245,6 +237,7 @@ export class Wrapper {
      * Generate a new container and makes it the window's active container 
      */
     add_container(id: string): Container {
+        //This a bug? we probably dont want all containers to share a single Div.. maybe. maybe not. what do i know?
         let tmp_ref = new Container(this.get_div(Wrapper_Divs.CHART), id)
         this.containers.push(tmp_ref)
         tmp_ref.resize()
@@ -263,7 +256,7 @@ export class Wrapper {
             this.resize()
         }
         else {
-            this.resizeTimeoutID = setTimeout(this.resize_debounce, 1000);
+            this.resizeTimeoutID = setTimeout(this.resize_debounce, 20);
         }
     }
 

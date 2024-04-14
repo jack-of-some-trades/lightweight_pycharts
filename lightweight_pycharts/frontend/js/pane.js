@@ -1,23 +1,35 @@
 import { createChart } from "./lib/pkg.js";
 import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
-import { TrendLine } from "./plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 export class Pane {
     constructor(id, div, flex_width = 1, flex_height = 1, chart_opts = u.DEFAULT_PYCHART_OPTS) {
         this.id = '';
+        this.is_focus = false;
         this.series = [];
         this.id = id;
         this.div = div;
         this.flex_width = flex_width;
         this.flex_height = flex_height;
         this.chart = createChart(this.div, chart_opts);
-        this.chart_div = this.div.getElementsByTagName('td')[1].firstChild;
-        this.resize = this.resize.bind(this);
-        this.set_data = this.set_data.bind(this);
-        this.add_candlestick_series = this.add_candlestick_series.bind(this);
+        this.chart_div = this.chart.chartElement();
+        this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this));
         this.watermark_div = null;
         this.watermark_series = null;
         this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries());
+    }
+    assign_active_pane() {
+        if (!window.active_pane) {
+            this.is_focus = true;
+            window.active_pane = this;
+            window.active_pane.div.classList.add('chart_pane_active');
+        }
+        else if (window.active_pane.id != this.id) {
+            window.active_pane.is_focus = false;
+            window.active_pane.div.classList.remove('chart_pane_active');
+            this.is_focus = true;
+            window.active_pane = this;
+            window.active_pane.div.classList.add('chart_pane_active');
+        }
     }
     set_main_series(series) {
         this.main_series = series;
@@ -82,24 +94,11 @@ export class Pane {
         }
         if (!data_set)
             console.warn("Failed to set data on Pane.set_data() function call.");
+        else
+            this.assign_active_pane();
     }
     add_candlestick_series(options) {
         this.series.push(this.chart.addCandlestickSeries(options));
-    }
-    create_line() {
-        const data = this.main_series.data();
-        const dataLength = data.length;
-        console.log(data[0].time);
-        const point1 = {
-            time: data[dataLength - 50].time,
-            price: data[dataLength - 50].close * 0.9,
-        };
-        const point2 = {
-            time: data[dataLength - 5].time,
-            price: data[dataLength - 5].close * 1.10,
-        };
-        const trend = new TrendLine(this.chart, this.main_series, point1, point2);
-        this.main_series.attachPrimitive(trend);
     }
     resize(width, height) {
         let this_width = width * this.flex_width;

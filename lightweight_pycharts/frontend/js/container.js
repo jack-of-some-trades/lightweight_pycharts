@@ -8,11 +8,6 @@ export class Container {
         this.id = id;
         this.div = parent_div;
         this.div.style.flexWrap = `wrap`;
-        this.add_frame = this.add_frame.bind(this);
-        this.set_layout = this.set_layout.bind(this);
-        this._create_frame = this._create_frame.bind(this);
-        this._add_flex_frame = this._add_flex_frame.bind(this);
-        this._add_flex_separator = this._add_flex_separator.bind(this);
     }
     resize_flex(separator, e) {
         if (separator.orientation === Orientation.Vertical) {

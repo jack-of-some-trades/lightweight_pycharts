@@ -61,11 +61,10 @@ export class Wrapper {
         this.overlay_manager = new overlay_manager();
         this.top_bar = new topbar(this);
         this.tool_box = new toolbox(this);
-        this.resize = this.resize.bind(this);
         this.resize();
         this.hide_section(Wrapper_Divs.NAV_BAR);
         this.hide_section(Wrapper_Divs.UTIL_BAR);
-        window.addEventListener('resize', this.resize);
+        window.addEventListener('resize', this.resize.bind(this));
         this.loaded = true;
     }
     resize() {
@@ -164,7 +163,7 @@ export class Wrapper {
             this.resize();
         }
         else {
-            this.resizeTimeoutID = setTimeout(this.resize_debounce, 1000);
+            this.resizeTimeoutID = setTimeout(this.resize_debounce, 20);
         }
     }
 }

@@ -20,13 +20,6 @@ export class Container {
         this.id = id
         this.div = parent_div
         this.div.style.flexWrap = `wrap`    //Flex-Wrap used to position layouts
-
-        //Bind Funcitons to ensure expected 'this' functionality
-        this.add_frame = this.add_frame.bind(this)
-        this.set_layout = this.set_layout.bind(this)
-        this._create_frame = this._create_frame.bind(this)
-        this._add_flex_frame = this._add_flex_frame.bind(this)
-        this._add_flex_separator = this._add_flex_separator.bind(this)
     }
 
 
