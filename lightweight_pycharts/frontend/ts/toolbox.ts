@@ -1,5 +1,6 @@
 import { icon_manager, icons } from "./icons.js"
-import { LAYOUT_DIM_LEFT, Wrapper_Divs, menu_location, overlay_menu } from "./util.js"
+import { menu_location, overlay_manager } from "./overlay.js"
+import { LAYOUT_DIM_LEFT, Wrapper_Divs } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
 /**
@@ -7,9 +8,9 @@ import { Wrapper } from "./wrapper.js"
  */
 export class toolbox {
     static loaded: boolean = false
-    static instance: toolbox                //@ts-ignore *Ignoring div not created error
-    private div: HTMLDivElement             //@ts-ignore *Happens b/c of "return toolbox.instance"
-    private overlay_div: HTMLDivElement
+    static instance: toolbox
+    //@ts-ignore
+    private div: HTMLDivElement
 
     private top_div: HTMLDivElement | undefined
     private bottom_div: HTMLDivElement | undefined
@@ -23,7 +24,6 @@ export class toolbox {
         toolbox.instance.create_toolbar = this.create_toolbar.bind(toolbox.instance)
         this.div = parent.get_div(Wrapper_Divs.DRAW_TOOLS)
         this.div.style.flexDirection = 'column'
-        this.overlay_div = parent.div_overlay
 
         this.create_toolbar()
         toolbox.loaded = true
@@ -103,7 +103,7 @@ export class toolbox {
         selector_div.appendChild(this.menu_selector(selector_div))
 
         //Create Selection Menu
-        overlay_menu(this.overlay_div, selector_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(selector_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT)
 
         return selector_div
     }
@@ -130,7 +130,7 @@ export class toolbox {
         selector_div.appendChild(this.menu_selector(selector_div))
 
         //Create Selection Menu
-        overlay_menu(this.overlay_div, selector_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(selector_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT)
 
         return selector_div
     }
@@ -152,7 +152,7 @@ export class toolbox {
         selector_div.appendChild(this.menu_selector(selector_div))
 
         //Create Selection Menu
-        overlay_menu(this.overlay_div, selector_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(selector_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT)
 
         return selector_div
     }
@@ -178,7 +178,7 @@ export class toolbox {
         selector_div.appendChild(this.menu_selector(selector_div))
 
         //Create Selection Menu
-        overlay_menu(this.overlay_div, selector_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT)
+        overlay_manager.menu(selector_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT)
 
         return selector_div
     }

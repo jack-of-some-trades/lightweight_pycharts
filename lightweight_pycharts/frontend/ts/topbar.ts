@@ -1,29 +1,55 @@
 import { icon_manager, icons } from "./icons.js"
-import { LAYOUT_DIM_TOP, Wrapper_Divs, menu_location, overlay_menu } from "./util.js"
+import { menu_item, menu_location, overlay_manager } from "./overlay.js"
+import { LAYOUT_DIM_TOP, Wrapper_Divs } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
 export class topbar {
-    overlay_div: HTMLDivElement
+    static loaded: boolean = false
+    static instance: topbar                 //@ts-ignore *Ignoring div not created error
+    private parent: Wrapper                 //@ts-ignore *Happens b/c of "return topbor.instance"
+    private div: HTMLDivElement
+
+    private left_div: HTMLDivElement | undefined
+    private right_div: HTMLDivElement | undefined
 
     constructor(parent: Wrapper) {
-        let this_div = parent.get_div(Wrapper_Divs.TOP_BAR)
-        this.overlay_div = parent.div_overlay
+        if (topbar.instance) {
+            //Return Instance already created
+            return topbar.instance
+        }
+        this.parent = parent
+        this.div = parent.get_div(Wrapper_Divs.TOP_BAR)
+        this.create_topbar()
+        topbar.loaded = true
 
-        let left_div = document.createElement('div')
-        left_div.classList.add('topbar', 'topbar_left')
-        left_div.appendChild(this.symbol_search())
-        left_div.appendChild(this.separator())
-        left_div.appendChild(this.timeframe_switcher())
+        // fetch('./fmt/topbar.json')
+        //     .then((resp) => resp.json())
+        //     .then((json_fmt) => {
+        //         this.create_topbar(json_fmt) 
+        //         topbar.loaded = true
+        //     })
+    }
 
-        let right_div = document.createElement('div')
-        right_div.classList.add('topbar', 'topbar_right')
-        right_div.appendChild(this.separator())
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_left))
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_right, false))
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_bottom, false))
+    create_topbar() {
+        if (this.left_div) this.left_div.remove()
+        if (this.right_div) this.right_div.remove()
 
-        this_div.appendChild(left_div)
-        this_div.appendChild(right_div)
+        this.left_div = document.createElement('div')
+        this.left_div.classList.add('topbar', 'topbar_left')
+        this.left_div.appendChild(this.symbol_search())
+        this.left_div.appendChild(this.separator())
+        this.left_div.appendChild(this.timeframe_switcher())
+
+        this.right_div = document.createElement('div')
+        this.right_div.classList.add('topbar', 'topbar_right')
+        this.right_div.appendChild(this.separator())
+        this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_left))
+        // Will uncomment other panel_toggle buttons once they have functionality.
+        // this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_right, false))
+        // this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_bottom, false))
+
+        this.div.appendChild(this.left_div)
+        this.div.appendChild(this.right_div)
     }
 
     /**
@@ -73,10 +99,11 @@ export class topbar {
         let items = [
             { label: '5 Minute', icon_str: '5m', star: true },
             { label: '15 Minute', icon_str: '15m', star: true },
+            { label: 'Single Layouts', separator: true },
             { label: '30 Minute', icon_str: '30m', star: true },
         ]
 
-        overlay_menu(this.overlay_div, menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT)
+        overlay_manager.menu(menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT)
 
         switcher_div.appendChild(menu_button)
         return switcher_div
@@ -86,9 +113,25 @@ export class topbar {
 
     indicators() { }
 
-    layout_selector() { }
+    layout_switcher(): HTMLDivElement {
+        let switcher_div = document.createElement('div')
+        switcher_div.id = 'layout_switcher'
+        switcher_div.classList.add('topbar', 'topbar_container')
 
-    layout_manager() { }
+        let menu_button = this.menu_selector()
+
+        let items: menu_item[] = [
+            { label: 'Single Layouts', separator: true },
+            { label: '5 Minute', icon_str: '5m', star: true, star_act: () => { console.log('activate') }, star_deact: () => { console.log('deactivate') } },
+            { label: '15 Minute', icon_str: '15m', star: true },
+            { label: '30 Minute', icon_str: '30m', star: true },
+        ]
+
+        overlay_manager.menu(menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT)
+
+        switcher_div.appendChild(menu_button)
+        return switcher_div
+    }
 
     /**
      * Create a Topbar Toggleable div that shows/hides a layout panel

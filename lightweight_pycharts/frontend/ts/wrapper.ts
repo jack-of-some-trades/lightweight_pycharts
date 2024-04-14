@@ -1,4 +1,5 @@
 import { Container } from "./container.js";
+import { overlay_manager } from "./overlay.js";
 import { toolbox } from "./toolbox.js";
 import { topbar } from "./topbar.js";
 import * as u from "./util.js";
@@ -34,10 +35,10 @@ export class Wrapper {
     div_right: HTMLDivElement
     div_bottom: HTMLDivElement
     div_center: HTMLDivElement
-    div_overlay: HTMLDivElement
 
     top_bar: topbar
     tool_box: toolbox
+    overlay_manager: overlay_manager
 
     private resizeTimeoutID: number | null = null;
 
@@ -48,12 +49,6 @@ export class Wrapper {
         this.div.classList.add('wrapper')
         document.body.appendChild(this.div)
 
-        //Create Overlay Manager
-        this.div_overlay = document.createElement('div')
-        this.div_overlay.id = 'overlay_manager'
-        this.div_overlay.classList.add('overlay_manager')
-        document.body.appendChild(this.div_overlay)
-
         //Create & Size Top Bar
         this.div_top = document.createElement('div')
         this.div_top.id = 'layout_top'
@@ -62,8 +57,7 @@ export class Wrapper {
         this.div_top.style.width = u.LAYOUT_DIM_TOP.WIDTH //Const is already string
         this.div_top.style.left = `${u.LAYOUT_DIM_TOP.LEFT}px`
         this.div_top.style.top = `${u.LAYOUT_DIM_TOP.TOP}px`
-        this.div_top.style.display = 'flex'
-        //Display must be set in JS to be used to control visibility
+        this.div_top.style.display = 'flex'//Display must be set in JS to be used to control visibility
         this.div.appendChild(this.div_top)
 
         //Create & Size Left Bar
@@ -110,19 +104,23 @@ export class Wrapper {
         this.div_center.style.display = 'flex'
         this.div.appendChild(this.div_center)
 
+        //Create Subobjects
+        this.overlay_manager = new overlay_manager()
         this.top_bar = new topbar(this)
         this.tool_box = new toolbox(this)
 
-        //Bind Funcitons to ensure expected 'this' functionality
+        // //Bind Funcitons to ensure expected 'this' functionality
         this.resize = this.resize.bind(this)
-        this.get_div = this.get_div.bind(this)
-        this.show_section = this.show_section.bind(this)
-        this.hide_section = this.hide_section.bind(this)
-        this.add_container = this.add_container.bind(this)
-        this.resize_debounce = this.resize_debounce.bind(this)
+        // this.get_div = this.get_div.bind(this)
+        // this.show_section = this.show_section.bind(this)
+        // this.hide_section = this.hide_section.bind(this)
+        // this.add_container = this.add_container.bind(this)
+        // this.resize_debounce = this.resize_debounce.bind(this)
 
         //Initilize Window regions and perform initial resize
         this.resize()
+        this.hide_section(Wrapper_Divs.NAV_BAR) /* Hiding Bar until it has some functionality */
+        this.hide_section(Wrapper_Divs.UTIL_BAR) /* Hiding Bar until it has some functionality */
 
         //Setup resize listener
         window.addEventListener('resize', this.resize)

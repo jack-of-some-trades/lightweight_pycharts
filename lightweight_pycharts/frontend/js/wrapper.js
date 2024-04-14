@@ -1,4 +1,5 @@
 import { Container } from "./container.js";
+import { overlay_manager } from "./overlay.js";
 import { toolbox } from "./toolbox.js";
 import { topbar } from "./topbar.js";
 import * as u from "./util.js";
@@ -12,10 +13,6 @@ export class Wrapper {
         this.div.id = 'layout_wrapper';
         this.div.classList.add('wrapper');
         document.body.appendChild(this.div);
-        this.div_overlay = document.createElement('div');
-        this.div_overlay.id = 'overlay_manager';
-        this.div_overlay.classList.add('overlay_manager');
-        document.body.appendChild(this.div_overlay);
         this.div_top = document.createElement('div');
         this.div_top.id = 'layout_top';
         this.div_top.classList.add('layout_main', 'layout_flex');
@@ -61,15 +58,13 @@ export class Wrapper {
         this.div_center.style.top = `${u.LAYOUT_DIM_CENTER.TOP}px`;
         this.div_center.style.display = 'flex';
         this.div.appendChild(this.div_center);
+        this.overlay_manager = new overlay_manager();
         this.top_bar = new topbar(this);
         this.tool_box = new toolbox(this);
         this.resize = this.resize.bind(this);
-        this.get_div = this.get_div.bind(this);
-        this.show_section = this.show_section.bind(this);
-        this.hide_section = this.hide_section.bind(this);
-        this.add_container = this.add_container.bind(this);
-        this.resize_debounce = this.resize_debounce.bind(this);
         this.resize();
+        this.hide_section(Wrapper_Divs.NAV_BAR);
+        this.hide_section(Wrapper_Divs.UTIL_BAR);
         window.addEventListener('resize', this.resize);
         this.loaded = true;
     }

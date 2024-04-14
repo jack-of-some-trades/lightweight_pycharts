@@ -1,5 +1,6 @@
 import { icon_manager, icons } from "./icons.js";
-import { LAYOUT_DIM_LEFT, Wrapper_Divs, menu_location, overlay_menu } from "./util.js";
+import { menu_location, overlay_manager } from "./overlay.js";
+import { LAYOUT_DIM_LEFT, Wrapper_Divs } from "./util.js";
 export class toolbox {
     constructor(parent) {
         if (toolbox.instance) {
@@ -9,7 +10,6 @@ export class toolbox {
         toolbox.instance.create_toolbar = this.create_toolbar.bind(toolbox.instance);
         this.div = parent.get_div(Wrapper_Divs.DRAW_TOOLS);
         this.div.style.flexDirection = 'column';
-        this.overlay_div = parent.div_overlay;
         this.create_toolbar();
         toolbox.loaded = true;
     }
@@ -55,7 +55,7 @@ export class toolbox {
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
         selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_menu(this.overlay_div, selector_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT);
+        overlay_manager.menu(selector_div, items, true, 'crosshair_menu', menu_location.TOP_RIGHT);
         return selector_div;
     }
     line_tools_selector() {
@@ -73,7 +73,7 @@ export class toolbox {
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
         selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_menu(this.overlay_div, selector_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT);
+        overlay_manager.menu(selector_div, items, true, 'linetools_menu', menu_location.TOP_RIGHT);
         return selector_div;
     }
     fib_tools_selector() {
@@ -86,7 +86,7 @@ export class toolbox {
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
         selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_menu(this.overlay_div, selector_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT);
+        overlay_manager.menu(selector_div, items, true, 'fibtools_menu', menu_location.TOP_RIGHT);
         return selector_div;
     }
     measure_tool_selector() {
@@ -102,7 +102,7 @@ export class toolbox {
         ];
         selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']));
         selector_div.appendChild(this.menu_selector(selector_div));
-        overlay_menu(this.overlay_div, selector_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT);
+        overlay_manager.menu(selector_div, items, true, 'measuretools_menu', menu_location.TOP_RIGHT);
         return selector_div;
     }
     ruler_button() {

@@ -50,6 +50,7 @@ export var icons;
     icons["menu_search_quick"] = "menu_search_quick";
     icons["menu_arrow_ew"] = "menu_arrow_ew";
     icons["menu_arrow_ns"] = "menu_arrow_ns";
+    icons["menu_arrow_sn"] = "menu_arrow_sn";
     icons["menu_arrow_up_down"] = "menu_arrow_up_down";
     icons["panel_left"] = "panel_left";
     icons["panel_right"] = "panel_right";

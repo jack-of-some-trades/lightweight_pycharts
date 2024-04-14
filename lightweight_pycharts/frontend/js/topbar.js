@@ -1,22 +1,32 @@
 import { icon_manager, icons } from "./icons.js";
-import { LAYOUT_DIM_TOP, Wrapper_Divs, menu_location, overlay_menu } from "./util.js";
+import { menu_location, overlay_manager } from "./overlay.js";
+import { LAYOUT_DIM_TOP, Wrapper_Divs } from "./util.js";
 export class topbar {
     constructor(parent) {
-        let this_div = parent.get_div(Wrapper_Divs.TOP_BAR);
-        this.overlay_div = parent.div_overlay;
-        let left_div = document.createElement('div');
-        left_div.classList.add('topbar', 'topbar_left');
-        left_div.appendChild(this.symbol_search());
-        left_div.appendChild(this.separator());
-        left_div.appendChild(this.timeframe_switcher());
-        let right_div = document.createElement('div');
-        right_div.classList.add('topbar', 'topbar_right');
-        right_div.appendChild(this.separator());
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_left));
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_right, false));
-        right_div.appendChild(this.panel_toggle(parent, icons.panel_bottom, false));
-        this_div.appendChild(left_div);
-        this_div.appendChild(right_div);
+        if (topbar.instance) {
+            return topbar.instance;
+        }
+        this.parent = parent;
+        this.div = parent.get_div(Wrapper_Divs.TOP_BAR);
+        this.create_topbar();
+        topbar.loaded = true;
+    }
+    create_topbar() {
+        if (this.left_div)
+            this.left_div.remove();
+        if (this.right_div)
+            this.right_div.remove();
+        this.left_div = document.createElement('div');
+        this.left_div.classList.add('topbar', 'topbar_left');
+        this.left_div.appendChild(this.symbol_search());
+        this.left_div.appendChild(this.separator());
+        this.left_div.appendChild(this.timeframe_switcher());
+        this.right_div = document.createElement('div');
+        this.right_div.classList.add('topbar', 'topbar_right');
+        this.right_div.appendChild(this.separator());
+        this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_left));
+        this.div.appendChild(this.left_div);
+        this.div.appendChild(this.right_div);
     }
     menu_selector() {
         let menu_sel = document.createElement('div');
@@ -49,16 +59,30 @@ export class topbar {
         let items = [
             { label: '5 Minute', icon_str: '5m', star: true },
             { label: '15 Minute', icon_str: '15m', star: true },
+            { label: 'Single Layouts', separator: true },
             { label: '30 Minute', icon_str: '30m', star: true },
         ];
-        overlay_menu(this.overlay_div, menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT);
+        overlay_manager.menu(menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT);
         switcher_div.appendChild(menu_button);
         return switcher_div;
     }
     candle_switcher() { }
     indicators() { }
-    layout_selector() { }
-    layout_manager() { }
+    layout_switcher() {
+        let switcher_div = document.createElement('div');
+        switcher_div.id = 'layout_switcher';
+        switcher_div.classList.add('topbar', 'topbar_container');
+        let menu_button = this.menu_selector();
+        let items = [
+            { label: 'Single Layouts', separator: true },
+            { label: '5 Minute', icon_str: '5m', star: true, star_act: () => { console.log('activate'); }, star_deact: () => { console.log('deactivate'); } },
+            { label: '15 Minute', icon_str: '15m', star: true },
+            { label: '30 Minute', icon_str: '30m', star: true },
+        ];
+        overlay_manager.menu(menu_button, items, false, 'timeframe_selector', menu_location.BOTTOM_RIGHT);
+        switcher_div.appendChild(menu_button);
+        return switcher_div;
+    }
     panel_toggle(parent, icon, active_start = true) {
         let toggle_btn = document.createElement('div');
         toggle_btn.classList.add('topbar_menu_button');
@@ -124,3 +148,4 @@ export class topbar {
         return new_div;
     }
 }
+topbar.loaded = false;

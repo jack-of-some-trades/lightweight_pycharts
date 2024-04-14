@@ -84,6 +84,7 @@ export enum icons {
     menu_search_quick = "menu_search_quick",
     menu_arrow_ew = 'menu_arrow_ew',
     menu_arrow_ns = 'menu_arrow_ns',
+    menu_arrow_sn = 'menu_arrow_sn',
     menu_arrow_up_down = "menu_arrow_up_down",
 
     panel_left = "panel_left",
