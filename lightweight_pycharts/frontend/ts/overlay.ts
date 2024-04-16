@@ -10,6 +10,7 @@ import { icon_manager, icons } from "./icons.js"
  * @param star_deact CallableFunction to be called when str is de-activated
  * @param separator Boolean, this is the start of a new sub_menu
  * @param separator_vis boolean, this new sub_menu should be visible by default: default true.
+ * @param separator_row boolean, Sub Menu Items should be listed in a Row: default false (column default).
  */
 export interface menu_item {
     label: string,
@@ -21,6 +22,7 @@ export interface menu_item {
 
     separator?: boolean,
     separator_vis?: boolean,
+    separator_row?: boolean
 }
 
 export enum menu_location {
@@ -96,7 +98,7 @@ export class overlay_manager {
                 sub_menu.style.display = item.separator_vis ? 'flex' : 'none'
                 overlay_menu.appendChild(overlay_manager.make_section_title(sub_menu, item))
             } else {
-                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, on_sel))
+                sub_menu.appendChild(overlay_manager.make_item(item, sub_menu, overlay_menu, on_sel))
             }
         });
 
@@ -113,6 +115,10 @@ export class overlay_manager {
     private static make_section_title(sub_menu: HTMLDivElement, item: menu_item): HTMLDivElement {
         let title_bar = document.createElement('div')
         title_bar.classList.add('menu_item', 'overlay_menu_separator')
+
+        if (item.separator_row) {
+            sub_menu.style.flexDirection = 'row'
+        }
 
         //set text
         let text = document.createElement('span')
@@ -147,21 +153,28 @@ export class overlay_manager {
     /**
      * Make the selectable Div for a given menu item
      */
-    private static make_item(item: menu_item, menu: HTMLDivElement, on_sel: CallableFunction): HTMLDivElement {
+    private static make_item(item: menu_item, sub_menu: HTMLDivElement, menu: HTMLDivElement, on_sel: CallableFunction): HTMLDivElement {
         let item_div = document.createElement('div')
         item_div.classList.add('menu_item') //Make Item Wrapper
 
         let sel_wrap = document.createElement('span')
-        sel_wrap.classList.add('menu_selectable')
+        if (sub_menu.style.flexDirection === 'row')
+            //When sub_menu is a flex column we dont want the items to expand
+            sel_wrap.classList.add('menu_selectable')
+        else
+            sel_wrap.classList.add('menu_selectable_expand')
 
         //Set icon if needed
         if (item.icon) sel_wrap.appendChild(icon_manager.get_svg(item.icon))
 
         //Set Label
-        let text = document.createElement('span')
-        text.classList.add('menu_text')
-        text.innerHTML = item.label
-        sel_wrap.appendChild(text)
+        if (item.label !== "") {
+            let text = document.createElement('span')
+            text.classList.add('menu_text')
+            text.innerHTML = item.label
+            sel_wrap.appendChild(text)
+        }
+
         item_div.appendChild(sel_wrap)
 
         //Add a Toggle Star if needed

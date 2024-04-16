@@ -1,6 +1,6 @@
 import { icon_manager, icons } from "./icons.js"
 import { menu_item, menu_location, overlay_manager } from "./overlay.js"
-import { LAYOUT_DIM_TOP, Wrapper_Divs, interval, tf } from "./util.js"
+import { Container_Layouts, LAYOUT_DIM_TOP, Wrapper_Divs, interval, layout_icon_map, tf } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
 /**
@@ -178,6 +178,7 @@ export class timeframe_selector {
 
         this.json = default_timeframe_select_opts
         this.menu_button = topbar.menu_selector()
+        //Current_tf_div must be created and appended before making items.
         this.current_tf_div = this.make_topbar_button(new tf(-1, 's'), false, true)
         this.wrapper_div.appendChild(this.current_tf_div)
         this.wrapper_div.appendChild(this.menu_button)
@@ -216,11 +217,11 @@ export class timeframe_selector {
         for (let i = favorite_divs.length - 1; i >= 0; i--) {
             if (curr_tf_value === parseInt(favorite_divs[i].getAttribute('data-tf-value') ?? '-1')) {
                 //If the Timeframe is within the favorites list, highlight it.
-                favorite_divs[i].classList.add('text_selected')
+                favorite_divs[i].classList.add('selected')
                 found = true
             } else {
                 //Remove Selection from all other elements
-                favorite_divs[i].classList.remove('text_selected')
+                favorite_divs[i].classList.remove('selected')
             }
         }
 
@@ -228,7 +229,7 @@ export class timeframe_selector {
         if (!found) {
             //Update the 'current_tf_div' to this timeframe
             tmp_div = this.make_topbar_button(data, false)
-            tmp_div.classList.add('text_selected')
+            tmp_div.classList.add('selected')
         } else {
             //Set the 'current_tf_div' to be an empty icon (a favorite is now highlighted)
             tmp_div = this.make_topbar_button(new tf(-1, 's'), false, true)
@@ -322,11 +323,13 @@ export class timeframe_selector {
             wrapper.innerHTML = data.toString().replace('1', '') //Ignore the '1' on timeframes Day and up
         } else
             wrapper.innerHTML = data.toString()
-        wrapper.classList.add('Text_selected')
+
 
         if (pressable) {
             wrapper.addEventListener('click', () => this.select(data))
             wrapper.classList.add('icon_hover', 'fav_tf') //fav_tf used as an identifier later & pressable === favorite
+        } else {
+            wrapper.classList.add('Text_selected')
         }
         return wrapper
     }
@@ -403,39 +406,240 @@ export class timeframe_selector {
  */
 export class layout_selector {
     wrapper_div: HTMLDivElement
+    private json: layout_json
+    private menu_button: HTMLDivElement
+    private overlay_menu_div: HTMLDivElement
     private current_layout_div: HTMLDivElement
-    private favorites_divs: HTMLDivElement[]
 
     constructor() {
         this.wrapper_div = document.createElement('div')
         this.wrapper_div.id = 'layout_switcher'
         this.wrapper_div.classList.add('topbar', 'topbar_container')
 
-        this.current_layout_div = document.createElement('div')
-        this.favorites_divs = []
-
-        let items: menu_item[] = [
-            { label: '5 Minute', data: '5m', star: true },
-            { label: '15 Minute', data: '15m', star: true },
-            { label: '30 Minute', data: '30m', star: true },
-        ]
-
-        let menu_button = topbar.menu_selector()
-        overlay_manager.menu(menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
-
+        this.json = default_layout_select_opts
+        this.menu_button = topbar.menu_selector()
+        this.current_layout_div = this.make_topbar_button(null, false)
         this.wrapper_div.appendChild(this.current_layout_div)
-        this.wrapper_div.appendChild(menu_button)
+        this.wrapper_div.appendChild(this.menu_button)
+
+        let items = this.make_items_list(this.json)
+
+        this.select = this.select.bind(this) //Needs binding since it's shared via reference
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
+
     }
-    select() { }
-    star_act() { }
-    star_deact() { }
+
+    /**
+    * Recreate the topbar given a formatted layout_json file
+    */
+    update_topbar(json: layout_json) {
+        let items = this.make_items_list(json)
+        this.overlay_menu_div.remove()
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
+
+        if (window.active_container && window.active_container.layout !== null) {
+            //if there is a valid container & layout has been set update the icon
+            this.update_topbar_icon(window.active_container.layout)
+        }
+    }
+
+    get_json(): layout_json { return this.json }
+
+    /**
+     * Update The topbar layout switcher to indicate the given layout was selected
+     * Can be called from global scope through 'wrapper.top_bar.tf_select.update_topbar()'
+     */
+    update_topbar_icon(data: Container_Layouts) {
+        let curr_layout_value = data.valueOf()
+        let found = false
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout')
+
+        //Check if Current layout is already set approprately
+        if (curr_layout_value === parseInt(this.current_layout_div.getAttribute('data-layout-value') ?? '-1'))
+            return
+
+        //Check if the layout is in the favorites list
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let icon_svg = favorite_divs[i].firstChild as SVGSVGElement
+            if (curr_layout_value === parseInt(favorite_divs[i].getAttribute('data-layout-value') ?? '-1')) {
+                //If the Timeframe is within the favorites list, highlight it.
+                icon_svg.classList.add('selected')
+                found = true
+            } else {
+                //Remove Selection from all other elements
+                icon_svg.classList.remove('selected')
+            }
+        }
+
+        let tmp_div: HTMLDivElement
+        if (!found) {
+            //Update the 'current_tf_div' to this layout
+            tmp_div = this.make_topbar_button(data, false)
+            let icon_svg = tmp_div.firstChild as SVGSVGElement
+            icon_svg.classList.add('selected')
+        } else {
+            //Set the 'current_tf_div' to be an empty icon (a favorite is now highlighted)
+            tmp_div = this.make_topbar_button(null, false)
+        }
+        this.current_layout_div.replaceWith(tmp_div)
+        this.current_layout_div = tmp_div
+    }
+
+    /**
+     * Makes a list of 'menu_items' from a formatted json file.
+     */
+    private make_items_list(json: layout_json): menu_item[] {
+        try {
+            let items: menu_item[] = []
+            let favs = json.favorites
+
+            let populate_items = (layouts: Container_Layouts[]) => {
+                layouts.forEach(layout => {
+                    items.push({
+                        label: "",
+                        data: layout,
+                        icon: layout_icon_map[layout],
+                        star: favs.includes(layout),
+                        star_act: () => this.add_favorite(layout),
+                        star_deact: () => this.remove_favorite(layout),
+                    })
+                })
+            }
+            populate_items = populate_items.bind(this)
+
+            items.push({ label: 'Basic', separator: true, separator_row: true })
+            populate_items([
+                Container_Layouts.SINGLE,
+                Container_Layouts.DOUBLE_VERT,
+                Container_Layouts.DOUBLE_HORIZ,
+            ])
+            items.push({ label: 'Triple', separator: true, separator_vis: false, separator_row: true })
+            populate_items([
+                Container_Layouts.TRIPLE_HORIZ,
+                Container_Layouts.TRIPLE_HORIZ_TOP,
+                Container_Layouts.TRIPLE_HORIZ_BOTTOM,
+                Container_Layouts.TRIPLE_VERT,
+                Container_Layouts.TRIPLE_VERT_LEFT,
+                Container_Layouts.TRIPLE_VERT_RIGHT,
+            ])
+            items.push({ label: 'Quad', separator: true, separator_vis: false, separator_row: true })
+            populate_items([
+                Container_Layouts.QUAD_VERT,
+                Container_Layouts.QUAD_HORIZ,
+                Container_Layouts.QUAD_TOP,
+                Container_Layouts.QUAD_LEFT,
+                Container_Layouts.QUAD_RIGHT,
+                Container_Layouts.QUAD_BOTTOM,
+            ])
+
+
+            //only once successfully done with makeing the icon list are the following updated
+            //Done to prevent a poorly format json from deleting data
+            let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout')
+            for (let i = 0; i < favorite_divs.length;) { //no i++ since length is actively decreasing
+                favorite_divs[i].remove()
+            }
+            this.json = json
+            favs.forEach(element => { this.add_favorite(element) })
+            return items
+
+        } catch (e) {
+            console.warn('layout_switcher.make_item_list() Failed. Json Not formatted Correctly')
+            console.log('Actual Error: ', e)
+            return []
+        }
+    }
+
+    /**
+     * Make a Generic button with text representing the given layout.
+     */
+    private make_topbar_button(data: Container_Layouts | null, pressable: boolean = true): HTMLDivElement {
+        let wrapper = document.createElement('div')
+        wrapper.classList.add('topbar')
+        if (data === null) return wrapper
+
+        wrapper.setAttribute('data-layout-value', data.valueOf().toString() ?? '-1')
+        wrapper.appendChild(icon_manager.get_svg(layout_icon_map[data]))
+
+        if (pressable) {
+            wrapper.addEventListener('click', () => this.select(data))
+            wrapper.classList.add('icon_hover', 'fav_layout') //fav_layout used as an identifier later & pressable === favorite
+        } else {
+            let icon_svg = wrapper.firstChild as SVGSVGElement
+            icon_svg.classList.add('selected')
+        }
+        return wrapper
+    }
+
+    private update_menu_location() {
+        if (this.menu_button && this.overlay_menu_div)
+            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
+    }
+
+    /**
+     * Action to preform on a layout selection
+     */
+    private select(data: Container_Layouts) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data) }
+
+    /**
+     * Adds a favorite Layout to the window topbar and the json representation
+     * @param data Timeframe to remove
+     */
+    private add_favorite(data: Container_Layouts) {
+        let curr_layout_value = data.valueOf()
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout')
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let element = favorite_divs[i]
+            if (curr_layout_value === parseInt(element.getAttribute('data-layout-value') ?? '1')) {
+                return //This favorite is already present
+            }
+            else if (curr_layout_value > parseInt(element.getAttribute('data-layout-value') ?? '-1')) {
+                //Add favorite 'icon'
+                element.after(this.make_topbar_button(data))
+                //Add to favoites if not already there
+                if (this.json.favorites.indexOf(data) === -1)
+                    this.json.favorites.push(data)
+                return
+            }
+        }
+        //This code is only reached when for loop doesn't return
+        //First Favorite, and a new lowest value favorite will trigger this.
+        this.current_layout_div.after(this.make_topbar_button(data))
+        //Add to favoites if not already there
+        if (this.json.favorites.indexOf(data) === -1)
+            this.json.favorites.push(data)
+    }
+
+    /**
+     * Removes a favorite layout from the window's topbar and the json representation
+     * @param data Timeframe to remove
+     */
+    private remove_favorite(data: Container_Layouts) {
+        let curr_tf_value = data.valueOf()
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout')
+
+        for (let i = 0; i < favorite_divs.length; i++) {
+            if (curr_tf_value === parseInt(favorite_divs[i].getAttribute('data-layout-value') ?? '-1')) {
+                //Remove visual element
+                favorite_divs[i].remove()
+
+                //remove the element from favoites if it is in the list.
+                let fav_index = this.json.favorites.indexOf(data)
+                if (fav_index !== -1) {
+                    this.json.favorites.splice(fav_index, 1)
+                }
+            }
+        }
+    }
 }
 
 // #endregion
 
 // #region ---------------- JSON Interfaces ---------------- //
 
-interface layout_json { }
+interface layout_json {
+    favorites: Container_Layouts[]
+}
 
 interface timeframe_json {
     menu_listings: {
@@ -450,7 +654,13 @@ interface timeframe_json {
     favorites: string[]
 }
 
-const default_layout_select_opts: layout_json = {}
+const default_layout_select_opts: layout_json = {
+    favorites: [
+        Container_Layouts.SINGLE,
+        Container_Layouts.DOUBLE_VERT,
+        Container_Layouts.DOUBLE_HORIZ
+    ]
+}
 
 const default_timeframe_select_opts: timeframe_json = {
     "menu_listings": {

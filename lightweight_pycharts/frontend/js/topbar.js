@@ -1,6 +1,6 @@
 import { icon_manager, icons } from "./icons.js";
 import { menu_location, overlay_manager } from "./overlay.js";
-import { LAYOUT_DIM_TOP, Wrapper_Divs, tf } from "./util.js";
+import { Container_Layouts, LAYOUT_DIM_TOP, Wrapper_Divs, layout_icon_map, tf } from "./util.js";
 export class topbar {
     constructor(parent, tf_select, layout_select) {
         this.parent = parent;
@@ -139,17 +139,17 @@ export class timeframe_selector {
             return;
         for (let i = favorite_divs.length - 1; i >= 0; i--) {
             if (curr_tf_value === parseInt((_b = favorite_divs[i].getAttribute('data-tf-value')) !== null && _b !== void 0 ? _b : '-1')) {
-                favorite_divs[i].classList.add('text_selected');
+                favorite_divs[i].classList.add('selected');
                 found = true;
             }
             else {
-                favorite_divs[i].classList.remove('text_selected');
+                favorite_divs[i].classList.remove('selected');
             }
         }
         let tmp_div;
         if (!found) {
             tmp_div = this.make_topbar_button(data, false);
-            tmp_div.classList.add('text_selected');
+            tmp_div.classList.add('selected');
         }
         else {
             tmp_div = this.make_topbar_button(new tf(-1, 's'), false, true);
@@ -232,10 +232,12 @@ export class timeframe_selector {
         }
         else
             wrapper.innerHTML = data.toString();
-        wrapper.classList.add('Text_selected');
         if (pressable) {
             wrapper.addEventListener('click', () => this.select(data));
             wrapper.classList.add('icon_hover', 'fav_tf');
+        }
+        else {
+            wrapper.classList.add('Text_selected');
         }
         return wrapper;
     }
@@ -287,23 +289,173 @@ export class layout_selector {
         this.wrapper_div = document.createElement('div');
         this.wrapper_div.id = 'layout_switcher';
         this.wrapper_div.classList.add('topbar', 'topbar_container');
-        this.current_layout_div = document.createElement('div');
-        this.favorites_divs = [];
-        let items = [
-            { label: '5 Minute', data: '5m', star: true },
-            { label: '15 Minute', data: '15m', star: true },
-            { label: '30 Minute', data: '30m', star: true },
-        ];
-        let menu_button = topbar.menu_selector();
-        overlay_manager.menu(menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
+        this.json = default_layout_select_opts;
+        this.menu_button = topbar.menu_selector();
+        this.current_layout_div = this.make_topbar_button(null, false);
         this.wrapper_div.appendChild(this.current_layout_div);
-        this.wrapper_div.appendChild(menu_button);
+        this.wrapper_div.appendChild(this.menu_button);
+        let items = this.make_items_list(this.json);
+        this.select = this.select.bind(this);
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
-    select() { }
-    star_act() { }
-    star_deact() { }
+    update_topbar(json) {
+        let items = this.make_items_list(json);
+        this.overlay_menu_div.remove();
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
+        if (window.active_container && window.active_container.layout !== null) {
+            this.update_topbar_icon(window.active_container.layout);
+        }
+    }
+    get_json() { return this.json; }
+    update_topbar_icon(data) {
+        var _a, _b;
+        let curr_layout_value = data.valueOf();
+        let found = false;
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout');
+        if (curr_layout_value === parseInt((_a = this.current_layout_div.getAttribute('data-layout-value')) !== null && _a !== void 0 ? _a : '-1'))
+            return;
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let icon_svg = favorite_divs[i].firstChild;
+            if (curr_layout_value === parseInt((_b = favorite_divs[i].getAttribute('data-layout-value')) !== null && _b !== void 0 ? _b : '-1')) {
+                icon_svg.classList.add('selected');
+                found = true;
+            }
+            else {
+                icon_svg.classList.remove('selected');
+            }
+        }
+        let tmp_div;
+        if (!found) {
+            tmp_div = this.make_topbar_button(data, false);
+            let icon_svg = tmp_div.firstChild;
+            icon_svg.classList.add('selected');
+        }
+        else {
+            tmp_div = this.make_topbar_button(null, false);
+        }
+        this.current_layout_div.replaceWith(tmp_div);
+        this.current_layout_div = tmp_div;
+    }
+    make_items_list(json) {
+        try {
+            let items = [];
+            let favs = json.favorites;
+            let populate_items = (layouts) => {
+                layouts.forEach(layout => {
+                    items.push({
+                        label: "",
+                        data: layout,
+                        icon: layout_icon_map[layout],
+                        star: favs.includes(layout),
+                        star_act: () => this.add_favorite(layout),
+                        star_deact: () => this.remove_favorite(layout),
+                    });
+                });
+            };
+            populate_items = populate_items.bind(this);
+            items.push({ label: 'Basic', separator: true, separator_row: true });
+            populate_items([
+                Container_Layouts.SINGLE,
+                Container_Layouts.DOUBLE_VERT,
+                Container_Layouts.DOUBLE_HORIZ,
+            ]);
+            items.push({ label: 'Triple', separator: true, separator_vis: false, separator_row: true });
+            populate_items([
+                Container_Layouts.TRIPLE_HORIZ,
+                Container_Layouts.TRIPLE_HORIZ_TOP,
+                Container_Layouts.TRIPLE_HORIZ_BOTTOM,
+                Container_Layouts.TRIPLE_VERT,
+                Container_Layouts.TRIPLE_VERT_LEFT,
+                Container_Layouts.TRIPLE_VERT_RIGHT,
+            ]);
+            items.push({ label: 'Quad', separator: true, separator_vis: false, separator_row: true });
+            populate_items([
+                Container_Layouts.QUAD_VERT,
+                Container_Layouts.QUAD_HORIZ,
+                Container_Layouts.QUAD_TOP,
+                Container_Layouts.QUAD_LEFT,
+                Container_Layouts.QUAD_RIGHT,
+                Container_Layouts.QUAD_BOTTOM,
+            ]);
+            let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout');
+            for (let i = 0; i < favorite_divs.length;) {
+                favorite_divs[i].remove();
+            }
+            this.json = json;
+            favs.forEach(element => { this.add_favorite(element); });
+            return items;
+        }
+        catch (e) {
+            console.warn('layout_switcher.make_item_list() Failed. Json Not formatted Correctly');
+            console.log('Actual Error: ', e);
+            return [];
+        }
+    }
+    make_topbar_button(data, pressable = true) {
+        var _a;
+        let wrapper = document.createElement('div');
+        wrapper.classList.add('topbar');
+        if (data === null)
+            return wrapper;
+        wrapper.setAttribute('data-layout-value', (_a = data.valueOf().toString()) !== null && _a !== void 0 ? _a : '-1');
+        wrapper.appendChild(icon_manager.get_svg(layout_icon_map[data]));
+        if (pressable) {
+            wrapper.addEventListener('click', () => this.select(data));
+            wrapper.classList.add('icon_hover', 'fav_layout');
+        }
+        else {
+            let icon_svg = wrapper.firstChild;
+            icon_svg.classList.add('selected');
+        }
+        return wrapper;
+    }
+    update_menu_location() {
+        if (this.menu_button && this.overlay_menu_div)
+            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
+    }
+    select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
+    add_favorite(data) {
+        var _a, _b;
+        let curr_layout_value = data.valueOf();
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout');
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let element = favorite_divs[i];
+            if (curr_layout_value === parseInt((_a = element.getAttribute('data-layout-value')) !== null && _a !== void 0 ? _a : '1')) {
+                return;
+            }
+            else if (curr_layout_value > parseInt((_b = element.getAttribute('data-layout-value')) !== null && _b !== void 0 ? _b : '-1')) {
+                element.after(this.make_topbar_button(data));
+                if (this.json.favorites.indexOf(data) === -1)
+                    this.json.favorites.push(data);
+                return;
+            }
+        }
+        this.current_layout_div.after(this.make_topbar_button(data));
+        if (this.json.favorites.indexOf(data) === -1)
+            this.json.favorites.push(data);
+    }
+    remove_favorite(data) {
+        var _a;
+        let curr_tf_value = data.valueOf();
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout');
+        for (let i = 0; i < favorite_divs.length; i++) {
+            if (curr_tf_value === parseInt((_a = favorite_divs[i].getAttribute('data-layout-value')) !== null && _a !== void 0 ? _a : '-1')) {
+                favorite_divs[i].remove();
+                let fav_index = this.json.favorites.indexOf(data);
+                if (fav_index !== -1) {
+                    this.json.favorites.splice(fav_index, 1);
+                }
+            }
+        }
+    }
 }
-const default_layout_select_opts = {};
+const default_layout_select_opts = {
+    favorites: [
+        Container_Layouts.SINGLE,
+        Container_Layouts.DOUBLE_VERT,
+        Container_Layouts.DOUBLE_HORIZ
+    ]
+};
 const default_timeframe_select_opts = {
     "menu_listings": {
         "s": [1, 2, 5, 15, 30],

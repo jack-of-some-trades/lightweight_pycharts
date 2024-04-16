@@ -8,6 +8,7 @@ export class Container {
         this.id = id;
         this.div = parent_div;
         this.div.style.flexWrap = `wrap`;
+        this.layout = null;
     }
     resize_flex(separator, e) {
         if (separator.orientation === Orientation.Vertical) {
@@ -122,6 +123,8 @@ export class Container {
             this.div.appendChild(flex_item.div);
         });
         this.resize();
+        this.layout = layout;
+        window.layout_selector.update_topbar_icon(layout);
     }
     _add_flex_frame(flex_width, flex_height) {
         let child_div = document.createElement('div');

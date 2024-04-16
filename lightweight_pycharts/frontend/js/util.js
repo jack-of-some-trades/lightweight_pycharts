@@ -1,3 +1,4 @@
+import { icons } from "./icons.js";
 import { ColorType, CrosshairMode, LastPriceAnimationMode, LineStyle, LineType, PriceLineSource, PriceScaleMode } from "./lib/pkg.js";
 export var Wrapper_Divs;
 (function (Wrapper_Divs) {
@@ -24,13 +25,31 @@ export var Container_Layouts;
     Container_Layouts[Container_Layouts["TRIPLE_HORIZ"] = 6] = "TRIPLE_HORIZ";
     Container_Layouts[Container_Layouts["TRIPLE_HORIZ_TOP"] = 7] = "TRIPLE_HORIZ_TOP";
     Container_Layouts[Container_Layouts["TRIPLE_HORIZ_BOTTOM"] = 8] = "TRIPLE_HORIZ_BOTTOM";
-    Container_Layouts[Container_Layouts["QUAD_HORIZ"] = 9] = "QUAD_HORIZ";
-    Container_Layouts[Container_Layouts["QUAD_VERT"] = 10] = "QUAD_VERT";
+    Container_Layouts[Container_Layouts["QUAD_VERT"] = 9] = "QUAD_VERT";
+    Container_Layouts[Container_Layouts["QUAD_HORIZ"] = 10] = "QUAD_HORIZ";
     Container_Layouts[Container_Layouts["QUAD_LEFT"] = 11] = "QUAD_LEFT";
     Container_Layouts[Container_Layouts["QUAD_RIGHT"] = 12] = "QUAD_RIGHT";
     Container_Layouts[Container_Layouts["QUAD_TOP"] = 13] = "QUAD_TOP";
     Container_Layouts[Container_Layouts["QUAD_BOTTOM"] = 14] = "QUAD_BOTTOM";
 })(Container_Layouts || (Container_Layouts = {}));
+export const Container_Layouts_max_val = Container_Layouts.QUAD_BOTTOM.valueOf();
+export const layout_icon_map = {
+    0: icons.layout_single,
+    1: icons.layout_double_vert,
+    2: icons.layout_double_horiz,
+    3: icons.layout_triple_vert,
+    4: icons.layout_triple_left,
+    5: icons.layout_triple_right,
+    6: icons.layout_triple_horiz,
+    7: icons.layout_triple_top,
+    8: icons.layout_triple_bottom,
+    9: icons.layout_quad_horiz,
+    10: icons.layout_quad_vert,
+    11: icons.layout_quad_left,
+    12: icons.layout_quad_right,
+    13: icons.layout_quad_top,
+    14: icons.layout_quad_bottom
+};
 const interval_list = ["s", "m", "h", "D", "W", "M", "Y"];
 const interval_val_map = { "s": 1, "m": 60, "h": 3600, "D": 86400, "W": 604800, "M": 18396000, "Y": 220752000, "E": 1 };
 export const interval_map = { "s": "Second", "m": "Minute", "h": "Hour", "D": "Day", "W": "Week", "M": "Month", "Y": "Year", "E": "Error" };

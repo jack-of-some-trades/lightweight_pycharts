@@ -13,6 +13,7 @@ import { Container_Layouts, Orientation, flex_div } from "./util.js";
 export class Container {
     id: string
     div: HTMLDivElement
+    layout: Container_Layouts | null
     frames: Frame[] = []
     flex_divs: flex_div[] = []
 
@@ -20,6 +21,7 @@ export class Container {
         this.id = id
         this.div = parent_div
         this.div.style.flexWrap = `wrap`    //Flex-Wrap used to position layouts
+        this.layout = null
     }
 
 
@@ -188,6 +190,9 @@ export class Container {
             this.div.appendChild(flex_item.div)
         })
         this.resize()
+        //If succsessful, update container variable and UI
+        this.layout = layout
+        window.layout_selector.update_topbar_icon(layout)
     }
 
     /**

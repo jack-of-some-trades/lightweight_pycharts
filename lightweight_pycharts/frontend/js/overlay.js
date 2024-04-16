@@ -51,7 +51,7 @@ export class overlay_manager {
                 overlay_menu.appendChild(overlay_manager.make_section_title(sub_menu, item));
             }
             else {
-                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, on_sel));
+                sub_menu.appendChild(overlay_manager.make_item(item, sub_menu, overlay_menu, on_sel));
             }
         });
         overlay_menu.appendChild(sub_menu);
@@ -62,6 +62,9 @@ export class overlay_manager {
         var _a;
         let title_bar = document.createElement('div');
         title_bar.classList.add('menu_item', 'overlay_menu_separator');
+        if (item.separator_row) {
+            sub_menu.style.flexDirection = 'row';
+        }
         let text = document.createElement('span');
         text.classList.add('overlay_sub_menu_text');
         text.innerHTML = item.label.toUpperCase();
@@ -87,17 +90,22 @@ export class overlay_manager {
         });
         return title_bar;
     }
-    static make_item(item, menu, on_sel) {
+    static make_item(item, sub_menu, menu, on_sel) {
         let item_div = document.createElement('div');
         item_div.classList.add('menu_item');
         let sel_wrap = document.createElement('span');
-        sel_wrap.classList.add('menu_selectable');
+        if (sub_menu.style.flexDirection === 'row')
+            sel_wrap.classList.add('menu_selectable');
+        else
+            sel_wrap.classList.add('menu_selectable_expand');
         if (item.icon)
             sel_wrap.appendChild(icon_manager.get_svg(item.icon));
-        let text = document.createElement('span');
-        text.classList.add('menu_text');
-        text.innerHTML = item.label;
-        sel_wrap.appendChild(text);
+        if (item.label !== "") {
+            let text = document.createElement('span');
+            text.classList.add('menu_text');
+            text.innerHTML = item.label;
+            sel_wrap.appendChild(text);
+        }
         item_div.appendChild(sel_wrap);
         if (item.star !== undefined)
             this.make_toggle_star(item_div, item);
