@@ -1,6 +1,7 @@
 //Typescript API that interfaces with python.
 
 import { icon_manager } from "./icons.js";
+import { topbar } from "./topbar.js";
 
 
 //Each Function Maps directly to a function within the js_api class in js_api.py
@@ -15,12 +16,12 @@ export class py_api {
 
     loaded_check() {
         //Check that everything outside of this class has been loaded
-        if (icon_manager.loaded && window.wrapper.loaded) {
+        if (icon_manager.loaded && topbar.loaded && window.wrapper.loaded) {
             //Once everything is loaded break recursion and make the python callback
             //this.loaded() should only be called once and called from here
             this.loaded()
         } else {
-            setTimeout(this.loaded_check, 10)
+            setTimeout(this.loaded_check, 25)
         }
     }
 }

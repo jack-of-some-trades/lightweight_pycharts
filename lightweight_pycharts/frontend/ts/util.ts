@@ -1,7 +1,7 @@
 import { AnySeries, AnySeriesData, AreaData, AreaStyleOptions, BarData, BarStyleOptions, BaselineData, BaselineStyleOptions, CandlestickData, CandlestickStyleOptions, ColorType, CrosshairMode, DeepPartial as DP, HistogramData, HistogramStyleOptions, LastPriceAnimationMode, LineData, LineStyle, LineStyleOptions, LineType, OhlcData, PriceLineSource, PriceScaleMode, SeriesOptionsCommon, SingleValueData, TimeChartOptions, UTCTimestamp, WhitespaceData } from "./lib/pkg.js";
 
 
-// ---------------- Enums ---------------- //
+// #region ---------------- Enums ---------------- //
 /**
  * Enum that corresponds to the different static divs of the window wrapper
 */
@@ -36,8 +36,9 @@ export enum Container_Layouts {
     QUAD_TOP,
     QUAD_BOTTOM
 }
+// #endregion
 
-// #region ---------------- Container/Layout/Pane Super Object Interfaces ---------------- //
+// #region ---------------- Super Object Interfaces ---------------- //
 
 /**
  * interface that represents a portion of a Frame's Layout. Could be either a Frame or a Frame Separator
@@ -72,9 +73,63 @@ export interface series_id {
     series_obj: AnySeries
 }
 
+const interval_list: interval[] = ["s", "m", "h", "D", "W", "M", "Y"]
+const interval_val_map = { "s": 1, "m": 60, "h": 3600, "D": 86400, "W": 604800, "M": 18396000, "Y": 220752000, "E": 1 }
+export type interval = "s" | "m" | "h" | "D" | "W" | "M" | "Y" | "E"
+export const interval_map = { "s": "Second", "m": "Minute", "h": "Hour", "D": "Day", "W": "Week", "M": "Month", "Y": "Year", "E": "Error" }
+/**
+ * An object that represents a given timeframe
+ */
+export class tf {
+    multiplier: number
+    interval: interval
+
+    constructor(mult: number, interval: interval) {
+        this.multiplier = Math.floor(mult)
+        this.interval = interval
+    }
+
+    /**
+     * Create a Timeframe Object from a string
+     */
+    static from_str(str_in: string): tf {
+        let interval_str = str_in.charAt(str_in.length - 1)
+        if (!interval_list.includes(interval_str as interval))
+            return new tf(-1, 'E') //Signal an error
+
+        let mult_str = str_in.split(interval_str)[0]
+        let mult_num = mult_str === "" ? 1 : parseFloat(mult_str)
+        return new tf(mult_num, interval_str as interval)
+    }
+
+    /**
+     * Create a Timeframe object from the given number. This is the inverse operation of .toValue(), 
+     * i.e tf.from_value(new tf(1, 'D').toValue()) === new tf(1, 'D')
+     * 
+     * The value given is rounded down to the nearest integer multiple timeframe. e.g. (tf.from_value(new tf(1, 'D').toValue() - 1) === new tf(23, 'h'))
+     * @param val The number of seconds within the given timeframe.
+     */
+    static from_value(val: number): tf {
+        for (let i = interval_list.length - 1; i >= 0; i--) {
+            let mult = (val / interval_val_map[interval_list[i]])
+            if (mult >= 1) {
+                //Highest Tf interval found
+                return new tf(mult, interval_list[i])
+            }
+        }
+
+        return new tf(-1, 'E') //Signal an error
+    }
+
+    toSectionLabel(): string { return interval_map[this.interval] }
+    toString(): string { return `${this.multiplier}${this.interval}` }
+    toLabel(): string { return `${this.multiplier} ${interval_map[this.interval]}${(this.multiplier !== 1) ? 's' : ''}` }
+    toValue(): number { return this.multiplier * interval_val_map[this.interval] }
+}
+
 //#endregion
 
-// ---------------- Base Layout Dimensions ---------------- //
+// #region ---------------- Base Layout Dimensions ---------------- //
 
 export const LAYOUT_MARGIN = 5
 export const LAYOUT_CHART_MARGIN = 4
@@ -118,6 +173,7 @@ export const LAYOUT_DIM_CENTER = {
 export const MIN_FRAME_WIDTH = 0.15
 export const MIN_FRAME_HEIGHT = 0.1
 
+// #endregion
 
 // #region ---------------- Series Data Type Checking Functions ---------------- //
 

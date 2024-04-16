@@ -31,6 +31,36 @@ export var Container_Layouts;
     Container_Layouts[Container_Layouts["QUAD_TOP"] = 13] = "QUAD_TOP";
     Container_Layouts[Container_Layouts["QUAD_BOTTOM"] = 14] = "QUAD_BOTTOM";
 })(Container_Layouts || (Container_Layouts = {}));
+const interval_list = ["s", "m", "h", "D", "W", "M", "Y"];
+const interval_val_map = { "s": 1, "m": 60, "h": 3600, "D": 86400, "W": 604800, "M": 18396000, "Y": 220752000, "E": 1 };
+export const interval_map = { "s": "Second", "m": "Minute", "h": "Hour", "D": "Day", "W": "Week", "M": "Month", "Y": "Year", "E": "Error" };
+export class tf {
+    constructor(mult, interval) {
+        this.multiplier = Math.floor(mult);
+        this.interval = interval;
+    }
+    static from_str(str_in) {
+        let interval_str = str_in.charAt(str_in.length - 1);
+        if (!interval_list.includes(interval_str))
+            return new tf(-1, 'E');
+        let mult_str = str_in.split(interval_str)[0];
+        let mult_num = mult_str === "" ? 1 : parseFloat(mult_str);
+        return new tf(mult_num, interval_str);
+    }
+    static from_value(val) {
+        for (let i = interval_list.length - 1; i >= 0; i--) {
+            let mult = (val / interval_val_map[interval_list[i]]);
+            if (mult >= 1) {
+                return new tf(mult, interval_list[i]);
+            }
+        }
+        return new tf(-1, 'E');
+    }
+    toSectionLabel() { return interval_map[this.interval]; }
+    toString() { return `${this.multiplier}${this.interval}`; }
+    toLabel() { return `${this.multiplier} ${interval_map[this.interval]}${(this.multiplier !== 1) ? 's' : ''}`; }
+    toValue() { return this.multiplier * interval_val_map[this.interval]; }
+}
 export const LAYOUT_MARGIN = 5;
 export const LAYOUT_CHART_MARGIN = 4;
 export const LAYOUT_CHART_SEP_BORDER = 2;

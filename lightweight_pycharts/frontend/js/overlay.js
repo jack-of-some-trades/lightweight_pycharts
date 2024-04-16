@@ -17,9 +17,9 @@ export class overlay_manager {
         document.body.appendChild(this.div);
         overlay_manager.instance = this;
     }
-    static menu(parent_div, items, update_icon, id, loc, on_sel) {
+    static menu(parent_div, items, id, loc, on_sel) {
         if (items.length === 0)
-            return;
+            return document.createElement('div');
         let overlay_menu = document.createElement('div');
         overlay_menu.id = id + '_menu';
         overlay_menu.classList.add('overlay_menu');
@@ -51,11 +51,12 @@ export class overlay_manager {
                 overlay_menu.appendChild(overlay_manager.make_section_title(sub_menu, item));
             }
             else {
-                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, parent_div, on_sel));
+                sub_menu.appendChild(overlay_manager.make_item(item, overlay_menu, on_sel));
             }
         });
         overlay_menu.appendChild(sub_menu);
         overlay_manager.instance.div.appendChild(overlay_menu);
+        return overlay_menu;
     }
     static make_section_title(sub_menu, item) {
         var _a;
@@ -86,7 +87,7 @@ export class overlay_manager {
         });
         return title_bar;
     }
-    static make_item(item, menu, parent_div, on_sel) {
+    static make_item(item, menu, on_sel) {
         let item_div = document.createElement('div');
         item_div.classList.add('menu_item');
         let sel_wrap = document.createElement('span');
@@ -98,7 +99,7 @@ export class overlay_manager {
         text.innerHTML = item.label;
         sel_wrap.appendChild(text);
         item_div.appendChild(sel_wrap);
-        if (item.star)
+        if (item.star !== undefined)
             this.make_toggle_star(item_div, item);
         sel_wrap.addEventListener('click', () => {
             menu.classList.remove('overlay_menu_active');
@@ -113,7 +114,8 @@ export class overlay_manager {
                 {
                     set_menu_loc = () => {
                         overlay_menu_div.style.top = `${Math.max(parent_div.getBoundingClientRect().bottom + 1, 0)}px`;
-                        overlay_menu_div.style.left = `${Math.max(parent_div.getBoundingClientRect().right - overlay_menu_div.getBoundingClientRect().width, 0)}px`;
+                        let right_offset = Math.max(parent_div.getBoundingClientRect().right - 1, overlay_menu_div.getBoundingClientRect().width);
+                        overlay_menu_div.style.right = `${window.innerWidth - right_offset}px`;
                     };
                 }
                 break;
@@ -139,9 +141,13 @@ export class overlay_manager {
     static make_toggle_star(parent_div, item) {
         let wrapper = document.createElement('div');
         wrapper.classList.add('menu_item_star');
-        let icon = icon_manager.get_svg(icons.star, ["icon_hover", "icon_hidden"]);
-        if (item.star_selected)
-            icon.classList.add('star_active');
+        let icon;
+        if (item.star) {
+            icon = icon_manager.get_svg(icons.star_filled, ["star_active", "icon_hover"]);
+        }
+        else {
+            icon = icon_manager.get_svg(icons.star, ["icon_hover", "icon_hidden"]);
+        }
         wrapper.appendChild(icon);
         parent_div.addEventListener('mouseenter', () => { wrapper.firstChild.style.visibility = 'visible'; });
         parent_div.addEventListener('mouseleave', () => {
@@ -163,7 +169,6 @@ export class overlay_manager {
             else {
                 icon.replaceWith(icon_manager.get_svg(icons.star_filled, ["star_active", "icon_hover"]));
                 icon = wrapper.firstChild;
-                icon.style.color = 'var(--star-active-color)';
                 if (item.star_act)
                     item.star_act();
             }

@@ -1,3 +1,4 @@
+import { ensureDefined } from '../helpers/assertions.js';
 import {
 	DataChangedScope,
 	IChartApi,
@@ -6,8 +7,7 @@ import {
 	SeriesAttachedParameter,
 	SeriesOptionsMap,
 	Time,
-} from '../../lib/pkg.js';
-import { ensureDefined } from '../helpers/assertions.js';
+} from '../lib/pkg.js';
 
 export abstract class PluginBase implements ISeriesPrimitive<Time> {
 	private _chart: IChartApi | undefined = undefined;

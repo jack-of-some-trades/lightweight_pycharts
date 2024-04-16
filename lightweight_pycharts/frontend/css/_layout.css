@@ -137,6 +137,7 @@ body {
 }
 
 .icon_text,
+.button_text,
 .menu_text,
 .overlay_sub_menu_text {
     height: -webkit-fill-available;
@@ -146,8 +147,21 @@ body {
     text-wrap: nowrap;
 }
 
+.button_text {
+    width: auto;
+    margin: 4px 1px;
+    font-weight: bold;
+    font-size: small;
+    border-radius: 5px;
+    padding: 3px;
+}
+
 .icon_text {
     font-weight: bold;
+}
+
+.text_selected {
+    color: var(--accent-color)
 }
 
 .menu_text {
@@ -401,8 +415,10 @@ body {
 }
 
 .overlay_sub_menu_text {
+    width: -webkit-fill-available;
     font-weight: bold;
     font-size: smaller;
+    text-align: left;
     margin: 2px 24px 2px 8px;
 }
 
@@ -437,6 +453,10 @@ body {
 .menu_selectable:hover,
 .overlay_menu_separator:hover {
     background-color: var(--icon-hover-color);
+}
+
+.star_active {
+    color: var(--star-active-color);
 }
 
 .menu_item_star {
