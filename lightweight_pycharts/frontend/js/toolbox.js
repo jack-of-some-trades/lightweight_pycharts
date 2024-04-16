@@ -3,21 +3,8 @@ import { menu_location, overlay_manager } from "./overlay.js";
 import { LAYOUT_DIM_LEFT, Wrapper_Divs } from "./util.js";
 export class toolbox {
     constructor(parent) {
-        if (toolbox.instance) {
-            return toolbox.instance;
-        }
-        toolbox.instance = this;
-        toolbox.instance.create_toolbar = this.create_toolbar.bind(toolbox.instance);
         this.div = parent.get_div(Wrapper_Divs.DRAW_TOOLS);
         this.div.style.flexDirection = 'column';
-        this.create_toolbar();
-        toolbox.loaded = true;
-    }
-    create_toolbar() {
-        if (this.top_div)
-            this.top_div.remove();
-        if (this.bottom_div)
-            this.bottom_div.remove();
         this.top_div = document.createElement('div');
         this.top_div.classList.add('toolbar', 'toolbar_top');
         this.top_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`;
@@ -29,6 +16,9 @@ export class toolbox {
         this.top_div.appendChild(this.separator());
         this.top_div.appendChild(this.ruler_button());
         this.top_div.appendChild(this.magnet_button());
+        this.bottom_div = document.createElement('div');
+        this.bottom_div.classList.add('toolbar', 'toolbar_bottom');
+        this.bottom_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`;
         this.div.appendChild(this.top_div);
     }
     menu_selector(parent) {
@@ -135,4 +125,3 @@ export class toolbox {
         return new_div;
     }
 }
-toolbox.loaded = false;

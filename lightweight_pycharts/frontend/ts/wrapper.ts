@@ -1,7 +1,4 @@
 import { Container } from "./container.js";
-import { overlay_manager } from "./overlay.js";
-import { toolbox } from "./toolbox.js";
-import { topbar } from "./topbar.js";
 import * as u from "./util.js";
 import { Wrapper_Divs } from "./util.js";
 
@@ -35,10 +32,6 @@ export class Wrapper {
     div_right: HTMLDivElement
     div_bottom: HTMLDivElement
     div_center: HTMLDivElement
-
-    top_bar: topbar
-    tool_box: toolbox
-    overlay_manager: overlay_manager
 
     private resizeTimeoutID: number | null = null;
 
@@ -103,11 +96,6 @@ export class Wrapper {
         this.div_center.style.top = `${u.LAYOUT_DIM_CENTER.TOP}px`
         this.div_center.style.display = 'flex'
         this.div.appendChild(this.div_center)
-
-        //Create Subobjects
-        this.overlay_manager = new overlay_manager()
-        this.top_bar = new topbar(this)
-        this.tool_box = new toolbox(this)
 
         //Initilize Window regions and perform initial resize
         this.resize()

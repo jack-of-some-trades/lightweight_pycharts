@@ -2,23 +2,11 @@ import { icon_manager, icons } from "./icons.js";
 import { menu_location, overlay_manager } from "./overlay.js";
 import { LAYOUT_DIM_TOP, Wrapper_Divs, tf } from "./util.js";
 export class topbar {
-    constructor(parent) {
-        if (topbar.instance) {
-            return topbar.instance;
-        }
+    constructor(parent, tf_select, layout_select) {
         this.parent = parent;
         this.div = parent.get_div(Wrapper_Divs.TOP_BAR);
-        topbar.instance = this;
-        this.create_topbar(default_topbar_json);
-        topbar.loaded = true;
-    }
-    create_topbar(json) {
-        if (this.left_div)
-            this.left_div.remove();
-        if (this.right_div)
-            this.right_div.remove();
-        this.tf_select = new timeframe_selector(json.timeframe);
-        this.layout_select = new layout_selector();
+        this.tf_select = tf_select;
+        this.layout_select = layout_select;
         this.left_div = document.createElement('div');
         this.left_div.classList.add('topbar', 'topbar_left');
         this.left_div.appendChild(this.symbol_search());
@@ -122,34 +110,32 @@ export class topbar {
     }
 }
 topbar.loaded = false;
-class timeframe_selector {
-    constructor(json) {
-        if (timeframe_selector.instance)
-            return timeframe_selector.instance;
-        timeframe_selector.instance = this;
+export class timeframe_selector {
+    constructor() {
         this.wrapper_div = document.createElement('div');
         this.wrapper_div.id = 'timeframe_switcher';
         this.wrapper_div.classList.add('topbar', 'topbar_container');
         this.json = default_timeframe_select_opts;
         this.menu_button = topbar.menu_selector();
-        this.current_tf_div = timeframe_selector.make_topbar_button(new tf(-1, 's'), false, true);
+        this.current_tf_div = this.make_topbar_button(new tf(-1, 's'), false, true);
         this.wrapper_div.appendChild(this.current_tf_div);
         this.wrapper_div.appendChild(this.menu_button);
-        let items = timeframe_selector.make_items_list(json);
+        let items = this.make_items_list(this.json);
+        this.select = this.select.bind(this);
         this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     update_topbar(json) {
-        let items = timeframe_selector.make_items_list(json);
+        let items = this.make_items_list(json);
         this.overlay_menu_div.remove();
         this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     get_json() { return this.json; }
-    static update_topbar_icon(data) {
+    update_topbar_icon(data) {
         var _a, _b;
         let curr_tf_value = data.toValue();
         let found = false;
-        let favorite_divs = timeframe_selector.instance.wrapper_div.getElementsByClassName('fav_tf');
-        if (curr_tf_value === parseInt((_a = timeframe_selector.instance.current_tf_div.getAttribute('data-tf-value')) !== null && _a !== void 0 ? _a : '-1'))
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_tf');
+        if (curr_tf_value === parseInt((_a = this.current_tf_div.getAttribute('data-tf-value')) !== null && _a !== void 0 ? _a : '-1'))
             return;
         for (let i = favorite_divs.length - 1; i >= 0; i--) {
             if (curr_tf_value === parseInt((_b = favorite_divs[i].getAttribute('data-tf-value')) !== null && _b !== void 0 ? _b : '-1')) {
@@ -166,19 +152,18 @@ class timeframe_selector {
             tmp_div.classList.add('text_selected');
         }
         else {
-            tmp_div = timeframe_selector.make_topbar_button(new tf(-1, 's'), false, true);
+            tmp_div = this.make_topbar_button(new tf(-1, 's'), false, true);
         }
-        timeframe_selector.instance.current_tf_div.replaceWith(tmp_div);
-        timeframe_selector.instance.current_tf_div = tmp_div;
+        this.current_tf_div.replaceWith(tmp_div);
+        this.current_tf_div = tmp_div;
     }
-    static make_items_list(json) {
+    make_items_list(json) {
         try {
-            let instance = timeframe_selector.instance;
             let favorite_tfs = [];
             let items = [];
             let favs = json.favorites;
             let sub_menus = json.menu_listings;
-            function populate_items(interval, values) {
+            let populate_items = (interval, values) => {
                 values.forEach(value => {
                     let period = new tf(value, interval);
                     let fav = favs.includes(period.toString());
@@ -188,11 +173,12 @@ class timeframe_selector {
                         label: period.toLabel(),
                         data: period,
                         star: fav,
-                        star_act: () => instance.add_favorite(period),
-                        star_deact: () => instance.remove_favorite(period),
+                        star_act: () => this.add_favorite(period),
+                        star_deact: () => this.remove_favorite(period),
                     });
                 });
-            }
+            };
+            populate_items = populate_items.bind(this);
             if (sub_menus.s) {
                 items.push({ label: "Seconds", separator: true, separator_vis: false });
                 populate_items('s', sub_menus.s);
@@ -221,20 +207,21 @@ class timeframe_selector {
                 items.push({ label: "Years", separator: true, separator_vis: false });
                 populate_items('Y', sub_menus.Y);
             }
-            let favorite_divs = instance.wrapper_div.getElementsByClassName('fav_tf');
+            let favorite_divs = this.wrapper_div.getElementsByClassName('fav_tf');
             for (let i = 0; i < favorite_divs.length;) {
                 favorite_divs[i].remove();
             }
-            instance.json = json;
-            favorite_tfs.forEach(element => { instance.add_favorite(element); });
+            this.json = json;
+            favorite_tfs.forEach(element => { this.add_favorite(element); });
             return items;
         }
-        catch (_a) {
+        catch (e) {
             console.warn('timeframe_switcher.make_item_list() Failed. Json Not formatted Correctly');
+            console.log('Actual Error: ', e);
             return [];
         }
     }
-    static make_topbar_button(data, pressable = true, blank_element = false) {
+    make_topbar_button(data, pressable = true, blank_element = false) {
         let wrapper = document.createElement('div');
         wrapper.classList.add('topbar', 'button_text');
         wrapper.setAttribute('data-tf-value', data.toValue().toString());
@@ -247,17 +234,16 @@ class timeframe_selector {
             wrapper.innerHTML = data.toString();
         wrapper.classList.add('Text_selected');
         if (pressable) {
-            wrapper.addEventListener('click', () => timeframe_selector.instance.select(data));
+            wrapper.addEventListener('click', () => this.select(data));
             wrapper.classList.add('icon_hover', 'fav_tf');
         }
         return wrapper;
     }
-    static update_menu_location() {
-        let instance = timeframe_selector.instance;
-        if (instance.menu_button && instance.overlay_menu_div)
-            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, instance.overlay_menu_div, instance.menu_button)();
+    update_menu_location() {
+        if (this.menu_button && this.overlay_menu_div)
+            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
-    select(data) { console.log(`selected ${data.toString()}`); timeframe_selector.update_topbar_icon(data); }
+    select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
     add_favorite(data) {
         var _a, _b;
         let curr_tf_value = data.toValue();
@@ -268,15 +254,15 @@ class timeframe_selector {
                 return;
             }
             else if (curr_tf_value > parseInt((_b = element.getAttribute('data-tf-value')) !== null && _b !== void 0 ? _b : '-1')) {
-                element.after(timeframe_selector.make_topbar_button(data));
+                element.after(this.make_topbar_button(data));
                 if (this.json.favorites.indexOf(data.toString()) === -1)
                     this.json.favorites.push(data.toString());
-                timeframe_selector.update_menu_location();
+                this.update_menu_location();
                 return;
             }
         }
-        this.current_tf_div.after(timeframe_selector.make_topbar_button(data));
-        timeframe_selector.update_menu_location();
+        this.current_tf_div.after(this.make_topbar_button(data));
+        this.update_menu_location();
         if (this.json.favorites.indexOf(data.toString()) === -1)
             this.json.favorites.push(data.toString());
     }
@@ -287,7 +273,7 @@ class timeframe_selector {
         for (let i = 0; i < favorite_divs.length; i++) {
             if (curr_tf_value === parseInt((_a = favorite_divs[i].getAttribute('data-tf-value')) !== null && _a !== void 0 ? _a : '-1')) {
                 favorite_divs[i].remove();
-                timeframe_selector.update_menu_location();
+                this.update_menu_location();
                 let fav_index = this.json.favorites.indexOf(data.toString());
                 if (fav_index !== -1) {
                     this.json.favorites.splice(fav_index, 1);
@@ -296,7 +282,7 @@ class timeframe_selector {
         }
     }
 }
-class layout_selector {
+export class layout_selector {
     constructor() {
         this.wrapper_div = document.createElement('div');
         this.wrapper_div.id = 'layout_switcher';
@@ -329,8 +315,4 @@ const default_timeframe_select_opts = {
     "favorites": [
         "1D"
     ]
-};
-const default_topbar_json = {
-    layout: default_layout_select_opts,
-    timeframe: default_timeframe_select_opts
 };

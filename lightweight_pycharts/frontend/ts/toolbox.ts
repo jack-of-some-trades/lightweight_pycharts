@@ -4,41 +4,16 @@ import { LAYOUT_DIM_LEFT, Wrapper_Divs } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
 /**
- * Singleton class that Constructs the Left-side ToolBox
+ * class that Constructs the Left-side ToolBox
  */
 export class toolbox {
-    static loaded: boolean = false
-    static instance: toolbox
-    //@ts-ignore
     private div: HTMLDivElement
-
-    private top_div: HTMLDivElement | undefined
-    private bottom_div: HTMLDivElement | undefined
+    private top_div: HTMLDivElement
+    private bottom_div: HTMLDivElement
 
     constructor(parent: Wrapper) {
-        if (toolbox.instance) {
-            //Return Instance already created
-            return toolbox.instance
-        }
-        toolbox.instance = this
-        toolbox.instance.create_toolbar = this.create_toolbar.bind(toolbox.instance)
         this.div = parent.get_div(Wrapper_Divs.DRAW_TOOLS)
         this.div.style.flexDirection = 'column'
-
-        this.create_toolbar()
-        toolbox.loaded = true
-        // Remainder is left just in case a favorites functionality is added to the toolbar
-        // fetch('./fmt/toolbox.json')
-        //     .then((resp) => resp.json())
-        //     .then((json_fmt) => {
-        //         this.create_toolbar(json_fmt) 
-        //         toolbox.loaded = true
-        //     })
-    }
-
-    create_toolbar() {
-        if (this.top_div) this.top_div.remove()
-        if (this.bottom_div) this.bottom_div.remove()
 
         this.top_div = document.createElement('div')
         this.top_div.classList.add('toolbar', 'toolbar_top')
@@ -53,12 +28,13 @@ export class toolbox {
         this.top_div.appendChild(this.ruler_button())
         this.top_div.appendChild(this.magnet_button())
 
-        // No use for bottom justified content yet.
-        // this.bottom_div = document.createElement('div')
-        // this.bottom_div.classList.add('toolbar', 'toolbar_bottom')
-        // this.bottom_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`
+
+        this.bottom_div = document.createElement('div')
+        this.bottom_div.classList.add('toolbar', 'toolbar_bottom')
+        this.bottom_div.style.width = `${LAYOUT_DIM_LEFT.WIDTH}px`
 
         this.div.appendChild(this.top_div)
+        // No use for bottom justified content yet.
         // this.div.appendChild(this.bottom_div)
     }
 
