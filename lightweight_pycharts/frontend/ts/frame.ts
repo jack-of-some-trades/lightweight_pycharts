@@ -1,4 +1,3 @@
-//@ts-ignore
 import { Pane } from "./pane.js";
 
 /**

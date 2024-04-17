@@ -270,6 +270,7 @@ body {
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
+    border-radius: 5px;
 }
 
 .topbar_left {

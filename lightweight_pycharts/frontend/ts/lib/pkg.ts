@@ -2875,41 +2875,41 @@ export interface SeriesAttachedParameter<HorzScaleItem = Time, TSeriesType exten
      */
     requestUpdate: () => void;
 }
-/**
- * Represents the type of data that a series contains.
- *
- * For example a bar series contains {@link BarData} or {@link WhitespaceData}.
- */
-export interface SeriesDataItemTypeMap<HorzScaleItem = Time> {
-    /**
-     * The types of bar series data.
-     */
-    Bar: BarData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
-    /**
-     * The types of candlestick series data.
-     */
-    Candlestick: CandlestickData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
-    /**
-     * The types of area series data.
-     */
-    Area: AreaData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
-    /**
-     * The types of baseline series data.
-     */
-    Baseline: BaselineData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
-    /**
-     * The types of line series data.
-     */
-    Line: LineData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
-    /**
-     * The types of histogram series data.
-     */
-    Histogram: HistogramData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
-    /**
-     * The base types of an custom series data.
-     */
-    Custom: CustomData<HorzScaleItem> | CustomSeriesWhitespaceData<HorzScaleItem>;
-}
+// /**
+//  * Represents the type of data that a series contains.
+//  *
+//  * For example a bar series contains {@link BarData} or {@link WhitespaceData}.
+//  */
+// export interface SeriesDataItemTypeMap<HorzScaleItem = Time> {
+//     /**
+//      * The types of bar series data.
+//      */
+//     Bar: BarData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+//     /**
+//      * The types of candlestick series data.
+//      */
+//     Candlestick: CandlestickData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+//     /**
+//      * The types of area series data.
+//      */
+//     Area: AreaData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+//     /**
+//      * The types of baseline series data.
+//      */
+//     Baseline: BaselineData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+//     /**
+//      * The types of line series data.
+//      */
+//     Line: LineData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+//     /**
+//      * The types of histogram series data.
+//      */
+//     Histogram: HistogramData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+//     /**
+//      * The base types of an custom series data.
+//      */
+//     Custom: CustomData<HorzScaleItem> | CustomSeriesWhitespaceData<HorzScaleItem>;
+// }
 /**
  * Represents a series marker.
  */
@@ -3084,76 +3084,76 @@ export interface SeriesOptionsCommon {
      */
     autoscaleInfoProvider?: AutoscaleInfoProvider;
 }
-/**
- * Represents the type of options for each series type.
- *
- * For example a bar series has options represented by {@link BarSeriesOptions}.
- */
-export interface SeriesOptionsMap {
-    /**
-     * The type of bar series options.
-     */
-    Bar: BarSeriesOptions;
-    /**
-     * The type of candlestick series options.
-     */
-    Candlestick: CandlestickSeriesOptions;
-    /**
-     * The type of area series options.
-     */
-    Area: AreaSeriesOptions;
-    /**
-     * The type of baseline series options.
-     */
-    Baseline: BaselineSeriesOptions;
-    /**
-     * The type of line series options.
-     */
-    Line: LineSeriesOptions;
-    /**
-     * The type of histogram series options.
-     */
-    Histogram: HistogramSeriesOptions;
-    /**
-     * The type of a custom series options.
-     */
-    Custom: CustomSeriesOptions;
-}
-/**
- * Represents the type of partial options for each series type.
- *
- * For example a bar series has options represented by {@link BarSeriesPartialOptions}.
- */
-export interface SeriesPartialOptionsMap {
-    /**
-     * The type of bar series partial options.
-     */
-    Bar: BarSeriesPartialOptions;
-    /**
-     * The type of candlestick series partial options.
-     */
-    Candlestick: CandlestickSeriesPartialOptions;
-    /**
-     * The type of area series partial options.
-     */
-    Area: AreaSeriesPartialOptions;
-    /**
-     * The type of baseline series partial options.
-     */
-    Baseline: BaselineSeriesPartialOptions;
-    /**
-     * The type of line series partial options.
-     */
-    Line: LineSeriesPartialOptions;
-    /**
-     * The type of histogram series partial options.
-     */
-    Histogram: HistogramSeriesPartialOptions;
-    /**
-     * The type of a custom series partial options.
-     */
-    Custom: CustomSeriesPartialOptions;
-}
+// /**
+//  * Represents the type of options for each series type.
+//  *
+//  * For example a bar series has options represented by {@link BarSeriesOptions}.
+//  */
+// export interface SeriesOptionsMap {
+//     /**
+//      * The type of bar series options.
+//      */
+//     Bar: BarSeriesOptions;
+//     /**
+//      * The type of candlestick series options.
+//      */
+//     Candlestick: CandlestickSeriesOptions;
+//     /**
+//      * The type of area series options.
+//      */
+//     Area: AreaSeriesOptions;
+//     /**
+//      * The type of baseline series options.
+//      */
+//     Baseline: BaselineSeriesOptions;
+//     /**
+//      * The type of line series options.
+//      */
+//     Line: LineSeriesOptions;
+//     /**
+//      * The type of histogram series options.
+//      */
+//     Histogram: HistogramSeriesOptions;
+//     /**
+//      * The type of a custom series options.
+//      */
+//     Custom: CustomSeriesOptions;
+// }
+// /**
+//  * Represents the type of partial options for each series type.
+//  *
+//  * For example a bar series has options represented by {@link BarSeriesPartialOptions}.
+//  */
+// export interface SeriesPartialOptionsMap {
+//     /**
+//      * The type of bar series partial options.
+//      */
+//     Bar: BarSeriesPartialOptions;
+//     /**
+//      * The type of candlestick series partial options.
+//      */
+//     Candlestick: CandlestickSeriesPartialOptions;
+//     /**
+//      * The type of area series partial options.
+//      */
+//     Area: AreaSeriesPartialOptions;
+//     /**
+//      * The type of baseline series partial options.
+//      */
+//     Baseline: BaselineSeriesPartialOptions;
+//     /**
+//      * The type of line series partial options.
+//      */
+//     Line: LineSeriesPartialOptions;
+//     /**
+//      * The type of histogram series partial options.
+//      */
+//     Histogram: HistogramSeriesPartialOptions;
+//     /**
+//      * The type of a custom series partial options.
+//      */
+//     Custom: CustomSeriesPartialOptions;
+// }
 /**
  * A base interface for a data point of single-value series.
  */
@@ -3738,13 +3738,12 @@ export type VisiblePriceScaleOptions = PriceScaleOptions;
 /**
  * Represents A Generic Series Type.
  */
-export type AnySeries = CandlestickSeries | BarSeries | HistogramSeries | AreaSeries | LineSeries | BaselineSeries | CustomSeries
+export type AnySeries = CandlestickSeries | BarSeries | HistogramSeries | AreaSeries | LineSeries | BaselineSeries | CustomSeries | RoundedCandleSeries
 
 /**
  * Represents any type of Data that could be sent to, or retrieved from, a data series
  */
 export type AnySeriesData<HorzScaleItem = Time> = SingleValueData<HorzScaleItem> | OhlcData<HorzScaleItem> | CandlestickData<HorzScaleItem> | BarData<HorzScaleItem> | HistogramData<HorzScaleItem> | LineData<HorzScaleItem> | BaselineData<HorzScaleItem> | AreaData<HorzScaleItem> | CustomData<HorzScaleItem>
-
 
 /**
  * Represents any type of Series Options
@@ -3788,6 +3787,138 @@ export type AreaSeries = ISeriesApi<"Area", Time, WhitespaceData<Time> | AreaDat
  */
 export type CustomSeries<TData extends CustomData<Time> = CustomData<Time>> = ISeriesApi<"Custom", Time, WhitespaceData<Time> | TData, CustomSeriesOptions, DeepPartial<CustomStyleOptions & SeriesOptionsCommon>>
 
+
+/**
+ * Represents A Custom Series.
+ */
+export type RoundedCandleSeries<TData extends CustomData<Time> = CustomData<Time>> = ISeriesApi<"Rounded_Candle", Time, WhitespaceData<Time> | TData, CustomSeriesOptions, DeepPartial<CustomStyleOptions & SeriesOptionsCommon>>
+
+/* --------------------- ----------------------- Series Interface Expantions Types ----------------------- ----------------------- */
+/*
+ * These Interfaces Redefine the Standard SeriesOptionsMap, SeriesDataItemTypeMap, SeriesPartialOptionsMaps that come with the Lightweight Charts Package.
+ * This is done so that each interface can be expanded to include more standardized Custom Series Types
+ */
+
+/**
+ * Represents the type of options for each series type.
+ *
+ * For example a bar series has options represented by {@link BarSeriesOptions}.
+ * 
+ */
+export interface SeriesOptionsMap {
+    /**
+     * The type of bar series options.
+     */
+    Bar: BarSeriesOptions;
+    /**
+     * The type of candlestick series options.
+     */
+    Candlestick: CandlestickSeriesOptions;
+    /**
+     * The type of area series options.
+     */
+    Area: AreaSeriesOptions;
+    /**
+     * The type of baseline series options.
+     */
+    Baseline: BaselineSeriesOptions;
+    /**
+     * The type of line series options.
+     */
+    Line: LineSeriesOptions;
+    /**
+     * The type of histogram series options.
+     */
+    Histogram: HistogramSeriesOptions;
+    /**
+     * The type of a custom series options.
+     */
+    Rounded_Candle: CustomSeriesOptions;
+    /**
+     * The type of a custom series options.
+     */
+    Custom: CustomSeriesOptions;
+}
+
+/**
+ * Represents the type of data that a series contains.
+ *
+ * For example a bar series contains {@link BarData} or {@link WhitespaceData}.
+ */
+export interface SeriesDataItemTypeMap<HorzScaleItem = Time> {
+    /**
+     * The types of bar series data.
+     */
+    Bar: BarData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+    /**
+     * The types of candlestick series data.
+     */
+    Candlestick: CandlestickData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+    /**
+     * The types of area series data.
+     */
+    Area: AreaData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+    /**
+     * The types of baseline series data.
+     */
+    Baseline: BaselineData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+    /**
+     * The types of line series data.
+     */
+    Line: LineData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+    /**
+     * The types of histogram series data.
+     */
+    Histogram: HistogramData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+    /**
+     * The type of a custom series options.
+     */
+    Rounded_Candle: CandlestickData<HorzScaleItem> | WhitespaceData<HorzScaleItem>;
+    /**
+     * The base types of an custom series data.
+     */
+    Custom: CustomData<HorzScaleItem> | CustomSeriesWhitespaceData<HorzScaleItem>;
+}
+
+/**
+ * Represents the type of partial options for each series type.
+ *
+ * For example a bar series has options represented by {@link BarSeriesPartialOptions}.
+ */
+export interface SeriesPartialOptionsMap {
+    /**
+     * The type of bar series partial options.
+     */
+    Bar: BarSeriesPartialOptions;
+    /**
+     * The type of candlestick series partial options.
+     */
+    Candlestick: CandlestickSeriesPartialOptions;
+    /**
+     * The type of area series partial options.
+     */
+    Area: AreaSeriesPartialOptions;
+    /**
+     * The type of baseline series partial options.
+     */
+    Baseline: BaselineSeriesPartialOptions;
+    /**
+     * The type of line series partial options.
+     */
+    Line: LineSeriesPartialOptions;
+    /**
+     * The type of histogram series partial options.
+     */
+    Histogram: HistogramSeriesPartialOptions;
+    /**
+     * The type of a custom series options.
+     */
+    Rounded_Candle: CandlestickSeriesPartialOptions;
+    /**
+     * The type of a custom series partial options.
+     */
+    Custom: CustomSeriesPartialOptions;
+}
 
 /* --------------------- Custom Types ----------------------- */
 

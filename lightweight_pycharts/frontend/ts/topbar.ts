@@ -113,6 +113,7 @@ export class topbar {
 
         return indicator_div
     }
+
     /**
      * Create a Topbar Toggleable div that shows/hides a layout panel
      * @param icon Valid args: icons.panel_left, icons.panel_right, icons.panel_bottom

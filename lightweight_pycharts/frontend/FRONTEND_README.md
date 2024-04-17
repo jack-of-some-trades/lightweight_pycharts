@@ -18,6 +18,8 @@ The Files within './ts/lib' are 'pkg.ts', 'fancy-canvas.ts' and ./fancy-canvas'
       File in the "Additional Types" Section denoted by a comment line break. These Addtional Types include:
         - A Generic Type Encompassing a set of SeriesData Types
         - Explicit Series Type Definitions of the ISeriesAPI General Type (e.g. CandlestickSeries, LineSeries, ...) 
+        - Redefined Versions of SeriesOptionsMap, SeriesDataItemTypeMap, SeriesPartialOptionsMaps
+            -These have been redefined so that they can be expanded to include more custom series types.
         - An Enum of All the named Colors defined within the standalone Lightweight-Charts API.
     - See below for the reasoning for changes to the file structure and imports
 - The 'fancy-canvas.ts' file is the 'index.ts' file that originally came with the '../../lib/fancy-canvas' library
@@ -26,7 +28,7 @@ The Files within './ts/lib' are 'pkg.ts', 'fancy-canvas.ts' and ./fancy-canvas'
 - The ./fancy-canvas' folder is TradingView's Fancy Canvas Repository
     '../../lib/fancy-canvas' is Licensed under a MIT License
 
-The Folders './ts/Plugins' and './ts/Helpers' Come from TradingView's Lightweight-Charts repository on Github (https://github.com/tradingview/lightweight-charts).
+The Folders './ts/plugins' and './ts/helpers' Come from TradingView's Lightweight-Charts repository on Github (https://github.com/tradingview/lightweight-charts).
     - The code within these folders also falls under the same Apache 2.0 License Mentioned above.
     - All of the import paths within these folders have been changed to import the respective code properly given changes to the file structure
     - The Javascript and Example Files have been removed to limit the amount of code in this repository. The Javascript files have been
@@ -34,6 +36,9 @@ The Folders './ts/Plugins' and './ts/Helpers' Come from TradingView's Lightweigh
 
 All Javascript Files from the libraries have been removed to limit how much code is uploaded directly by this repository.
 These Javascript Files are re-transpiled locally and placed within their respective './js/.js' folders.
+
+The '.ts/lwpc-plugins' folder houses all the plugins written specifically for the Lightweight-PyCharts library. This was made a separate folder in order to
+maintain some level of separation between source code written for this repository and the lightweight-charts repository.
 
 
 # The Necessity for changing the file structure and imports:
