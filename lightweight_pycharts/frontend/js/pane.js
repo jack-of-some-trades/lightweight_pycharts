@@ -13,8 +13,6 @@ export class Pane {
         this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.chart.chartElement();
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this));
-        this.watermark_div = null;
-        this.watermark_series = null;
         this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries());
     }
     assign_active_pane() {
@@ -34,14 +32,10 @@ export class Pane {
     set_data(dtype, data, series = this.main_series) {
         if (data.length === 0) {
             series.setData([]);
-            this.create_screensaver();
             return;
         }
         else if (series === undefined) {
             return;
-        }
-        else if (this.watermark_div) {
-            this.remove_screensaver();
         }
         let data_set = false;
         switch (series.seriesType()) {
@@ -101,14 +95,7 @@ export class Pane {
         let this_height = height * this.flex_height;
         this.div.style.width = `${this_width}px`;
         this.div.style.height = `${this_height}px`;
-        if (this.watermark_div) {
-            this.chart.resize(this_width, this_height, true);
-            this.watermark_div.style.width = `${this.chart_div.clientWidth}px`;
-            this.watermark_div.style.height = `${this.chart_div.clientHeight}px`;
-        }
-        else {
-            this.chart.resize(this_width, this_height, false);
-        }
+        this.chart.resize(this_width, this_height, false);
     }
     add_candlestick_series(options) {
         this.series.push(this.chart.addCandlestickSeries(options));
@@ -116,27 +103,4 @@ export class Pane {
     fitcontent() { this.chart.timeScale().fitContent(); }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale(); }
     set_main_series(series) { this.main_series = series; }
-    create_screensaver(white = true) {
-        if (!this.watermark_div) {
-            this.watermark_div = document.createElement('div');
-            this.watermark_div.classList.add(white ? 'chart_watermark_white' : 'chart_watermark_black');
-            this.watermark_div.style.width = `${this.chart_div.clientWidth}px`;
-            this.watermark_div.style.height = `${this.chart_div.clientHeight}px`;
-            this.div.appendChild(this.watermark_div);
-        }
-        if (!this.watermark_series) {
-            this.watermark_series = this.chart.addCandlestickSeries();
-            this.watermark_series.setData(u.fake_bar_data);
-        }
-    }
-    remove_screensaver() {
-        if (this.watermark_div) {
-            this.div.removeChild(this.watermark_div);
-            this.watermark_div = null;
-        }
-        if (this.watermark_series) {
-            this.chart.removeSeries(this.watermark_series);
-            this.watermark_series = null;
-        }
-    }
 }

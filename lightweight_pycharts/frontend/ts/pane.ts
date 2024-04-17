@@ -68,12 +68,9 @@ export class Pane {
         if (data.length === 0) {
             //Delete Present Data if none was given.
             series.setData([])
-            this.create_screensaver()
             return
         } else if (series === undefined) {
             return
-        } else if (this.watermark_div) {
-            this.remove_screensaver()
         }
 
         let data_set: boolean = false
@@ -145,14 +142,7 @@ export class Pane {
 
         this.div.style.width = `${this_width}px`
         this.div.style.height = `${this_height}px`
-
-        if (this.watermark_div) {
-            this.chart.resize(this_width, this_height, true)
-            this.watermark_div.style.width = `${this.chart_div.clientWidth}px`
-            this.watermark_div.style.height = `${this.chart_div.clientHeight}px`
-        } else {
-            this.chart.resize(this_width, this_height, false)
-        }
+        this.chart.resize(this_width, this_height, false)
     }
 
 
