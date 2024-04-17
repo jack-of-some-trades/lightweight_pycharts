@@ -1,17 +1,20 @@
 import { icon_manager, icons } from "./icons.js";
 import { menu_location, overlay_manager } from "./overlay.js";
-import { Container_Layouts, LAYOUT_DIM_TOP, Wrapper_Divs, layout_icon_map, tf } from "./util.js";
+import { Container_Layouts, LAYOUT_DIM_TOP, Series_Types, Wrapper_Divs, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js";
 export class topbar {
-    constructor(parent, tf_select, layout_select) {
+    constructor(parent, tf, layout, series) {
         this.parent = parent;
         this.div = parent.get_div(Wrapper_Divs.TOP_BAR);
-        this.tf_select = tf_select;
-        this.layout_select = layout_select;
+        this.tf_select = tf;
+        this.layout_select = layout;
+        this.series_select = series;
         this.left_div = document.createElement('div');
         this.left_div.classList.add('topbar', 'topbar_left');
         this.left_div.appendChild(this.symbol_search());
         this.left_div.appendChild(this.separator());
         this.left_div.appendChild(this.tf_select.wrapper_div);
+        this.left_div.appendChild(this.separator());
+        this.left_div.appendChild(this.series_select.wrapper_div);
         this.left_div.appendChild(this.separator());
         this.right_div = document.createElement('div');
         this.right_div.classList.add('topbar', 'topbar_right');
@@ -486,6 +489,181 @@ export class layout_selector {
         }
     }
 }
+export class series_selector {
+    constructor() {
+        this.wrapper_div = document.createElement('div');
+        this.wrapper_div.id = 'series_switcher';
+        this.wrapper_div.classList.add('topbar', 'topbar_container');
+        this.json = default_series_select_opts;
+        this.menu_button = topbar.menu_selector();
+        this.current_series_div = this.make_topbar_button(null, false);
+        this.wrapper_div.appendChild(this.current_series_div);
+        this.wrapper_div.appendChild(this.menu_button);
+        let items = this.make_items_list(this.json);
+        this.select = this.select.bind(this);
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
+    }
+    update_topbar(json) {
+        let items = this.make_items_list(json);
+        this.overlay_menu_div.remove();
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
+    }
+    get_json() { return this.json; }
+    update_topbar_icon(data) {
+        var _a, _b;
+        let curr_series_value = data.valueOf();
+        let found = false;
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series');
+        if (curr_series_value === parseInt((_a = this.current_series_div.getAttribute('data-series-value')) !== null && _a !== void 0 ? _a : '-1'))
+            return;
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let icon_svg = favorite_divs[i].firstChild;
+            if (curr_series_value === parseInt((_b = favorite_divs[i].getAttribute('data-series-value')) !== null && _b !== void 0 ? _b : '-1')) {
+                icon_svg.classList.add('selected');
+                found = true;
+            }
+            else {
+                icon_svg.classList.remove('selected');
+            }
+        }
+        let tmp_div;
+        if (!found) {
+            tmp_div = this.make_topbar_button(data, false);
+            let icon_svg = tmp_div.firstChild;
+            icon_svg.classList.add('selected');
+        }
+        else {
+            tmp_div = this.make_topbar_button(null, false);
+        }
+        this.current_series_div.replaceWith(tmp_div);
+        this.current_series_div = tmp_div;
+    }
+    make_items_list(json) {
+        try {
+            let items = [];
+            let favs = json.favorites;
+            let populate_items = (series) => {
+                series.forEach(type => {
+                    items.push({
+                        label: series_label_map[type],
+                        data: type,
+                        icon: series_icon_map[type],
+                        star: favs.includes(type),
+                        star_act: () => this.add_favorite(type),
+                        star_deact: () => this.remove_favorite(type),
+                    });
+                });
+            };
+            populate_items = populate_items.bind(this);
+            populate_items([
+                Series_Types.BAR,
+                Series_Types.CANDLESTICK,
+                Series_Types.ROUNDED_CANDLE,
+                Series_Types.LINE,
+                Series_Types.AREA,
+                Series_Types.HISTOGRAM,
+                Series_Types.BASELINE,
+                Series_Types.HLC_AREA,
+            ]);
+            let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series');
+            for (let i = 0; i < favorite_divs.length;) {
+                favorite_divs[i].remove();
+            }
+            this.json = json;
+            favs.forEach(element => { this.add_favorite(element); });
+            return items;
+        }
+        catch (e) {
+            console.warn('series_switcher.make_item_list() Failed. Json Not formatted Correctly');
+            console.log('Actual Error: ', e);
+            return [];
+        }
+    }
+    make_topbar_button(data, pressable = true) {
+        var _a;
+        let wrapper = document.createElement('div');
+        wrapper.classList.add('topbar');
+        if (data === null)
+            return wrapper;
+        wrapper.setAttribute('data-series-value', (_a = data.valueOf().toString()) !== null && _a !== void 0 ? _a : '-1');
+        wrapper.appendChild(icon_manager.get_svg(series_icon_map[data]));
+        if (pressable) {
+            wrapper.addEventListener('click', () => this.select(data));
+            wrapper.classList.add('icon_hover', 'fav_series');
+        }
+        else {
+            let icon_svg = wrapper.firstChild;
+            icon_svg.classList.add('selected');
+        }
+        return wrapper;
+    }
+    update_menu_location() {
+        if (this.menu_button && this.overlay_menu_div)
+            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
+    }
+    select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
+    add_favorite(data) {
+        var _a, _b, _c, _d;
+        let curr_series_value = data.valueOf();
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series');
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let element = favorite_divs[i];
+            if (curr_series_value === parseInt((_a = element.getAttribute('data-series-value')) !== null && _a !== void 0 ? _a : '1')) {
+                return;
+            }
+            else if (curr_series_value > parseInt((_b = element.getAttribute('data-series-value')) !== null && _b !== void 0 ? _b : '-1')) {
+                element.after(this.make_topbar_button(data));
+                if (this.json.favorites.indexOf(data) === -1)
+                    this.json.favorites.push(data);
+                if (curr_series_value === parseInt((_c = this.current_series_div.getAttribute('data-series-value')) !== null && _c !== void 0 ? _c : '-1')) {
+                    let tmp_div = this.make_topbar_button(null, false);
+                    this.current_series_div.replaceWith(tmp_div);
+                    this.current_series_div = tmp_div;
+                    this.update_topbar_icon(data);
+                }
+                this.update_menu_location();
+                return;
+            }
+        }
+        this.current_series_div.after(this.make_topbar_button(data));
+        if (this.json.favorites.indexOf(data) === -1)
+            this.json.favorites.push(data);
+        if (curr_series_value === parseInt((_d = this.current_series_div.getAttribute('data-series-value')) !== null && _d !== void 0 ? _d : '-1')) {
+            let tmp_div = this.make_topbar_button(null, false);
+            this.current_series_div.replaceWith(tmp_div);
+            this.current_series_div = tmp_div;
+            this.update_topbar_icon(data);
+        }
+        this.update_menu_location();
+    }
+    remove_favorite(data) {
+        var _a;
+        let curr_series_value = data.valueOf();
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series');
+        for (let i = 0; i < favorite_divs.length; i++) {
+            if (curr_series_value === parseInt((_a = favorite_divs[i].getAttribute('data-series-value')) !== null && _a !== void 0 ? _a : '-1')) {
+                let icon = favorite_divs[i].firstChild;
+                if (icon.classList.contains('selected')) {
+                    favorite_divs[i].remove();
+                    this.update_topbar_icon(data);
+                }
+                else {
+                    favorite_divs[i].remove();
+                }
+                this.update_menu_location();
+                let fav_index = this.json.favorites.indexOf(data);
+                if (fav_index !== -1) {
+                    this.json.favorites.splice(fav_index, 1);
+                }
+            }
+        }
+    }
+}
+const default_series_select_opts = {
+    favorites: [
+        Series_Types.ROUNDED_CANDLE
+    ]
+};
 const default_layout_select_opts = {
     favorites: [
         Container_Layouts.SINGLE,

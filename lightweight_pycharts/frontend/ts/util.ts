@@ -37,11 +37,7 @@ export enum Container_Layouts {
     QUAD_TOP,
     QUAD_BOTTOM
 }
-export const Container_Layouts_max_val = Container_Layouts.QUAD_BOTTOM.valueOf()
-interface layout_icon_map_interface {
-    [key: number]: icons;
-}
-export const layout_icon_map: layout_icon_map_interface = {
+export const layout_icon_map: { [key: number]: icons; } = {
     0: icons.layout_single,
     1: icons.layout_double_vert,
     2: icons.layout_double_horiz,
@@ -59,6 +55,40 @@ export const layout_icon_map: layout_icon_map_interface = {
     14: icons.layout_quad_bottom
 }
 
+export enum Series_Types {
+    BAR,
+    CANDLESTICK,
+    LINE,
+    AREA,
+    HISTOGRAM,
+    BASELINE,
+
+    HLC_AREA,
+    ROUNDED_CANDLE
+}
+export const series_icon_map: { [key: number]: icons; } = {
+    0: icons.candle_bar,
+    1: icons.candle_regular,
+    2: icons.series_line,
+    3: icons.series_area,
+    4: icons.series_histogram,
+    5: icons.series_baseline,
+
+    6: icons.series_step_line,
+    7: icons.candle_hollow,
+}
+
+export const series_label_map: { [key: number]: string; } = {
+    0: "Bar",
+    1: "Candlestick",
+    2: "Line",
+    3: "Area",
+    4: "Histogram",
+    5: "Baseline",
+
+    6: "HLC Area",
+    7: "Rounded Candlestick",
+}
 // #endregion
 
 // #region ---------------- Super Object Interfaces ---------------- //

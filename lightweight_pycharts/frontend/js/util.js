@@ -32,7 +32,6 @@ export var Container_Layouts;
     Container_Layouts[Container_Layouts["QUAD_TOP"] = 13] = "QUAD_TOP";
     Container_Layouts[Container_Layouts["QUAD_BOTTOM"] = 14] = "QUAD_BOTTOM";
 })(Container_Layouts || (Container_Layouts = {}));
-export const Container_Layouts_max_val = Container_Layouts.QUAD_BOTTOM.valueOf();
 export const layout_icon_map = {
     0: icons.layout_single,
     1: icons.layout_double_vert,
@@ -49,6 +48,37 @@ export const layout_icon_map = {
     12: icons.layout_quad_right,
     13: icons.layout_quad_top,
     14: icons.layout_quad_bottom
+};
+export var Series_Types;
+(function (Series_Types) {
+    Series_Types[Series_Types["BAR"] = 0] = "BAR";
+    Series_Types[Series_Types["CANDLESTICK"] = 1] = "CANDLESTICK";
+    Series_Types[Series_Types["LINE"] = 2] = "LINE";
+    Series_Types[Series_Types["AREA"] = 3] = "AREA";
+    Series_Types[Series_Types["HISTOGRAM"] = 4] = "HISTOGRAM";
+    Series_Types[Series_Types["BASELINE"] = 5] = "BASELINE";
+    Series_Types[Series_Types["HLC_AREA"] = 6] = "HLC_AREA";
+    Series_Types[Series_Types["ROUNDED_CANDLE"] = 7] = "ROUNDED_CANDLE";
+})(Series_Types || (Series_Types = {}));
+export const series_icon_map = {
+    0: icons.candle_bar,
+    1: icons.candle_regular,
+    2: icons.series_line,
+    3: icons.series_area,
+    4: icons.series_histogram,
+    5: icons.series_baseline,
+    6: icons.series_step_line,
+    7: icons.candle_hollow,
+};
+export const series_label_map = {
+    0: "Bar",
+    1: "Candlestick",
+    2: "Line",
+    3: "Area",
+    4: "Histogram",
+    5: "Baseline",
+    6: "HLC Area",
+    7: "Rounded Candlestick",
 };
 const interval_list = ["s", "m", "h", "D", "W", "M", "Y"];
 const interval_val_map = { "s": 1, "m": 60, "h": 3600, "D": 86400, "W": 604800, "M": 18396000, "Y": 220752000, "E": 1 };

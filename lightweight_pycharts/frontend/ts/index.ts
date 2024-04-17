@@ -5,7 +5,7 @@ import { overlay_manager } from "./overlay.js";
 import { Pane } from "./pane.js";
 import { py_api } from "./py_api.js";
 import { toolbox } from "./toolbox.js";
-import { layout_selector, timeframe_selector, topbar } from "./topbar.js";
+import { layout_selector, series_selector, timeframe_selector, topbar } from "./topbar.js";
 import { Container_Layouts } from "./util.js";
 import { Wrapper } from "./wrapper.js";
 
@@ -20,6 +20,7 @@ declare global {
         wrapper: Wrapper,
         topbar: topbar,
         toolbox: toolbox,
+        series_selector: series_selector,
         layout_selector: layout_selector,
         timeframe_selector: timeframe_selector,
 
@@ -41,9 +42,15 @@ window.svgs = new icon_manager();
 window.wrapper = new Wrapper();
 window.overlay_manager = new overlay_manager()
 
+window.series_selector = new series_selector()
 window.layout_selector = new layout_selector()
 window.timeframe_selector = new timeframe_selector()
-window.topbar = new topbar(window.wrapper, window.timeframe_selector, window.layout_selector)
+window.topbar = new topbar(
+    window.wrapper,
+    window.timeframe_selector,
+    window.layout_selector,
+    window.series_selector
+)
 window.toolbox = new toolbox(window.wrapper)
 
 //Define Global Constructors; might move this to be a responsibility of the wrapper class..

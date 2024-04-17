@@ -1,6 +1,6 @@
 import { icon_manager, icons } from "./icons.js"
 import { menu_item, menu_location, overlay_manager } from "./overlay.js"
-import { Container_Layouts, LAYOUT_DIM_TOP, Wrapper_Divs, interval, layout_icon_map, tf } from "./util.js"
+import { Container_Layouts, LAYOUT_DIM_TOP, Series_Types, Wrapper_Divs, interval, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
 /**
@@ -16,19 +16,23 @@ export class topbar {
     private right_div: HTMLDivElement | undefined
     tf_select: timeframe_selector
     layout_select: layout_selector
+    series_select: series_selector
 
-    constructor(parent: Wrapper, tf_select: timeframe_selector, layout_select: layout_selector) {
+    constructor(parent: Wrapper, tf: timeframe_selector, layout: layout_selector, series: series_selector) {
         this.parent = parent
         this.div = parent.get_div(Wrapper_Divs.TOP_BAR)
 
-        this.tf_select = tf_select
-        this.layout_select = layout_select
+        this.tf_select = tf
+        this.layout_select = layout
+        this.series_select = series
 
         this.left_div = document.createElement('div')
         this.left_div.classList.add('topbar', 'topbar_left')
         this.left_div.appendChild(this.symbol_search())
         this.left_div.appendChild(this.separator())
         this.left_div.appendChild(this.tf_select.wrapper_div)
+        this.left_div.appendChild(this.separator())
+        this.left_div.appendChild(this.series_select.wrapper_div)
         this.left_div.appendChild(this.separator())
 
         this.right_div = document.createElement('div')
@@ -677,9 +681,254 @@ export class layout_selector {
     }
 }
 
+/**
+ * Class to create an Manage The Series Selector.
+ * This is almost a direct copy of the layout selector. Only difference is the Enum used has been changed.
+ * If there were any more than these two selectors it would have been worth making an ABS.
+ */
+export class series_selector {
+    wrapper_div: HTMLDivElement
+    private json: series_json
+    private menu_button: HTMLDivElement
+    private overlay_menu_div: HTMLDivElement
+    private current_series_div: HTMLDivElement
+
+    constructor() {
+        this.wrapper_div = document.createElement('div')
+        this.wrapper_div.id = 'series_switcher'
+        this.wrapper_div.classList.add('topbar', 'topbar_container')
+
+        this.json = default_series_select_opts
+        this.menu_button = topbar.menu_selector()
+        this.current_series_div = this.make_topbar_button(null, false)
+        this.wrapper_div.appendChild(this.current_series_div)
+        this.wrapper_div.appendChild(this.menu_button)
+
+        let items = this.make_items_list(this.json)
+
+        this.select = this.select.bind(this) //Needs binding since it's shared via reference
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select)
+
+    }
+
+    /**
+    * Recreate the topbar given a formatted series_json file
+    */
+    update_topbar(json: series_json) {
+        let items = this.make_items_list(json)
+        this.overlay_menu_div.remove()
+        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select)
+    }
+
+    get_json(): series_json { return this.json }
+
+    /**
+     * Update The topbar series switcher to indicate the given series was selected
+     * Can be called from global scope through 'wrapper.top_bar.tf_select.update_topbar()'
+     */
+    update_topbar_icon(data: Series_Types) {
+        let curr_series_value = data.valueOf()
+        let found = false
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
+
+        //Check if Current series is already set approprately
+        if (curr_series_value === parseInt(this.current_series_div.getAttribute('data-series-value') ?? '-1'))
+            return
+
+        //Check if the series is in the favorites list
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let icon_svg = favorite_divs[i].firstChild as SVGSVGElement
+            if (curr_series_value === parseInt(favorite_divs[i].getAttribute('data-series-value') ?? '-1')) {
+                //If the Timeframe is within the favorites list, highlight it.
+                icon_svg.classList.add('selected')
+                found = true
+            } else {
+                //Remove Selection from all other elements
+                icon_svg.classList.remove('selected')
+            }
+        }
+
+        let tmp_div: HTMLDivElement
+        if (!found) {
+            //Update the 'current_tf_div' to this series
+            tmp_div = this.make_topbar_button(data, false)
+            let icon_svg = tmp_div.firstChild as SVGSVGElement
+            icon_svg.classList.add('selected')
+        } else {
+            //Set the 'current_tf_div' to be an empty icon (a favorite is now highlighted)
+            tmp_div = this.make_topbar_button(null, false)
+        }
+        this.current_series_div.replaceWith(tmp_div)
+        this.current_series_div = tmp_div
+    }
+
+    /**
+     * Makes a list of 'menu_items' from a formatted json file.
+     */
+    private make_items_list(json: series_json): menu_item[] {
+        try {
+            let items: menu_item[] = []
+            let favs = json.favorites
+
+            let populate_items = (series: Series_Types[]) => {
+                series.forEach(type => {
+                    items.push({
+                        label: series_label_map[type],
+                        data: type,
+                        icon: series_icon_map[type],
+                        star: favs.includes(type),
+                        star_act: () => this.add_favorite(type),
+                        star_deact: () => this.remove_favorite(type),
+                    })
+                })
+            }
+            populate_items = populate_items.bind(this)
+
+            populate_items([
+                Series_Types.BAR,
+                Series_Types.CANDLESTICK,
+                Series_Types.ROUNDED_CANDLE,
+                Series_Types.LINE,
+                Series_Types.AREA,
+                Series_Types.HISTOGRAM,
+                Series_Types.BASELINE,
+                Series_Types.HLC_AREA,
+            ])
+
+
+            //only once successfully done with makeing the icon list are the following updated
+            //Done to prevent a poorly format json from deleting data
+            let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
+            for (let i = 0; i < favorite_divs.length;) { //no i++ since length is actively decreasing
+                favorite_divs[i].remove()
+            }
+            this.json = json
+            favs.forEach(element => { this.add_favorite(element) })
+            return items
+
+        } catch (e) {
+            console.warn('series_switcher.make_item_list() Failed. Json Not formatted Correctly')
+            console.log('Actual Error: ', e)
+            return []
+        }
+    }
+
+    /**
+     * Make a Generic button with text representing the given series.
+     */
+    private make_topbar_button(data: Series_Types | null, pressable: boolean = true): HTMLDivElement {
+        let wrapper = document.createElement('div')
+        wrapper.classList.add('topbar')
+        if (data === null) return wrapper
+
+        wrapper.setAttribute('data-series-value', data.valueOf().toString() ?? '-1')
+        wrapper.appendChild(icon_manager.get_svg(series_icon_map[data]))
+
+        if (pressable) {
+            wrapper.addEventListener('click', () => this.select(data))
+            wrapper.classList.add('icon_hover', 'fav_series') //fav_series used as an identifier later & pressable === favorite
+        } else {
+            let icon_svg = wrapper.firstChild as SVGSVGElement
+            icon_svg.classList.add('selected')
+        }
+        return wrapper
+    }
+
+    private update_menu_location() {
+        if (this.menu_button && this.overlay_menu_div)
+            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
+    }
+
+    /**
+     * Action to preform on a series selection
+     */
+    private select(data: Series_Types) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data) }
+
+    /**
+     * Adds a favorite Layout to the window topbar and the json representation
+     * @param data Timeframe to remove
+     */
+    private add_favorite(data: Series_Types) {
+        let curr_series_value = data.valueOf()
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
+        for (let i = favorite_divs.length - 1; i >= 0; i--) {
+            let element = favorite_divs[i]
+            if (curr_series_value === parseInt(element.getAttribute('data-series-value') ?? '1')) {
+                return //This favorite is already present
+            }
+            else if (curr_series_value > parseInt(element.getAttribute('data-series-value') ?? '-1')) {
+                //Add favorite 'icon'
+                element.after(this.make_topbar_button(data))
+                //Add to favoites if not already there
+                if (this.json.favorites.indexOf(data) === -1)
+                    this.json.favorites.push(data)
+                //Update topbar Icon if this is the series currently selected
+                if (curr_series_value === parseInt(this.current_series_div.getAttribute('data-series-value') ?? '-1')) {
+                    let tmp_div = this.make_topbar_button(null, false)
+                    this.current_series_div.replaceWith(tmp_div)
+                    this.current_series_div = tmp_div
+                    this.update_topbar_icon(data)
+                }
+                this.update_menu_location()
+                return
+            }
+        }
+        //This code is only reached when for loop doesn't return
+        //Either this is the First Favorite, or a new lowest value favorite.
+        this.current_series_div.after(this.make_topbar_button(data))
+        //Add to favoites if not already there
+        if (this.json.favorites.indexOf(data) === -1)
+            this.json.favorites.push(data)
+
+        //Update Icon in case the active series was just added to favorites.
+        if (curr_series_value === parseInt(this.current_series_div.getAttribute('data-series-value') ?? '-1')) {
+            let tmp_div = this.make_topbar_button(null, false)
+            this.current_series_div.replaceWith(tmp_div)//Replace old selected element
+            this.current_series_div = tmp_div
+            this.update_topbar_icon(data) //Highlight the current favorite 
+        }
+        this.update_menu_location()
+    }
+
+    /**
+     * Removes a favorite series from the window's topbar and the json representation
+     * @param data Timeframe to remove
+     */
+    private remove_favorite(data: Series_Types) {
+        let curr_series_value = data.valueOf()
+        let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
+
+        for (let i = 0; i < favorite_divs.length; i++) {
+            if (curr_series_value === parseInt(favorite_divs[i].getAttribute('data-series-value') ?? '-1')) {
+                let icon = favorite_divs[i].firstChild as SVGSVGElement
+                if (icon.classList.contains('selected')) {
+                    //Remove then update the topbar
+                    favorite_divs[i].remove()
+                    this.update_topbar_icon(data)
+                } else {
+                    //Remove visual element
+                    favorite_divs[i].remove()
+                }
+                this.update_menu_location()
+
+                //remove the element from favoites if it is in the list.
+                let fav_index = this.json.favorites.indexOf(data)
+                if (fav_index !== -1) {
+                    this.json.favorites.splice(fav_index, 1)
+                }
+            }
+        }
+    }
+}
+
 // #endregion
 
 // #region ---------------- JSON Interfaces ---------------- //
+
+
+interface series_json {
+    favorites: Series_Types[]
+}
 
 interface layout_json {
     favorites: Container_Layouts[]
@@ -696,6 +945,12 @@ interface timeframe_json {
         "Y"?: number[]
     },
     favorites: string[]
+}
+
+const default_series_select_opts: series_json = {
+    favorites: [
+        Series_Types.ROUNDED_CANDLE
+    ]
 }
 
 const default_layout_select_opts: layout_json = {

@@ -28,6 +28,11 @@ export class overlay_manager {
             if (overlay_menu.classList.contains('overlay_menu_active'))
                 overlay_menu.classList.remove('overlay_menu_active');
             else {
+                let other_menus = window.overlay_manager.div.getElementsByClassName('overlay_menu_active');
+                console.log(other_menus.length);
+                for (let i = 0; i < other_menus.length; i++) {
+                    other_menus[i].classList.remove('overlay_menu_active');
+                }
                 overlay_menu.classList.add('overlay_menu_active');
                 menu_loc_func();
             }
