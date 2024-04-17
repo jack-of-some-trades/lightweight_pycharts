@@ -34,9 +34,12 @@ export class topbar {
         this.left_div.appendChild(this.separator())
         this.left_div.appendChild(this.series_select.wrapper_div)
         this.left_div.appendChild(this.separator())
+        this.left_div.appendChild(this.indicators_box())
+        this.left_div.appendChild(this.separator())
 
         this.right_div = document.createElement('div')
         this.right_div.classList.add('topbar', 'topbar_right')
+        this.right_div.appendChild(this.separator())
         this.right_div.appendChild(this.layout_select.wrapper_div)
         this.right_div.appendChild(this.separator())
         this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_left))
@@ -85,6 +88,31 @@ export class topbar {
         return search_div
     }
 
+    /**
+     *  Create the Indicator's Box
+     */
+    indicators_box() {
+        let indicator_div = document.createElement('div')
+        indicator_div.id = 'indicator_topbar'
+        indicator_div.classList.add('topbar', 'topbar_container')
+
+        let template_btn = document.createElement('div')
+        template_btn.classList.add('topbar', 'topbar_item', 'icon_hover')
+        template_btn.style.padding = '4px'
+
+        let search_text = document.createElement('div')
+        search_text.classList.add('topbar', 'icon_text')
+        search_text.innerHTML = 'Indicators'
+        search_text.style.marginRight = '4px'
+
+        template_btn.appendChild(icon_manager.get_svg(icons.indicator, ['icon_v_margin', 'icon_r_margin']))
+        template_btn.appendChild(search_text)
+
+        indicator_div.appendChild(template_btn)
+        indicator_div.appendChild(icon_manager.get_svg(icons.indicator_template, ['icon_hover']))
+
+        return indicator_div
+    }
     /**
      * Create a Topbar Toggleable div that shows/hides a layout panel
      * @param icon Valid args: icons.panel_left, icons.panel_right, icons.panel_bottom
@@ -183,7 +211,7 @@ export class timeframe_selector {
         this.json = default_timeframe_select_opts
         this.menu_button = topbar.menu_selector()
         //Current_tf_div must be created and appended before making items.
-        this.current_tf_div = this.make_topbar_button(new tf(-1, 's'), false, true)
+        this.current_tf_div = this.make_topbar_button(null, false)
         this.wrapper_div.appendChild(this.current_tf_div)
         this.wrapper_div.appendChild(this.menu_button)
 
@@ -236,7 +264,7 @@ export class timeframe_selector {
             tmp_div.classList.add('selected')
         } else {
             //Set the 'current_tf_div' to be an empty icon (a favorite is now highlighted)
-            tmp_div = this.make_topbar_button(new tf(-1, 's'), false, true)
+            tmp_div = this.make_topbar_button(null, false)
         }
         this.current_tf_div.replaceWith(tmp_div)
         this.current_tf_div = tmp_div
@@ -317,11 +345,13 @@ export class timeframe_selector {
     /**
      * Make a Generic button with text representing the given timeframe.
      */
-    private make_topbar_button(data: tf, pressable: boolean = true, blank_element: boolean = false): HTMLDivElement {
+    private make_topbar_button(data: tf | null, pressable: boolean = true): HTMLDivElement {
         let wrapper = document.createElement('div')
-        wrapper.classList.add('topbar', 'button_text')
+        wrapper.classList.add('topbar')
+        if (data === null) return wrapper
+
         wrapper.setAttribute('data-tf-value', data.toValue().toString())
-        if (blank_element) return wrapper
+        wrapper.classList.add('button_text') //Adding this after makes a blank element 0 width
 
         if (data.multiplier === 1 && ['D', 'W', 'M', 'Y'].includes(data.interval)) {
             wrapper.innerHTML = data.toString().replace('1', '') //Ignore the '1' on timeframes Day and up
@@ -368,7 +398,7 @@ export class timeframe_selector {
                     this.json.favorites.push(data.toString())
                 //Update topbar Icon if this is the timeframe currently selected
                 if (curr_tf_value === parseInt(this.current_tf_div.getAttribute('data-tf-value') ?? '-1')) {
-                    let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true)
+                    let tmp_div = this.make_topbar_button(null, false)
                     this.current_tf_div.replaceWith(tmp_div)
                     this.current_tf_div = tmp_div
                     this.update_topbar_icon(data)
@@ -386,7 +416,7 @@ export class timeframe_selector {
 
         //Update topbar Icon if this is the timeframe currently selected
         if (curr_tf_value === parseInt(this.current_tf_div.getAttribute('data-tf-value') ?? '-1')) {
-            let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true)
+            let tmp_div = this.make_topbar_button(null, false)
             this.current_tf_div.replaceWith(tmp_div)
             this.current_tf_div = tmp_div
             this.update_topbar_icon(data)

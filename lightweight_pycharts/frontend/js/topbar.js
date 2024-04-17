@@ -16,8 +16,11 @@ export class topbar {
         this.left_div.appendChild(this.separator());
         this.left_div.appendChild(this.series_select.wrapper_div);
         this.left_div.appendChild(this.separator());
+        this.left_div.appendChild(this.indicators_box());
+        this.left_div.appendChild(this.separator());
         this.right_div = document.createElement('div');
         this.right_div.classList.add('topbar', 'topbar_right');
+        this.right_div.appendChild(this.separator());
         this.right_div.appendChild(this.layout_select.wrapper_div);
         this.right_div.appendChild(this.separator());
         this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_left));
@@ -46,6 +49,23 @@ export class topbar {
         search_div.appendChild(search_button);
         search_div.appendChild(icon_manager.get_svg(icons.menu_add, ['icon_hover']));
         return search_div;
+    }
+    indicators_box() {
+        let indicator_div = document.createElement('div');
+        indicator_div.id = 'indicator_topbar';
+        indicator_div.classList.add('topbar', 'topbar_container');
+        let template_btn = document.createElement('div');
+        template_btn.classList.add('topbar', 'topbar_item', 'icon_hover');
+        template_btn.style.padding = '4px';
+        let search_text = document.createElement('div');
+        search_text.classList.add('topbar', 'icon_text');
+        search_text.innerHTML = 'Indicators';
+        search_text.style.marginRight = '4px';
+        template_btn.appendChild(icon_manager.get_svg(icons.indicator, ['icon_v_margin', 'icon_r_margin']));
+        template_btn.appendChild(search_text);
+        indicator_div.appendChild(template_btn);
+        indicator_div.appendChild(icon_manager.get_svg(icons.indicator_template, ['icon_hover']));
+        return indicator_div;
     }
     panel_toggle(parent, icon, active_start = true) {
         let toggle_btn = document.createElement('div');
@@ -120,7 +140,7 @@ export class timeframe_selector {
         this.wrapper_div.classList.add('topbar', 'topbar_container');
         this.json = default_timeframe_select_opts;
         this.menu_button = topbar.menu_selector();
-        this.current_tf_div = this.make_topbar_button(new tf(-1, 's'), false, true);
+        this.current_tf_div = this.make_topbar_button(null, false);
         this.wrapper_div.appendChild(this.current_tf_div);
         this.wrapper_div.appendChild(this.menu_button);
         let items = this.make_items_list(this.json);
@@ -155,7 +175,7 @@ export class timeframe_selector {
             tmp_div.classList.add('selected');
         }
         else {
-            tmp_div = this.make_topbar_button(new tf(-1, 's'), false, true);
+            tmp_div = this.make_topbar_button(null, false);
         }
         this.current_tf_div.replaceWith(tmp_div);
         this.current_tf_div = tmp_div;
@@ -224,12 +244,13 @@ export class timeframe_selector {
             return [];
         }
     }
-    make_topbar_button(data, pressable = true, blank_element = false) {
+    make_topbar_button(data, pressable = true) {
         let wrapper = document.createElement('div');
-        wrapper.classList.add('topbar', 'button_text');
-        wrapper.setAttribute('data-tf-value', data.toValue().toString());
-        if (blank_element)
+        wrapper.classList.add('topbar');
+        if (data === null)
             return wrapper;
+        wrapper.setAttribute('data-tf-value', data.toValue().toString());
+        wrapper.classList.add('button_text');
         if (data.multiplier === 1 && ['D', 'W', 'M', 'Y'].includes(data.interval)) {
             wrapper.innerHTML = data.toString().replace('1', '');
         }
@@ -263,7 +284,7 @@ export class timeframe_selector {
                 if (this.json.favorites.indexOf(data.toString()) === -1)
                     this.json.favorites.push(data.toString());
                 if (curr_tf_value === parseInt((_c = this.current_tf_div.getAttribute('data-tf-value')) !== null && _c !== void 0 ? _c : '-1')) {
-                    let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true);
+                    let tmp_div = this.make_topbar_button(null, false);
                     this.current_tf_div.replaceWith(tmp_div);
                     this.current_tf_div = tmp_div;
                     this.update_topbar_icon(data);
@@ -276,7 +297,7 @@ export class timeframe_selector {
         if (this.json.favorites.indexOf(data.toString()) === -1)
             this.json.favorites.push(data.toString());
         if (curr_tf_value === parseInt((_d = this.current_tf_div.getAttribute('data-tf-value')) !== null && _d !== void 0 ? _d : '-1')) {
-            let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true);
+            let tmp_div = this.make_topbar_button(null, false);
             this.current_tf_div.replaceWith(tmp_div);
             this.current_tf_div = tmp_div;
             this.update_topbar_icon(data);
