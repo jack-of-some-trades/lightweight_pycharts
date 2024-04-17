@@ -14,12 +14,8 @@ export class Pane {
     main_series: AnySeries
     series: AnySeries[] = []
 
-    private chart_div: HTMLDivElement
     private chart: IChartApi
-
-    private watermark_div: HTMLDivElement | null
-    private watermark_series: AnySeries | null
-
+    private chart_div: HTMLDivElement
 
     constructor(
         id: string,
@@ -39,8 +35,6 @@ export class Pane {
 
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this))
 
-        this.watermark_div = null
-        this.watermark_series = null
         this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries())
     }
 
@@ -62,10 +56,6 @@ export class Pane {
             window.active_pane = this           //Set this object's focus
             window.active_pane.div.classList.add('chart_pane_active')
         }
-    }
-
-    set_main_series(series: AnySeries) {
-        this.main_series = series
     }
 
     /**
@@ -138,12 +128,10 @@ export class Pane {
 
         if (!data_set)
             console.warn("Failed to set data on Pane.set_data() function call.")
-        else
+        else {
             this.assign_active_pane()
-    }
-
-    add_candlestick_series(options?: DP<CandlestickSeriesOptions>) {
-        this.series.push(this.chart.addCandlestickSeries(options))
+            this.autoscale_time_axis()
+        }
     }
 
     /**
@@ -167,32 +155,12 @@ export class Pane {
         }
     }
 
-    fitcontent() {
-        this.chart.timeScale().fitContent()
+
+    add_candlestick_series(options?: DP<CandlestickSeriesOptions>) {
+        this.series.push(this.chart.addCandlestickSeries(options))
     }
 
-    create_screensaver(white: boolean = true) {
-        if (!this.watermark_div) {
-            this.watermark_div = document.createElement('div')
-            this.watermark_div.classList.add(white ? 'chart_watermark_white' : 'chart_watermark_black')
-            this.watermark_div.style.width = `${this.chart_div.clientWidth}px`
-            this.watermark_div.style.height = `${this.chart_div.clientHeight}px`
-            this.div.appendChild(this.watermark_div)
-        }
-        if (!this.watermark_series) {
-            this.watermark_series = this.chart.addCandlestickSeries()
-            this.watermark_series.setData(u.fake_bar_data)
-        }
-    }
-
-    remove_screensaver() {
-        if (this.watermark_div) {
-            this.div.removeChild(this.watermark_div)
-            this.watermark_div = null
-        }
-        if (this.watermark_series) {
-            this.chart.removeSeries(this.watermark_series)
-            this.watermark_series = null
-        }
-    }
+    fitcontent() { this.chart.timeScale().fitContent() }
+    autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
+    set_main_series(series: AnySeries) { this.main_series = series }
 }

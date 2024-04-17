@@ -31,9 +31,6 @@ export class Pane {
             window.active_pane.div.classList.add('chart_pane_active');
         }
     }
-    set_main_series(series) {
-        this.main_series = series;
-    }
     set_data(dtype, data, series = this.main_series) {
         if (data.length === 0) {
             series.setData([]);
@@ -94,11 +91,10 @@ export class Pane {
         }
         if (!data_set)
             console.warn("Failed to set data on Pane.set_data() function call.");
-        else
+        else {
             this.assign_active_pane();
-    }
-    add_candlestick_series(options) {
-        this.series.push(this.chart.addCandlestickSeries(options));
+            this.autoscale_time_axis();
+        }
     }
     resize(width, height) {
         let this_width = width * this.flex_width;
@@ -114,9 +110,12 @@ export class Pane {
             this.chart.resize(this_width, this_height, false);
         }
     }
-    fitcontent() {
-        this.chart.timeScale().fitContent();
+    add_candlestick_series(options) {
+        this.series.push(this.chart.addCandlestickSeries(options));
     }
+    fitcontent() { this.chart.timeScale().fitContent(); }
+    autoscale_time_axis() { this.chart.timeScale().resetTimeScale(); }
+    set_main_series(series) { this.main_series = series; }
     create_screensaver(white = true) {
         if (!this.watermark_div) {
             this.watermark_div = document.createElement('div');
