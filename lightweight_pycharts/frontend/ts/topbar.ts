@@ -362,6 +362,13 @@ export class timeframe_selector {
                 //Add to favoites if not already there
                 if (this.json.favorites.indexOf(data.toString()) === -1)
                     this.json.favorites.push(data.toString())
+                //Update topbar Icon if this is the timeframe currently selected
+                if (curr_tf_value === parseInt(this.current_tf_div.getAttribute('data-tf-value') ?? '-1')) {
+                    let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true)
+                    this.current_tf_div.replaceWith(tmp_div)
+                    this.current_tf_div = tmp_div
+                    this.update_topbar_icon(data)
+                }
                 this.update_menu_location()
                 return
             }
@@ -369,10 +376,18 @@ export class timeframe_selector {
         //This code is only reached when for loop doesn't return
         //First Favorite, and a new lowest value favorite will trigger this.
         this.current_tf_div.after(this.make_topbar_button(data))
-        this.update_menu_location()
         //Add to favoites if not already there
         if (this.json.favorites.indexOf(data.toString()) === -1)
             this.json.favorites.push(data.toString())
+
+        //Update topbar Icon if this is the timeframe currently selected
+        if (curr_tf_value === parseInt(this.current_tf_div.getAttribute('data-tf-value') ?? '-1')) {
+            let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true)
+            this.current_tf_div.replaceWith(tmp_div)
+            this.current_tf_div = tmp_div
+            this.update_topbar_icon(data)
+        }
+        this.update_menu_location()
     }
 
     /**
@@ -385,8 +400,15 @@ export class timeframe_selector {
 
         for (let i = 0; i < favorite_divs.length; i++) {
             if (curr_tf_value === parseInt(favorite_divs[i].getAttribute('data-tf-value') ?? '-1')) {
-                //Remove visual element
-                favorite_divs[i].remove()
+                //Check if this was the selected element
+                if (favorite_divs[i].classList.contains('selected')) {
+                    //Remove then update the topbar
+                    favorite_divs[i].remove()
+                    this.update_topbar_icon(data)
+                } else {
+                    //Remove visual element
+                    favorite_divs[i].remove()
+                }
                 this.update_menu_location()
 
                 //remove the element from favoites if it is in the list.
@@ -599,15 +621,30 @@ export class layout_selector {
                 //Add to favoites if not already there
                 if (this.json.favorites.indexOf(data) === -1)
                     this.json.favorites.push(data)
+                //Update topbar Icon if this is the layout currently selected
+                if (curr_layout_value === parseInt(this.current_layout_div.getAttribute('data-layout-value') ?? '-1')) {
+                    let tmp_div = this.make_topbar_button(null, false)
+                    this.current_layout_div.replaceWith(tmp_div)
+                    this.current_layout_div = tmp_div
+                    this.update_topbar_icon(data)
+                }
                 return
             }
         }
         //This code is only reached when for loop doesn't return
-        //First Favorite, and a new lowest value favorite will trigger this.
+        //Either this is the First Favorite, or a new lowest value favorite.
         this.current_layout_div.after(this.make_topbar_button(data))
         //Add to favoites if not already there
         if (this.json.favorites.indexOf(data) === -1)
             this.json.favorites.push(data)
+
+        //Update Icon in case the active layout was just added to favorites.
+        if (curr_layout_value === parseInt(this.current_layout_div.getAttribute('data-layout-value') ?? '-1')) {
+            let tmp_div = this.make_topbar_button(null, false)
+            this.current_layout_div.replaceWith(tmp_div)//Replace old selected element
+            this.current_layout_div = tmp_div
+            this.update_topbar_icon(data) //Highlight the current favorite 
+        }
     }
 
     /**
@@ -615,13 +652,20 @@ export class layout_selector {
      * @param data Timeframe to remove
      */
     private remove_favorite(data: Container_Layouts) {
-        let curr_tf_value = data.valueOf()
+        let curr_layout_value = data.valueOf()
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout')
 
         for (let i = 0; i < favorite_divs.length; i++) {
-            if (curr_tf_value === parseInt(favorite_divs[i].getAttribute('data-layout-value') ?? '-1')) {
-                //Remove visual element
-                favorite_divs[i].remove()
+            if (curr_layout_value === parseInt(favorite_divs[i].getAttribute('data-layout-value') ?? '-1')) {
+                let icon = favorite_divs[i].firstChild as SVGSVGElement
+                if (icon.classList.contains('selected')) {
+                    //Remove then update the topbar
+                    favorite_divs[i].remove()
+                    this.update_topbar_icon(data)
+                } else {
+                    //Remove visual element
+                    favorite_divs[i].remove()
+                }
 
                 //remove the element from favoites if it is in the list.
                 let fav_index = this.json.favorites.indexOf(data)

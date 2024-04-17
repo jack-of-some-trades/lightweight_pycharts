@@ -247,7 +247,7 @@ export class timeframe_selector {
     }
     select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
     add_favorite(data) {
-        var _a, _b;
+        var _a, _b, _c, _d;
         let curr_tf_value = data.toValue();
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_tf');
         for (let i = favorite_divs.length - 1; i >= 0; i--) {
@@ -259,14 +259,26 @@ export class timeframe_selector {
                 element.after(this.make_topbar_button(data));
                 if (this.json.favorites.indexOf(data.toString()) === -1)
                     this.json.favorites.push(data.toString());
+                if (curr_tf_value === parseInt((_c = this.current_tf_div.getAttribute('data-tf-value')) !== null && _c !== void 0 ? _c : '-1')) {
+                    let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true);
+                    this.current_tf_div.replaceWith(tmp_div);
+                    this.current_tf_div = tmp_div;
+                    this.update_topbar_icon(data);
+                }
                 this.update_menu_location();
                 return;
             }
         }
         this.current_tf_div.after(this.make_topbar_button(data));
-        this.update_menu_location();
         if (this.json.favorites.indexOf(data.toString()) === -1)
             this.json.favorites.push(data.toString());
+        if (curr_tf_value === parseInt((_d = this.current_tf_div.getAttribute('data-tf-value')) !== null && _d !== void 0 ? _d : '-1')) {
+            let tmp_div = this.make_topbar_button(new tf(-1, 'E'), false, true);
+            this.current_tf_div.replaceWith(tmp_div);
+            this.current_tf_div = tmp_div;
+            this.update_topbar_icon(data);
+        }
+        this.update_menu_location();
     }
     remove_favorite(data) {
         var _a;
@@ -274,7 +286,13 @@ export class timeframe_selector {
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_tf');
         for (let i = 0; i < favorite_divs.length; i++) {
             if (curr_tf_value === parseInt((_a = favorite_divs[i].getAttribute('data-tf-value')) !== null && _a !== void 0 ? _a : '-1')) {
-                favorite_divs[i].remove();
+                if (favorite_divs[i].classList.contains('selected')) {
+                    favorite_divs[i].remove();
+                    this.update_topbar_icon(data);
+                }
+                else {
+                    favorite_divs[i].remove();
+                }
                 this.update_menu_location();
                 let fav_index = this.json.favorites.indexOf(data.toString());
                 if (fav_index !== -1) {
@@ -415,7 +433,7 @@ export class layout_selector {
     }
     select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
     add_favorite(data) {
-        var _a, _b;
+        var _a, _b, _c, _d;
         let curr_layout_value = data.valueOf();
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout');
         for (let i = favorite_divs.length - 1; i >= 0; i--) {
@@ -427,20 +445,39 @@ export class layout_selector {
                 element.after(this.make_topbar_button(data));
                 if (this.json.favorites.indexOf(data) === -1)
                     this.json.favorites.push(data);
+                if (curr_layout_value === parseInt((_c = this.current_layout_div.getAttribute('data-layout-value')) !== null && _c !== void 0 ? _c : '-1')) {
+                    let tmp_div = this.make_topbar_button(null, false);
+                    this.current_layout_div.replaceWith(tmp_div);
+                    this.current_layout_div = tmp_div;
+                    this.update_topbar_icon(data);
+                }
                 return;
             }
         }
         this.current_layout_div.after(this.make_topbar_button(data));
         if (this.json.favorites.indexOf(data) === -1)
             this.json.favorites.push(data);
+        if (curr_layout_value === parseInt((_d = this.current_layout_div.getAttribute('data-layout-value')) !== null && _d !== void 0 ? _d : '-1')) {
+            let tmp_div = this.make_topbar_button(null, false);
+            this.current_layout_div.replaceWith(tmp_div);
+            this.current_layout_div = tmp_div;
+            this.update_topbar_icon(data);
+        }
     }
     remove_favorite(data) {
         var _a;
-        let curr_tf_value = data.valueOf();
+        let curr_layout_value = data.valueOf();
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout');
         for (let i = 0; i < favorite_divs.length; i++) {
-            if (curr_tf_value === parseInt((_a = favorite_divs[i].getAttribute('data-layout-value')) !== null && _a !== void 0 ? _a : '-1')) {
-                favorite_divs[i].remove();
+            if (curr_layout_value === parseInt((_a = favorite_divs[i].getAttribute('data-layout-value')) !== null && _a !== void 0 ? _a : '-1')) {
+                let icon = favorite_divs[i].firstChild;
+                if (icon.classList.contains('selected')) {
+                    favorite_divs[i].remove();
+                    this.update_topbar_icon(data);
+                }
+                else {
+                    favorite_divs[i].remove();
+                }
                 let fav_index = this.json.favorites.indexOf(data);
                 if (fav_index !== -1) {
                     this.json.favorites.splice(fav_index, 1);
