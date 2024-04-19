@@ -13,12 +13,12 @@ import webview
 import pandas as pd
 from webview.errors import JavascriptException
 
-from .js_cmd import JS_CMD
+from .js_cmd import JS_CMD, PY_CMD
 import lightweight_pycharts.orm as orm
 import lightweight_pycharts.js_cmd as cmds
 
 file_dir = dirname(abspath(__file__))
-logger = logging.getLogger("lightweight-pycharts-view")
+logger = logging.getLogger("lightweight-pycharts")
 
 ##### --------------------------------- Javascript API Class --------------------------------- #####
 
@@ -27,6 +27,7 @@ class js_api:
     """
     Base javascript Callback API.
     Every function in this class maps to a function in the py_api class in py_api.ts
+    * private, protected, sunder, and dunder methods are *not* placed in the Javascript window
     """
 
     def __init__(self) -> None:
@@ -57,7 +58,15 @@ class js_api:
     def callback(self, msg: str) -> None:
         "Generic Callback that passes serialized data as a string"
         logger.debug("Recieved Message from JS: %s", msg)
-        self.rtn_queue.put(msg)
+        self.rtn_queue.put((PY_CMD.PY_EXEC, msg))
+
+    def timeframe_switch(self, mult: int, period: orm.Period):
+        "Signals UI requested a Timeframe Swtich"
+        try:
+            timeframe = orm.TF(mult, period)
+            self.rtn_queue.put((PY_CMD.TF_CHANGE, timeframe))
+        except ValueError as e:
+            logger.warning(e)
 
 
 ##### --------------------------------- Helper Classes --------------------------------- #####
@@ -121,7 +130,7 @@ class View(ABC):
     @abstractmethod
     def maximize(self): ...
     @abstractmethod
-    def _assign_callbacks(self): ...
+    def assign_callback(self, func_name: str): ...
 
     def _manage_queue(self):
         "Infinite loop to manage Process Queue since it is launched in an isolated process"
@@ -266,11 +275,14 @@ class PyWv(View):
         for name, _ in member_functions:
             # filter out dunder methods
             if not (name.startswith("__") or name.endswith("__")):
-                self.run_script(f"window.api.{name} = pywebview.api.{name}")
+                self.assign_callback(name)
 
         # Signal to both python and javascript listeners that inital setup is complete
         self.js_loaded_event.set()
-        self.run_script("window.api.loaded_check()")
+        self.run_script("window.api._loaded_check()")
+
+    def assign_callback(self, func_name: str):
+        self.run_script(f"window.api.{func_name} = pywebview.api.{func_name}")
 
     def close(self):
         self.pyweb_window.destroy()

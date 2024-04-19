@@ -3,18 +3,28 @@
 import asyncio
 import logging
 from time import sleep
-from typing import Optional, Union, Any
+import threading as th
 import multiprocessing as mp
+from typing import Optional, Any
 
 import pandas as pd
 
 from .js_api import PyWv, MpHooks
-from .js_cmd import JS_CMD
+from .js_cmd import JS_CMD, PY_CMD
 from .util import ID_List
 
+import lightweight_pycharts.util as util
 import lightweight_pycharts.orm as orm
 
-logger = logging.getLogger("lightweight-pycharts-main")
+logger = logging.getLogger("lightweight-pycharts")
+
+
+class Events:
+    "An Event Super Object that is a Collection of Emitters"
+
+    def __init__(self):
+        self.tf_change = util.Emitter[util.TimeFrame_Protocol]()
+        self.layout_change = util.Emitter[util.Layout_Protocol]()
 
 
 class Window:
@@ -27,14 +37,15 @@ class Window:
         - Interval Switcher     *TBI
         - Watchlist, etc.       *TBI
 
-    Window contains a 'Container' object for every tab.
+    Window contains a 'Container' object for every tab. ... To be implented
     """
 
     def __init__(
         self,
+        *,
+        daemon: bool = False,
+        use_async: bool = True,
         options: Optional[orm.PyWebViewOptions] = None,
-        blocking: bool = False,
-        daemon: bool = True,
         **kwargs,
     ) -> None:
         # -------- Setup and start the Pywebview subprocess  -------- #
@@ -65,37 +76,61 @@ class Window:
             )
 
         # Begin Listening for any responses from PyWV Process
-        if blocking:
-            self._manage_queue_block()
-        else:
+        if use_async:
             self._queue_manager = asyncio.create_task(self._manage_queue())
+        else:
+            self._queue_manager = th.Thread(
+                target=self._manage_thread_queue, daemon=daemon
+            )
+            self._queue_manager.start()
 
         # -------- Create Subobjects  -------- #
+        self.events = Events()
         self.js_id = "wrapper"
         self._container_ids = ID_List("c")
         self._containers: list[Container] = []
         self.new_tab()
 
-    def _manage_queue_block(self):
-        logger.debug("Entered Blocking Queue Manager")
+    # region ------------------------ Private Window Methods  ------------------------ #
+
+    def _execute_cmd(self, cmd: PY_CMD, *args):
+        match cmd, *args:
+            case PY_CMD.PY_EXEC, str(), *_:
+                logger.info("Recieved Message from View: %s", args[0])
+            case PY_CMD.TF_CHANGE, orm.TF(), *_:
+                logger.info("Recieved Timeframe Change Request from View: %s", args[0])
+                self.events.tf_change(args[0])
+
+    def _manage_thread_queue(self):
+        logger.debug("Entered Threaded Queue Manager")
         while not self._stop_event.is_set():
             if self._rtn_queue.empty():
                 sleep(0.05)
             else:
-                rsp = self._rtn_queue.get()
-                logger.info("Recieved Message from View: %s", rsp)
+                cmd, *rsp = self._rtn_queue.get()
+                self._execute_cmd(cmd, *rsp)
+        logger.debug("Exited Threaded Queue Manager")
 
     async def _manage_queue(self):
-        logger.debug("Entered Queue Manager")
+        logger.debug("Entered Async Queue Manager")
         while not self._stop_event.is_set():
             if self._rtn_queue.empty():
                 await asyncio.sleep(0.05)
             else:
-                rsp = self._rtn_queue.get()
-                logger.info("Recieved Message from View: %s", rsp)
+                cmd, *rsp = self._rtn_queue.get()
+                self._execute_cmd(cmd, *rsp)
+                # logger.debug("Window Recieved Command: %s: %s", cmd, rsp)
+        logger.debug("Exited Async Queue Manager")
+
+    def await_thread_close(self):
+        "Await thread closure if using threading. Useful if Daemon = True"
+        if isinstance(self._queue_manager, th.Thread):
+            self._queue_manager.join()
 
     async def await_close(self):
-        await self._queue_manager
+        "Await closure if using asyncio. Useful if Daemon = True"
+        if isinstance(self._queue_manager, asyncio.Task):
+            await self._queue_manager
 
     def _queue_test(self):
         self._fwd_queue.put(
@@ -105,6 +140,10 @@ class Window:
                 "api.callback(`weeeeeeeeeeeeeeeee`)",
             )
         )
+
+    # endregion
+
+    # region ------------------------ Public Window Methods  ------------------------ #
 
     def show(self):
         "Show the PyWebView Window"
@@ -120,7 +159,7 @@ class Window:
         return self._containers
 
     @property
-    def container_ids(self) -> list[ID_List]:
+    def container_ids(self) -> list[str]:
         "return list of all current container IDs"
         return self._container_ids
 
@@ -134,7 +173,7 @@ class Window:
         self._containers.append(new_container)
         return new_container
 
-    def get_container(self, _id: Union[int, str]) -> Optional["Container"]:
+    def get_container(self, _id: int | str) -> Optional["Container"]:
         "Return the container that either matchs the given js_id string, or the integer tab number"
         if isinstance(_id, int):
             if _id >= 0 and _id < len(self.containers):
@@ -143,7 +182,8 @@ class Window:
             for container in self._containers:
                 if _id == container.js_id:
                     return container
-        return None
+
+    # endregion
 
 
 class Container:

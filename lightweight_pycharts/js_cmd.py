@@ -1,12 +1,25 @@
 "Function definitions that return formatted Javascript scripts as literal strings"
 
-from enum import Enum
-from .orm import dump, Container_Layouts
+from enum import IntEnum
 from pandas import DataFrame
 
+from .orm import Container_Layouts
 
-class JS_CMD(Enum):
-    "Enumeration of the various preformatted JS_Commands"
+# from .util import dump
+
+
+class PY_CMD(IntEnum):
+    "Enumeration of the various commands that javascript can send to python"
+    PY_EXEC = 1
+    TF_CHANGE = 2
+    SERIES_CHANGE = 3
+    LAYOUT_CHANGE = 4
+    RANGE_CHANGE = 5
+    INDICATOR_ADD = 6
+
+
+class JS_CMD(IntEnum):
+    "Enumeration of the various commands that Python can send to Javascript"
     JS_CODE = 1
     SHOW = 2
     HIDE = 3

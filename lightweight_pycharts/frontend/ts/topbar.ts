@@ -101,9 +101,9 @@ export class topbar {
         template_btn.style.padding = '4px'
 
         let search_text = document.createElement('div')
-        search_text.classList.add('topbar', 'icon_text')
+        search_text.classList.add('topbar', 'menu_text')
         search_text.innerHTML = 'Indicators'
-        search_text.style.marginRight = '4px'
+        search_text.style.margin = '0px'
 
         template_btn.appendChild(icon_manager.get_svg(icons.indicator, ['icon_v_margin', 'icon_r_margin']))
         template_btn.appendChild(search_text)
@@ -377,7 +377,11 @@ export class timeframe_selector {
     /**
      * Action to preform on a timeframe selection
      */
-    private select(data: tf) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data) }
+    private select(data: tf) {
+        console.log(`selected ${data.toString()}`);
+        window.api.timeframe_switch(data.multiplier, data.interval as string);
+        this.update_topbar_icon(data)
+    }
 
     /**
      * Adds a favorite timeframe to the window topbar and the json representation

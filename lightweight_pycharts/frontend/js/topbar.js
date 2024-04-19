@@ -58,9 +58,9 @@ export class topbar {
         template_btn.classList.add('topbar', 'topbar_item', 'icon_hover');
         template_btn.style.padding = '4px';
         let search_text = document.createElement('div');
-        search_text.classList.add('topbar', 'icon_text');
+        search_text.classList.add('topbar', 'menu_text');
         search_text.innerHTML = 'Indicators';
-        search_text.style.marginRight = '4px';
+        search_text.style.margin = '0px';
         template_btn.appendChild(icon_manager.get_svg(icons.indicator, ['icon_v_margin', 'icon_r_margin']));
         template_btn.appendChild(search_text);
         indicator_div.appendChild(template_btn);
@@ -269,7 +269,11 @@ export class timeframe_selector {
         if (this.menu_button && this.overlay_menu_div)
             overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
-    select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
+    select(data) {
+        console.log(`selected ${data.toString()}`);
+        window.api.timeframe_switch(data.multiplier, data.interval);
+        this.update_topbar_icon(data);
+    }
     add_favorite(data) {
         var _a, _b, _c, _d;
         let curr_tf_value = data.toValue();

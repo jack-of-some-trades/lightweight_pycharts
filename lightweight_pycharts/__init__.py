@@ -15,20 +15,10 @@ _LOG_LVL = logging.WARNING
 # _LOG_LVL = logging.INFO
 # _LOG_LVL = logging.DEBUG
 
-logger = logging.getLogger("lightweight-pycharts-main")
+logger = logging.getLogger("lightweight-pycharts")
 handler = logging.StreamHandler()
 formatter = logging.Formatter(
-    "[pycharts] - [Main Process] - %(levelname)s: %(message)s"
-)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(_LOG_LVL)
-
-
-logger = logging.getLogger("lightweight-pycharts-view")
-handler = logging.StreamHandler()
-formatter = logging.Formatter(
-    "[pycharts] - [View Process] - %(levelname)s: %(message)s"
+    "[pycharts] - [.\\%(filename)s Line: %(lineno)d] - %(levelname)s: %(message)s"
 )
 handler.setFormatter(formatter)
 logger.addHandler(handler)

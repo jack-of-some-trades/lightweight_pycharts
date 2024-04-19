@@ -11,12 +11,17 @@ import lightweight_pycharts as lwc
 import lightweight_pycharts.orm as orm
 
 
+def timeframe_change(timeframe: orm.TF) -> None:
+    print(f"Requested Timeframe Change to {timeframe}")
+
+
 async def main():
-    window = lwc.Window(debug=True)
+    window = lwc.Window(debug=True, daemon=True)
+    window.events.tf_change += timeframe_change
+
     df = pd.read_csv("examples/data/ohlcv.csv")
     window.containers[0].frames[0].panes[0].set_data(df)
 
-    # Halt main process since window process is Daemon by default
     await window.await_close()
 
 

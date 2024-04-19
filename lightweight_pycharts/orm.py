@@ -3,35 +3,13 @@
 """
 
 import logging
-from dataclasses import dataclass, field, is_dataclass, asdict
+from dataclasses import dataclass, field, asdict
 from typing import TypeAlias, Optional, Literal, Union, Any
 from enum import Enum, IntEnum, StrEnum
-from json import JSONEncoder, dumps
 
 import pandas as pd
 
-logger = logging.getLogger("lightweight-pycharts-view")
-
-
-class ORM_JSONEncoder(JSONEncoder):
-    "Enhanced JSON Encoder that encodes DataClasses as dicts and Color as JS rgba()"
-
-    def default(self, o):
-        if isinstance(o, Color):
-            return repr(o)
-        if is_dataclass(o):
-            return asdict(o)
-        return super().default(o)
-
-
-def dump(obj: Any) -> str:
-    "Enchanced JSON.dumps() to serialize all ORM Objects"
-    return str(dumps(obj, cls=ORM_JSONEncoder))
-
-
-def load(obj: str) -> Any:
-    "Enchanced JSON.loads() to load ORM Objects"
-    raise NotImplementedError
+logger = logging.getLogger("lightweight-pycharts")
 
 
 # pylint: disable=line-too-long
@@ -47,6 +25,8 @@ LineWidth: TypeAlias = Literal[1, 2, 3, 4]
 
 Coordinate: TypeAlias = int
 UTCTimestamp: TypeAlias = int
+
+Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y"]
 
 
 @dataclass
@@ -273,7 +253,7 @@ class SeriesMarkerShape(StrEnum):
 
 
 # Note, this object cannot be a dataclass otherwise json.dumps()
-# dumps this out as a dict. For functionality we need to call repr() on dumps()
+# will dump this out as a dict. For functionality we need to call repr() on dumps()
 class Color:
     """
     RBGa Color Class. To instatiate use Color.from_rgb() or Color.from_hex()
@@ -379,6 +359,98 @@ class Color:
     def __repr__(self):
         "Javascript RGBA Representation of Class Params."
         return f"rgba({self._r},{self._g},{self._b},{self._a})"
+
+
+@dataclass
+class TF:
+    "Dataclass Representation of a Timeframe"
+    _mult: int
+    _period: Period
+
+    def __init__(self, mult: int, period: Period):
+        self.validate(mult, period)
+        self._period = period
+        self._mult = mult
+
+    def __str__(self) -> str:
+        return self.toString
+
+    # region ---- TF Setters and Getters ----
+
+    @property
+    def mult(self):
+        return self._mult
+
+    @mult.setter
+    def amount(self, value: int):
+        self.validate(value, self._period)
+        self._mult = value
+
+    @property
+    def period(self) -> str:
+        return self._period
+
+    @period.setter
+    def period(self, value: Period):
+        self.validate(self._mult, value)
+        self._period = value
+
+    @property
+    def toString(self) -> str:
+        return f"{self._mult}{self._period}"
+
+    @staticmethod
+    def validate(amount: int, unit: Period):
+        if amount <= 0:
+            raise ValueError("Amount must be a positive integer value.")
+
+        match unit:
+            case "s" | "m":
+                if amount > 59:
+                    raise ValueError("Seconds & Minutes multiplier must be in [1, 59].")
+            case "h":
+                if amount > 23:
+                    raise ValueError("Hour multiplier must be in [1, 23].")
+            case "D":
+                if amount > 6:
+                    raise ValueError("Hour multiplier must be in [1, 6].")
+            case "W":
+                if amount > 3:
+                    raise ValueError("Hour multiplier must be in [1, 3].")
+            case "M":
+                if amount not in (1, 2, 3, 6):
+                    raise ValueError("Month units must be (1, 2, 3, 6)")
+            case "Y":
+                return
+            case _:
+                raise ValueError(f"'{unit}' Not a valid timeframe period.")
+
+    @property
+    def unix_len(self) -> int:
+        """
+        The length, in seconds, that the timeframe represents.
+
+        1 Month = 30.44 Days, 1 Year = 365.24 Days (Unix Standard Conversions)
+        """
+        match self._period:
+            case "s":
+                return self._mult
+            case "m":
+                return self._mult * 60
+            case "h":
+                return self._mult * 3600
+            case "D":
+                return self._mult * 86400
+            case "W":
+                return self._mult * 604800
+            case "M":
+                return self._mult * 2629743
+            case "Y":
+                return self._mult * 31556926
+            case _:
+                return -1
+
+    # endregion
 
 
 @dataclass
@@ -1286,8 +1358,6 @@ class WatermarkOptions:
     horzAlign: HorzAlign = "center"
     vertAlign: VertAlign = "center"
 
-    # endregion
-
 
 @dataclass
 class ChartOptionsBase:
@@ -1548,3 +1618,6 @@ class ColorLiteral(Enum):
     mediumslateblue = Color.from_hex("#7b68ee")
     plum = Color.from_hex("#dda0dd")
     mediumspringgreen = Color.from_hex("#00fa9a")
+
+
+# endregion

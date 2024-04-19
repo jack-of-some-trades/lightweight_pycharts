@@ -9,18 +9,23 @@ export class py_api {
     close!: () => void;
     maximize!: () => void;
     minimize!: () => void;
+
     callback!: (msg: string) => void;
+    timeframe_switch!: (mult: number, period: string) => void;
 
-    constructor() { this.loaded_check = this.loaded_check.bind(this) }
+    constructor() { this._loaded_check = this._loaded_check.bind(this) }
 
-    loaded_check() {
+    //The Python "View" Subclasses Kick starts this recursive check 
+    //immediately after they assigns the api callbacks above
+    //=> those are guaranteed to have been loaded.
+    _loaded_check() {
         //Check that everything outside of this class has been loaded
         if (icon_manager.loaded && window.loaded) {
             //Once everything is loaded break recursion and make the python callback
             //this.loaded() should only be called once and called from here
             this.loaded()
         } else {
-            setTimeout(this.loaded_check, 50)
+            setTimeout(this._loaded_check, 50)
         }
     }
 }
