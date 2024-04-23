@@ -86,6 +86,7 @@ export enum icons {
     menu_arrow_ns = 'menu_arrow_ns',
     menu_arrow_sn = 'menu_arrow_sn',
     menu_arrow_up_down = "menu_arrow_up_down",
+    menu_dragable = "menu_dragable",
 
     panel_left = "panel_left",
     panel_right = "panel_right",
@@ -101,6 +102,7 @@ export enum icons {
     candle_bar = "candle_bar",
     candle_hollow = "candle_hollow",
     candle_volume = "candle_volume",
+    candle_rounded = "candle_rounded",
 
     series_line = "series_line",
     series_line_markers = "series_line_markers",

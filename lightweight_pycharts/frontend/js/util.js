@@ -68,7 +68,7 @@ export const series_icon_map = {
     4: icons.series_histogram,
     5: icons.series_baseline,
     6: icons.series_step_line,
-    7: icons.candle_hollow,
+    7: icons.candle_rounded,
 };
 export const series_label_map = {
     0: "Bar",
@@ -149,6 +149,22 @@ export const LAYOUT_DIM_CENTER = {
 };
 export const MIN_FRAME_WIDTH = 0.15;
 export const MIN_FRAME_HEIGHT = 0.1;
+const ID_LEN = 6;
+export function makeid(id_list, prefix = '') {
+    let result = prefix;
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < ID_LEN) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
+    }
+    if (id_list.includes(result))
+        return makeid(id_list, prefix);
+    else {
+        return result;
+    }
+}
 export function isWhitespaceData(data) {
     let keys = Object.keys(data);
     let mandatory_keys_len = 0;
@@ -266,7 +282,7 @@ export function isAreaData(data) {
 export function isAreaDataList(data) {
     return isAreaData(data[0]);
 }
-const DEFAULT_CHART_OPTS = {
+export const DEFAULT_CHART_OPTS = {
     width: 0,
     height: 0,
     autoSize: true,

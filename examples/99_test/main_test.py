@@ -22,7 +22,7 @@ async def main():
     df = pd.read_csv("examples/data/ohlcv.csv")
     window.containers[0].frames[0].panes[0].set_data(df)
 
-    await window.await_close()
+    await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 
 
 # lightweight_pycharts Spawns a new Process to manage the display

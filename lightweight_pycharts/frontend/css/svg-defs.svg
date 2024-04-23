@@ -46,6 +46,10 @@
     <path fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="square" d="M6.145 11.968L14 5.5l7.855 6.468a.3.3 0 0 1-.191.532H6.336a.3.3 0 0 1-.19-.532zm0 4.064L14 22.5l7.855-6.468a.3.3 0 0 0-.191-.532H6.336a.3.3 0 0 0-.19.532z"></path>
 </svg>
 
+<svg id="menu_dragable" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none">
+    <path d="M9 6H9.01M15 6H15.01M15 12H15.01M9 12H9.01M9 18H9.01M15 18H15.01M10 6C10 6.55228 9.55228 7 9 7C8.44772 7 8 6.55228 8 6C8 5.44772 8.44772 5 9 5C9.55228 5 10 5.44772 10 6ZM16 6C16 6.55228 15.5523 7 15 7C14.4477 7 14 6.55228 14 6C14 5.44772 14.4477 5 15 5C15.5523 5 16 5.44772 16 6ZM10 12C10 12.5523 9.55228 13 9 13C8.44772 13 8 12.5523 8 12C8 11.4477 8.44772 11 9 11C9.55228 11 10 11.4477 10 12ZM16 12C16 12.5523 15.5523 13 15 13C14.4477 13 14 12.5523 14 12C14 11.4477 14.4477 11 15 11C15.5523 11 16 11.4477 16 12ZM10 18C10 18.5523 9.55228 19 9 19C8.44772 19 8 18.5523 8 18C8 17.4477 8.44772 17 9 17C9.55228 17 10 17.4477 10 18ZM16 18C16 18.5523 15.5523 19 15 19C14.4477 19 14 18.5523 14 18C14 17.4477 14.4477 17 15 17C15.5523 17 16 17.4477 16 18Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
 <!-- #endregion -->
 
 <!-- #region ________________ Panel Toggle Icons ________________ -->
@@ -111,6 +115,13 @@
     <path d="M18 7h1v3.5h-1zm0 10.5h1V21h-1z"></path>
     <path d="M9 8v12h3V8H9zm-.5-1h4a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 .5-.5z"></path>
     <path d="M10 4h1v3.5h-1zm0 16.5h1V24h-1z"></path>
+</svg>
+
+<svg id="candle_rounded" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 32 32" width="28" height="28" fill="currentColor">
+    <path d="M 17.563 5.584 L 18.959 5.584 L 18.959 9.717 L 17.563 9.717 L 17.563 5.584 Z M 17.563 17.978 L 18.959 17.978 L 18.959 22.109 L 17.563 22.109 L 17.563 17.978 Z"/>
+    <path d="M 8.566 2.043 L 9.963 2.043 L 9.963 6.175 L 8.566 6.175 L 8.566 2.043 Z M 8.566 21.52 L 9.963 21.52 L 9.963 25.652 L 8.566 25.652 L 8.566 21.52 Z"/>
+    <rect x="6.47" y="5.746" width="5.517" height="15.769" rx="3" ry="3" style="fill: none; stroke: currentColor; stroke-width: 1.5;"/>
+    <rect x="15.632" y="9.927" width="5.198" height="7.84" rx="3" ry="3" style="fill: none; stroke: currentColor; stroke-width: 1.5;"/>
 </svg>
 
 <svg id="candle_bar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">

@@ -1,4 +1,4 @@
-import { isBusinessDay, isUTCTimestamp } from '../../lib/pkg.js';
+import { isBusinessDay, isUTCTimestamp } from '../lib/pkg.js';
 export function convertTime(t) {
     if (isUTCTimestamp(t))
         return t * 1000;

@@ -75,7 +75,7 @@ export const series_icon_map: { [key: number]: icons; } = {
     5: icons.series_baseline,
 
     6: icons.series_step_line,
-    7: icons.candle_hollow,
+    7: icons.candle_rounded,
 }
 
 export const series_label_map: { [key: number]: string; } = {
@@ -227,6 +227,35 @@ export const MIN_FRAME_WIDTH = 0.15
 export const MIN_FRAME_HEIGHT = 0.1
 
 // #endregion
+
+
+// #region ---------------- Misc Util Functions ---------------- //
+
+const ID_LEN = 6
+/**
+ * Generate a unique ID of Random characters that is not present in the given list.
+ * @param prefix Optional prefix to affix at the start of the id
+ * @param id_list List of ID's to check for collisions against
+ * @returns The new ID. The ID is *not* automatically appended to the id_list
+ */
+export function makeid(id_list: string[], prefix: string = ''): string {
+    let result = prefix;
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < ID_LEN) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
+    }
+    if (id_list.includes(result))
+        //Generate again if there's a collision
+        return makeid(id_list, prefix)
+    else {
+        return result;
+    }
+}
+
+//#endregion
 
 // #region ---------------- Series Data Type Checking Functions ---------------- //
 
@@ -441,7 +470,7 @@ export function isAreaDataList(data: AnySeriesData[]): data is AreaData[] {
  * Default TimeChart Options from Lightweight Charts API.
  * Full Options Set Listed to make it easier to see what options are available
  */
-const DEFAULT_CHART_OPTS: DP<TimeChartOptions> = {
+export const DEFAULT_CHART_OPTS: DP<TimeChartOptions> = {
     width: 0,               // ---- Default to container size ----
     height: 0,              // ---- Default to container size ----
     autoSize: true,         // ---- Default normally False ----
