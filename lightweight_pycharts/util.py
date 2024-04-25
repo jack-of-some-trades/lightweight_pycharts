@@ -7,7 +7,7 @@ from string import ascii_letters
 from typing import Protocol, Self, TypeAlias, Callable, Optional, Any
 from json import JSONEncoder, dumps
 
-from .orm import TF, Color
+from .orm.types import TF, Color
 
 
 class ORM_JSONEncoder(JSONEncoder):
@@ -59,11 +59,11 @@ class ID_List(list[str]):
         if _id_prefixed not in self:
             self.append(_id_prefixed)
             return _id_prefixed
-        else:
-            # In case of a collision.
+        else:  # In case of a collision.
             return self.generate()
 
 
+# pylint: disable=invalid-name disable=missing-class-docstring
 class Timeframe_sync(Protocol):
     def __call__(self, timeframe: TF) -> None: ...
 class Timeframe_async(Protocol):
@@ -86,8 +86,10 @@ Layout_Protocol: TypeAlias = Layout_sync | Layout_async
 Command_Protocol: TypeAlias = Command_sync | Command_async
 TimeFrame_Protocol: TypeAlias = Timeframe_sync | Timeframe_async
 
+Emitter_Protocols: TypeAlias = TimeFrame_Protocol | Layout_Protocol | Command_Protocol
 
-class Emitter[T: (TimeFrame_Protocol, Layout_Protocol, Command_Protocol)](list[T]):
+
+class Emitter[T: Emitter_Protocols](list[T]):
     """
     Emitter is a list type extension. It should be instantiated with one of the below
     Protocol Type Aliases. Functions of that TypeAlias can be appended.
@@ -106,7 +108,8 @@ class Emitter[T: (TimeFrame_Protocol, Layout_Protocol, Command_Protocol)](list[T
         self._response = respose_func
 
     def __iadd__(self, func: T) -> Self:
-        self.append(func)
+        if func not in self:
+            self.append(func)
         return self
 
     def __isub__(self, func: T) -> Self:

@@ -637,6 +637,10 @@ export const DEFAULT_PYCHART_OPTS: DP<TimeChartOptions> = {
     kineticScroll: {            // ---- Kinetic Scroll ---- 
         touch: true
     },
+    timeScale: {
+        rightBarStaysOnScroll: true,
+        timeVisible: true
+    }
 }
 
 

@@ -6,10 +6,36 @@ https://github.com/jack-of-some-trades/lightweight-pycharts
 """
 
 import logging
-from .orm import *
-from .window import Window
 
-__all__ = ("Window", "orm")
+import lightweight_pycharts.orm.enum as enum
+import lightweight_pycharts.orm.types as types
+import lightweight_pycharts.orm.style as style
+import lightweight_pycharts.orm.series as series
+import lightweight_pycharts.orm.options as options
+
+# Without the following line Pylance shows the above lines as errors?
+from . import orm
+from .window import Window
+from .orm.types import TF, Color
+from .orm.enum import layouts, ColorLiteral
+
+__all__ = (
+    "Window",
+    # SubModules
+    "types",
+    "enum",
+    "series",
+    "style",
+    "options",
+    #
+    # Types
+    "TF",
+    "Color",
+    #
+    # Enums
+    "ColorLiteral",
+    "layouts",
+)
 
 _LOG_LVL = logging.WARNING
 # _LOG_LVL = logging.INFO

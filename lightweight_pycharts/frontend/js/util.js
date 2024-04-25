@@ -439,6 +439,10 @@ export const DEFAULT_PYCHART_OPTS = {
     kineticScroll: {
         touch: true
     },
+    timeScale: {
+        rightBarStaysOnScroll: true,
+        timeVisible: true
+    }
 };
 const DEFAULT_SERIES_OPTS = {
     lastValueVisible: true,

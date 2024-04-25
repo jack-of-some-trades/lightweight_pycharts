@@ -3,7 +3,7 @@
 from enum import IntEnum
 from pandas import DataFrame
 
-from .orm import Container_Layouts
+from .orm.enum import layouts
 
 # from .util import dump
 
@@ -42,7 +42,7 @@ def new_pane(pane_id: str, frame_id: str) -> str:
     return f"var {pane_id} = {frame_id}.add_pane('{pane_id}')"
 
 
-def set_layout(container_id: str, layout: Container_Layouts) -> str:
+def set_layout(container_id: str, layout: layouts) -> str:
     return f"{container_id}.set_layout({layout})"
 
 

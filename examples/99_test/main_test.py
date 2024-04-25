@@ -8,10 +8,9 @@ import asyncio
 import pandas as pd
 
 import lightweight_pycharts as lwc
-import lightweight_pycharts.orm as orm
 
 
-def timeframe_change(timeframe: orm.TF) -> None:
+def timeframe_change(timeframe: lwc.TF) -> None:
     print(f"Requested Timeframe Change to {timeframe}")
 
 

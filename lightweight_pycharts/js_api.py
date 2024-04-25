@@ -13,9 +13,9 @@ import webview
 import pandas as pd
 from webview.errors import JavascriptException
 
+from . import orm
+from . import js_cmd as cmds
 from .js_cmd import JS_CMD, PY_CMD
-import lightweight_pycharts.orm as orm
-import lightweight_pycharts.js_cmd as cmds
 
 file_dir = dirname(abspath(__file__))
 logger = logging.getLogger("lightweight-pycharts")
@@ -60,7 +60,7 @@ class js_api:
         logger.debug("Recieved Message from JS: %s", msg)
         self.rtn_queue.put((PY_CMD.PY_EXEC, msg))
 
-    def timeframe_switch(self, mult: int, period: orm.Period):
+    def timeframe_switch(self, mult: int, period: orm.types.Period):
         "Signals UI requested a Timeframe Swtich"
         try:
             timeframe = orm.TF(mult, period)
@@ -85,7 +85,7 @@ class MpHooks:
 ##### --------------------------------- Python Gui Classes --------------------------------- #####
 
 
-class script_protocol(Protocol):
+class _scriptProtocol(Protocol):
     def __call__(self, cmd: str, promise: Optional[Callable] = None) -> None: ...
 
 
@@ -110,7 +110,7 @@ class View(ABC):
     def __init__(
         self,
         hooks: MpHooks,
-        run_script: script_protocol,
+        run_script: _scriptProtocol,
     ) -> None:
         self.run_script = run_script
         self.fwd_queue = hooks.fwd_queue
@@ -158,12 +158,7 @@ class View(ABC):
             except IndexError:
                 logger.error("incorrect number of args given for command: %s", cmd)
             except TypeError as e:
-                logger.error(
-                    "incorrect Type of args given for command: %s: Given %s: %s",
-                    cmd,
-                    [type(arg) for arg in args],
-                    e,
-                )
+                logger.error(e)
 
     def _execute_cmd(self, js_cmd: JS_CMD, *args):
         "Execute command with Argument Pattern Matching"
@@ -185,12 +180,15 @@ class View(ABC):
                 cmd = cmds.new_frame(args[0], args[1])
             case JS_CMD.NEW_PANE, str(), str(), *_:
                 cmd = cmds.new_pane(args[0], args[1])
-            case JS_CMD.SET_LAYOUT, str(), orm.Container_Layouts(), *_:
+            case JS_CMD.SET_LAYOUT, str(), orm.layouts(), *_:
                 cmd = cmds.set_layout(args[0], args[1])
             case JS_CMD.SET_DATA, str(), pd.DataFrame(), *_:
                 cmd = cmds.set_data(args[0], args[1].lwc_df)
             case _:
-                raise TypeError
+                raise TypeError(
+                    f"""incorrect Type of args given for command: 
+                    {cmd}: Given {[type(arg) for arg in args]}"""
+                )
         self.run_script(cmd)
 
 

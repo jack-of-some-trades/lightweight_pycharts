@@ -5,22 +5,21 @@ import logging
 from time import sleep
 import threading as th
 import multiprocessing as mp
+from dataclasses import asdict
 from typing import Optional, Any
 
 import pandas as pd
 
+from . import orm
+from . import util
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD, PY_CMD
-from .util import ID_List
-
-import lightweight_pycharts.util as util
-import lightweight_pycharts.orm as orm
 
 logger = logging.getLogger("lightweight-pycharts")
 
 
 class Events:
-    "An Event Super Object that is a Collection of Emitters"
+    "A Super Object that is a Collection of Emitters"
 
     def __init__(self):
         self.tf_change = util.Emitter[util.TimeFrame_Protocol]()
@@ -45,13 +44,13 @@ class Window:
         *,
         daemon: bool = False,
         use_async: bool = True,
-        options: Optional[orm.PyWebViewOptions] = None,
+        options: Optional[orm.options.PyWebViewOptions] = None,
         **kwargs,
     ) -> None:
         # -------- Setup and start the Pywebview subprocess  -------- #
         if options is not None:
             # PyWebviewOptions Given, overwrite anything in kwargs.
-            kwargs = options.asdict()
+            kwargs = asdict(options)
 
         if "debug" in kwargs.keys() and kwargs["debug"]:
             logger.setLevel(logging.DEBUG)
@@ -87,8 +86,8 @@ class Window:
         # -------- Create Subobjects  -------- #
         self.events = Events()
         self.js_id = "wrapper"
-        self._container_ids = ID_List("c")
-        self._containers: list[Container] = []
+        self.container_ids = util.ID_List("c")
+        self.containers: list[Container] = []
         self.new_tab()
 
     # region ------------------------ Private Window Methods  ------------------------ #
@@ -153,33 +152,23 @@ class Window:
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.HIDE)
 
-    @property
-    def containers(self) -> list["Container"]:
-        "return list of all current containers"
-        return self._containers
-
-    @property
-    def container_ids(self) -> list[str]:
-        "return list of all current container IDs"
-        return self._container_ids
-
     def new_tab(self) -> "Container":
         """
         Add a new Tab to the Window interface
         :returns: A Container obj that represents the Tab's Contents
         """
-        new_id = self._container_ids.generate()
+        new_id = self.container_ids.generate()
         new_container = Container(new_id, self._fwd_queue)
-        self._containers.append(new_container)
+        self.containers.append(new_container)
         return new_container
 
     def get_container(self, _id: int | str) -> Optional["Container"]:
         "Return the container that either matchs the given js_id string, or the integer tab number"
         if isinstance(_id, int):
             if _id >= 0 and _id < len(self.containers):
-                return self._containers[_id]
+                return self.containers[_id]
         else:
-            for container in self._containers:
+            for container in self.containers:
                 if _id == container.js_id:
                     return container
 
@@ -191,14 +180,14 @@ class Container:
     def __init__(self, js_id: str, fwd_queue: mp.Queue) -> None:
         self._fwd_queue = fwd_queue
         self.js_id = js_id
-        self.layout_type = orm.Container_Layouts.SINGLE
-        self.frame_ids = ID_List(f"{js_id}_f")
+        self.layout_type = orm.layouts.SINGLE
+        self.frame_ids = util.ID_List(f"{js_id}_f")
         self.frames: list[Frame] = []
 
         self._fwd_queue.put((JS_CMD.NEW_CONTAINER, self.js_id))
         self.set_layout(self.layout_type)
 
-    def set_layout(self, layout: orm.Container_Layouts):
+    def set_layout(self, layout: orm.layouts):
         self._fwd_queue.put((JS_CMD.SET_LAYOUT, self.js_id, layout))
         self.layout_type = layout
 
@@ -227,7 +216,7 @@ class Frame:
         self._fwd_queue = parent._fwd_queue
         self.parent = parent
         self.js_id = js_id
-        self.pane_ids = ID_List(f"{js_id}_p")
+        self.pane_ids = util.ID_List(f"{js_id}_p")
         self.panes: list[Pane] = []
 
         self._fwd_queue.put((JS_CMD.NEW_FRAME, js_id, self.parent.js_id))
