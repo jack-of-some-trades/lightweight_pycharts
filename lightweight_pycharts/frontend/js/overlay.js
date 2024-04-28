@@ -25,19 +25,19 @@ export class overlay_manager {
         overlay_menu.classList.add('overlay_menu');
         let menu_loc_func = overlay_manager.menu_position_func(loc, overlay_menu, parent_div);
         parent_div.addEventListener('click', () => {
-            if (overlay_menu.classList.contains('overlay_menu_active'))
-                overlay_menu.classList.remove('overlay_menu_active');
+            if (overlay_menu.hasAttribute('active'))
+                overlay_menu.removeAttribute('active');
             else {
-                let other_menus = window.overlay_manager.div.getElementsByClassName('overlay_menu_active');
+                let other_menus = window.overlay_manager.div.querySelectorAll('.overlay_menu[active]');
                 for (let i = 0; i < other_menus.length; i++) {
-                    other_menus[i].classList.remove('overlay_menu_active');
+                    other_menus[i].removeAttribute('active');
                 }
-                overlay_menu.classList.add('overlay_menu_active');
+                overlay_menu.setAttribute('active', '');
                 menu_loc_func();
             }
         });
         document.addEventListener('mousedown', () => {
-            overlay_menu.classList.remove('overlay_menu_active');
+            overlay_menu.removeAttribute('active');
         });
         parent_div.addEventListener('mousedown', (event) => { event.stopPropagation(); });
         overlay_menu.addEventListener('mousedown', (event) => { event.stopPropagation(); });
@@ -114,7 +114,7 @@ export class overlay_manager {
         if (item.star !== undefined)
             this.make_toggle_star(item_div, item);
         sel_wrap.addEventListener('click', () => {
-            menu.classList.remove('overlay_menu_active');
+            menu.removeAttribute('active');
             on_sel(item.data);
         });
         return item_div;

@@ -10,6 +10,15 @@ export class Wrapper {
         this.div.id = 'layout_wrapper';
         this.div.classList.add('wrapper');
         document.body.appendChild(this.div);
+        this.div_title = document.createElement('div');
+        this.div_title.id = 'layout_title';
+        this.div_title.classList.add('layout_title', 'layout_flex');
+        this.div_title.style.height = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`;
+        this.div_title.style.width = u.LAYOUT_DIM_TITLE.WIDTH;
+        this.div_title.style.left = `${u.LAYOUT_DIM_TITLE.LEFT}px`;
+        this.div_title.style.top = `${u.LAYOUT_DIM_TITLE.TOP}px`;
+        this.div_title.style.display = 'flex';
+        this.div.appendChild(this.div_title);
         this.div_top = document.createElement('div');
         this.div_top.id = 'layout_top';
         this.div_top.classList.add('layout_main', 'layout_flex');
@@ -48,7 +57,7 @@ export class Wrapper {
         this.div.appendChild(this.div_bottom);
         this.div_center = document.createElement('div');
         this.div_center.id = 'layout_center';
-        this.div_center.classList.add('layout_main', 'layout_container_row');
+        this.div_center.classList.add('layout_main');
         this.div_center.style.height = `${u.LAYOUT_DIM_CENTER.HEIGHT}px`;
         this.div_center.style.width = `${u.LAYOUT_DIM_CENTER.WIDTH}px`;
         this.div_center.style.left = `${u.LAYOUT_DIM_CENTER.LEFT}px`;
@@ -56,8 +65,6 @@ export class Wrapper {
         this.div_center.style.display = 'flex';
         this.div.appendChild(this.div_center);
         this.resize();
-        this.hide_section(Wrapper_Divs.NAV_BAR);
-        this.hide_section(Wrapper_Divs.UTIL_BAR);
         window.addEventListener('resize', this.resize.bind(this));
         this.loaded = true;
     }
@@ -67,7 +74,7 @@ export class Wrapper {
         this.div.style.width = `${width}px`;
         this.div.style.height = `${height}px`;
         let side_bar_height = height;
-        let center_height = height;
+        let center_height = height - u.LAYOUT_DIM_TITLE.HEIGHT;
         let center_width = width;
         if (this.div_top.style.display === 'flex') {
             side_bar_height -= (u.LAYOUT_DIM_TOP.HEIGHT + u.LAYOUT_MARGIN);
@@ -93,6 +100,7 @@ export class Wrapper {
     }
     get_div(section) {
         switch (section) {
+            case (Wrapper_Divs.TITLE_BAR): return this.div_title;
             case (Wrapper_Divs.CHART): return this.div_center;
             case (Wrapper_Divs.DRAW_TOOLS): return this.div_left;
             case (Wrapper_Divs.NAV_BAR): return this.div_right;
@@ -134,21 +142,47 @@ export class Wrapper {
                 break;
             case (Wrapper_Divs.TOP_BAR):
                 this.div_top.style.display = 'none';
-                this.div_left.style.top = '0px';
-                this.div_right.style.top = '0px';
-                this.div_center.style.top = '0px';
+                this.div_left.style.top = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`;
+                this.div_right.style.top = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`;
+                this.div_center.style.top = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`;
                 break;
             case (Wrapper_Divs.UTIL_BAR):
                 this.div_bottom.style.display = 'none';
         }
         this.resize();
     }
+    reorder_containers(from, to) {
+        if (from < 0 || from >= this.containers.length)
+            console.error(`Index, 'from=${from}', out of bounds on container reorder call. list len = ${this.containers.length}`);
+        else if (to < 0 || to >= this.containers.length)
+            console.error(`Index, 'to=${to}', out of bounds on container reorder call. list len = ${this.containers.length}`);
+        else {
+            this.containers.splice(to, 0, this.containers.splice(from, 1)[0]);
+            let id_list = [];
+            this.containers.forEach(container => { id_list.push(container.id); });
+        }
+    }
     add_container(id) {
-        let tmp_ref = new Container(this.get_div(Wrapper_Divs.CHART), id);
+        let tmp_ref = new Container(this.div_center, id);
         this.containers.push(tmp_ref);
-        tmp_ref.resize();
-        window.active_container = tmp_ref;
         return tmp_ref;
+    }
+    remove_container(id) {
+        for (let i = 0; i < this.containers.length; i++) {
+            if (this.containers[i].id === id) {
+                let objs = this.containers.splice(i, 1);
+                objs[0].remove();
+                return;
+            }
+        }
+    }
+    set_active_container(tab_div) {
+        for (let i = 0; i < this.containers.length; i++) {
+            if (this.containers[i].tab_div == tab_div) {
+                this.containers[i].assign_active_container();
+                break;
+            }
+        }
     }
     resize_debounce() {
         if (this.resizeTimeoutID !== null) {

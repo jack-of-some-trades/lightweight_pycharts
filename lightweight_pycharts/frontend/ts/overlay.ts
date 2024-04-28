@@ -66,22 +66,22 @@ export class overlay_manager {
         //Event listener to toggle visibility and interactivity
         let menu_loc_func = overlay_manager.menu_position_func(loc, overlay_menu, parent_div)
         parent_div.addEventListener('click', () => {
-            if (overlay_menu.classList.contains('overlay_menu_active'))
-                overlay_menu.classList.remove('overlay_menu_active')
+            if (overlay_menu.hasAttribute('active'))
+                overlay_menu.removeAttribute('active')
             else {
-                let other_menus = window.overlay_manager.div.getElementsByClassName('overlay_menu_active')
+                let other_menus = window.overlay_manager.div.querySelectorAll('.overlay_menu[active]')
                 for (let i = 0; i < other_menus.length; i++) {
                     //Make all other active menus inactive.
-                    other_menus[i].classList.remove('overlay_menu_active')
+                    other_menus[i].removeAttribute('active')
                 }
-                overlay_menu.classList.add('overlay_menu_active')
+                overlay_menu.setAttribute('active', '')
                 menu_loc_func()
             }
         })
 
         //Global Event Listener to Remove visibility and interactivity
         document.addEventListener('mousedown', () => {
-            overlay_menu.classList.remove('overlay_menu_active')
+            overlay_menu.removeAttribute('active')
         })
         //Stop the Propogation of the global mousedown event when it originates somewhere in this menu (so menu doesn't disappear)
         parent_div.addEventListener('mousedown', (event) => { event.stopPropagation() })
@@ -187,7 +187,7 @@ export class overlay_manager {
 
         //Setup click behavior on the selectable wrapper
         sel_wrap.addEventListener('click', () => {
-            menu.classList.remove('overlay_menu_active') //Remove Visibility from entire menu
+            menu.removeAttribute('active') //Remove Visibility from entire menu
             on_sel(item.data) //Call the on_select with the given data for this item.
         })
 

@@ -22,8 +22,6 @@ export class topbar {
         this.right_div.classList.add('topbar', 'topbar_right');
         this.right_div.appendChild(this.separator());
         this.right_div.appendChild(this.layout_select.wrapper_div);
-        this.right_div.appendChild(this.separator());
-        this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_left));
         this.div.appendChild(this.left_div);
         this.div.appendChild(this.right_div);
     }
@@ -67,63 +65,6 @@ export class topbar {
         indicator_div.appendChild(icon_manager.get_svg(icons.indicator_template, ['icon_hover']));
         return indicator_div;
     }
-    panel_toggle(parent, icon, active_start = true) {
-        let toggle_btn = document.createElement('div');
-        toggle_btn.classList.add('topbar_menu_button');
-        let wrap_div;
-        switch (icon) {
-            case icons.panel_right:
-                wrap_div = Wrapper_Divs.NAV_BAR;
-                break;
-            case icons.panel_bottom:
-                wrap_div = Wrapper_Divs.UTIL_BAR;
-                break;
-            default:
-                icon = icons.panel_left;
-                wrap_div = Wrapper_Divs.DRAW_TOOLS;
-        }
-        let svg = icon_manager.get_svg(icon, ['icon_hover']);
-        if (active_start) {
-            svg.classList.add('icon_active');
-            parent.show_section(wrap_div);
-        }
-        else {
-            parent.hide_section(wrap_div);
-        }
-        toggle_btn.appendChild(svg);
-        toggle_btn.addEventListener('click', () => {
-            if (toggle_btn.firstElementChild)
-                if (toggle_btn.firstElementChild.classList.contains('icon_active')) {
-                    toggle_btn.firstElementChild.classList.remove('icon_active');
-                    parent.hide_section(wrap_div);
-                }
-                else {
-                    toggle_btn.firstElementChild.classList.add('icon_active');
-                    parent.show_section(wrap_div);
-                }
-        });
-        return toggle_btn;
-    }
-    button(icon) {
-        let btn = document.createElement('div');
-        btn.appendChild(icon_manager.get_svg(icon, ['icon_hover']));
-        btn.classList.add('topbar_menu_button');
-        btn.style.margin = '4px';
-        switch (icon) {
-            case icons.close:
-                btn.addEventListener('click', () => { window.api.close(); });
-                break;
-            case icons.minimize:
-                btn.addEventListener('click', () => { window.api.minimize(); });
-                break;
-            case icons.maximize:
-                btn.addEventListener('click', () => { window.api.maximize(); });
-                break;
-            default:
-                btn.addEventListener('click', () => { console.log(`button ${icon} pressed!`); });
-        }
-        return btn;
-    }
     separator() {
         let new_div = document.createElement('div');
         new_div.classList.add('topbar_separator');
@@ -132,7 +73,6 @@ export class topbar {
         return new_div;
     }
 }
-topbar.loaded = false;
 export class timeframe_selector {
     constructor() {
         this.wrapper_div = document.createElement('div');

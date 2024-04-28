@@ -1,10 +1,9 @@
 import { createChart } from "./lib/pkg.js";
-import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
+import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 export class Pane {
     constructor(id, div, flex_width = 1, flex_height = 1, chart_opts = u.DEFAULT_PYCHART_OPTS) {
         this.id = '';
-        this.is_focus = false;
         this.series = [];
         this.id = id;
         this.div = div;
@@ -13,21 +12,13 @@ export class Pane {
         this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.chart.chartElement();
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this));
-        this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries());
+        this.main_series = this.chart.addCandlestickSeries();
     }
     assign_active_pane() {
-        if (!window.active_pane) {
-            this.is_focus = true;
-            window.active_pane = this;
-            window.active_pane.div.classList.add('chart_pane_active');
-        }
-        else if (window.active_pane.id != this.id) {
-            window.active_pane.is_focus = false;
-            window.active_pane.div.classList.remove('chart_pane_active');
-            this.is_focus = true;
-            window.active_pane = this;
-            window.active_pane.div.classList.add('chart_pane_active');
-        }
+        if (window.active_pane)
+            window.active_pane.div.removeAttribute('active');
+        window.active_pane = this;
+        window.active_pane.div.setAttribute('active', '');
     }
     set_data(dtype, data, series = this.main_series) {
         if (data.length === 0) {
@@ -99,6 +90,21 @@ export class Pane {
     }
     add_candlestick_series(options) {
         this.series.push(this.chart.addCandlestickSeries(options));
+    }
+    create_line() {
+        const data = this.main_series.data();
+        const dataLength = data.length;
+        console.log(data[0].time);
+        const point1 = {
+            time: data[dataLength - 50].time,
+            value: data[dataLength - 50].close * 0.9,
+        };
+        const point2 = {
+            time: data[dataLength - 5].time,
+            value: data[dataLength - 5].close * 1.1,
+        };
+        const trend = new TrendLine(point1, point2);
+        this.main_series.attachPrimitive(trend);
     }
     fitcontent() { this.chart.timeScale().fitContent(); }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale(); }

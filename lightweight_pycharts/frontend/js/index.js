@@ -1,7 +1,7 @@
-import { Container } from "./container.js";
 import { icon_manager } from "./icons.js";
 import { overlay_manager } from "./overlay.js";
 import { py_api } from "./py_api.js";
+import { TitleBar } from "./title_bar.js";
 import { toolbox } from "./toolbox.js";
 import { layout_selector, series_selector, timeframe_selector, topbar } from "./topbar.js";
 import { Container_Layouts } from "./util.js";
@@ -15,7 +15,7 @@ window.layout_selector = new layout_selector();
 window.timeframe_selector = new timeframe_selector();
 window.topbar = new topbar(window.wrapper, window.timeframe_selector, window.layout_selector, window.series_selector);
 window.toolbox = new toolbox(window.wrapper);
-window.Container = Container;
+window.titlebar = new TitleBar(window.wrapper);
 window.Container_Layouts = Container_Layouts;
 window.wrapper.resize();
 window.loaded = true;

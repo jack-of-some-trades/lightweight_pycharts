@@ -7,7 +7,6 @@ export class Frame {
     //The class that contains all the data to be displayed
     id: string
     div: HTMLDivElement
-    is_focus: boolean = false
 
     private panes: Pane[] = []
 
@@ -23,19 +22,11 @@ export class Frame {
      * Update Global 'active_frame' reference to this instance. 
      */
     assign_active_frame() {
-        if (!window.active_frame) {
-            this.is_focus = true
-            window.active_frame = this
-            window.active_frame.div.classList.add('chart_frame_active')
+        if (window.active_frame)
+            window.active_frame.div.removeAttribute('active')
 
-        } else if (window.active_frame.id != this.id) {
-            window.active_frame.is_focus = false    //Unset old object's focus
-            window.active_frame.div.classList.remove('chart_frame_active')
-
-            this.is_focus = true
-            window.active_frame = this              //Set this object's focus
-            window.active_frame.div.classList.add('chart_frame_active')
-        }
+        window.active_frame = this
+        window.active_frame.div.setAttribute('active', '')
     }
 
     /**
@@ -72,8 +63,11 @@ export class Frame {
      * Resize All Children Panes
      */
     resize() {
-        let this_width = this.div.clientWidth
-        let this_height = this.div.clientHeight
+        // -2 accounts for... uhh... the chart border? idk man.
+        // Without it the 'active_frame' grey chart border is hidden behind the chart
+        // and the 'active_pane' accent color border
+        let this_width = this.div.clientWidth - 2
+        let this_height = this.div.clientHeight - 2
 
         this.panes.forEach(pane => {
             pane.resize(this_width, this_height)

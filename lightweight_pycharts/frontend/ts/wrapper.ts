@@ -17,8 +17,8 @@ import { Wrapper_Divs } from "./util.js";
  */
 
 /**
- * Wrapper Class.
- * Contains all the objects and elements required for a full tradestation
+ * Wrapper Class. Creates all the main Divs for the window and retains 
+ * references to them.
  * 
  * @member containers An Array of container objects. Analogous to tabs of a window.
  */
@@ -32,6 +32,7 @@ export class Wrapper {
     div_right: HTMLDivElement
     div_bottom: HTMLDivElement
     div_center: HTMLDivElement
+    div_title: HTMLDivElement
 
     private resizeTimeoutID: number | null = null;
 
@@ -43,6 +44,17 @@ export class Wrapper {
         document.body.appendChild(this.div)
 
         //Create & Size Top Bar
+        this.div_title = document.createElement('div')
+        this.div_title.id = 'layout_title'
+        this.div_title.classList.add('layout_title', 'layout_flex')
+        this.div_title.style.height = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`
+        this.div_title.style.width = u.LAYOUT_DIM_TITLE.WIDTH //Const is already string
+        this.div_title.style.left = `${u.LAYOUT_DIM_TITLE.LEFT}px`
+        this.div_title.style.top = `${u.LAYOUT_DIM_TITLE.TOP}px`
+        this.div_title.style.display = 'flex'//Display must be set in JS to be used to control visibility
+        this.div.appendChild(this.div_title)
+
+        //Create & Size Top Bar
         this.div_top = document.createElement('div')
         this.div_top.id = 'layout_top'
         this.div_top.classList.add('layout_main', 'layout_flex')
@@ -50,7 +62,7 @@ export class Wrapper {
         this.div_top.style.width = u.LAYOUT_DIM_TOP.WIDTH //Const is already string
         this.div_top.style.left = `${u.LAYOUT_DIM_TOP.LEFT}px`
         this.div_top.style.top = `${u.LAYOUT_DIM_TOP.TOP}px`
-        this.div_top.style.display = 'flex'//Display must be set in JS to be used to control visibility
+        this.div_top.style.display = 'flex'
         this.div.appendChild(this.div_top)
 
         //Create & Size Left Bar
@@ -89,7 +101,7 @@ export class Wrapper {
         //Create & Size center container
         this.div_center = document.createElement('div')
         this.div_center.id = 'layout_center'
-        this.div_center.classList.add('layout_main', 'layout_container_row')
+        this.div_center.classList.add('layout_main')
         this.div_center.style.height = `${u.LAYOUT_DIM_CENTER.HEIGHT}px`
         this.div_center.style.width = `${u.LAYOUT_DIM_CENTER.WIDTH}px`
         this.div_center.style.left = `${u.LAYOUT_DIM_CENTER.LEFT}px`
@@ -99,8 +111,6 @@ export class Wrapper {
 
         //Initilize Window regions and perform initial resize
         this.resize()
-        this.hide_section(Wrapper_Divs.NAV_BAR) /* Hiding Bar until it has some functionality */
-        this.hide_section(Wrapper_Divs.UTIL_BAR) /* Hiding Bar until it has some functionality */
 
         //Setup resize listener
         window.addEventListener('resize', this.resize.bind(this))
@@ -118,7 +128,7 @@ export class Wrapper {
         this.div.style.height = `${height}px`
 
         let side_bar_height = height
-        let center_height = height
+        let center_height = height - u.LAYOUT_DIM_TITLE.HEIGHT
         let center_width = width
 
         if (this.div_top.style.display === 'flex') { //Top Visible? 
@@ -155,6 +165,7 @@ export class Wrapper {
      */
     get_div(section: Wrapper_Divs): HTMLDivElement {
         switch (section) {
+            case (Wrapper_Divs.TITLE_BAR): return this.div_title
             case (Wrapper_Divs.CHART): return this.div_center
             case (Wrapper_Divs.DRAW_TOOLS): return this.div_left
             case (Wrapper_Divs.NAV_BAR): return this.div_right
@@ -209,9 +220,9 @@ export class Wrapper {
                 break;
             case (Wrapper_Divs.TOP_BAR):
                 this.div_top.style.display = 'none'
-                this.div_left.style.top = '0px'
-                this.div_right.style.top = '0px'
-                this.div_center.style.top = '0px'
+                this.div_left.style.top = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`
+                this.div_right.style.top = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`
+                this.div_center.style.top = `${u.LAYOUT_DIM_TITLE.HEIGHT}px`
                 break;
             case (Wrapper_Divs.UTIL_BAR):
                 this.div_bottom.style.display = 'none'
@@ -220,17 +231,61 @@ export class Wrapper {
         this.resize()
     }
 
+    /**
+     * Re-order container list to match Tabs list.
+     * Technically the order of this list doesn't matter since that information isn't used. 
+     * Better to be thorough than not though.
+     */
+    reorder_containers(from: number, to: number) {
+        if (from < 0 || from >= this.containers.length)
+            console.error(`Index, 'from=${from}', out of bounds on container reorder call. list len = ${this.containers.length}`)
+        else if (to < 0 || to >= this.containers.length)
+            console.error(`Index, 'to=${to}', out of bounds on container reorder call. list len = ${this.containers.length}`)
+        else {
+            this.containers.splice(to, 0, this.containers.splice(from, 1)[0])
+            let id_list: string[] = []
+            this.containers.forEach(container => { id_list.push(container.id) });
+        }
+    }
 
     /**
      * Generate a new container and makes it the window's active container 
+     * Protected to indicate it should only be called from Python
      */
-    add_container(id: string): Container {
-        //This a bug? we probably dont want all containers to share a single Div.. maybe. maybe not. what do i know?
-        let tmp_ref = new Container(this.get_div(Wrapper_Divs.CHART), id)
+    protected add_container(id: string): Container {
+        let tmp_ref = new Container(this.div_center, id)
         this.containers.push(tmp_ref)
-        tmp_ref.resize()
-        window.active_container = tmp_ref
         return tmp_ref
+    }
+
+    /**
+     * Removes a Container, and all its subsidiaries, from the entire interface.
+     * As such, It's a protected method (Should only be called from Python)
+     */
+    protected remove_container(id: string) {
+        for (let i = 0; i < this.containers.length; i++) {
+            // == Since we need to make sure it's the same object reference.
+            if (this.containers[i].id === id) {
+                let objs = this.containers.splice(i, 1)
+                objs[0].remove()
+                return
+            }
+        }
+    }
+
+    /**
+     * Sets active_container when the current active container is deleted from the tab list.
+     * Called from the TitleBar Tab's Object since that is the only element that
+     * knows the tab order and what next tab is being set 
+     */
+    set_active_container(tab_div: HTMLDivElement) {
+        for (let i = 0; i < this.containers.length; i++) {
+            // == Since we need to make sure it's the same object reference.
+            if (this.containers[i].tab_div == tab_div) {
+                this.containers[i].assign_active_container()
+                break;
+            }
+        }
     }
 
     /**

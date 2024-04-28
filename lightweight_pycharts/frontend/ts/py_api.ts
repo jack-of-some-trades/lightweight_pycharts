@@ -9,6 +9,11 @@ export class py_api {
     close!: () => void;
     maximize!: () => void;
     minimize!: () => void;
+    restore!: () => void;
+
+    add_container!: () => void;
+    remove_container!: (id: string) => void;
+    reorder_containers!: (from: number, to: number) => null
 
     callback!: (msg: string) => void;
     timeframe_switch!: (mult: number, period: string) => void;

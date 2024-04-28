@@ -4,6 +4,7 @@ import { icon_manager } from "./icons.js";
 import { overlay_manager } from "./overlay.js";
 import { Pane } from "./pane.js";
 import { py_api } from "./py_api.js";
+import { TitleBar } from "./title_bar.js";
 import { toolbox } from "./toolbox.js";
 import { layout_selector, series_selector, timeframe_selector, topbar } from "./topbar.js";
 import { Container_Layouts } from "./util.js";
@@ -18,6 +19,7 @@ declare global {
         overlay_manager: overlay_manager,
 
         wrapper: Wrapper,
+        titlebar: TitleBar,
         topbar: topbar,
         toolbox: toolbox,
         series_selector: series_selector,
@@ -27,8 +29,10 @@ declare global {
         active_pane: Pane,
         active_frame: Frame,
         active_container: Container,
-        Container: { new(div: HTMLDivElement, id: string): Container },
-
+        // Technically Pane, Frame & Container can refer to deleted objects 
+        // if they have been removed, but where the active element at the time of deletion.
+        // Beyond delaying some garbage collection, I don't think the dead references are 
+        // an issue so the behavior will stay for now.
         Container_Layouts: typeof Container_Layouts
     }
 }
@@ -52,9 +56,7 @@ window.topbar = new topbar(
     window.series_selector
 )
 window.toolbox = new toolbox(window.wrapper)
-
-//Define Global Constructors; might move this to be a responsibility of the wrapper class..
-window.Container = Container
+window.titlebar = new TitleBar(window.wrapper)
 
 //Enums that will be used by Python need to be placed into the Global Scope
 window.Container_Layouts = Container_Layouts

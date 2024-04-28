@@ -13,28 +13,69 @@ import { Container_Layouts, Orientation, flex_div } from "./util.js";
 export class Container {
     id: string
     div: HTMLDivElement
+    tab_div: HTMLDivElement
     layout: Container_Layouts | null
     frames: Frame[] = []
     flex_divs: flex_div[] = []
 
     constructor(parent_div: HTMLDivElement, id: string) {
         this.id = id
-        this.div = parent_div
-        this.div.style.flexWrap = `wrap`    //Flex-Wrap used to position layouts
+        this.div = document.createElement('div')
+        this.div.classList.add('layout_main', 'layout_container_row')
         this.layout = null
+
+        parent_div.appendChild(this.div)
+
+        this.tab_div = window.titlebar.tab_manager.addTab()
+        window.titlebar.tab_manager.setTabCloseEventListener(this.tab_div, id)
+        this.assign_active_container()
+
+        this.resize()
     }
 
+    /**
+     * Fit the content of all child Frames
+     */
+    fitcontent() {
+        this.frames.forEach(frame => {
+            frame.fitcontent()
+        });
+    }
+
+    remove() {
+        //The remove tab call will set the next active_container if necessary.
+        //The Tab_manager has that responsibility since the tabs are already ordered 
+        //and thus make the implementation easier.
+        window.titlebar.tab_manager.removeTab(this.tab_div)
+        this.div.remove()
+    }
 
     /**
-     * Resize the Flex Width/Height of all neighboring frames & spearators
+     * Update Global 'active_frame' reference to this instance. 
+     */
+    assign_active_container() {
+        if (window.active_container)
+            window.active_container.div.removeAttribute('active')
+
+        window.active_container = this
+        window.active_container.div.setAttribute('active', '')
+        window.titlebar.tab_manager.setCurrentTab(this.tab_div)
+        this.resize() //Non-Active Containers aren't updated
+    }
+
+    /**
+     * Resize the Flex Width/Height %s of all neighboring frames & spearators
      */
     resize_flex(separator: flex_div, e: MouseEvent) {
         if (separator.orientation === Orientation.Vertical) {
+            //flex total is the total percentage of the screen that the laft & Right charts occupy
+            //e.g a Triple_vertical will have an initial flex_total of 0.33 + 0.33 = 0.66
             let flex_total = separator.resize_pos[0].flex_width + separator.resize_neg[0].flex_width
             let width_total = separator.resize_pos[0].div.offsetWidth + separator.resize_neg[0].div.offsetWidth
 
-            let container_x = e.clientX - separator.resize_pos[0].div.offsetLeft - this.div.offsetLeft
-            let flex_size_left = (container_x / width_total) * flex_total
+            //x position within the container
+            let relative_x = e.clientX - separator.resize_pos[0].div.getBoundingClientRect().left
+            let flex_size_left = (relative_x / width_total) * flex_total
             let flex_size_right = flex_total - flex_size_left
 
             //Limit the size of each frame to the minimum set in util.
@@ -59,7 +100,7 @@ export class Container {
             let flex_total = separator.resize_pos[0].flex_height + separator.resize_neg[0].flex_height
             let height_total = separator.resize_pos[0].div.offsetHeight + separator.resize_neg[0].div.offsetHeight
 
-            let container_y = e.clientY - separator.resize_pos[0].div.offsetTop - this.div.offsetTop
+            let container_y = e.clientY - separator.resize_pos[0].div.getBoundingClientRect().top
             let flex_size_top = (container_y / height_total) * flex_total
             let flex_size_bottom = flex_total - flex_size_top
 
@@ -89,6 +130,8 @@ export class Container {
     resize() {
         let this_width = this.div.clientWidth
         let this_height = this.div.clientHeight
+        if (this_width <= 0 || this_height <= 0)
+            return
 
         //These remove the width of the frame separators, With that width removed the flexbox grows the
         //frame elements to their necessary size instead of unnecessarily wrapping the contents because they 
@@ -100,15 +143,15 @@ export class Container {
         this.flex_divs.forEach((flex_item) => {
             if (flex_item.isFrame) {
                 //Margin is subtracted from width to ensure size row wrap functions correctly
-                flex_item.div.style.width = `${this_width * flex_item.flex_width - horiz_offset}px`
-                flex_item.div.style.height = `${this_height * flex_item.flex_height - vert_offset}px`
+                flex_item.div.style.width = `${Math.round(this_width * flex_item.flex_width - horiz_offset)}px`
+                flex_item.div.style.height = `${Math.round(this_height * flex_item.flex_height - vert_offset)}px`
             } else if (flex_item.orientation === Orientation.Vertical) {
                 //vertical Separators have fixed width
                 flex_item.div.style.width = `${u.LAYOUT_CHART_SEP_BORDER}px`
-                flex_item.div.style.height = `${this_height * flex_item.flex_height - vert_offset}px`
+                flex_item.div.style.height = `${Math.round(this_height * flex_item.flex_height - vert_offset)}px`
             } else if (flex_item.orientation === Orientation.Horizontal) {
                 //Horizontal Separators have fixed height
-                flex_item.div.style.width = `${this_width * flex_item.flex_width - horiz_offset}px`
+                flex_item.div.style.width = `${Math.round(this_width * flex_item.flex_width - horiz_offset)}px`
                 flex_item.div.style.height = `${u.LAYOUT_CHART_SEP_BORDER}px`
             }
         })
@@ -157,8 +200,9 @@ export class Container {
 
     /** 
      * Create and configure all the necessary frames & separators for a given layout.
+     * protected => should only be called from python
      */
-    set_layout(layout: Container_Layouts) {
+    protected set_layout(layout: Container_Layouts) {
         // ------------ Clear Previous Layout ------------
         this.flex_divs.forEach((item) => {
             //Remove all the divs from the document
@@ -198,7 +242,7 @@ export class Container {
     /**
      * Creates a Flex Div for a Chart Frame. The Frame must be created seprately
      */
-    _add_flex_frame(flex_width: number, flex_height: number): flex_div {
+    private _add_flex_frame(flex_width: number, flex_height: number): flex_div {
         let child_div = document.createElement('div')
         child_div.classList.add('chart_frame')
         let new_flexdiv = {
@@ -217,7 +261,7 @@ export class Container {
     /**
      * Creates a Flex Div for use as a separator between frame elements
      */
-    _add_flex_separator(type: Orientation, size: number): flex_div {
+    private _add_flex_separator(type: Orientation, size: number): flex_div {
         let child_div = document.createElement('div')
         child_div.classList.add('chart_separator')
         child_div.style.cursor = (type === Orientation.Vertical ? 'ew-resize' : 'ns-resize')
@@ -251,34 +295,17 @@ export class Container {
     /**
      * Creates a new Frame that's tied to the DIV element given in specs.
      */
-    _create_frame(specs: flex_div, id: string = ''): Frame {
+    private _create_frame(specs: flex_div, id: string = ''): Frame {
         let new_frame = new Frame(id, specs.div)
         this.frames.push(new_frame)
         return new_frame
-    }
-
-    hide() {
-        this.div.style.display = 'none'
-    }
-
-    show() {
-        this.div.style.display = 'flex'
-    }
-
-    /**
-     * Fit the content of all child Frames
-     */
-    fitcontent() {
-        this.frames.forEach(frame => {
-            frame.fitcontent()
-        });
     }
 
     /**
      * Giant Switch Statement that creates each of the individual layouts
      * Only called by set_layout() but it's large enough to deserve its own function
      */
-    _layout_switch(layout: Container_Layouts) {
+    private _layout_switch(layout: Container_Layouts) {
         switch (layout) {
             case Container_Layouts.DOUBLE_VERT: {
                 this.div.classList.replace('layout_container_col', 'layout_container_row')

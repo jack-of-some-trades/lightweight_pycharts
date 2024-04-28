@@ -7,9 +7,7 @@ import { Wrapper } from "./wrapper.js"
  * Class to create and manage the TopBar of the application
  */
 export class topbar {
-    static loaded: boolean = false
-    static instance: topbar                 //@ts-ignore *Ignoring div not created error
-    private parent: Wrapper                 //@ts-ignore 
+    private parent: Wrapper
     private div: HTMLDivElement
 
     private left_div: HTMLDivElement | undefined
@@ -41,8 +39,6 @@ export class topbar {
         this.right_div.classList.add('topbar', 'topbar_right')
         this.right_div.appendChild(this.separator())
         this.right_div.appendChild(this.layout_select.wrapper_div)
-        this.right_div.appendChild(this.separator())
-        this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_left))
         // Will uncomment other panel_toggle buttons once they have functionality.
         // this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_right, false))
         // this.right_div.appendChild(this.panel_toggle(this.parent, icons.panel_bottom, false))
@@ -112,72 +108,6 @@ export class topbar {
         indicator_div.appendChild(icon_manager.get_svg(icons.indicator_template, ['icon_hover']))
 
         return indicator_div
-    }
-
-    /**
-     * Create a Topbar Toggleable div that shows/hides a layout panel
-     * @param icon Valid args: icons.panel_left, icons.panel_right, icons.panel_bottom
-     * @param active_start initial state of the panel, true === shown
-     */
-    panel_toggle(parent: Wrapper, icon: icons, active_start: boolean = true): HTMLDivElement {
-        let toggle_btn = document.createElement('div')
-        toggle_btn.classList.add('topbar_menu_button')
-
-        let wrap_div: Wrapper_Divs
-        switch (icon) {
-            case icons.panel_right:
-                wrap_div = Wrapper_Divs.NAV_BAR
-                break;
-            case icons.panel_bottom:
-                wrap_div = Wrapper_Divs.UTIL_BAR
-                break;
-            default:
-                icon = icons.panel_left
-                wrap_div = Wrapper_Divs.DRAW_TOOLS
-        }
-
-        let svg = icon_manager.get_svg(icon, ['icon_hover'])
-        if (active_start) {
-            svg.classList.add('icon_active')
-            parent.show_section(wrap_div)
-        } else {
-            parent.hide_section(wrap_div)
-        }
-        toggle_btn.appendChild(svg)
-
-        toggle_btn.addEventListener('click', () => {
-            if (toggle_btn.firstElementChild)
-                if (toggle_btn.firstElementChild.classList.contains('icon_active')) {
-                    toggle_btn.firstElementChild.classList.remove('icon_active')
-                    parent.hide_section(wrap_div)
-                } else {
-                    toggle_btn.firstElementChild.classList.add('icon_active')
-                    parent.show_section(wrap_div)
-                }
-        })
-
-        return toggle_btn
-    }
-
-    /**
-     * Create A pre-defined clickable button.
-     */
-    button(icon: icons): HTMLDivElement {
-        let btn = document.createElement('div')
-        btn.appendChild(icon_manager.get_svg(icon, ['icon_hover']))
-        btn.classList.add('topbar_menu_button')
-        btn.style.margin = '4px'
-        switch (icon) {
-            case icons.close:
-                btn.addEventListener('click', () => { window.api.close() }); break;
-            case icons.minimize:
-                btn.addEventListener('click', () => { window.api.minimize() }); break;
-            case icons.maximize:
-                btn.addEventListener('click', () => { window.api.maximize() }); break;
-            default:
-                btn.addEventListener('click', () => { console.log(`button ${icon} pressed!`) })
-        }
-        return btn
     }
 
     /**

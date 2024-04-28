@@ -5,7 +5,7 @@ from os.path import dirname, abspath
 from inspect import getmembers, ismethod
 import multiprocessing as mp
 from multiprocessing.synchronize import Event as mp_EventClass
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, Optional, Protocol
 from abc import ABC, abstractmethod
 
@@ -19,6 +19,8 @@ from .js_cmd import JS_CMD, PY_CMD
 
 file_dir = dirname(abspath(__file__))
 logger = logging.getLogger("lightweight-pycharts")
+
+# @pylint: disable=consider-iterating-dictionary missing-function-docstring invalid-name
 
 ##### --------------------------------- Javascript API Class --------------------------------- #####
 
@@ -43,8 +45,8 @@ class js_api:
         self.view_window = view_window
 
     def loaded(self) -> None:
-        """Called on start-up. Indicates that all javascript assets, not just the JS api, have loaded"""
-        self.view_window.show()  # api.loaded_check() in py_api.ts is the actual function that calls this
+        "Called on start-up. Indicates that all javascript assets, not just the JS api, have loaded"
+        self.view_window.show()  # api.loaded_check() in py_api.ts is what calls this
 
     def close(self) -> None:
         self.view_window.close()
@@ -54,6 +56,18 @@ class js_api:
 
     def minimize(self) -> None:
         self.view_window.minimize()
+
+    def restore(self) -> None:
+        self.view_window.restore()
+
+    def add_container(self) -> None:
+        self.rtn_queue.put(PY_CMD.ADD_CONTAINER)
+
+    def remove_container(self, _id: str) -> None:
+        self.rtn_queue.put((PY_CMD.REMOVE_CONTAINER, _id))
+
+    def reorder_containers(self, _from: int, _to: int) -> None:
+        self.rtn_queue.put((PY_CMD.REORDER_CONTAINERS, _from, _to))
 
     def callback(self, msg: str) -> None:
         "Generic Callback that passes serialized data as a string"
@@ -75,11 +89,11 @@ class js_api:
 @dataclass
 class MpHooks:
     "All required Multiprocessor Hooks required for a javascript interface"
-    fwd_queue: mp.Queue = mp.Queue()
-    rtn_queue: mp.Queue = mp.Queue()
-    start_event: mp_EventClass = mp.Event()
-    js_loaded_event: mp_EventClass = mp.Event()
-    stop_event: mp_EventClass = mp.Event()
+    fwd_queue: mp.Queue = field(default_factory=mp.Queue)
+    rtn_queue: mp.Queue = field(default_factory=mp.Queue)
+    start_event: mp_EventClass = field(default_factory=mp.Event)
+    js_loaded_event: mp_EventClass = field(default_factory=mp.Event)
+    stop_event: mp_EventClass = field(default_factory=mp.Event)
 
 
 ##### --------------------------------- Python Gui Classes --------------------------------- #####
@@ -130,6 +144,8 @@ class View(ABC):
     @abstractmethod
     def maximize(self): ...
     @abstractmethod
+    def restore(self): ...
+    @abstractmethod
     def assign_callback(self, func_name: str): ...
 
     def _manage_queue(self):
@@ -170,23 +186,35 @@ class View(ABC):
             case JS_CMD.JS_CODE, *scripts:
                 for script in scripts:
                     cmd += (script + ";") if isinstance(script, str) else ""
-            case JS_CMD.SHOW, *_:
-                self.show()
-            case JS_CMD.HIDE, *_:
-                self.hide()
-            case JS_CMD.NEW_CONTAINER, str(), *_:
-                cmd = cmds.new_container(args[0])
-            case JS_CMD.NEW_FRAME, str(), str(), *_:
-                cmd = cmds.new_frame(args[0], args[1])
-            case JS_CMD.NEW_PANE, str(), str(), *_:
-                cmd = cmds.new_pane(args[0], args[1])
+            case JS_CMD.ADD_CONTAINER, str(), *_:
+                cmd = cmds.add_container(args[0])
+            case JS_CMD.REMOVE_CONTAINER, str(), *_:
+                cmd = cmds.remove_container(args[0])
+            case JS_CMD.REMOVE_REFERENCE, str(), *_:
+                cmd = cmds.remove_reference(*args)
+            case JS_CMD.ADD_FRAME, str(), str(), *_:
+                cmd = cmds.add_frame(args[0], args[1])
+            case JS_CMD.ADD_PANE, str(), str(), *_:
+                cmd = cmds.add_pane(args[0], args[1])
             case JS_CMD.SET_LAYOUT, str(), orm.layouts(), *_:
                 cmd = cmds.set_layout(args[0], args[1])
             case JS_CMD.SET_DATA, str(), pd.DataFrame(), *_:
                 cmd = cmds.set_data(args[0], args[1].lwc_df)
+            case JS_CMD.SHOW, *_:
+                self.show()
+            case JS_CMD.HIDE, *_:
+                self.hide()
+            case JS_CMD.CLOSE, *_:
+                self.close()
+            case JS_CMD.MAXIMIZE, *_:
+                self.maximize()
+            case JS_CMD.MINIMIZE, *_:
+                self.minimize()
+            case JS_CMD.RESTORE, *_:
+                self.restore()
             case _:
                 raise TypeError(
-                    f"""incorrect Type of args given for command: 
+                    f"""incorrect Type of args given for command:
                     {cmd}: Given {[type(arg) for arg in args]}"""
                 )
         self.run_script(cmd)
@@ -239,6 +267,15 @@ class PyWv(View):
             kwargs["width"] = 1600
         if "height" not in kwargs.keys():
             kwargs["height"] = 800
+        if "frameless" not in kwargs.keys():
+            kwargs["frameless"] = False
+        kwargs["easy_drag"] = False  # REALLY Don't want this behavior
+
+        self.frameless = kwargs["frameless"]
+        if self.frameless:
+            webview.DRAG_REGION_SELECTOR = ".drag-region"
+            # Need to do this otherwise a Framed window is draggable
+            # and no, you can't just add this class after the window is made..
 
         self.pyweb_window = webview.create_window(
             title=title,
@@ -252,6 +289,8 @@ class PyWv(View):
         self.pyweb_window.events.loaded += lambda: api.__set_view_window__(self)
         self.pyweb_window.events.loaded += self._assign_callbacks
         self.pyweb_window.events.loaded += self._manage_queue
+        self.pyweb_window.events.maximized += self._on_maximized
+        self.pyweb_window.events.restored += self._on_restore
 
         # Wait until main process signals to start
         webview.start(debug=debug)
@@ -278,6 +317,8 @@ class PyWv(View):
         # Signal to both python and javascript listeners that inital setup is complete
         self.js_loaded_event.set()
         self.run_script("window.api._loaded_check()")
+        if self.frameless:
+            self.run_script("window.titlebar.create_window_btns()")
 
     def assign_callback(self, func_name: str):
         self.run_script(f"window.api.{func_name} = pywebview.api.{func_name}")
@@ -286,14 +327,16 @@ class PyWv(View):
         self.pyweb_window.destroy()
 
     def maximize(self):
-        # This doesn't work due to a py_webview bug.
         if self.pyweb_window.maximized:
-            self.pyweb_window.minimize()
+            self.restore()
         else:
             self.pyweb_window.maximize()
 
     def minimize(self):
         self.pyweb_window.minimize()
+
+    def restore(self):
+        self.pyweb_window.restore()
 
     def show(self):
         self.pyweb_window.show()
@@ -301,9 +344,22 @@ class PyWv(View):
     def hide(self):
         self.pyweb_window.hide()
 
+    def _on_maximized(self):
+        # For Some reason maximized doesn't auto update?
+        self.pyweb_window.maximized = True
+        # self.run_script("") #Should make this update the icon...
+
+    def _on_restore(self):
+        self.pyweb_window.maximized = False
+        # self.run_script("") #Should make this update the icon...
+
 
 class QWebView:  # (View):
     """Class to create and manage a Pyside QWebView widget"""
 
     def __init__(self) -> None:
+        # In theory, Even though most things you could want are already fleshed out
+        # in the PYWebView version, You could expand the View Class to work with QWebView.
+        # This would allow someone to place the window into the GUI and have a Custom Side/Bottom
+        # Bar that's implemented in Pyside/Pyqt to display a table/custom menu.. idk. options
         raise NotImplementedError

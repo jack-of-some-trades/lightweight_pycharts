@@ -86,7 +86,7 @@ class Window:
         # -------- Create Subobjects  -------- #
         self.events = Events()
         self.js_id = "wrapper"
-        self.container_ids = util.ID_List("c")
+        self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
         self.new_tab()
 
@@ -95,10 +95,17 @@ class Window:
     def _execute_cmd(self, cmd: PY_CMD, *args):
         match cmd, *args:
             case PY_CMD.PY_EXEC, str(), *_:
-                logger.info("Recieved Message from View: %s", args[0])
+                logger.debug("Recieved Message from View: %s", args[0])
             case PY_CMD.TF_CHANGE, orm.TF(), *_:
-                logger.info("Recieved Timeframe Change Request from View: %s", args[0])
+                logger.debug("Recieved Timeframe Change Request from View: %s", args[0])
                 self.events.tf_change(args[0])
+            case PY_CMD.ADD_CONTAINER, *_:
+                self.new_tab()
+            case PY_CMD.REMOVE_CONTAINER, str(), *_:
+                self.del_tab(args[0])
+            case PY_CMD.REORDER_CONTAINERS, int(), int(), *_:
+                self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
+                self.containers.insert(args[1], self.containers.pop(args[0]))
 
     def _manage_thread_queue(self):
         logger.debug("Entered Threaded Queue Manager")
@@ -106,7 +113,12 @@ class Window:
             if self._rtn_queue.empty():
                 sleep(0.05)
             else:
-                cmd, *rsp = self._rtn_queue.get()
+                msg = self._rtn_queue.get()
+                if isinstance(msg, tuple):
+                    cmd, *rsp = msg
+                else:
+                    cmd = msg
+                    rsp = tuple()
                 self._execute_cmd(cmd, *rsp)
         logger.debug("Exited Threaded Queue Manager")
 
@@ -116,7 +128,12 @@ class Window:
             if self._rtn_queue.empty():
                 await asyncio.sleep(0.05)
             else:
-                cmd, *rsp = self._rtn_queue.get()
+                msg = self._rtn_queue.get()
+                if isinstance(msg, tuple):
+                    cmd, *rsp = msg
+                else:
+                    cmd = msg
+                    rsp = tuple()
                 self._execute_cmd(cmd, *rsp)
                 # logger.debug("Window Recieved Command: %s: %s", cmd, rsp)
         logger.debug("Exited Async Queue Manager")
@@ -152,15 +169,42 @@ class Window:
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.HIDE)
 
+    def Maximize(self):
+        "Hide the PyWebView Window"
+        self._fwd_queue.put(JS_CMD.MAXIMIZE)
+
+    def Minimize(self):
+        "Hide the PyWebView Window"
+        self._fwd_queue.put(JS_CMD.MINIMIZE)
+
+    def Restore(self):
+        "Hide the PyWebView Window"
+        self._fwd_queue.put(JS_CMD.RESTORE)
+
+    def Close(self):
+        "Hide the PyWebView Window"
+        self._fwd_queue.put(JS_CMD.CLOSE)
+
     def new_tab(self) -> "Container":
         """
         Add a new Tab to the Window interface
         :returns: A Container obj that represents the Tab's Contents
         """
-        new_id = self.container_ids.generate()
+        new_id = self._container_ids.generate()
         new_container = Container(new_id, self._fwd_queue)
         self.containers.append(new_container)
         return new_container
+
+    def del_tab(self, container_id: str) -> None:
+        """
+        Deletes a Tab. Argument Passed should be the JS_ID of the container
+        """
+        for container in self.containers:
+            if container.js_id == container_id:
+                self._container_ids.remove(container_id)
+                self.containers.remove(container)
+                self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
+                self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
 
     def get_container(self, _id: int | str) -> Optional["Container"]:
         "Return the container that either matchs the given js_id string, or the integer tab number"
@@ -184,7 +228,7 @@ class Container:
         self.frame_ids = util.ID_List(f"{js_id}_f")
         self.frames: list[Frame] = []
 
-        self._fwd_queue.put((JS_CMD.NEW_CONTAINER, self.js_id))
+        self._fwd_queue.put((JS_CMD.ADD_CONTAINER, self.js_id))
         self.set_layout(self.layout_type)
 
     def set_layout(self, layout: orm.layouts):
@@ -195,11 +239,20 @@ class Container:
         frame_diff = len(self.frame_ids) - self.layout_type.num_frames
         if frame_diff < 0:
             for _ in range(-frame_diff):
-                self._add_frame()
+                self._add_frame_()
 
-    def _add_frame(self):
-        new_id = self.frame_ids.generate()
-        self.frames.append(Frame(new_id, self))
+    def _add_frame_(self):
+        # Only Add a frame if the layout can support it
+        if len(self.frames) < self.layout_type.num_frames:
+            new_id = self.frame_ids.generate()
+            self.frames.append(Frame(new_id, self))
+
+    def all_ids(self) -> list[str]:
+        "Return a List of all Ids of this object and sub-objects"
+        _ids = [self.js_id]
+        for frame in self.frames:
+            _ids += frame.all_ids()
+        return _ids
 
 
 class Frame:
@@ -219,7 +272,7 @@ class Frame:
         self.pane_ids = util.ID_List(f"{js_id}_p")
         self.panes: list[Pane] = []
 
-        self._fwd_queue.put((JS_CMD.NEW_FRAME, js_id, self.parent.js_id))
+        self._fwd_queue.put((JS_CMD.ADD_FRAME, js_id, self.parent.js_id))
 
         # Add main pane
         new_id = self.pane_ids.affix("main")
@@ -228,6 +281,13 @@ class Frame:
     def _add_pane(self):
         new_id = self.pane_ids.generate()
         self.panes.append(Pane(new_id, self))
+
+    def all_ids(self) -> list[str]:
+        "Return a List of all Ids of this object and sub-objects"
+        _ids = [self.js_id]
+        for pane in self.panes:
+            _ids += pane.all_ids()
+        return _ids
 
 
 class Pane:
@@ -239,7 +299,7 @@ class Pane:
         self.js_id = js_id
         self.sources = []
 
-        self._fwd_queue.put((JS_CMD.NEW_PANE, js_id, self.parent.js_id))
+        self._fwd_queue.put((JS_CMD.ADD_PANE, js_id, self.parent.js_id))
 
     def set_data(self, data: pd.DataFrame | list[dict[str, Any]]):
         "Sets the main source of data for this Pane"
@@ -250,6 +310,10 @@ class Pane:
 
     def add_source(self, data: pd.DataFrame | list[dict[str, Any]]):
         """Creates a new source of data for the Pane. Sources are analogous to Ticker Data or indicators"""
+
+    def all_ids(self) -> list[str]:
+        "Return a List of all Ids of this object and sub-objects"
+        return [self.js_id]
 
 
 class Source:

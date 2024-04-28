@@ -1,12 +1,11 @@
 import { Legend } from "./legend.js";
-import { AnySeries, AnySeriesData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
-import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
+import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
+import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 
 //The portion of a chart where things are actually drawn
 export class Pane {
     id: string = ''
-    is_focus: boolean = false
     div: HTMLDivElement
     flex_width: number
     flex_height: number
@@ -35,27 +34,19 @@ export class Pane {
 
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this))
 
-        this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries())
+        this.main_series = this.chart.addCandlestickSeries()
+        // this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries())
     }
 
     /**
      * Update Global 'active_pane' reference to this instance. 
      */
     assign_active_pane() {
-        if (!window.active_pane) {
-            this.is_focus = true
-            window.active_pane = this
-            window.active_pane.div.classList.add('chart_pane_active')
+        if (window.active_pane)
+            window.active_pane.div.removeAttribute('active')
 
-        } else if (window.active_pane.id != this.id) {
-            window.active_pane.is_focus = false //Unset old object's focus
-            window.active_pane.div.classList.remove('chart_pane_active')
-
-
-            this.is_focus = true
-            window.active_pane = this           //Set this object's focus
-            window.active_pane.div.classList.add('chart_pane_active')
-        }
+        window.active_pane = this
+        window.active_pane.div.setAttribute('active', '')
     }
 
     /**
@@ -148,6 +139,22 @@ export class Pane {
 
     add_candlestick_series(options?: DP<CandlestickSeriesOptions>) {
         this.series.push(this.chart.addCandlestickSeries(options))
+    }
+
+    create_line() {
+        const data = this.main_series.data() as CandlestickData[]
+        const dataLength = data.length
+        console.log(data[0].time)
+        const point1 = {
+            time: data[dataLength - 50].time,
+            value: data[dataLength - 50].close * 0.9,
+        };
+        const point2 = {
+            time: data[dataLength - 5].time,
+            value: data[dataLength - 5].close * 1.1,
+        };
+        const trend = new TrendLine(point1, point2);
+        this.main_series.attachPrimitive(trend);
     }
 
     fitcontent() { this.chart.timeScale().fitContent() }

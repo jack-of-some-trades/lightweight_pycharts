@@ -42,10 +42,17 @@ export class icon_manager {
         let svgs = document.querySelectorAll("svg.replace")
         svgs.forEach(svg => {
             svg.classList.remove('replace')
+
+            let new_svg
             if (svg.classList.length > 0)
-                svg.replaceWith(icon_manager.get_svg(svg.id as icons, svg.classList.toString().split(' ')))
+                new_svg = icon_manager.get_svg(svg.id as icons, svg.classList.toString().split(' '))
             else
-                svg.replaceWith(icon_manager.get_svg(svg.id as icons))
+                new_svg = icon_manager.get_svg(svg.id as icons)
+
+            if (svg.hasAttribute('active'))
+                new_svg.setAttribute('active', '')
+
+            svg.replaceWith(new_svg)
         });
         icon_manager.loaded = true
     }
@@ -88,6 +95,7 @@ export enum icons {
     menu_arrow_up_down = "menu_arrow_up_down",
     menu_dragable = "menu_dragable",
 
+    panel_top = "panel_top",
     panel_left = "panel_left",
     panel_right = "panel_right",
     panel_bottom = "panel_bottom",
@@ -131,6 +139,8 @@ export enum icons {
     add_section = "add_section",
     maximize = "maximize",
     minimize = "minimize",
+    restore = "restore",
+    window_add = "window_add",
 
     fib_retrace = "fib_retrace",
     fib_extend = "fib_extend",

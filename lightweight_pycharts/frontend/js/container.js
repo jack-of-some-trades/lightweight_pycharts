@@ -6,16 +6,38 @@ export class Container {
         this.frames = [];
         this.flex_divs = [];
         this.id = id;
-        this.div = parent_div;
-        this.div.style.flexWrap = `wrap`;
+        this.div = document.createElement('div');
+        this.div.classList.add('layout_main', 'layout_container_row');
         this.layout = null;
+        parent_div.appendChild(this.div);
+        this.tab_div = window.titlebar.tab_manager.addTab();
+        window.titlebar.tab_manager.setTabCloseEventListener(this.tab_div, id);
+        this.assign_active_container();
+        this.resize();
+    }
+    fitcontent() {
+        this.frames.forEach(frame => {
+            frame.fitcontent();
+        });
+    }
+    remove() {
+        window.titlebar.tab_manager.removeTab(this.tab_div);
+        this.div.remove();
+    }
+    assign_active_container() {
+        if (window.active_container)
+            window.active_container.div.removeAttribute('active');
+        window.active_container = this;
+        window.active_container.div.setAttribute('active', '');
+        window.titlebar.tab_manager.setCurrentTab(this.tab_div);
+        this.resize();
     }
     resize_flex(separator, e) {
         if (separator.orientation === Orientation.Vertical) {
             let flex_total = separator.resize_pos[0].flex_width + separator.resize_neg[0].flex_width;
             let width_total = separator.resize_pos[0].div.offsetWidth + separator.resize_neg[0].div.offsetWidth;
-            let container_x = e.clientX - separator.resize_pos[0].div.offsetLeft - this.div.offsetLeft;
-            let flex_size_left = (container_x / width_total) * flex_total;
+            let relative_x = e.clientX - separator.resize_pos[0].div.getBoundingClientRect().left;
+            let flex_size_left = (relative_x / width_total) * flex_total;
             let flex_size_right = flex_total - flex_size_left;
             if (flex_size_left < u.MIN_FRAME_WIDTH) {
                 flex_size_left = u.MIN_FRAME_WIDTH;
@@ -36,7 +58,7 @@ export class Container {
         else if (separator.orientation === Orientation.Horizontal) {
             let flex_total = separator.resize_pos[0].flex_height + separator.resize_neg[0].flex_height;
             let height_total = separator.resize_pos[0].div.offsetHeight + separator.resize_neg[0].div.offsetHeight;
-            let container_y = e.clientY - separator.resize_pos[0].div.offsetTop - this.div.offsetTop;
+            let container_y = e.clientY - separator.resize_pos[0].div.getBoundingClientRect().top;
             let flex_size_top = (container_y / height_total) * flex_total;
             let flex_size_bottom = flex_total - flex_size_top;
             if (flex_size_top < u.MIN_FRAME_HEIGHT) {
@@ -59,19 +81,21 @@ export class Container {
     resize() {
         let this_width = this.div.clientWidth;
         let this_height = this.div.clientHeight;
+        if (this_width <= 0 || this_height <= 0)
+            return;
         let horiz_offset = (this.div.classList.contains('layout_container_row')) ? u.LAYOUT_CHART_MARGIN : u.LAYOUT_CHART_SEP_BORDER;
         let vert_offset = (this.div.classList.contains('layout_container_col')) ? u.LAYOUT_CHART_MARGIN : u.LAYOUT_CHART_SEP_BORDER;
         this.flex_divs.forEach((flex_item) => {
             if (flex_item.isFrame) {
-                flex_item.div.style.width = `${this_width * flex_item.flex_width - horiz_offset}px`;
-                flex_item.div.style.height = `${this_height * flex_item.flex_height - vert_offset}px`;
+                flex_item.div.style.width = `${Math.round(this_width * flex_item.flex_width - horiz_offset)}px`;
+                flex_item.div.style.height = `${Math.round(this_height * flex_item.flex_height - vert_offset)}px`;
             }
             else if (flex_item.orientation === Orientation.Vertical) {
                 flex_item.div.style.width = `${u.LAYOUT_CHART_SEP_BORDER}px`;
-                flex_item.div.style.height = `${this_height * flex_item.flex_height - vert_offset}px`;
+                flex_item.div.style.height = `${Math.round(this_height * flex_item.flex_height - vert_offset)}px`;
             }
             else if (flex_item.orientation === Orientation.Horizontal) {
-                flex_item.div.style.width = `${this_width * flex_item.flex_width - horiz_offset}px`;
+                flex_item.div.style.width = `${Math.round(this_width * flex_item.flex_width - horiz_offset)}px`;
                 flex_item.div.style.height = `${u.LAYOUT_CHART_SEP_BORDER}px`;
             }
         });
@@ -168,17 +192,6 @@ export class Container {
         let new_frame = new Frame(id, specs.div);
         this.frames.push(new_frame);
         return new_frame;
-    }
-    hide() {
-        this.div.style.display = 'none';
-    }
-    show() {
-        this.div.style.display = 'flex';
-    }
-    fitcontent() {
-        this.frames.forEach(frame => {
-            frame.fitcontent();
-        });
     }
     _layout_switch(layout) {
         switch (layout) {

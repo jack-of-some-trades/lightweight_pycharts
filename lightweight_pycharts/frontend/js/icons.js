@@ -15,10 +15,14 @@ export class icon_manager {
         let svgs = document.querySelectorAll("svg.replace");
         svgs.forEach(svg => {
             svg.classList.remove('replace');
+            let new_svg;
             if (svg.classList.length > 0)
-                svg.replaceWith(icon_manager.get_svg(svg.id, svg.classList.toString().split(' ')));
+                new_svg = icon_manager.get_svg(svg.id, svg.classList.toString().split(' '));
             else
-                svg.replaceWith(icon_manager.get_svg(svg.id));
+                new_svg = icon_manager.get_svg(svg.id);
+            if (svg.hasAttribute('active'))
+                new_svg.setAttribute('active', '');
+            svg.replaceWith(new_svg);
         });
         icon_manager.loaded = true;
     }
@@ -53,6 +57,7 @@ export var icons;
     icons["menu_arrow_sn"] = "menu_arrow_sn";
     icons["menu_arrow_up_down"] = "menu_arrow_up_down";
     icons["menu_dragable"] = "menu_dragable";
+    icons["panel_top"] = "panel_top";
     icons["panel_left"] = "panel_left";
     icons["panel_right"] = "panel_right";
     icons["panel_bottom"] = "panel_bottom";
@@ -91,6 +96,8 @@ export var icons;
     icons["add_section"] = "add_section";
     icons["maximize"] = "maximize";
     icons["minimize"] = "minimize";
+    icons["restore"] = "restore";
+    icons["window_add"] = "window_add";
     icons["fib_retrace"] = "fib_retrace";
     icons["fib_extend"] = "fib_extend";
     icons["trend_line"] = "trend_line";

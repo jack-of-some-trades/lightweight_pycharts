@@ -15,11 +15,12 @@ def timeframe_change(timeframe: lwc.TF) -> None:
 
 
 async def main():
-    window = lwc.Window(debug=True, daemon=True)
+    window = lwc.Window(debug=True, daemon=True, frameless=False)
     window.events.tf_change += timeframe_change
 
     df = pd.read_csv("examples/data/ohlcv.csv")
     window.containers[0].frames[0].panes[0].set_data(df)
+    window.containers[0].set_layout(lwc.layouts.QUAD_LEFT)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

@@ -2,6 +2,7 @@ import { icons } from "./icons.js";
 import { ColorType, CrosshairMode, LastPriceAnimationMode, LineStyle, LineType, PriceLineSource, PriceScaleMode } from "./lib/pkg.js";
 export var Wrapper_Divs;
 (function (Wrapper_Divs) {
+    Wrapper_Divs["TITLE_BAR"] = "div_title";
     Wrapper_Divs["TOP_BAR"] = "div_top";
     Wrapper_Divs["DRAW_TOOLS"] = "div_left";
     Wrapper_Divs["NAV_BAR"] = "div_right";
@@ -113,18 +114,26 @@ export class tf {
 export const LAYOUT_MARGIN = 5;
 export const LAYOUT_CHART_MARGIN = 4;
 export const LAYOUT_CHART_SEP_BORDER = 2;
-export const LAYOUT_DIM_TOP = {
+export const LAYOUT_DIM_TITLE = {
     WIDTH: `100vw`,
     HEIGHT: 38,
     LEFT: 0,
     TOP: 0,
+    V_BUFFER: 8,
+    H_BUFFER: 4,
+};
+export const LAYOUT_DIM_TOP = {
+    WIDTH: `100vw`,
+    HEIGHT: 38,
+    LEFT: 0,
+    TOP: LAYOUT_DIM_TITLE.HEIGHT,
     V_BUFFER: 8,
     H_BUFFER: 2,
 };
 export const LAYOUT_DIM_LEFT = {
     WIDTH: 46,
     HEIGHT: -1,
-    TOP: LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
+    TOP: LAYOUT_DIM_TOP.TOP + LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
     LEFT: 0,
     V_BUFFER: 3,
     H_BUFFER: 6,
@@ -132,7 +141,7 @@ export const LAYOUT_DIM_LEFT = {
 export const LAYOUT_DIM_RIGHT = {
     WIDTH: 52,
     HEIGHT: -1,
-    TOP: LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
+    TOP: LAYOUT_DIM_TOP.TOP + LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
     RIGHT: 0
 };
 export const LAYOUT_DIM_BOTTOM = {
@@ -144,7 +153,7 @@ export const LAYOUT_DIM_BOTTOM = {
 export const LAYOUT_DIM_CENTER = {
     WIDTH: -1,
     HEIGHT: -1,
-    TOP: LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
+    TOP: LAYOUT_DIM_TOP.TOP + LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
     LEFT: LAYOUT_DIM_LEFT.WIDTH + LAYOUT_MARGIN
 };
 export const MIN_FRAME_WIDTH = 0.15;
