@@ -1,4 +1,5 @@
 import { Pane } from "./pane.js";
+import { tf } from "./util.js";
 
 /**
  * @member Div: Div That Contains Pane's and pane seprators.
@@ -7,12 +8,16 @@ export class Frame {
     //The class that contains all the data to be displayed
     id: string
     div: HTMLDivElement
+    tab_div: HTMLDivElement
 
+    symbol: string = 'LWPC'
+    timeframe: tf | null = null
     private panes: Pane[] = []
 
-    constructor(id: string, div: HTMLDivElement) {
+    constructor(id: string, div: HTMLDivElement, tab_div: HTMLDivElement) {
         this.id = id
         this.div = div
+        this.tab_div = tab_div
 
         //Add Active Frame Listener
         this.div.addEventListener('mousedown', this.assign_active_frame.bind(this))
@@ -25,8 +30,12 @@ export class Frame {
         if (window.active_frame)
             window.active_frame.div.removeAttribute('active')
 
+        console.log('Active Frame Assignment', this)
         window.active_frame = this
         window.active_frame.div.setAttribute('active', '')
+        window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol })
+        if (this.panes[0])
+            this.panes[0].assign_active_pane()
     }
 
     /**

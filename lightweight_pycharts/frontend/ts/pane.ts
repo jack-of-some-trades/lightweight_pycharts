@@ -136,7 +136,6 @@ export class Pane {
         this.chart.resize(this_width, this_height, false)
     }
 
-
     add_candlestick_series(options?: DP<CandlestickSeriesOptions>) {
         this.series.push(this.chart.addCandlestickSeries(options))
     }

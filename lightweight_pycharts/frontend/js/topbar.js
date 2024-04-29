@@ -210,9 +210,7 @@ export class timeframe_selector {
             overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
     select(data) {
-        console.log(`selected ${data.toString()}`);
-        window.api.timeframe_switch(data.multiplier, data.interval);
-        this.update_topbar_icon(data);
+        window.api.timeframe_switch(window.active_frame.id, data.multiplier, data.interval);
     }
     add_favorite(data) {
         var _a, _b, _c, _d;
@@ -347,20 +345,22 @@ export class layout_selector {
             ]);
             items.push({ label: 'Triple', separator: true, separator_vis: false, separator_row: true });
             populate_items([
-                Container_Layouts.TRIPLE_HORIZ,
-                Container_Layouts.TRIPLE_HORIZ_TOP,
-                Container_Layouts.TRIPLE_HORIZ_BOTTOM,
                 Container_Layouts.TRIPLE_VERT,
+                Container_Layouts.TRIPLE_HORIZ,
                 Container_Layouts.TRIPLE_VERT_LEFT,
                 Container_Layouts.TRIPLE_VERT_RIGHT,
+                Container_Layouts.TRIPLE_HORIZ_TOP,
+                Container_Layouts.TRIPLE_HORIZ_BOTTOM,
             ]);
             items.push({ label: 'Quad', separator: true, separator_vis: false, separator_row: true });
             populate_items([
+                Container_Layouts.QUAD_SQ_V,
+                Container_Layouts.QUAD_SQ_H,
                 Container_Layouts.QUAD_VERT,
                 Container_Layouts.QUAD_HORIZ,
-                Container_Layouts.QUAD_TOP,
                 Container_Layouts.QUAD_LEFT,
                 Container_Layouts.QUAD_RIGHT,
+                Container_Layouts.QUAD_TOP,
                 Container_Layouts.QUAD_BOTTOM,
             ]);
             let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout');
@@ -399,7 +399,7 @@ export class layout_selector {
         if (this.menu_button && this.overlay_menu_div)
             overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
-    select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
+    select(data) { window.api.layout_change(window.active_container.id, data); }
     add_favorite(data) {
         var _a, _b, _c, _d;
         let curr_layout_value = data.valueOf();

@@ -1,6 +1,6 @@
 """ Enumeration Defenitions """
 
-from enum import IntEnum, StrEnum, Enum
+from enum import IntEnum, StrEnum, Enum, auto
 from .types import Color
 
 # pylint: disable=line-too-long
@@ -10,20 +10,22 @@ from .types import Color
 class layouts(IntEnum):
     "1:1 Mapping of util.ts Container_Layouts Enum"
     SINGLE = 0
-    DOUBLE_VERT = 1
-    DOUBLE_HORIZ = 2
-    TRIPLE_VERT = 3
-    TRIPLE_VERT_LEFT = 4
-    TRIPLE_VERT_RIGHT = 5
-    TRIPLE_HORIZ = 6
-    TRIPLE_HORIZ_TOP = 7
-    TRIPLE_HORIZ_BOTTOM = 8
-    QUAD_HORIZ = 9
-    QUAD_VERT = 10
-    QUAD_LEFT = 11
-    QUAD_RIGHT = 12
-    QUAD_TOP = 13
-    QUAD_BOTTOM = 14
+    DOUBLE_VERT = auto()
+    DOUBLE_HORIZ = auto()
+    TRIPLE_VERT = auto()
+    TRIPLE_VERT_LEFT = auto()
+    TRIPLE_VERT_RIGHT = auto()
+    TRIPLE_HORIZ = auto()
+    TRIPLE_HORIZ_TOP = auto()
+    TRIPLE_HORIZ_BOTTOM = auto()
+    QUAD_SQ_V = auto()
+    QUAD_SQ_H = auto()
+    QUAD_VERT = auto()
+    QUAD_HORIZ = auto()
+    QUAD_LEFT = auto()
+    QUAD_RIGHT = auto()
+    QUAD_TOP = auto()
+    QUAD_BOTTOM = auto()
 
     @property
     def num_frames(self) -> int:

@@ -31,6 +31,8 @@ export enum Container_Layouts {
     TRIPLE_HORIZ,
     TRIPLE_HORIZ_TOP,
     TRIPLE_HORIZ_BOTTOM,
+    QUAD_SQ_V,
+    QUAD_SQ_H,
     QUAD_VERT,
     QUAD_HORIZ,
     QUAD_LEFT,
@@ -38,6 +40,29 @@ export enum Container_Layouts {
     QUAD_TOP,
     QUAD_BOTTOM
 }
+export function num_frames(layout: Container_Layouts | null): number {
+    switch (layout) {
+        case (Container_Layouts.SINGLE): return 1
+        case (Container_Layouts.DOUBLE_VERT): return 2
+        case (Container_Layouts.DOUBLE_HORIZ): return 2
+        case (Container_Layouts.TRIPLE_VERT): return 3
+        case (Container_Layouts.TRIPLE_VERT_LEFT): return 3
+        case (Container_Layouts.TRIPLE_VERT_RIGHT): return 3
+        case (Container_Layouts.TRIPLE_HORIZ): return 3
+        case (Container_Layouts.TRIPLE_HORIZ_TOP): return 3
+        case (Container_Layouts.TRIPLE_HORIZ_BOTTOM): return 3
+        case (Container_Layouts.QUAD_SQ_V): return 4
+        case (Container_Layouts.QUAD_SQ_H): return 4
+        case (Container_Layouts.QUAD_VERT): return 4
+        case (Container_Layouts.QUAD_HORIZ): return 4
+        case (Container_Layouts.QUAD_LEFT): return 4
+        case (Container_Layouts.QUAD_RIGHT): return 4
+        case (Container_Layouts.QUAD_TOP): return 4
+        case (Container_Layouts.QUAD_BOTTOM): return 4
+        default: return 0
+    }
+}
+
 export const layout_icon_map: { [key: number]: icons; } = {
     0: icons.layout_single,
     1: icons.layout_double_vert,
@@ -48,12 +73,14 @@ export const layout_icon_map: { [key: number]: icons; } = {
     6: icons.layout_triple_horiz,
     7: icons.layout_triple_top,
     8: icons.layout_triple_bottom,
-    9: icons.layout_quad_horiz,
-    10: icons.layout_quad_vert,
-    11: icons.layout_quad_left,
-    12: icons.layout_quad_right,
-    13: icons.layout_quad_top,
-    14: icons.layout_quad_bottom
+    9: icons.layout_quad_sq_v,
+    10: icons.layout_quad_sq_h,
+    11: icons.layout_quad_vert,
+    12: icons.layout_quad_horiz,
+    13: icons.layout_quad_left,
+    14: icons.layout_quad_right,
+    15: icons.layout_quad_top,
+    16: icons.layout_quad_bottom
 }
 
 export enum Series_Types {

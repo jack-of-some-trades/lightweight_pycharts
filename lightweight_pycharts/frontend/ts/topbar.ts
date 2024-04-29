@@ -306,11 +306,11 @@ export class timeframe_selector {
 
     /**
      * Action to preform on a timeframe selection
+     * Nothing is actually updated here for a reason. The topbar is updated once the change has
+     * taken effect on a response from the python side to make sure everything stays synced.
      */
     private select(data: tf) {
-        console.log(`selected ${data.toString()}`);
-        window.api.timeframe_switch(data.multiplier, data.interval as string);
-        this.update_topbar_icon(data)
+        window.api.timeframe_switch(window.active_frame.id, data.multiplier, data.interval as string);
     }
 
     /**
@@ -506,20 +506,22 @@ export class layout_selector {
             ])
             items.push({ label: 'Triple', separator: true, separator_vis: false, separator_row: true })
             populate_items([
-                Container_Layouts.TRIPLE_HORIZ,
-                Container_Layouts.TRIPLE_HORIZ_TOP,
-                Container_Layouts.TRIPLE_HORIZ_BOTTOM,
                 Container_Layouts.TRIPLE_VERT,
+                Container_Layouts.TRIPLE_HORIZ,
                 Container_Layouts.TRIPLE_VERT_LEFT,
                 Container_Layouts.TRIPLE_VERT_RIGHT,
+                Container_Layouts.TRIPLE_HORIZ_TOP,
+                Container_Layouts.TRIPLE_HORIZ_BOTTOM,
             ])
             items.push({ label: 'Quad', separator: true, separator_vis: false, separator_row: true })
             populate_items([
+                Container_Layouts.QUAD_SQ_V,
+                Container_Layouts.QUAD_SQ_H,
                 Container_Layouts.QUAD_VERT,
                 Container_Layouts.QUAD_HORIZ,
-                Container_Layouts.QUAD_TOP,
                 Container_Layouts.QUAD_LEFT,
                 Container_Layouts.QUAD_RIGHT,
+                Container_Layouts.QUAD_TOP,
                 Container_Layouts.QUAD_BOTTOM,
             ])
 
@@ -569,8 +571,9 @@ export class layout_selector {
 
     /**
      * Action to preform on a layout selection
+     * Topbar is not updated until response from python is executed to ensure JS & Python are synced.
      */
-    private select(data: Container_Layouts) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data) }
+    private select(data: Container_Layouts) { window.api.layout_change(window.active_container.id, data) }
 
     /**
      * Adds a favorite Layout to the window topbar and the json representation

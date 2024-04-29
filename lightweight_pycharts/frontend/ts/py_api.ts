@@ -1,6 +1,7 @@
 //Typescript API that interfaces with python.
 
 import { icon_manager } from "./icons.js";
+import { Container_Layouts } from "./util.js";
 
 
 //Each Function Maps directly to a function within the js_api class in js_api.py
@@ -16,7 +17,8 @@ export class py_api {
     reorder_containers!: (from: number, to: number) => null
 
     callback!: (msg: string) => void;
-    timeframe_switch!: (mult: number, period: string) => void;
+    layout_change!: (container_id: string, layout: Container_Layouts) => void;
+    timeframe_switch!: (frame_id: string, mult: number, period: string) => void;
 
     constructor() { this._loaded_check = this._loaded_check.bind(this) }
 

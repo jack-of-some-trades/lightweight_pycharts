@@ -182,15 +182,9 @@ const tabTemplate = `
     `
 
 export interface TabProperties {
-    id?: string,
     title?: string,
     price?: string,
     favicon?: string | null
-}
-interface TabEmitData {
-    tabEl: HTMLDivElement,
-    originIndex?: number,
-    destinationIndex?: number
 }
 interface Position {
     x: number;
@@ -411,10 +405,6 @@ class Tabs {
         } else {
             faviconEl.setAttribute('hidden', '')
             faviconEl.removeAttribute('style')
-        }
-
-        if (tabProperties.id) {
-            tabEl.setAttribute('data-tab-id', tabProperties.id)
         }
     }
 

@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Optional, Protocol
 from abc import ABC, abstractmethod
 
+from numpy import number
 import webview
 import pandas as pd
 from webview.errors import JavascriptException
@@ -74,11 +75,18 @@ class js_api:
         logger.debug("Recieved Message from JS: %s", msg)
         self.rtn_queue.put((PY_CMD.PY_EXEC, msg))
 
-    def timeframe_switch(self, mult: int, period: orm.types.Period):
+    def layout_change(self, container_id: str, layout: int) -> None:
+        self.rtn_queue.put(
+            (PY_CMD.LAYOUT_CHANGE, container_id, orm.enum.layouts(layout))
+        )
+
+    def timeframe_switch(
+        self, container_id: str, frame_id: str, mult: int, period: orm.types.Period
+    ):
         "Signals UI requested a Timeframe Swtich"
         try:
-            timeframe = orm.TF(mult, period)
-            self.rtn_queue.put((PY_CMD.TF_CHANGE, timeframe))
+            tf = orm.TF(mult, period)
+            self.rtn_queue.put((PY_CMD.TIMEFRAME_CHANGE, container_id, frame_id, tf))
         except ValueError as e:
             logger.warning(e)
 

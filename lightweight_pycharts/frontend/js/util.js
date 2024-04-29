@@ -26,13 +26,37 @@ export var Container_Layouts;
     Container_Layouts[Container_Layouts["TRIPLE_HORIZ"] = 6] = "TRIPLE_HORIZ";
     Container_Layouts[Container_Layouts["TRIPLE_HORIZ_TOP"] = 7] = "TRIPLE_HORIZ_TOP";
     Container_Layouts[Container_Layouts["TRIPLE_HORIZ_BOTTOM"] = 8] = "TRIPLE_HORIZ_BOTTOM";
-    Container_Layouts[Container_Layouts["QUAD_VERT"] = 9] = "QUAD_VERT";
-    Container_Layouts[Container_Layouts["QUAD_HORIZ"] = 10] = "QUAD_HORIZ";
-    Container_Layouts[Container_Layouts["QUAD_LEFT"] = 11] = "QUAD_LEFT";
-    Container_Layouts[Container_Layouts["QUAD_RIGHT"] = 12] = "QUAD_RIGHT";
-    Container_Layouts[Container_Layouts["QUAD_TOP"] = 13] = "QUAD_TOP";
-    Container_Layouts[Container_Layouts["QUAD_BOTTOM"] = 14] = "QUAD_BOTTOM";
+    Container_Layouts[Container_Layouts["QUAD_SQ_V"] = 9] = "QUAD_SQ_V";
+    Container_Layouts[Container_Layouts["QUAD_SQ_H"] = 10] = "QUAD_SQ_H";
+    Container_Layouts[Container_Layouts["QUAD_VERT"] = 11] = "QUAD_VERT";
+    Container_Layouts[Container_Layouts["QUAD_HORIZ"] = 12] = "QUAD_HORIZ";
+    Container_Layouts[Container_Layouts["QUAD_LEFT"] = 13] = "QUAD_LEFT";
+    Container_Layouts[Container_Layouts["QUAD_RIGHT"] = 14] = "QUAD_RIGHT";
+    Container_Layouts[Container_Layouts["QUAD_TOP"] = 15] = "QUAD_TOP";
+    Container_Layouts[Container_Layouts["QUAD_BOTTOM"] = 16] = "QUAD_BOTTOM";
 })(Container_Layouts || (Container_Layouts = {}));
+export function num_frames(layout) {
+    switch (layout) {
+        case (Container_Layouts.SINGLE): return 1;
+        case (Container_Layouts.DOUBLE_VERT): return 2;
+        case (Container_Layouts.DOUBLE_HORIZ): return 2;
+        case (Container_Layouts.TRIPLE_VERT): return 3;
+        case (Container_Layouts.TRIPLE_VERT_LEFT): return 3;
+        case (Container_Layouts.TRIPLE_VERT_RIGHT): return 3;
+        case (Container_Layouts.TRIPLE_HORIZ): return 3;
+        case (Container_Layouts.TRIPLE_HORIZ_TOP): return 3;
+        case (Container_Layouts.TRIPLE_HORIZ_BOTTOM): return 3;
+        case (Container_Layouts.QUAD_SQ_V): return 4;
+        case (Container_Layouts.QUAD_SQ_H): return 4;
+        case (Container_Layouts.QUAD_VERT): return 4;
+        case (Container_Layouts.QUAD_HORIZ): return 4;
+        case (Container_Layouts.QUAD_LEFT): return 4;
+        case (Container_Layouts.QUAD_RIGHT): return 4;
+        case (Container_Layouts.QUAD_TOP): return 4;
+        case (Container_Layouts.QUAD_BOTTOM): return 4;
+        default: return 0;
+    }
+}
 export const layout_icon_map = {
     0: icons.layout_single,
     1: icons.layout_double_vert,
@@ -43,12 +67,14 @@ export const layout_icon_map = {
     6: icons.layout_triple_horiz,
     7: icons.layout_triple_top,
     8: icons.layout_triple_bottom,
-    9: icons.layout_quad_horiz,
-    10: icons.layout_quad_vert,
-    11: icons.layout_quad_left,
-    12: icons.layout_quad_right,
-    13: icons.layout_quad_top,
-    14: icons.layout_quad_bottom
+    9: icons.layout_quad_sq_v,
+    10: icons.layout_quad_sq_h,
+    11: icons.layout_quad_vert,
+    12: icons.layout_quad_horiz,
+    13: icons.layout_quad_left,
+    14: icons.layout_quad_right,
+    15: icons.layout_quad_top,
+    16: icons.layout_quad_bottom
 };
 export var Series_Types;
 (function (Series_Types) {

@@ -60,6 +60,10 @@ export class Container {
         window.active_container = this
         window.active_container.div.setAttribute('active', '')
         window.titlebar.tab_manager.setCurrentTab(this.tab_div)
+        if (this.layout)
+            window.layout_selector.update_topbar_icon(this.layout)
+        if (this.frames[0])
+            this.frames[0].assign_active_frame()
         this.resize() //Non-Active Containers aren't updated
     }
 
@@ -155,11 +159,9 @@ export class Container {
                 flex_item.div.style.height = `${u.LAYOUT_CHART_SEP_BORDER}px`
             }
         })
-
-        //Resize all contents of each Frame
-        this.frames.forEach((frame) => {
-            frame.resize()
-        });
+        //Resize all contents of each *visible* Frame
+        for (let i = 0; i < u.num_frames(this.layout); i++)
+            this.frames[i].resize()
     }
 
     /**
@@ -233,10 +235,14 @@ export class Container {
             }
             this.div.appendChild(flex_item.div)
         })
-        this.resize()
-        //If succsessful, update container variable and UI
         this.layout = layout
+
+        //If succsessful, update container variable and UI
         window.layout_selector.update_topbar_icon(layout)
+        //Delay on executing this is to make it so the Frame has time to create it's Pane
+        //So that too can be made active
+        setTimeout(this.assign_active_container.bind(this), 50)
+        this.resize()
     }
 
     /**
@@ -296,7 +302,7 @@ export class Container {
      * Creates a new Frame that's tied to the DIV element given in specs.
      */
     private _create_frame(specs: flex_div, id: string = ''): Frame {
-        let new_frame = new Frame(id, specs.div)
+        let new_frame = new Frame(id, specs.div, this.tab_div)
         this.frames.push(new_frame)
         return new_frame
     }
@@ -415,7 +421,7 @@ export class Container {
                 s2.resize_neg.push(f3)
             } break;
 
-            case Container_Layouts.QUAD_HORIZ: {
+            case Container_Layouts.QUAD_SQ_H: {
                 this.div.classList.replace('layout_container_col', 'layout_container_row')
                 let f1 = this._add_flex_frame(0.5, 0.5)
                 let s1 = this._add_flex_separator(Orientation.Vertical, 0.5)
@@ -435,7 +441,7 @@ export class Container {
                 s2.resize_neg.push(f3, f4, s3)
             } break;
 
-            case Container_Layouts.QUAD_VERT: {
+            case Container_Layouts.QUAD_SQ_V: {
                 this.div.classList.replace('layout_container_row', 'layout_container_col')
                 let f1 = this._add_flex_frame(0.5, 0.5)
                 let s1 = this._add_flex_separator(Orientation.Horizontal, 0.5)
@@ -453,6 +459,47 @@ export class Container {
 
                 s2.resize_pos.push(f1, f2, s1)
                 s2.resize_neg.push(f3, f4, s3)
+            } break;
+
+
+            case Container_Layouts.QUAD_VERT: {
+                this.div.classList.replace('layout_container_row', 'layout_container_col')
+                let f1 = this._add_flex_frame(0.25, 1)
+                let s1 = this._add_flex_separator(Orientation.Vertical, 1)
+                let f2 = this._add_flex_frame(0.25, 1)
+                let s2 = this._add_flex_separator(Orientation.Vertical, 1)
+                let f3 = this._add_flex_frame(0.25, 1)
+                let s3 = this._add_flex_separator(Orientation.Vertical, 1)
+                let f4 = this._add_flex_frame(0.25, 1)
+
+                s1.resize_pos.push(f1)
+                s1.resize_neg.push(f2)
+
+                s2.resize_pos.push(f2)
+                s2.resize_neg.push(f3)
+
+                s3.resize_pos.push(f3)
+                s3.resize_neg.push(f4)
+            } break;
+
+            case Container_Layouts.QUAD_HORIZ: {
+                this.div.classList.replace('layout_container_col', 'layout_container_row')
+                let f1 = this._add_flex_frame(1, 0.25)
+                let s1 = this._add_flex_separator(Orientation.Horizontal, 1)
+                let f2 = this._add_flex_frame(1, 0.25)
+                let s2 = this._add_flex_separator(Orientation.Horizontal, 1)
+                let f3 = this._add_flex_frame(1, 0.25)
+                let s3 = this._add_flex_separator(Orientation.Horizontal, 1)
+                let f4 = this._add_flex_frame(1, 0.25)
+
+                s1.resize_pos.push(f1)
+                s1.resize_neg.push(f2)
+
+                s2.resize_pos.push(f2)
+                s2.resize_neg.push(f3)
+
+                s3.resize_pos.push(f3)
+                s3.resize_neg.push(f4)
             } break;
 
             case Container_Layouts.QUAD_LEFT: {

@@ -16,11 +16,15 @@ import lightweight_pycharts.orm.options as options
 # Without the following line Pylance shows the above lines as errors?
 from . import orm
 from .window import Window
+from .containers import Container, Frame, Pane
 from .orm.types import TF, Color
 from .orm.enum import layouts, ColorLiteral
 
 __all__ = (
     "Window",
+    "Container",
+    "Frame",
+    "Pane",
     # SubModules
     "types",
     "enum",

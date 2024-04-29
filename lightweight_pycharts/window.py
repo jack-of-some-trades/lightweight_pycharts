@@ -12,18 +12,12 @@ import pandas as pd
 
 from . import orm
 from . import util
+from .events import Events
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD, PY_CMD
+from .containers import Container
 
 logger = logging.getLogger("lightweight-pycharts")
-
-
-class Events:
-    "A Super Object that is a Collection of Emitters"
-
-    def __init__(self):
-        self.tf_change = util.Emitter[util.TimeFrame_Protocol]()
-        self.layout_change = util.Emitter[util.Layout_Protocol]()
 
 
 class Window:
@@ -93,12 +87,8 @@ class Window:
     # region ------------------------ Private Window Methods  ------------------------ #
 
     def _execute_cmd(self, cmd: PY_CMD, *args):
+        logger.debug("Recieved Command: %s, Args:%s", cmd, args)
         match cmd, *args:
-            case PY_CMD.PY_EXEC, str(), *_:
-                logger.debug("Recieved Message from View: %s", args[0])
-            case PY_CMD.TF_CHANGE, orm.TF(), *_:
-                logger.debug("Recieved Timeframe Change Request from View: %s", args[0])
-                self.events.tf_change(args[0])
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
             case PY_CMD.REMOVE_CONTAINER, str(), *_:
@@ -106,6 +96,35 @@ class Window:
             case PY_CMD.REORDER_CONTAINERS, int(), int(), *_:
                 self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
                 self.containers.insert(args[1], self.containers.pop(args[0]))
+            case PY_CMD.TIMEFRAME_CHANGE, str(), str(), orm.TF(), *_:
+                if (container := self.get_container(args[0])) is None:
+                    logger.warning(
+                        "Failed Timeframe Switch, Couldn't find Conatiner ID %s",
+                        args[0],
+                    )
+                    return
+                if (frame := container.get_frame(args[1])) is None:
+                    logger.warning(
+                        "Failed Timeframe Switch, Could not find Frame ID '%s'", args[0]
+                    )
+                    return
+                logger.debug(
+                    "Received TF Change Request: %s, Frame: %s", args[2], frame.js_id
+                )
+                self.events.tf_change(
+                    timeframe=args[2], container=container, frame=frame
+                )
+            case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts(), *_:
+                container = self.get_container(args[0])
+                if container is None:
+                    logger.warning(
+                        "Failed layout change, Couldn't find Container '%s'", args[0]
+                    )
+                    return
+                self.events.layout_change(layout=args[1], container=container)
+                container.set_layout(args[1])
+            case PY_CMD.PY_EXEC, str(), *_:
+                logger.debug("Recieved Message from View: %s", args[0])
 
     def _manage_thread_queue(self):
         logger.debug("Entered Threaded Queue Manager")
@@ -205,116 +224,16 @@ class Window:
                 self.containers.remove(container)
                 self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
                 self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
+                return
 
-    def get_container(self, _id: int | str) -> Optional["Container"]:
+    def get_container(self, _id: int | str) -> Optional[Container]:
         "Return the container that either matchs the given js_id string, or the integer tab number"
-        if isinstance(_id, int):
-            if _id >= 0 and _id < len(self.containers):
-                return self.containers[_id]
-        else:
+        if isinstance(_id, str):
             for container in self.containers:
                 if _id == container.js_id:
                     return container
+        else:
+            if _id >= 0 and _id < len(self.containers):
+                return self.containers[_id]
 
     # endregion
-
-
-class Container:
-
-    def __init__(self, js_id: str, fwd_queue: mp.Queue) -> None:
-        self._fwd_queue = fwd_queue
-        self.js_id = js_id
-        self.layout_type = orm.layouts.SINGLE
-        self.frame_ids = util.ID_List(f"{js_id}_f")
-        self.frames: list[Frame] = []
-
-        self._fwd_queue.put((JS_CMD.ADD_CONTAINER, self.js_id))
-        self.set_layout(self.layout_type)
-
-    def set_layout(self, layout: orm.layouts):
-        self._fwd_queue.put((JS_CMD.SET_LAYOUT, self.js_id, layout))
-        self.layout_type = layout
-
-        # If there arent enough Frames to support the layout then generate them
-        frame_diff = len(self.frame_ids) - self.layout_type.num_frames
-        if frame_diff < 0:
-            for _ in range(-frame_diff):
-                self._add_frame_()
-
-    def _add_frame_(self):
-        # Only Add a frame if the layout can support it
-        if len(self.frames) < self.layout_type.num_frames:
-            new_id = self.frame_ids.generate()
-            self.frames.append(Frame(new_id, self))
-
-    def all_ids(self) -> list[str]:
-        "Return a List of all Ids of this object and sub-objects"
-        _ids = [self.js_id]
-        for frame in self.frames:
-            _ids += frame.all_ids()
-        return _ids
-
-
-class Frame:
-    """Frame Objects primarily hold information about multi-chart layouts.
-    They also handle chart syncing(?) of: #Should they?
-        - Crosshairs    *TBI
-        - Symbols       *TBI
-        - Timeframe     *TBI
-        - Interval      *TBI
-        - Date Range    *TBI
-    """
-
-    def __init__(self, js_id: str, parent: Container) -> None:
-        self._fwd_queue = parent._fwd_queue
-        self.parent = parent
-        self.js_id = js_id
-        self.pane_ids = util.ID_List(f"{js_id}_p")
-        self.panes: list[Pane] = []
-
-        self._fwd_queue.put((JS_CMD.ADD_FRAME, js_id, self.parent.js_id))
-
-        # Add main pane
-        new_id = self.pane_ids.affix("main")
-        self.panes.append(Pane(new_id, self))
-
-    def _add_pane(self):
-        new_id = self.pane_ids.generate()
-        self.panes.append(Pane(new_id, self))
-
-    def all_ids(self) -> list[str]:
-        "Return a List of all Ids of this object and sub-objects"
-        _ids = [self.js_id]
-        for pane in self.panes:
-            _ids += pane.all_ids()
-        return _ids
-
-
-class Pane:
-    """An individual charting window, can contain seriesCommon objects and indicators"""
-
-    def __init__(self, js_id: str, parent: Frame) -> None:
-        self._fwd_queue = parent._fwd_queue
-        self.parent = parent
-        self.js_id = js_id
-        self.sources = []
-
-        self._fwd_queue.put((JS_CMD.ADD_PANE, js_id, self.parent.js_id))
-
-    def set_data(self, data: pd.DataFrame | list[dict[str, Any]]):
-        "Sets the main source of data for this Pane"
-        if not isinstance(data, pd.DataFrame):
-            data = pd.DataFrame(data)
-
-        self._fwd_queue.put((JS_CMD.SET_DATA, self.js_id, data))
-
-    def add_source(self, data: pd.DataFrame | list[dict[str, Any]]):
-        """Creates a new source of data for the Pane. Sources are analogous to Ticker Data or indicators"""
-
-    def all_ids(self) -> list[str]:
-        "Return a List of all Ids of this object and sub-objects"
-        return [self.js_id]
-
-
-class Source:
-    """A Source Object. Sources contain various Series Elements"""

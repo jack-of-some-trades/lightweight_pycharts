@@ -18,7 +18,7 @@ class PY_CMD(IntEnum):
     # ADD_PANE = auto()
     # REMOVE_PANE = auto()
 
-    TF_CHANGE = auto()
+    TIMEFRAME_CHANGE = auto()
     # RANGE_CHANGE = auto() # Maybe?
     SERIES_CHANGE = auto()
     LAYOUT_CHANGE = auto()

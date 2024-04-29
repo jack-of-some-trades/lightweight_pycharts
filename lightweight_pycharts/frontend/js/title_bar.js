@@ -323,9 +323,6 @@ class Tabs {
             faviconEl.setAttribute('hidden', '');
             faviconEl.removeAttribute('style');
         }
-        if (tabProperties.id) {
-            tabEl.setAttribute('data-tab-id', tabProperties.id);
-        }
     }
     cleanUpPreviouslyDraggedTabs() {
         this.tabEls.forEach((tabEl) => tabEl.classList.remove('tab-was-just-dragged'));
