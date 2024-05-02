@@ -444,3 +444,18 @@ class SeriesMarker:
 
 
 # endregion
+
+# region --------------------------------------- Python <-> JS Interface Dataclasses --------------------------------------- #
+
+
+@dataclass
+class SymbolItem:
+    "Dataclass interface used to send Symbol Search information to the Symbol Search Menu"
+    symbol: str
+    name: Optional[str] = None
+    type: Optional[str] = None
+    broker: Optional[str] = None
+    exchange: Optional[str] = None
+
+
+# endregion

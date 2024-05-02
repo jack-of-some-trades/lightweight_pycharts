@@ -1,5 +1,5 @@
 import { icon_manager, icons } from "./icons.js"
-import { menu_item, menu_location, overlay_manager } from "./overlay.js"
+import { menu_location, switcher_item } from "./overlay.js"
 import { Container_Layouts, LAYOUT_DIM_TOP, Series_Types, Wrapper_Divs, interval, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
@@ -77,9 +77,40 @@ export class topbar {
 
         search_button.appendChild(icon_manager.get_svg(icons.menu_search, ['icon_v_margin', 'icon_h_margin']))
         search_button.appendChild(search_text)
-
         search_div.appendChild(search_button)
-        search_div.appendChild(icon_manager.get_svg(icons.menu_add, ['icon_hover']))
+
+        let add_compare_btn = document.createElement('div')
+        add_compare_btn.classList.add("topbar")
+        add_compare_btn.appendChild(icon_manager.get_svg(icons.menu_add, ['icon_hover']))
+        search_div.appendChild(add_compare_btn)
+
+        let search_overlay_menu = window.overlay_manager.symbol_search()
+
+        //'Active' carries information on whether we want to add or replace the symbol
+        //The following listeners change the menu type, add visibility or remove it.
+        search_button.addEventListener('click', () => {
+            if (search_overlay_menu.getAttribute('active') === 'replace') {
+                search_overlay_menu.removeAttribute('active')
+            } else if (search_overlay_menu.hasAttribute('active')) {
+                search_overlay_menu.setAttribute('active', 'replace')
+            } else {
+                window.overlay_manager.hide_all_menus()
+                search_overlay_menu.setAttribute('active', 'replace')
+            }
+        })
+        add_compare_btn.addEventListener('click', () => {
+            if (search_overlay_menu.getAttribute('active') === 'add') {
+                search_overlay_menu.removeAttribute('active')
+            } else if (search_overlay_menu.hasAttribute('active')) {
+                search_overlay_menu.setAttribute('active', 'add')
+            } else {
+                window.overlay_manager.hide_all_menus()
+                search_overlay_menu.setAttribute('active', 'add')
+            }
+        })
+
+        //Stop document listeners from triggering and removing visibility
+        search_div.addEventListener('mousedown', (event) => { event.stopPropagation() })
 
         return search_div
     }
@@ -149,7 +180,7 @@ export class timeframe_selector {
         let items = this.make_items_list(this.json)
 
         this.select = this.select.bind(this) //Needs binding since it's shared via reference
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select)
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select)
     }
 
     /**
@@ -158,7 +189,7 @@ export class timeframe_selector {
     update_topbar(json: timeframe_json) {
         let items = this.make_items_list(json)
         this.overlay_menu_div.remove()
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select)
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select)
     }
 
     get_json(): timeframe_json { return this.json }
@@ -202,12 +233,12 @@ export class timeframe_selector {
     }
 
     /**
-     * Makes a list of 'menu_items' from a formatted json file.
+     * Makes a list of 'switcher_items' from a formatted json file.
      */
-    private make_items_list(json: timeframe_json): menu_item[] {
+    private make_items_list(json: timeframe_json): switcher_item[] {
         try {
             let favorite_tfs: tf[] = []
-            let items: menu_item[] = []
+            let items: switcher_item[] = []
             let favs = json.favorites
             let sub_menus = json.menu_listings
 
@@ -301,7 +332,7 @@ export class timeframe_selector {
 
     private update_menu_location() {
         if (this.menu_button && this.overlay_menu_div)
-            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
+            window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
     }
 
     /**
@@ -310,7 +341,7 @@ export class timeframe_selector {
      * taken effect on a response from the python side to make sure everything stays synced.
      */
     private select(data: tf) {
-        window.api.timeframe_switch(window.active_frame.id, data.multiplier, data.interval as string);
+        window.api.timeframe_switch(window.active_container.id, window.active_frame.id, data.multiplier, data.interval as string);
     }
 
     /**
@@ -416,8 +447,7 @@ export class layout_selector {
         let items = this.make_items_list(this.json)
 
         this.select = this.select.bind(this) //Needs binding since it's shared via reference
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
-
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
     }
 
     /**
@@ -426,7 +456,7 @@ export class layout_selector {
     update_topbar(json: layout_json) {
         let items = this.make_items_list(json)
         this.overlay_menu_div.remove()
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
 
         if (window.active_container && window.active_container.layout !== null) {
             //if there is a valid container & layout has been set update the icon
@@ -477,11 +507,11 @@ export class layout_selector {
     }
 
     /**
-     * Makes a list of 'menu_items' from a formatted json file.
+     * Makes a list of 'switcher_items' from a formatted json file.
      */
-    private make_items_list(json: layout_json): menu_item[] {
+    private make_items_list(json: layout_json): switcher_item[] {
         try {
-            let items: menu_item[] = []
+            let items: switcher_item[] = []
             let favs = json.favorites
 
             let populate_items = (layouts: Container_Layouts[]) => {
@@ -566,7 +596,7 @@ export class layout_selector {
 
     private update_menu_location() {
         if (this.menu_button && this.overlay_menu_div)
-            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
+            window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
     }
 
     /**
@@ -675,7 +705,7 @@ export class series_selector {
         let items = this.make_items_list(this.json)
 
         this.select = this.select.bind(this) //Needs binding since it's shared via reference
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select)
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select)
 
     }
 
@@ -685,7 +715,7 @@ export class series_selector {
     update_topbar(json: series_json) {
         let items = this.make_items_list(json)
         this.overlay_menu_div.remove()
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select)
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select)
     }
 
     get_json(): series_json { return this.json }
@@ -731,11 +761,11 @@ export class series_selector {
     }
 
     /**
-     * Makes a list of 'menu_items' from a formatted json file.
+     * Makes a list of 'switcher_items' from a formatted json file.
      */
-    private make_items_list(json: series_json): menu_item[] {
+    private make_items_list(json: series_json): switcher_item[] {
         try {
-            let items: menu_item[] = []
+            let items: switcher_item[] = []
             let favs = json.favorites
 
             let populate_items = (series: Series_Types[]) => {
@@ -804,7 +834,7 @@ export class series_selector {
 
     private update_menu_location() {
         if (this.menu_button && this.overlay_menu_div)
-            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
+            window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)()
     }
 
     /**

@@ -6,10 +6,9 @@ from inspect import getmembers, ismethod
 import multiprocessing as mp
 from multiprocessing.synchronize import Event as mp_EventClass
 from dataclasses import dataclass, field
-from typing import Callable, Optional, Protocol
+from typing import Callable, Optional, Protocol, Dict
 from abc import ABC, abstractmethod
 
-from numpy import number
 import webview
 import pandas as pd
 from webview.errors import JavascriptException
@@ -45,6 +44,11 @@ class js_api:
         # done after the py_webivew window has loaded
         self.view_window = view_window
 
+    def callback(self, msg: str) -> None:
+        "Generic Callback that passes serialized data as a string"
+        logger.debug("Recieved Message from JS: %s", msg)
+        self.rtn_queue.put((PY_CMD.PY_EXEC, msg))
+
     def loaded(self) -> None:
         "Called on start-up. Indicates that all javascript assets, not just the JS api, have loaded"
         self.view_window.show()  # api.loaded_check() in py_api.ts is what calls this
@@ -70,11 +74,6 @@ class js_api:
     def reorder_containers(self, _from: int, _to: int) -> None:
         self.rtn_queue.put((PY_CMD.REORDER_CONTAINERS, _from, _to))
 
-    def callback(self, msg: str) -> None:
-        "Generic Callback that passes serialized data as a string"
-        logger.debug("Recieved Message from JS: %s", msg)
-        self.rtn_queue.put((PY_CMD.PY_EXEC, msg))
-
     def layout_change(self, container_id: str, layout: int) -> None:
         self.rtn_queue.put(
             (PY_CMD.LAYOUT_CHANGE, container_id, orm.enum.layouts(layout))
@@ -89,6 +88,21 @@ class js_api:
             self.rtn_queue.put((PY_CMD.TIMEFRAME_CHANGE, container_id, frame_id, tf))
         except ValueError as e:
             logger.warning(e)
+
+    def symbol_search(
+        self,
+        symbol: str,
+        types: list[str],
+        brokers: list[str],
+        exchanges: list[str],
+        confirmed: bool,
+    ):
+        self.rtn_queue.put(
+            (PY_CMD.SYMBOL_SEARCH, symbol, confirmed, types, brokers, exchanges)
+        )
+
+    def symbol_select(self, item: Dict[str, str]):
+        self.rtn_queue.put((PY_CMD.SYMBOL_SELECT, orm.types.SymbolItem(**item)))
 
 
 ##### --------------------------------- Helper Classes --------------------------------- #####
@@ -165,11 +179,6 @@ class View(ABC):
             msg = self.fwd_queue.get()
             if isinstance(msg, tuple):
                 cmd, *args = msg
-                logger.debug(
-                    "Recieved cmd %s: %s",
-                    JS_CMD(cmd).name,
-                    str(args),
-                )
             elif isinstance(msg, JS_CMD):
                 cmd = msg
                 args = tuple()
@@ -186,6 +195,7 @@ class View(ABC):
 
     def _execute_cmd(self, js_cmd: JS_CMD, *args):
         "Execute command with Argument Pattern Matching"
+        logger.debug("Recieved Command %s: %s", JS_CMD(js_cmd).name, str(args))
         cmd = ""
         match js_cmd, *args:
             # case JS_CMD.JS_CODE, Callable(), *scripts:
@@ -194,20 +204,24 @@ class View(ABC):
             case JS_CMD.JS_CODE, *scripts:
                 for script in scripts:
                     cmd += (script + ";") if isinstance(script, str) else ""
-            case JS_CMD.ADD_CONTAINER, str(), *_:
+            case JS_CMD.ADD_CONTAINER, str():
                 cmd = cmds.add_container(args[0])
-            case JS_CMD.REMOVE_CONTAINER, str(), *_:
+            case JS_CMD.REMOVE_CONTAINER, str():
                 cmd = cmds.remove_container(args[0])
-            case JS_CMD.REMOVE_REFERENCE, str(), *_:
+            case JS_CMD.REMOVE_REFERENCE, str():
                 cmd = cmds.remove_reference(*args)
-            case JS_CMD.ADD_FRAME, str(), str(), *_:
+            case JS_CMD.ADD_FRAME, str(), str():
                 cmd = cmds.add_frame(args[0], args[1])
-            case JS_CMD.ADD_PANE, str(), str(), *_:
+            case JS_CMD.ADD_PANE, str(), str():
                 cmd = cmds.add_pane(args[0], args[1])
-            case JS_CMD.SET_LAYOUT, str(), orm.layouts(), *_:
+            case JS_CMD.SET_LAYOUT, str(), orm.layouts():
                 cmd = cmds.set_layout(args[0], args[1])
-            case JS_CMD.SET_DATA, str(), pd.DataFrame(), *_:
+            case JS_CMD.SET_DATA, str(), pd.DataFrame():
                 cmd = cmds.set_data(args[0], args[1].lwc_df)
+            case JS_CMD.SET_SYMBOL_ITEMS, list():
+                cmd = cmds.update_symbol_search(args[0])
+            case JS_CMD.SET_SYMBOL_SEARCH_OPTS, str(), list():
+                cmd = cmds.update_symbol_search_bubbles(args[0], args[1])
             case JS_CMD.SHOW, *_:
                 self.show()
             case JS_CMD.HIDE, *_:

@@ -1,5 +1,5 @@
 import { icon_manager, icons } from "./icons.js";
-import { menu_location, overlay_manager } from "./overlay.js";
+import { menu_location } from "./overlay.js";
 import { Container_Layouts, LAYOUT_DIM_TOP, Series_Types, Wrapper_Divs, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js";
 export class topbar {
     constructor(parent, tf, layout, series) {
@@ -45,7 +45,36 @@ export class topbar {
         search_button.appendChild(icon_manager.get_svg(icons.menu_search, ['icon_v_margin', 'icon_h_margin']));
         search_button.appendChild(search_text);
         search_div.appendChild(search_button);
-        search_div.appendChild(icon_manager.get_svg(icons.menu_add, ['icon_hover']));
+        let add_compare_btn = document.createElement('div');
+        add_compare_btn.classList.add("topbar");
+        add_compare_btn.appendChild(icon_manager.get_svg(icons.menu_add, ['icon_hover']));
+        search_div.appendChild(add_compare_btn);
+        let search_overlay_menu = window.overlay_manager.symbol_search();
+        search_button.addEventListener('click', () => {
+            if (search_overlay_menu.getAttribute('active') === 'replace') {
+                search_overlay_menu.removeAttribute('active');
+            }
+            else if (search_overlay_menu.hasAttribute('active')) {
+                search_overlay_menu.setAttribute('active', 'replace');
+            }
+            else {
+                window.overlay_manager.hide_all_menus();
+                search_overlay_menu.setAttribute('active', 'replace');
+            }
+        });
+        add_compare_btn.addEventListener('click', () => {
+            if (search_overlay_menu.getAttribute('active') === 'add') {
+                search_overlay_menu.removeAttribute('active');
+            }
+            else if (search_overlay_menu.hasAttribute('active')) {
+                search_overlay_menu.setAttribute('active', 'add');
+            }
+            else {
+                window.overlay_manager.hide_all_menus();
+                search_overlay_menu.setAttribute('active', 'add');
+            }
+        });
+        search_div.addEventListener('mousedown', (event) => { event.stopPropagation(); });
         return search_div;
     }
     indicators_box() {
@@ -85,12 +114,12 @@ export class timeframe_selector {
         this.wrapper_div.appendChild(this.menu_button);
         let items = this.make_items_list(this.json);
         this.select = this.select.bind(this);
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     update_topbar(json) {
         let items = this.make_items_list(json);
         this.overlay_menu_div.remove();
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     get_json() { return this.json; }
     update_topbar_icon(data) {
@@ -207,10 +236,10 @@ export class timeframe_selector {
     }
     update_menu_location() {
         if (this.menu_button && this.overlay_menu_div)
-            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
+            window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
     select(data) {
-        window.api.timeframe_switch(window.active_frame.id, data.multiplier, data.interval);
+        window.api.timeframe_switch(window.active_container.id, window.active_frame.id, data.multiplier, data.interval);
     }
     add_favorite(data) {
         var _a, _b, _c, _d;
@@ -280,12 +309,12 @@ export class layout_selector {
         this.wrapper_div.appendChild(this.menu_button);
         let items = this.make_items_list(this.json);
         this.select = this.select.bind(this);
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     update_topbar(json) {
         let items = this.make_items_list(json);
         this.overlay_menu_div.remove();
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
         if (window.active_container && window.active_container.layout !== null) {
             this.update_topbar_icon(window.active_container.layout);
         }
@@ -397,7 +426,7 @@ export class layout_selector {
     }
     update_menu_location() {
         if (this.menu_button && this.overlay_menu_div)
-            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
+            window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
     select(data) { window.api.layout_change(window.active_container.id, data); }
     add_favorite(data) {
@@ -466,12 +495,12 @@ export class series_selector {
         this.wrapper_div.appendChild(this.menu_button);
         let items = this.make_items_list(this.json);
         this.select = this.select.bind(this);
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     update_topbar(json) {
         let items = this.make_items_list(json);
         this.overlay_menu_div.remove();
-        this.overlay_menu_div = overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
+        this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     get_json() { return this.json; }
     update_topbar_icon(data) {
@@ -564,7 +593,7 @@ export class series_selector {
     }
     update_menu_location() {
         if (this.menu_button && this.overlay_menu_div)
-            overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
+            window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
     select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
     add_favorite(data) {

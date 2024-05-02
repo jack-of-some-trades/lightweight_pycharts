@@ -14,7 +14,9 @@ class ORM_JSONEncoder(JSONEncoder):
 
     def default(self, o):
         if is_dataclass(o):
-            return asdict(o)
+            return asdict(  # Drop Nones
+                o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
+            )
         if isinstance(o, Color):
             return repr(o)
         if isinstance(o, bool):

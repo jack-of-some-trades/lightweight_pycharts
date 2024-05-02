@@ -1,5 +1,7 @@
 import sys
 import pathlib
+from typing import Optional
+
 
 sys.path.append(str(pathlib.Path().resolve()))
 # prior code is only needed for when developing/editing the library directly
@@ -8,6 +10,18 @@ import asyncio
 import pandas as pd
 
 import lightweight_pycharts as lwc
+from lightweight_pycharts.orm.types import SymbolItem
+
+
+def symbol_search(symbol: str, **kwargs) -> Optional[list[SymbolItem]]:
+    print(symbol)
+    print(kwargs)
+    return [
+        SymbolItem("BTC_USD"),
+        SymbolItem("ETH_USD"),
+        SymbolItem("AAPL", exchange="NASDAQ"),
+        SymbolItem("NVDA", name="Nvidia Co."),
+    ]
 
 
 def timeframe_change(
@@ -19,6 +33,11 @@ def timeframe_change(
 async def main():
     window = lwc.Window(debug=True, daemon=True, frameless=False)
     window.events.tf_change += timeframe_change
+    window.events.symbol_search += symbol_search
+
+    window.set_search_filters("type", ["Crypto", "Equity"])
+    window.set_search_filters("broker", ["Local", "Alpaca"])
+    window.set_search_filters("exchange", [])
 
     df = pd.read_csv("examples/data/ohlcv.csv")
     window.containers[0].frames[0].panes[0].set_data(df)

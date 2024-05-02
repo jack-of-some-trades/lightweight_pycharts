@@ -3,6 +3,8 @@
 from enum import IntEnum, auto
 from pandas import DataFrame
 
+from .util import dump
+from .orm import types
 from .orm.enum import layouts
 
 # from .util import dump
@@ -17,6 +19,9 @@ class PY_CMD(IntEnum):
     REORDER_CONTAINERS = auto()
     # ADD_PANE = auto()
     # REMOVE_PANE = auto()
+
+    SYMBOL_SEARCH = auto()
+    SYMBOL_SELECT = auto()
 
     TIMEFRAME_CHANGE = auto()
     # RANGE_CHANGE = auto() # Maybe?
@@ -37,6 +42,9 @@ class JS_CMD(IntEnum):
 
     ADD_PANE = auto()
     SET_DATA = auto()
+
+    SET_SYMBOL_ITEMS = auto()
+    SET_SYMBOL_SEARCH_OPTS = auto()
 
     SHOW = auto()
     HIDE = auto()
@@ -77,6 +85,14 @@ def set_layout(container_id: str, layout: layouts) -> str:
     return f"{container_id}.set_layout({layout})"
 
 
-def set_data(frame_id: str, data: DataFrame):
+def set_data(frame_id: str, data: DataFrame) -> str:
     # Assumes data is DataFrame.lwc_data Accessor Extention of a normal Dataframe.
     return f"{frame_id}.set_data('{data.type.value}',{data.json})"
+
+
+def update_symbol_search(symbols: list[types.SymbolItem]) -> str:
+    return f"overlay_manager.populate_symbol_list({dump(symbols)})"
+
+
+def update_symbol_search_bubbles(category: str, opts: list[str]) -> str:
+    return f"overlay_manager.populate_bubbles('{category}', {dump(opts)})"

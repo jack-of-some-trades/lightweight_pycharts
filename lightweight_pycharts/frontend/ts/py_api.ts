@@ -1,6 +1,7 @@
 //Typescript API that interfaces with python.
 
 import { icon_manager } from "./icons.js";
+import { symbol_item } from "./overlay.js";
 import { Container_Layouts } from "./util.js";
 
 
@@ -16,10 +17,13 @@ export class py_api {
     remove_container!: (id: string) => void;
     reorder_containers!: (from: number, to: number) => null
 
-    callback!: (msg: string) => void;
     layout_change!: (container_id: string, layout: Container_Layouts) => void;
-    timeframe_switch!: (frame_id: string, mult: number, period: string) => void;
+    timeframe_switch!: (container_id: string, frame_id: string, mult: number, period: string) => void;
 
+    symbol_search!: (symbol: string, types: string[], brokers: string[], exchanges: string[], confirmed: boolean) => void;
+    symbol_select!: (item: symbol_item) => void;
+
+    callback!: (msg: string) => void;
     constructor() { this._loaded_check = this._loaded_check.bind(this) }
 
     //The Python "View" Subclasses Kick starts this recursive check 

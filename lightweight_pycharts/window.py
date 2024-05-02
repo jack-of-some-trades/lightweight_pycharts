@@ -6,9 +6,7 @@ from time import sleep
 import threading as th
 import multiprocessing as mp
 from dataclasses import asdict
-from typing import Optional, Any
-
-import pandas as pd
+from typing import Literal, Optional
 
 from . import orm
 from . import util
@@ -78,7 +76,11 @@ class Window:
             self._queue_manager.start()
 
         # -------- Create Subobjects  -------- #
-        self.events = Events()
+        self.events = Events(
+            symbol_search_func=lambda x: self._fwd_queue.put(
+                (JS_CMD.SET_SYMBOL_ITEMS, x)
+            )
+        )
         self.js_id = "wrapper"
         self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
@@ -87,16 +89,16 @@ class Window:
     # region ------------------------ Private Window Methods  ------------------------ #
 
     def _execute_cmd(self, cmd: PY_CMD, *args):
-        logger.debug("Recieved Command: %s, Args:%s", cmd, args)
+        logger.debug("Recieved Command: %s: %s", PY_CMD(cmd).name, str(args))
         match cmd, *args:
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
-            case PY_CMD.REMOVE_CONTAINER, str(), *_:
+            case PY_CMD.REMOVE_CONTAINER, str():
                 self.del_tab(args[0])
-            case PY_CMD.REORDER_CONTAINERS, int(), int(), *_:
+            case PY_CMD.REORDER_CONTAINERS, int(), int():
                 self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
                 self.containers.insert(args[1], self.containers.pop(args[0]))
-            case PY_CMD.TIMEFRAME_CHANGE, str(), str(), orm.TF(), *_:
+            case PY_CMD.TIMEFRAME_CHANGE, str(), str(), orm.TF():
                 if (container := self.get_container(args[0])) is None:
                     logger.warning(
                         "Failed Timeframe Switch, Couldn't find Conatiner ID %s",
@@ -114,7 +116,7 @@ class Window:
                 self.events.tf_change(
                     timeframe=args[2], container=container, frame=frame
                 )
-            case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts(), *_:
+            case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts():
                 container = self.get_container(args[0])
                 if container is None:
                     logger.warning(
@@ -123,7 +125,22 @@ class Window:
                     return
                 self.events.layout_change(layout=args[1], container=container)
                 container.set_layout(args[1])
-            case PY_CMD.PY_EXEC, str(), *_:
+            case (
+                PY_CMD.SYMBOL_SEARCH,
+                str(),
+                bool(),
+                list(),
+                list(),
+                list(),
+            ):
+                self.events.symbol_search(
+                    symbol=args[0],
+                    confirmed=args[1],
+                    types=args[2],
+                    brokers=args[3],
+                    exchanges=args[4],
+                )
+            case PY_CMD.PY_EXEC, str():
                 logger.debug("Recieved Message from View: %s", args[0])
 
     def _manage_thread_queue(self):
@@ -188,19 +205,19 @@ class Window:
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.HIDE)
 
-    def Maximize(self):
+    def maximize(self):
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.MAXIMIZE)
 
-    def Minimize(self):
+    def minimize(self):
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.MINIMIZE)
 
-    def Restore(self):
+    def restore(self):
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.RESTORE)
 
-    def Close(self):
+    def close(self):
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.CLOSE)
 
@@ -235,5 +252,13 @@ class Window:
         else:
             if _id >= 0 and _id < len(self.containers):
                 return self.containers[_id]
+
+    def set_search_filters(
+        self, category: Literal["type", "broker", "exchange"], items: list[str]
+    ):
+        """Set the search filters available when searching for a Symbol.
+        'type'==Security Types, 'broker'==Data Brokers, 'exchange' == Security's Exchange
+        """
+        self._fwd_queue.put((JS_CMD.SET_SYMBOL_SEARCH_OPTS, category, items))
 
     # endregion

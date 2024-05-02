@@ -14,8 +14,9 @@
     --hover-color-light: #454c5e;
 
     --text-color: #b2b5be;
-    --text-dark-color: #707277;
     --text-light-color: #f3f0f0;
+    --text-dark-color: #707277;
+    --text-near-black-color: #131722;
     --accent-color: #2962ff;
     --separator-color: #222631;
 
@@ -178,7 +179,11 @@ body {
     background-color: var(--icon-active-color);
 }
 
+.icon[active-star] {
+    color: var(--star-active-color);
+}
 
+.text,
 .icon_text,
 .button_text,
 .menu_text,
@@ -592,16 +597,179 @@ body {
     background-color: var(--icon-hover-color);
 }
 
-.star_active {
-    color: var(--star-active-color);
-}
-
 .menu_item_star {
     border-radius: 5px;
     width: 18px;
     height: 18px;
 }
 
+
+/* #endregion */
+
+/* #region --------------- Overlay Search Menu Params --------------- */
+
+
+.overlay_menu_large {
+    box-sizing: border-box;
+    padding: 10px;
+    top: 15%;
+    left: 20%;
+    width: 60%;
+    height: 70%;
+    box-shadow: 2px 2px 6px 1px var(--overlay-shadow);
+}
+
+.overlay_title_bar,
+.sel_bubbles,
+.symbol_list,
+.symbol_list_item,
+.symbol_text_input {
+    display: flex;
+    width: -webkit-fill-available;
+    margin: 4px 10px;
+    align-items: center;
+}
+
+.overlay_title_bar {
+    height: 50px;
+}
+
+.sel_bubbles {
+    height: 30px;
+}
+
+.symbol_text_input {
+    height: 40px;
+}
+
+.search_input {
+    width: -webkit-fill-available;
+    background-color: transparent;
+    border: 2px solid var(--accent-color);
+    border-width: 0px 0px 2px 0px;
+    margin: 0px 20px;
+    padding: 0px 20px;
+    text-align: left;
+    font-size: larger;
+    text-transform: uppercase;
+}
+
+.search_input:focus {
+    outline: none;
+    border-color: var(--star-active-color);
+}
+
+.search_submit {
+    width: 15%;
+    height: -webkit-fill-available;
+    background-color: transparent;
+    font-size: larger;
+}
+
+.search_submit:active {
+    color: var(--accent-color);
+}
+
+.bubble_item {
+    margin: 0px 5px;
+    padding: 3px 10px;
+    border-radius: 35px;
+    background-color: var(--background-fill);
+}
+
+.bubble_item:hover {
+    color: var(--text-light-color);
+    background-color: var(--hover-color);
+}
+
+.bubble_item[active] {
+    color: black;
+    background-color: var(--accent-color);
+}
+
+.bubble_item[active]:hover {
+    color: var(--text-near-black-color);
+}
+
+.bubble {
+    width: 10%;
+    height: -webkit-fill-available;
+    border-radius: 20%;
+}
+
+.bubble[selected] {
+    width: 15%;
+}
+
+.symbol_list {
+    width: -webkit-fill-available;
+    /*For some weird reason fill-available isn't working => magic number. */
+    /* height: -webkit-fill-available; */
+    height: calc(100% - 200px);
+    text-align: left;
+    border: 2px solid var(--background-fill);
+    border-radius: 10px;
+    background-image: linear-gradient(0deg, var(--overlay-fill) 0%, var(--overlay-fill) 90%, var(--background-fill) 100%);
+
+}
+
+#symbols_table {
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    border-spacing: 0px;
+}
+
+table thead {
+    /* head takes the height it requires, 
+    and it's not scaled when table is resized */
+    flex: 0 0 auto;
+    width: calc(100% - 0.9em);
+}
+
+table tbody {
+    /* body takes all the remaining available space */
+    flex: 1 1 auto;
+    display: block;
+    overflow-y: scroll;
+    scrollbar-color: var(--accent-color) transparent;
+}
+
+table tbody tr:hover {
+    background-color: var(--hover-color);
+}
+
+table thead,
+table tbody tr {
+    display: table;
+    table-layout: fixed;
+}
+
+#symbols_table thead {
+    border: solid var(--accent-color);
+    border-width: 0px 0px 1px 0px;
+}
+
+#symbols_table thead tr th,
+#symbols_table tbody tr td {
+    overflow: hidden;
+    width: 15%;
+}
+
+#symbols_table thead tr th:nth-child(2),
+#symbols_table tbody tr td:nth-child(2) {
+    width: 40%
+}
+
+.symbol_list th,
+.symbol_list td[id*='ticker'] {
+    box-sizing: border-box;
+    padding-left: 5px;
+    border: solid var(--background-fill);
+    border-width: 0px 0px 0px 3px;
+}
 
 /* #endregion */
 

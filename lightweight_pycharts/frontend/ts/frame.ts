@@ -30,7 +30,6 @@ export class Frame {
         if (window.active_frame)
             window.active_frame.div.removeAttribute('active')
 
-        console.log('Active Frame Assignment', this)
         window.active_frame = this
         window.active_frame.div.setAttribute('active', '')
         window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol })

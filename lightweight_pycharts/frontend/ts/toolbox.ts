@@ -1,5 +1,5 @@
 import { icon_manager, icons } from "./icons.js"
-import { menu_location, overlay_manager } from "./overlay.js"
+import { menu_location } from "./overlay.js"
 import { LAYOUT_DIM_LEFT, Wrapper_Divs } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
@@ -80,7 +80,7 @@ export class toolbox {
         selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(menu_div, items, 'crosshair_menu', menu_location.TOP_RIGHT, this.on_crosshair_sel)
+        window.overlay_manager.menu(menu_div, items, 'crosshair', menu_location.TOP_RIGHT, this.on_crosshair_sel)
 
         return selector_div
     }
@@ -109,7 +109,7 @@ export class toolbox {
         selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(menu_div, items, 'linetools_menu', menu_location.TOP_RIGHT, this.on_line_tools_sel)
+        window.overlay_manager.menu(menu_div, items, 'linetools', menu_location.TOP_RIGHT, this.on_line_tools_sel)
 
         return selector_div
     }
@@ -133,7 +133,7 @@ export class toolbox {
         selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(menu_div, items, 'fibtools_menu', menu_location.TOP_RIGHT, this.on_fib_tools_sel)
+        window.overlay_manager.menu(menu_div, items, 'fibtools', menu_location.TOP_RIGHT, this.on_fib_tools_sel)
 
         return selector_div
     }
@@ -160,7 +160,7 @@ export class toolbox {
         selector_div.appendChild(menu_div)
 
         //Create Selection Menu
-        overlay_manager.menu(menu_div, items, 'measuretools_menu', menu_location.TOP_RIGHT, this.on_measure_tool_sel)
+        window.overlay_manager.menu(menu_div, items, 'measuretools', menu_location.TOP_RIGHT, this.on_measure_tool_sel)
 
         return selector_div
     }

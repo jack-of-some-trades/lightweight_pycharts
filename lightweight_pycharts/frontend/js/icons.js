@@ -14,14 +14,11 @@ export class icon_manager {
     static update_svgs() {
         let svgs = document.querySelectorAll("svg.replace");
         svgs.forEach(svg => {
+            let new_svg = icon_manager.get_svg(svg.id);
             svg.classList.remove('replace');
-            let new_svg;
-            if (svg.classList.length > 0)
-                new_svg = icon_manager.get_svg(svg.id, svg.classList.toString().split(' '));
-            else
-                new_svg = icon_manager.get_svg(svg.id);
-            if (svg.hasAttribute('active'))
-                new_svg.setAttribute('active', '');
+            let attrs = svg.attributes;
+            for (let i = 0; i < attrs.length; i++)
+                new_svg.setAttribute(attrs[i].name, attrs[i].value);
             svg.replaceWith(new_svg);
         });
         icon_manager.loaded = true;
@@ -37,7 +34,7 @@ export class icon_manager {
         else {
             let tmp_icon_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             tmp_icon_svg.id = icon;
-            tmp_icon_svg.classList.add('replace');
+            tmp_icon_svg.classList.add('replace', 'icon');
             css_classes.forEach(class_name => { tmp_icon_svg.classList.add(class_name); });
             return tmp_icon_svg;
         }
