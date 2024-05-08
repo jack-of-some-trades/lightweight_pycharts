@@ -14,6 +14,8 @@ from webview.errors import JavascriptException
 
 from . import orm
 from . import js_cmd as cmds
+from .orm.enum import SeriesType
+from .orm.series import Series_DF
 from .js_cmd import JS_CMD, PY_CMD
 
 file_dir = dirname(abspath(__file__))
@@ -217,7 +219,7 @@ class View(ABC):
 
     def _execute_cmd(self, js_cmd: JS_CMD, *args):
         "Execute command with Argument Pattern Matching"
-        logger.debug("Recieved Command %s: %s", JS_CMD(js_cmd).name, str(args))
+        logger.debug("JS_CMD: %s: %s", JS_CMD(js_cmd).name, str(args))
         cmd = ""
         match js_cmd, *args:
             # case JS_CMD.JS_CODE, Callable(), *scripts:
@@ -238,12 +240,14 @@ class View(ABC):
                 cmd = cmds.add_pane(args[0], args[1])
             case JS_CMD.SET_LAYOUT, str(), orm.layouts():
                 cmd = cmds.set_layout(args[0], args[1])
-            case JS_CMD.SET_DATA, str(), orm.series.Series_DF():
+            case JS_CMD.SET_DATA, str(), Series_DF():
                 cmd = cmds.set_data(args[0], args[1])
             case JS_CMD.SET_SYMBOL, str(), orm.Symbol():
                 cmd = cmds.set_symbol(args[0], args[1])
             case JS_CMD.SET_TIMEFRAME, str(), orm.TF():
                 cmd = cmds.set_timeframe(args[0], args[1])
+            case JS_CMD.SET_SERIES_TYPE, str(), SeriesType(), Series_DF():
+                cmd = cmds.set_series_type(args[0], args[1], args[2])
             case JS_CMD.SET_SYMBOL_ITEMS, list():
                 cmd = cmds.update_symbol_search(args[0])
             case JS_CMD.SET_SYMBOL_SEARCH_OPTS, str(), list():

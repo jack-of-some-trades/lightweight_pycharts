@@ -202,6 +202,24 @@ class Series_DF:
         self._df["time"] = (self._df["time"] * 10**9).astype("datetime64[ns]")
         return json_df
 
+    @property
+    def is_ohlc(self) -> bool:
+        return "close" in set(self._df.columns)
+        # return set(self._df.columns).intersection("open", "high", "low", "close") == 4
+
+    @property
+    def is_svalue(self) -> bool:
+        return "value" in set(self._df.columns)
+
+    def convert(self) -> None:
+        """
+        Converts the Value Column name to Close and vise-versa depending on which is present
+        Does Nothing if both value and close are present
+        """
+        col_names = set(self._df.columns)
+        if len(col_names.intersection(("value", "close"))) == 1:
+            self._df.rename(columns={"value": "close", "close": "value"}, inplace=True)
+
 
 # region --------------------------------------- Series Data Types --------------------------------------- #
 

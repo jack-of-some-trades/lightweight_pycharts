@@ -1,5 +1,6 @@
 import { createChart } from "./lib/pkg.js";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
+import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import * as u from "./util.js";
 export class Pane {
     constructor(id, div, flex_width = 1, flex_height = 1, chart_opts = u.DEFAULT_PYCHART_OPTS) {
@@ -20,66 +21,47 @@ export class Pane {
         window.active_pane = this;
         window.active_pane.div.setAttribute('active', '');
     }
-    set_data(dtype, data, series = this.main_series) {
-        if (data.length === 0) {
-            series.setData([]);
-            return;
-        }
-        else if (series === undefined) {
-            return;
-        }
-        let data_set = false;
-        switch (series.seriesType()) {
-            case "Candlestick":
-                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR || dtype == u.Series_Type.CANDLESTICK) {
-                    series.setData(data);
-                    data_set = true;
-                }
+    set_main_series(series_type, data) {
+        let new_series;
+        switch (series_type) {
+            case (u.Series_Type.LINE):
+                new_series = this.chart.addLineSeries();
                 break;
-            case "Bar":
-                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR) {
-                    series.setData(data);
-                    data_set = true;
-                }
+            case (u.Series_Type.AREA):
+                new_series = this.chart.addAreaSeries();
                 break;
-            case "Line":
-                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.LINE || u.Series_Type.HISTOGRAM) {
-                    series.setData(data);
-                    data_set = true;
-                }
+            case (u.Series_Type.HISTOGRAM):
+                new_series = this.chart.addHistogramSeries();
                 break;
-            case "Histogram":
-                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.HISTOGRAM || u.Series_Type.LINE) {
-                    series.setData(data);
-                    data_set = true;
-                }
+            case (u.Series_Type.BASELINE):
+                new_series = this.chart.addBaselineSeries();
                 break;
-            case "Area":
-                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.AREA) {
-                    series.setData(data);
-                    data_set = true;
-                }
+            case (u.Series_Type.BAR):
+                new_series = this.chart.addBarSeries();
                 break;
-            case "Baseline":
-                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.BASELINE) {
-                    series.setData(data);
-                    data_set = true;
-                }
+            case (u.Series_Type.CANDLESTICK):
+                new_series = this.chart.addCandlestickSeries();
+                break;
+            case (u.Series_Type.ROUNDED_CANDLE):
+                new_series = this.chart.addCustomSeries(new RoundedCandleSeries());
                 break;
             default:
-                series.setData(data);
-                data_set = true;
+                return;
         }
-        if (!data_set && dtype == u.Series_Type.WhitespaceData) {
-            series.setData(data);
-            data_set = true;
+        this.chart.removeSeries(this.main_series);
+        new_series.setData(data);
+        this.main_series = new_series;
+    }
+    set_main_data(data) {
+        if (data.length === 0) {
+            this.main_series.setData([]);
+            return;
         }
-        if (!data_set)
-            console.warn("Failed to set data on Pane.set_data() function call.");
-        else {
-            this.assign_active_pane();
-            this.autoscale_time_axis();
+        else if (this.main_series === undefined) {
+            return;
         }
+        this.main_series.setData(data);
+        this.autoscale_time_axis();
     }
     resize(width, height) {
         let this_width = width * this.flex_width;
@@ -108,6 +90,5 @@ export class Pane {
     }
     fitcontent() { this.chart.timeScale().fitContent(); }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale(); }
-    set_main_series(series) { this.main_series = series; }
     update_timescale_opts(newOpts) { this.chart.timeScale().applyOptions(newOpts); }
 }

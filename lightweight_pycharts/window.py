@@ -95,7 +95,7 @@ class Window:
     # region ------------------------ Private Window Methods  ------------------------ #
 
     def _execute_cmd(self, cmd: PY_CMD, *args):
-        logger.debug("Recieved Command: %s: %s", PY_CMD(cmd).name, str(args))
+        logger.debug("PY_CMD: %s: %s", PY_CMD(cmd).name, str(args))
         match cmd, *args:
             case PY_CMD.SYMBOL_SEARCH, str(), bool(), list(), list(), list():
                 self.events.symbol_search(
@@ -137,7 +137,7 @@ class Window:
                         args[1],
                     )
                     return
-                logger.info("Series Change Request on frame %s", frame.js_id)
+                frame.change_series_type(args[2])
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
             case PY_CMD.REMOVE_CONTAINER, str():

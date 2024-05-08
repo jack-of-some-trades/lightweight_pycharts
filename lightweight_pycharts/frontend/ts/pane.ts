@@ -1,6 +1,7 @@
 import { Legend } from "./legend.js";
 import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
+import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import * as u from "./util.js";
 
 //The portion of a chart where things are actually drawn
@@ -49,75 +50,50 @@ export class Pane {
         window.active_pane.div.setAttribute('active', '')
     }
 
+    set_main_series(series_type: u.Series_Type, data: AnySeriesData) {
+        let new_series: AnySeries
+        switch (series_type) {
+            case (u.Series_Type.LINE):
+                new_series = this.chart.addLineSeries(); break;
+            case (u.Series_Type.AREA):
+                new_series = this.chart.addAreaSeries(); break;
+            case (u.Series_Type.HISTOGRAM):
+                new_series = this.chart.addHistogramSeries(); break;
+            case (u.Series_Type.BASELINE):
+                new_series = this.chart.addBaselineSeries(); break;
+            case (u.Series_Type.BAR):
+                new_series = this.chart.addBarSeries(); break;
+            case (u.Series_Type.CANDLESTICK):
+                new_series = this.chart.addCandlestickSeries(); break;
+            case (u.Series_Type.ROUNDED_CANDLE):
+                new_series = this.chart.addCustomSeries(new RoundedCandleSeries()); break;
+            default:
+                return // Whitespace
+        }
+        this.chart.removeSeries(this.main_series)
+        //@ts-ignore (Type Checking Done in Python, Data should already be updated if it needed to be)
+        new_series.setData(data)
+        this.main_series = new_series
+    }
+
     /**
      * Sets The Data of a Series to the data list given.
      * @param dtype The type of data Series given
      * @param data The List of Data. It is trusted that this data actually matches the dtype given
      * @param series The Data Series to be updated. Can be any of the base SeriesAPI types
      */
-    set_data(dtype: u.Series_Type, data: AnySeriesData[], series: AnySeries = this.main_series) {
+    set_main_data(data: AnySeriesData[]) {
         if (data.length === 0) {
             //Delete Present Data if none was given.
-            series.setData([])
+            this.main_series.setData([])
             return
-        } else if (series === undefined) {
+        } else if (this.main_series === undefined) {
             return
         }
 
-        let data_set: boolean = false
-        switch (series.seriesType()) {
-            case "Candlestick":
-                //The input dtype is used instead of the 'util.is*datatype*()' functions since
-                //the dtype input originates from pandas where the whole list is checked, not just the first element
-                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR || dtype == u.Series_Type.CANDLESTICK) {
-                    series.setData(data)
-                    data_set = true
-                }
-                break;
-            case "Bar":
-                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR) {
-                    series.setData(data)
-                    data_set = true
-                }
-                break;
-            case "Line":
-                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.LINE || u.Series_Type.HISTOGRAM) {
-                    series.setData(data)
-                    data_set = true
-                }
-                break;
-            case "Histogram":
-                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.HISTOGRAM || u.Series_Type.LINE) {
-                    series.setData(data)
-                    data_set = true
-                }
-                break;
-            case "Area":
-                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.AREA) {
-                    series.setData(data)
-                    data_set = true
-                }
-                break;
-            case "Baseline":
-                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.BASELINE) {
-                    series.setData(data)
-                    data_set = true
-                }
-                break;
-            default: //Custom Datatype
-                //Can't type check this so it will just blindly be applied. gl.
-                series.setData(data)
-                data_set = true
-        }
-        if (!data_set && dtype == u.Series_Type.WhitespaceData) {
-            series.setData(data)
-            data_set = true
-        }
-
-        if (!data_set)
-            console.warn("Failed to set data on Pane.set_data() function call.")
-        else
-            this.autoscale_time_axis()
+        //Type checking presumed to have been done on the python side
+        this.main_series.setData(data)
+        this.autoscale_time_axis()
     }
 
     /**
@@ -157,6 +133,5 @@ export class Pane {
 
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
-    set_main_series(series: AnySeries) { this.main_series = series }
     update_timescale_opts(newOpts: DeepPartial<HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
 }

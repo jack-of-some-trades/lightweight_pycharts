@@ -66,6 +66,21 @@ class SeriesType(IntEnum):
     # HLC_AREA = auto()
     Rounded_Candle = auto()
 
+    @staticmethod
+    def OHLC_Derived() -> tuple["SeriesType", ...]:
+        "Returns the Series Types that are derived from OHLC Data"
+        return (SeriesType.Bar, SeriesType.Candlestick, SeriesType.Rounded_Candle)
+
+    @staticmethod
+    def SValue_Derived() -> tuple["SeriesType", ...]:
+        "Returns the Series Types that are derived from Single-Value Data"
+        return (
+            SeriesType.Line,
+            SeriesType.Area,
+            SeriesType.Baseline,
+            SeriesType.Histogram,
+        )
+
     @property
     def params(self) -> set[str]:
         """

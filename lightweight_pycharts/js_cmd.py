@@ -5,7 +5,7 @@ from pandas import DataFrame
 
 from .util import dump
 from .orm import types
-from .orm.enum import layouts
+from .orm.enum import layouts, SeriesType
 from .orm.series import Series_DF
 
 # from .util import dump
@@ -44,6 +44,7 @@ class JS_CMD(IntEnum):
     SET_DATA = auto()
     SET_SYMBOL = auto()
     SET_TIMEFRAME = auto()
+    SET_SERIES_TYPE = auto()
 
     ADD_PANE = auto()
 
@@ -90,10 +91,11 @@ def set_layout(container_id: str, layout: layouts) -> str:
 
 
 def set_data(frame_id: str, data: Series_DF) -> str:
-    return f"""{frame_id}.set_data(
-        {data.type.value},
-        {data.json}
-    )"""
+    return f"{frame_id}.set_data({data.json})"
+
+
+def set_series_type(frame_id: str, series: SeriesType, data: Series_DF) -> str:
+    return f"{frame_id}.set_series_type({series},{data.json})"
 
 
 def set_symbol(frame_id: str, symbol: types.Symbol) -> str:

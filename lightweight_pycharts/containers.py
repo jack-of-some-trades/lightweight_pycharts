@@ -6,12 +6,15 @@ from typing import Optional, Any
 
 import pandas as pd
 
-from . import orm
 from . import util
+from .orm import layouts, Symbol, TF
+from .orm.enum import SeriesType
 from .orm.series import Series_DF
 from .js_cmd import JS_CMD
 
 logger = logging.getLogger("lightweight-pycharts")
+# Membership test is a false-positive error
+# pylint disable="unsupported-membership-test"
 
 
 class Container:
@@ -20,7 +23,7 @@ class Container:
     def __init__(self, js_id: str, fwd_queue: mp.Queue) -> None:
         self._fwd_queue = fwd_queue
         self.js_id = js_id
-        self.layout_type = orm.layouts.SINGLE
+        self.layout_type = layouts.SINGLE
         self.frame_ids = util.ID_List(f"{js_id}_f")
         self.frames: list[Frame] = []
 
@@ -36,7 +39,7 @@ class Container:
             new_id = self.frame_ids.generate()
             self.frames.append(Frame(new_id, self.js_id, self._fwd_queue))
 
-    def set_layout(self, layout: orm.layouts):
+    def set_layout(self, layout: layouts):
         "Set the layout of the Container creating Frames as needed"
         self._fwd_queue.put((JS_CMD.SET_LAYOUT, self.js_id, layout))
         self.layout_type = layout
@@ -74,9 +77,9 @@ class Frame:
         self.js_id = js_id
         self._fwd_queue = queue
         self.socket_open = False
-        self.symbol: Optional[orm.Symbol] = None
+        self.symbol: Optional[Symbol] = None
         self.main_data: Optional[Series_DF] = None
-        self.series_type = orm.enum.SeriesType.Candlestick
+        self.series_type = SeriesType.Candlestick
 
         self._fwd_queue.put((JS_CMD.ADD_FRAME, js_id, parent_id))
 
@@ -100,10 +103,46 @@ class Frame:
             _ids += pane.all_ids()
         return _ids
 
+    def change_series_type(self, series_type: SeriesType):
+        "Change the Series Type of the main dataset"
+        # Massage Input
+        if series_type == SeriesType.WhitespaceData:
+            return
+        if series_type == SeriesType.OHLC_Data:
+            series_type = SeriesType.Candlestick
+        if series_type == SeriesType.SingleValueData:
+            series_type = SeriesType.Line
+        if self.series_type == series_type or self.main_data is None:
+            return
+
+        # Check that The Current Data Supports the Change
+        if series_type in SeriesType.OHLC_Derived():
+            if not self.main_data.is_ohlc:
+                self.main_data.convert()
+                if not self.main_data.is_ohlc:
+                    logger.warning(
+                        "Series Change Failed, Main_Data had no 'close' or 'value'"
+                    )
+                    return
+        else:  # series_type in SeriesType.SValue_Derived():
+            if not self.main_data.is_svalue:
+                self.main_data.convert()
+                if not self.main_data.is_svalue:
+                    logger.warning(
+                        "Series Change Failed, Main_Data had no 'close' or 'value'"
+                    )
+                    return
+
+        # Set.
+        self.series_type = series_type
+        self._fwd_queue.put(
+            (JS_CMD.SET_SERIES_TYPE, self.js_id, self.series_type, self.main_data)
+        )
+
     def set_data(
         self,
         data: pd.DataFrame | list[dict[str, Any]],
-        symbol: Optional[orm.Symbol] = None,
+        symbol: Optional[Symbol] = None,
     ):
         "Sets the main source of data for this Frame"
         # Update the Symbol Regardless if data is good or not
@@ -116,10 +155,10 @@ class Frame:
         self.main_data = Series_DF(data)
 
         # Clear and Return on bad data.
-        if self.main_data.tf == orm.TF(1, "E"):
+        if self.main_data.tf == TF(1, "E"):
             self.clear_data()
             return
-        if self.main_data.type == orm.enum.SeriesType.WhitespaceData:
+        if self.main_data.type == SeriesType.WhitespaceData:
             self.clear_data(timeframe=self.main_data.tf)
             return
 
@@ -133,7 +172,7 @@ class Frame:
     # e.g. If the current symbol doesn't exist and no data exists at the current timeframe,
     # then the frame would be in a locked state if it only ever updated when setting valid data.
     def clear_data(
-        self, timeframe: Optional[orm.TF] = None, symbol: Optional[orm.Symbol] = None
+        self, timeframe: Optional[TF] = None, symbol: Optional[Symbol] = None
     ):
         """Clears the data in memory and on the screen and, if not none,
         updates the desired timeframe and symbol for the Frame"""

@@ -42,6 +42,7 @@ async def main():
 
     df = pd.read_csv("examples/data/ohlcv.csv")
     window.containers[0].frames[0].set_data(df)
+    window.containers[0].set_layout(lwc.layouts.TRIPLE_VERT_LEFT)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

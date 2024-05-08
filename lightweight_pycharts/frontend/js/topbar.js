@@ -243,7 +243,6 @@ export class timeframe_selector {
             window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
     select(data) {
-        console.log(window.active_frame.symbol, data.multiplier, data.period);
         if (window.active_frame)
             window.api.data_request(window.active_container.id, window.active_frame.id, window.active_frame.symbol, data.multiplier, data.period);
         else
