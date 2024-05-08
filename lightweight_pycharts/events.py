@@ -1,22 +1,22 @@
 """ Utility functions and objects that are used across the library """
 
 from asyncio import iscoroutinefunction, create_task
-from typing import Protocol, Self, TypeAlias, Callable, Optional
+from typing import Literal, Protocol, Self, TypeAlias, Callable, Optional, Any
 
-from .orm import enum
-from .orm.types import TF
-from .containers import Container, Frame
-from lightweight_pycharts.orm import types
+from pandas import DataFrame
+
+from lightweight_pycharts import containers
+
+from .orm import types
 
 
 class Events:
     "A Super Object that is a Collection of Emitters"
 
-    def __init__(self, symbol_search_func: Callable):
-        self.tf_change = Emitter[TimeFrame_Protocol]()
-        self.layout_change = Emitter[Layout_Protocol]()
-        self.symbol_search = Emitter[Symbol_Search_Protocol](symbol_search_func)
-        self.symbol_select = Emitter[Symbol_Select_Protocol]()
+    def __init__(self):
+        self.symbol_search = Emitter[Symbol_Search_Protocol]()
+        self.data_request = Emitter[Data_Request_Protocol]()
+        self.socket_switch = Emitter[Socket_Switch_Protocol]()
 
 
 # region --------------------------------------- Python Event Protocol Definitions --------------------------------------- #
@@ -30,81 +30,75 @@ class Command_async(Protocol):
     async def __call__(self, cmd: str) -> None: ...
 
 
-# Timeframe Change Request Protocol
-class Timeframe_sync_1(Protocol):
-    def __call__(self, timeframe: TF, container: Container, frame: Frame) -> None: ...
-class Timeframe_sync_2(Protocol):
-    def __call__(self, timeframe: TF, **kwargs) -> None: ...
-class Timeframe_async_1(Protocol):
-    async def __call__(
-        self, timeframe: TF, container: Container, frame: Frame
-    ) -> None: ...
-class Timeframe_async_2(Protocol):
-    async def __call__(self, timeframe: TF, **kwargs) -> None: ...
-
-
-# Layout Change Request Protocol
-class Layout_sync(Protocol):
-    def __call__(self, layout: enum.layouts, container: Container) -> None: ...
-class Layout_async(Protocol):
-    async def __call__(self, layout: enum.layouts, container: Container) -> None: ...
+class Data_request_sync(Protocol):
+    def __call__(
+        self, symbol: types.Symbol, tf: types.TF
+    ) -> DataFrame | list[dict[str, Any]] | None: ...
+class Data_request_async(Protocol):
+    def __call__(
+        self, symbol: types.Symbol, tf: types.TF
+    ) -> DataFrame | list[dict[str, Any]] | None: ...
 
 
 # Symbol Search Request Protocol
 class Symbol_search_sync_1(Protocol):
-    def __call__(self, symbol: str, **kwargs) -> Optional[list[types.SymbolItem]]: ...
+    def __call__(self, ticker: str, **kwargs) -> Optional[list[types.Symbol]]: ...
 class Symbol_search_sync_2(Protocol):
     def __call__(
         self,
-        symbol: str,
+        ticker: str,
         confirmed: bool,
-        types: list[str],
+        sec_types: list[str],
         brokers: list[str],
         exchanges: list[str],
-    ) -> Optional[list[types.SymbolItem]]: ...
+    ) -> Optional[list[types.Symbol]]: ...
 class Symbol_search_async_1(Protocol):
-    async def __call__(
-        self, symbol: str, **kwargs
-    ) -> Optional[list[types.SymbolItem]]: ...
+    async def __call__(self, ticker: str, **kwargs) -> Optional[list[types.Symbol]]: ...
 class Symbol_search_async_2(Protocol):
     async def __call__(
         self,
-        symbol: str,
+        ticker: str,
         confirmed: bool,
-        types: list[str],
+        sec_types: list[str],
         brokers: list[str],
         exchanges: list[str],
-    ) -> Optional[list[types.SymbolItem]]: ...
+    ) -> Optional[list[types.Symbol]]: ...
 
 
-class Symbol_select_sync(Protocol):
-    def __call__(self, selection: types.SymbolItem) -> None: ...
-class Symbol_select_async(Protocol):
-    async def __call__(self, selection: types.SymbolItem) -> None: ...
+class Socket_switch_sync(Protocol):
+    def __call__(
+        self,
+        state: Literal["open", "close"],
+        symbol: types.Symbol,
+        frame: containers.Frame,
+    ) -> None: ...
+class Socket_switch_async(Protocol):
+    async def __call__(
+        self,
+        state: Literal["open", "close"],
+        symbol: types.Symbol,
+        frame: containers.Frame,
+    ) -> None: ...
 
 
 # Type Aliases to congregate various different Protocol Signatures into Groups
 Command_Protocol: TypeAlias = Command_sync | Command_async
-TimeFrame_Protocol: TypeAlias = (
-    Timeframe_sync_1 | Timeframe_sync_2 | Timeframe_async_1 | Timeframe_async_2
-)
-Layout_Protocol: TypeAlias = Layout_sync | Layout_async
 Symbol_Search_Protocol: TypeAlias = (
     Symbol_search_sync_1
     | Symbol_search_sync_2
     | Symbol_search_async_1
     | Symbol_search_async_2
 )
-Symbol_Select_Protocol: TypeAlias = Symbol_select_sync | Symbol_select_async
+Data_Request_Protocol: TypeAlias = Data_request_sync | Data_request_async
+Socket_Switch_Protocol: TypeAlias = Socket_switch_sync | Socket_switch_async
 
 # endregion
 
 Emitter_Protocols: TypeAlias = (
-    TimeFrame_Protocol
-    | Layout_Protocol
-    | Command_Protocol
+    Command_Protocol
     | Symbol_Search_Protocol
-    | Symbol_Select_Protocol
+    | Data_Request_Protocol
+    | Socket_Switch_Protocol
 )
 
 
@@ -124,33 +118,52 @@ class Emitter[T: Emitter_Protocols](list[T]):
         - Timeframe_Protocol: ( arg1:TF, ) => {None}
     """
 
-    def __init__(self, respose_func: Optional[Callable] = None):
+    def __init__(self, response: Optional[Callable] = None):
         super().__init__()
-        self._response = respose_func
+        self.response = response
 
     def __iadd__(self, func: T) -> Self:
         if func not in self:
+            self.clear()
             self.append(func)
         return self
 
     def __isub__(self, func: T) -> Self:
-        self.remove(func)
+        if func in self:
+            self.remove(func)
         return self
 
-    def __call__(self, *args, **kwargs):
-        for call in iter(self):  # Dispatch all Async requests
-            if iscoroutinefunction(call):
-                create_task(self._async_response_(call, *args, **kwargs))
+    # rsp_kwargs are set when the event it emitted, They are arguments
+    # passed directly to the response function of the emitter.
+    # Needed so Multiple Emits can safely be done at once.
+    def __call__(self, *_, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs):
+        if len(self) == 0:
+            return
+        if iscoroutinefunction(call := self[0]):
+            # Run Self, Asynchronously
+            create_task(
+                self._async_response_wrap_(call, **kwargs, rsp_kwargs=rsp_kwargs)
+            )
+        else:
+            # Run Self, Synchronously
+            rsp = call(**kwargs)
+            if self.response is None:
+                return
 
-        for call in iter(self):  # Then Execute all Blocking functions
-            if not iscoroutinefunction(call):
-                self._response_(call(*args, **kwargs))
+            self.response(  # only unpack rsp tuples, not lists
+                *rsp if isinstance(rsp, tuple) else (rsp,),
+                **rsp_kwargs if rsp_kwargs is not None else {},
+            )
 
-    def _response_(self, *args):
-        if self._response and len(args) > 0:
-            self._response(*args)
+    async def _async_response_wrap_(
+        self, call, *_, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs
+    ):
+        "Simple Wrapper to 'await' the initial 'call' function."
+        rsp = await call(**kwargs)
+        if self.response is None:
+            return
 
-    async def _async_response_(self, call, *args, **kwargs):
-        rsp = await call(*args, **kwargs)
-        if self._response and rsp is not None:
-            self._response(*rsp)
+        self.response(
+            *rsp if isinstance(rsp, tuple) else rsp,  # only unpack tuples, not lists
+            **rsp_kwargs if rsp_kwargs is not None else {},
+        )

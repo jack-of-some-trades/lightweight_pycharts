@@ -123,11 +123,11 @@
     <path d="M10 4h1v3.5h-1zm0 16.5h1V24h-1z"></path>
 </svg>
 
-<svg id="candle_rounded" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 32 32" width="28" height="28" fill="currentColor">
-    <path d="M 17.563 5.584 L 18.959 5.584 L 18.959 9.717 L 17.563 9.717 L 17.563 5.584 Z M 17.563 17.978 L 18.959 17.978 L 18.959 22.109 L 17.563 22.109 L 17.563 17.978 Z"/>
-    <path d="M 8.566 2.043 L 9.963 2.043 L 9.963 6.175 L 8.566 6.175 L 8.566 2.043 Z M 8.566 21.52 L 9.963 21.52 L 9.963 25.652 L 8.566 25.652 L 8.566 21.52 Z"/>
-    <rect x="6.47" y="5.746" width="5.517" height="15.769" rx="3" ry="3" style="fill: none; stroke: currentColor; stroke-width: 1.5;"/>
-    <rect x="15.632" y="9.927" width="5.198" height="7.84" rx="3" ry="3" style="fill: none; stroke: currentColor; stroke-width: 1.5;"/>
+<svg id="candle_rounded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
+  <rect x="6.5" y="7" width="6" height="14" rx="3" ry="3" style="fill: none; stroke: currentColor;"/>
+  <rect x="15.5" y="10" width="6" height="8" rx="3" ry="3" style="fill: none; stroke: currentColor;"/>
+  <path d="M 18 7 L 19 7 L 19 10 L 18 10 L 18 7 Z M 18 18 L 19 18 L 19 21 L 18 21 L 18 18 Z"/>
+  <path d="M 9 4 L 10 4 L 10 7 L 9 7 L 9 4 Z M 9 21 L 10 21 L 10 24 L 9 24 L 9 21 Z"/>
 </svg>
 
 <svg id="candle_bar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">

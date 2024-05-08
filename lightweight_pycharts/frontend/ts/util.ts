@@ -40,6 +40,7 @@ export enum Container_Layouts {
     QUAD_TOP,
     QUAD_BOTTOM
 }
+
 export function num_frames(layout: Container_Layouts | null): number {
     switch (layout) {
         case (Container_Layouts.SINGLE): return 1
@@ -83,39 +84,56 @@ export const layout_icon_map: { [key: number]: icons; } = {
     16: icons.layout_quad_bottom
 }
 
-export enum Series_Types {
-    BAR,
-    CANDLESTICK,
+//This must match the orm.enum.SeriesType.
+export enum Series_Type {
+    WhitespaceData,
+
+    SingleValueData,
     LINE,
     AREA,
     HISTOGRAM,
     BASELINE,
 
-    HLC_AREA,
+    OHLC,
+    BAR,
+    CANDLESTICK,
+
+    // HLC_AREA,
     ROUNDED_CANDLE
 }
+
 export const series_icon_map: { [key: number]: icons; } = {
-    0: icons.candle_bar,
-    1: icons.candle_regular,
+    0: icons.close_small,   //Whitespace Data -> No Icon
+
+    1: icons.close_small,   //Single Value Data -> No Icon
     2: icons.series_line,
     3: icons.series_area,
     4: icons.series_histogram,
     5: icons.series_baseline,
 
-    6: icons.series_step_line,
-    7: icons.candle_rounded,
+    6: icons.close_small,   //OHLC Data -> No Icon
+    7: icons.candle_bar,
+    8: icons.candle_regular,
+
+    // 9: icons.series_step_line,
+    9: icons.candle_rounded,
 }
 
 export const series_label_map: { [key: number]: string; } = {
-    0: "Bar",
-    1: "Candlestick",
+    0: "Whitespace Data",
+
+    1: "Single Value Data",
     2: "Line",
     3: "Area",
     4: "Histogram",
     5: "Baseline",
 
-    6: "HLC Area",
-    7: "Rounded Candlestick",
+    6: "OHLC Data",
+    7: "Bar",
+    8: "Candlestick",
+
+    // 9: "HLC Area",
+    9: "Rounded Candlestick",
 }
 // #endregion
 
@@ -146,6 +164,17 @@ export interface source {
 }
 
 /**
+ * Represents information about a specific symbol
+ */
+export interface symbol_item {
+    ticker: string
+    name?: string
+    broker?: string
+    sec_type?: Series_Type
+    exchange?: string
+}
+
+/**
  * interface to wrap around a Series Data type with additional information
  */
 export interface series_id {
@@ -163,11 +192,11 @@ export const interval_map = { "s": "Second", "m": "Minute", "h": "Hour", "D": "D
  */
 export class tf {
     multiplier: number
-    interval: interval
+    period: interval
 
-    constructor(mult: number, interval: interval) {
+    constructor(mult: number, period: interval) {
         this.multiplier = Math.floor(mult)
-        this.interval = interval
+        this.period = period
     }
 
     /**
@@ -202,10 +231,10 @@ export class tf {
         return new tf(-1, 'E') //Signal an error
     }
 
-    toSectionLabel(): string { return interval_map[this.interval] }
-    toString(): string { return `${this.multiplier}${this.interval}` }
-    toLabel(): string { return `${this.multiplier} ${interval_map[this.interval]}${(this.multiplier !== 1) ? 's' : ''}` }
-    toValue(): number { return this.multiplier * interval_val_map[this.interval] }
+    toSectionLabel(): string { return interval_map[this.period] }
+    toString(): string { return `${this.multiplier}${this.period}` }
+    toLabel(): string { return `${this.multiplier} ${interval_map[this.period]}${(this.multiplier !== 1) ? 's' : ''}` }
+    toValue(): number { return this.multiplier * interval_val_map[this.period] }
 }
 
 //#endregion

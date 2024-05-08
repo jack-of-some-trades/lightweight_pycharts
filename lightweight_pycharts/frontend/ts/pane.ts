@@ -1,5 +1,5 @@
 import { Legend } from "./legend.js";
-import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
+import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 
@@ -55,7 +55,7 @@ export class Pane {
      * @param data The List of Data. It is trusted that this data actually matches the dtype given
      * @param series The Data Series to be updated. Can be any of the base SeriesAPI types
      */
-    set_data(dtype: string, data: AnySeriesData[], series: AnySeries = this.main_series) {
+    set_data(dtype: u.Series_Type, data: AnySeriesData[], series: AnySeries = this.main_series) {
         if (data.length === 0) {
             //Delete Present Data if none was given.
             series.setData([])
@@ -67,39 +67,39 @@ export class Pane {
         let data_set: boolean = false
         switch (series.seriesType()) {
             case "Candlestick":
-                //The input dtype is used instead of the 'util.is*dataype*()' functions since
+                //The input dtype is used instead of the 'util.is*datatype*()' functions since
                 //the dtype input originates from pandas where the whole list is checked, not just the first element
-                if (dtype == 'OHLC' || dtype == 'Bar' || dtype == 'Candlestick') {
+                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR || dtype == u.Series_Type.CANDLESTICK) {
                     series.setData(data)
                     data_set = true
                 }
                 break;
             case "Bar":
-                if (dtype == 'OHLC' || dtype == 'Bar') {
+                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR) {
                     series.setData(data)
                     data_set = true
                 }
                 break;
             case "Line":
-                if (dtype == 'SingleValueData' || dtype == 'Line' || dtype == 'LineorHistogram') {
+                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.LINE || u.Series_Type.HISTOGRAM) {
                     series.setData(data)
                     data_set = true
                 }
                 break;
             case "Histogram":
-                if (dtype == 'SingleValueData' || dtype == 'Histogram' || dtype == 'LineorHistogram') {
+                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.HISTOGRAM || u.Series_Type.LINE) {
                     series.setData(data)
                     data_set = true
                 }
                 break;
             case "Area":
-                if (dtype == 'SingleValueData' || dtype == 'Area') {
+                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.AREA) {
                     series.setData(data)
                     data_set = true
                 }
                 break;
             case "Baseline":
-                if (dtype == 'SingleValueData' || dtype == 'Baseline') {
+                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.BASELINE) {
                     series.setData(data)
                     data_set = true
                 }
@@ -109,17 +109,15 @@ export class Pane {
                 series.setData(data)
                 data_set = true
         }
-        if (!data_set && dtype == 'WhitespaceData') {
+        if (!data_set && dtype == u.Series_Type.WhitespaceData) {
             series.setData(data)
             data_set = true
         }
 
         if (!data_set)
             console.warn("Failed to set data on Pane.set_data() function call.")
-        else {
-            this.assign_active_pane()
+        else
             this.autoscale_time_axis()
-        }
     }
 
     /**
@@ -156,7 +154,9 @@ export class Pane {
         this.main_series.attachPrimitive(trend);
     }
 
+
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
     set_main_series(series: AnySeries) { this.main_series = series }
+    update_timescale_opts(newOpts: DeepPartial<HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
 }

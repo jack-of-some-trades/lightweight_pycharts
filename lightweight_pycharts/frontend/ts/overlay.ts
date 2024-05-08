@@ -1,4 +1,5 @@
 import { icon_manager, icons } from "./icons.js"
+import { symbol_item } from "./util.js"
 
 /**
  * Interface used when creating selectable menus
@@ -23,14 +24,6 @@ export interface switcher_item {
     separator?: boolean,
     separator_vis?: boolean,
     separator_row?: boolean
-}
-
-export interface symbol_item {
-    symbol: string
-    exchange?: string
-    broker?: string
-    type?: string
-    name?: string
 }
 
 export enum menu_location {
@@ -333,14 +326,23 @@ export class overlay_manager {
             list_item.classList.add('symbol_list_item')
             list_item.innerHTML = symbol_search_item_template;
 
-            (list_item.querySelector('#ticker_symbol') as HTMLTableCellElement).innerText = item.symbol;
+            (list_item.querySelector('#ticker_symbol') as HTMLTableCellElement).innerText = item.ticker;
             (list_item.querySelector('#ticker_name') as HTMLTableCellElement).innerText = item.name ?? "-";
             (list_item.querySelector('#ticker_exchange') as HTMLTableCellElement).innerText = item.exchange ?? "-";
-            (list_item.querySelector('#ticker_type') as HTMLTableCellElement).innerText = item.type ?? "-";
+            (list_item.querySelector('#ticker_type') as HTMLTableCellElement).innerText = item.sec_type?.toString() ?? "-";
             (list_item.querySelector('#ticker_broker') as HTMLTableCellElement).innerText = item.broker ?? "-";
 
             list_item.addEventListener('click', () => {
-                window.api.symbol_select(item)
+                if (window.active_frame)
+                    window.api.data_request(
+                        window.active_container.id,
+                        window.active_frame.id,
+                        item,
+                        window.active_frame.timeframe.multiplier,
+                        window.active_frame.timeframe.period
+                    )
+                else
+                    console.warn("Data Request Called, but Active_frame is null")
                 this.hide_all_menus()
             })
 

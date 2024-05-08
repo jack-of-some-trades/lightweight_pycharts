@@ -54,8 +54,9 @@ export class Container {
      * Update Global 'active_frame' reference to this instance. 
      */
     assign_active_container() {
-        if (window.active_container)
+        if (window.active_container) {
             window.active_container.div.removeAttribute('active')
+        }
 
         window.active_container = this
         window.active_container.div.setAttribute('active', '')

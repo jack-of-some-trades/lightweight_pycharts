@@ -1,13 +1,12 @@
 import { icon_manager, icons } from "./icons.js"
 import { menu_location, switcher_item } from "./overlay.js"
-import { Container_Layouts, LAYOUT_DIM_TOP, Series_Types, Wrapper_Divs, interval, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js"
+import { Container_Layouts, LAYOUT_DIM_TOP, Series_Type, Wrapper_Divs, interval, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js"
 import { Wrapper } from "./wrapper.js"
 
 /**
  * Class to create and manage the TopBar of the application
  */
 export class topbar {
-    private parent: Wrapper
     private div: HTMLDivElement
 
     private left_div: HTMLDivElement | undefined
@@ -17,7 +16,6 @@ export class topbar {
     series_select: series_selector
 
     constructor(parent: Wrapper, tf: timeframe_selector, layout: layout_selector, series: series_selector) {
-        this.parent = parent
         this.div = parent.get_div(Wrapper_Divs.TOP_BAR)
 
         this.tf_select = tf
@@ -72,8 +70,8 @@ export class topbar {
         search_button.style.padding = '4px'
         let search_text = document.createElement('div')
         search_text.classList.add('topbar', 'icon_text')
+        search_text.id = 'search_text'
         search_text.innerHTML = 'LWPC'
-        search_text.style.marginRight = '4px'
 
         search_button.appendChild(icon_manager.get_svg(icons.menu_search, ['icon_v_margin', 'icon_h_margin']))
         search_button.appendChild(search_text)
@@ -113,6 +111,12 @@ export class topbar {
         search_div.addEventListener('mousedown', (event) => { event.stopPropagation() })
 
         return search_div
+    }
+
+    set_symbol_search_text(txt: string) {
+        let txt_div = this.div.querySelector('#search_text')
+        if (txt_div)
+            txt_div.innerHTML = txt
     }
 
     /**
@@ -315,7 +319,7 @@ export class timeframe_selector {
         wrapper.setAttribute('data-tf-value', data.toValue().toString())
         wrapper.classList.add('button_text') //Adding this after makes a blank element 0 width
 
-        if (data.multiplier === 1 && ['D', 'W', 'M', 'Y'].includes(data.interval)) {
+        if (data.multiplier === 1 && ['D', 'W', 'M', 'Y'].includes(data.period)) {
             wrapper.innerHTML = data.toString().replace('1', '') //Ignore the '1' on timeframes Day and up
         } else
             wrapper.innerHTML = data.toString()
@@ -341,7 +345,16 @@ export class timeframe_selector {
      * taken effect on a response from the python side to make sure everything stays synced.
      */
     private select(data: tf) {
-        window.api.timeframe_switch(window.active_container.id, window.active_frame.id, data.multiplier, data.interval as string);
+        if (window.active_frame)
+            window.api.data_request(
+                window.active_container.id,
+                window.active_frame.id,
+                window.active_frame.symbol,
+                data.multiplier,
+                data.period
+            )
+        else
+            console.warn('Cannot Set Series Type, No Active_Frame.')
     }
 
     /**
@@ -603,7 +616,12 @@ export class layout_selector {
      * Action to preform on a layout selection
      * Topbar is not updated until response from python is executed to ensure JS & Python are synced.
      */
-    private select(data: Container_Layouts) { window.api.layout_change(window.active_container.id, data) }
+    private select(data: Container_Layouts) {
+        if (window.active_container)
+            window.api.layout_change(window.active_container.id, data)
+        else
+            console.warn('Cannot Set Layout, No Active_Container.')
+    }
 
     /**
      * Adds a favorite Layout to the window topbar and the json representation
@@ -724,7 +742,7 @@ export class series_selector {
      * Update The topbar series switcher to indicate the given series was selected
      * Can be called from global scope through 'wrapper.top_bar.tf_select.update_topbar()'
      */
-    update_topbar_icon(data: Series_Types) {
+    update_topbar_icon(data: Series_Type) {
         let curr_series_value = data.valueOf()
         let found = false
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
@@ -768,7 +786,7 @@ export class series_selector {
             let items: switcher_item[] = []
             let favs = json.favorites
 
-            let populate_items = (series: Series_Types[]) => {
+            let populate_items = (series: Series_Type[]) => {
                 series.forEach(type => {
                     items.push({
                         label: series_label_map[type],
@@ -783,14 +801,14 @@ export class series_selector {
             populate_items = populate_items.bind(this)
 
             populate_items([
-                Series_Types.BAR,
-                Series_Types.CANDLESTICK,
-                Series_Types.ROUNDED_CANDLE,
-                Series_Types.LINE,
-                Series_Types.AREA,
-                Series_Types.HISTOGRAM,
-                Series_Types.BASELINE,
-                Series_Types.HLC_AREA,
+                Series_Type.BAR,
+                Series_Type.CANDLESTICK,
+                Series_Type.ROUNDED_CANDLE,
+                Series_Type.LINE,
+                Series_Type.AREA,
+                Series_Type.HISTOGRAM,
+                Series_Type.BASELINE,
+                // Series_Type.HLC_AREA,
             ])
 
 
@@ -814,7 +832,7 @@ export class series_selector {
     /**
      * Make a Generic button with text representing the given series.
      */
-    private make_topbar_button(data: Series_Types | null, pressable: boolean = true): HTMLDivElement {
+    private make_topbar_button(data: Series_Type | null, pressable: boolean = true): HTMLDivElement {
         let wrapper = document.createElement('div')
         wrapper.classList.add('topbar')
         if (data === null) return wrapper
@@ -840,13 +858,22 @@ export class series_selector {
     /**
      * Action to preform on a series selection
      */
-    private select(data: Series_Types) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data) }
+    private select(data: Series_Type) {
+        if (window.active_frame)
+            window.api.series_change(
+                window.active_container.id,
+                window.active_frame.id,
+                data
+            )
+        else
+            console.warn('Cannot Set Series Type, No Active_Frame.')
+    }
 
     /**
      * Adds a favorite Layout to the window topbar and the json representation
      * @param data Timeframe to remove
      */
-    private add_favorite(data: Series_Types) {
+    private add_favorite(data: Series_Type) {
         let curr_series_value = data.valueOf()
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
         for (let i = favorite_divs.length - 1; i >= 0; i--) {
@@ -892,7 +919,7 @@ export class series_selector {
      * Removes a favorite series from the window's topbar and the json representation
      * @param data Timeframe to remove
      */
-    private remove_favorite(data: Series_Types) {
+    private remove_favorite(data: Series_Type) {
         let curr_series_value = data.valueOf()
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
 
@@ -925,7 +952,7 @@ export class series_selector {
 
 
 interface series_json {
-    favorites: Series_Types[]
+    favorites: Series_Type[]
 }
 
 interface layout_json {
@@ -947,7 +974,7 @@ interface timeframe_json {
 
 const default_series_select_opts: series_json = {
     favorites: [
-        Series_Types.ROUNDED_CANDLE
+        Series_Type.ROUNDED_CANDLE
     ]
 }
 

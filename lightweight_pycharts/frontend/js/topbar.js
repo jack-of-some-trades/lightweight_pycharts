@@ -1,9 +1,8 @@
 import { icon_manager, icons } from "./icons.js";
 import { menu_location } from "./overlay.js";
-import { Container_Layouts, LAYOUT_DIM_TOP, Series_Types, Wrapper_Divs, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js";
+import { Container_Layouts, LAYOUT_DIM_TOP, Series_Type, Wrapper_Divs, layout_icon_map, series_icon_map, series_label_map, tf } from "./util.js";
 export class topbar {
     constructor(parent, tf, layout, series) {
-        this.parent = parent;
         this.div = parent.get_div(Wrapper_Divs.TOP_BAR);
         this.tf_select = tf;
         this.layout_select = layout;
@@ -40,8 +39,8 @@ export class topbar {
         search_button.style.padding = '4px';
         let search_text = document.createElement('div');
         search_text.classList.add('topbar', 'icon_text');
+        search_text.id = 'search_text';
         search_text.innerHTML = 'LWPC';
-        search_text.style.marginRight = '4px';
         search_button.appendChild(icon_manager.get_svg(icons.menu_search, ['icon_v_margin', 'icon_h_margin']));
         search_button.appendChild(search_text);
         search_div.appendChild(search_button);
@@ -76,6 +75,11 @@ export class topbar {
         });
         search_div.addEventListener('mousedown', (event) => { event.stopPropagation(); });
         return search_div;
+    }
+    set_symbol_search_text(txt) {
+        let txt_div = this.div.querySelector('#search_text');
+        if (txt_div)
+            txt_div.innerHTML = txt;
     }
     indicators_box() {
         let indicator_div = document.createElement('div');
@@ -220,7 +224,7 @@ export class timeframe_selector {
             return wrapper;
         wrapper.setAttribute('data-tf-value', data.toValue().toString());
         wrapper.classList.add('button_text');
-        if (data.multiplier === 1 && ['D', 'W', 'M', 'Y'].includes(data.interval)) {
+        if (data.multiplier === 1 && ['D', 'W', 'M', 'Y'].includes(data.period)) {
             wrapper.innerHTML = data.toString().replace('1', '');
         }
         else
@@ -239,7 +243,11 @@ export class timeframe_selector {
             window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
     select(data) {
-        window.api.timeframe_switch(window.active_container.id, window.active_frame.id, data.multiplier, data.interval);
+        console.log(window.active_frame.symbol, data.multiplier, data.period);
+        if (window.active_frame)
+            window.api.data_request(window.active_container.id, window.active_frame.id, window.active_frame.symbol, data.multiplier, data.period);
+        else
+            console.warn('Cannot Set Series Type, No Active_Frame.');
     }
     add_favorite(data) {
         var _a, _b, _c, _d;
@@ -428,7 +436,12 @@ export class layout_selector {
         if (this.menu_button && this.overlay_menu_div)
             window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
-    select(data) { window.api.layout_change(window.active_container.id, data); }
+    select(data) {
+        if (window.active_container)
+            window.api.layout_change(window.active_container.id, data);
+        else
+            console.warn('Cannot Set Layout, No Active_Container.');
+    }
     add_favorite(data) {
         var _a, _b, _c, _d;
         let curr_layout_value = data.valueOf();
@@ -550,14 +563,13 @@ export class series_selector {
             };
             populate_items = populate_items.bind(this);
             populate_items([
-                Series_Types.BAR,
-                Series_Types.CANDLESTICK,
-                Series_Types.ROUNDED_CANDLE,
-                Series_Types.LINE,
-                Series_Types.AREA,
-                Series_Types.HISTOGRAM,
-                Series_Types.BASELINE,
-                Series_Types.HLC_AREA,
+                Series_Type.BAR,
+                Series_Type.CANDLESTICK,
+                Series_Type.ROUNDED_CANDLE,
+                Series_Type.LINE,
+                Series_Type.AREA,
+                Series_Type.HISTOGRAM,
+                Series_Type.BASELINE,
             ]);
             let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series');
             for (let i = 0; i < favorite_divs.length;) {
@@ -595,7 +607,12 @@ export class series_selector {
         if (this.menu_button && this.overlay_menu_div)
             window.overlay_manager.menu_position_func(menu_location.BOTTOM_RIGHT, this.overlay_menu_div, this.menu_button)();
     }
-    select(data) { console.log(`selected ${data.toString()}`); this.update_topbar_icon(data); }
+    select(data) {
+        if (window.active_frame)
+            window.api.series_change(window.active_container.id, window.active_frame.id, data);
+        else
+            console.warn('Cannot Set Series Type, No Active_Frame.');
+    }
     add_favorite(data) {
         var _a, _b, _c, _d;
         let curr_series_value = data.valueOf();
@@ -655,7 +672,7 @@ export class series_selector {
 }
 const default_series_select_opts = {
     favorites: [
-        Series_Types.ROUNDED_CANDLE
+        Series_Type.ROUNDED_CANDLE
     ]
 };
 const default_layout_select_opts = {

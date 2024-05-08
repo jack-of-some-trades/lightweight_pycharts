@@ -25,8 +25,9 @@ export class Container {
         this.div.remove();
     }
     assign_active_container() {
-        if (window.active_container)
+        if (window.active_container) {
             window.active_container.div.removeAttribute('active');
+        }
         window.active_container = this;
         window.active_container.div.setAttribute('active', '');
         window.titlebar.tab_manager.setCurrentTab(this.tab_div);

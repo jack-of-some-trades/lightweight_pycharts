@@ -454,6 +454,11 @@ body {
     background-color: var(--icon-hover-color);
 }
 
+#search_text {
+    margin-right: 4px;
+    width: 60px;
+}
+
 
 /* #endregion */
 

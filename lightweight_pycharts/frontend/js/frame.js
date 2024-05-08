@@ -1,12 +1,14 @@
 import { Pane } from "./pane.js";
+import { Series_Type, tf } from "./util.js";
 export class Frame {
     constructor(id, div, tab_div) {
-        this.symbol = 'LWPC';
-        this.timeframe = null;
         this.panes = [];
         this.id = id;
         this.div = div;
         this.tab_div = tab_div;
+        this.symbol = { ticker: 'LWPC' };
+        this.timeframe = new tf(1, 'D');
+        this.series_type = Series_Type.CANDLESTICK;
         this.div.addEventListener('mousedown', this.assign_active_frame.bind(this));
     }
     assign_active_frame() {
@@ -14,9 +16,12 @@ export class Frame {
             window.active_frame.div.removeAttribute('active');
         window.active_frame = this;
         window.active_frame.div.setAttribute('active', '');
-        window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol });
         if (this.panes[0])
             this.panes[0].assign_active_pane();
+        window.topbar.series_select.update_topbar_icon(this.series_type);
+        window.topbar.tf_select.update_topbar_icon(this.timeframe);
+        window.topbar.set_symbol_search_text(this.symbol.ticker);
+        window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker });
     }
     reassign_div(div) {
         this.div = div;
@@ -24,6 +29,40 @@ export class Frame {
             this.div.appendChild(pane.div);
         });
         this.div.addEventListener('mousedown', this.assign_active_frame.bind(this));
+    }
+    set_data(series_type, data) {
+        this.series_type = series_type;
+        if (this.panes[0])
+            this.panes[0].set_data(series_type, data);
+        if (this == window.active_frame) {
+            window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker });
+            window.topbar.tf_select.update_topbar_icon(this.timeframe);
+        }
+    }
+    set_symbol(new_symbol) {
+        this.symbol = new_symbol;
+        window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker });
+        if (this == window.active_frame)
+            window.topbar.set_symbol_search_text(this.symbol.ticker);
+    }
+    set_timeframe(new_tf_str) {
+        this.timeframe = tf.from_str(new_tf_str);
+        if (this == window.active_frame)
+            window.topbar.tf_select.update_topbar_icon(this.timeframe);
+        let newOpts = { timeVisible: false, secondsVisible: false };
+        if (this.timeframe.period === 's') {
+            newOpts.timeVisible = true;
+            newOpts.secondsVisible = true;
+        }
+        else if (this.timeframe.period === 'm' || this.timeframe.period === 'h') {
+            newOpts.timeVisible = true;
+        }
+        this.panes.forEach(pane => { pane.update_timescale_opts(newOpts); });
+    }
+    set_series_type(new_type) {
+        this.series_type = new_type;
+        if (this == window.active_frame)
+            window.topbar.series_select.update_topbar_icon(this.series_type);
     }
     add_pane(id = '') {
         let child_div = document.createElement('div');
@@ -44,6 +83,11 @@ export class Frame {
     fitcontent() {
         this.panes.forEach(pane => {
             pane.fitcontent();
+        });
+    }
+    autoscale_content() {
+        this.panes.forEach(pane => {
+            pane.autoscale_time_axis();
         });
     }
 }

@@ -6,11 +6,10 @@ from inspect import getmembers, ismethod
 import multiprocessing as mp
 from multiprocessing.synchronize import Event as mp_EventClass
 from dataclasses import dataclass, field
-from typing import Callable, Optional, Protocol, Dict
+from typing import Callable, Optional, Protocol
 from abc import ABC, abstractmethod
 
 import webview
-import pandas as pd
 from webview.errors import JavascriptException
 
 from . import orm
@@ -79,13 +78,39 @@ class js_api:
             (PY_CMD.LAYOUT_CHANGE, container_id, orm.enum.layouts(layout))
         )
 
-    def timeframe_switch(
-        self, container_id: str, frame_id: str, mult: int, period: orm.types.Period
-    ):
-        "Signals UI requested a Timeframe Swtich"
+    def series_change(self, container_id: str, frame_id: str, series_type: str) -> None:
         try:
-            tf = orm.TF(mult, period)
-            self.rtn_queue.put((PY_CMD.TIMEFRAME_CHANGE, container_id, frame_id, tf))
+            self.rtn_queue.put(
+                (
+                    PY_CMD.SERIES_CHANGE,
+                    container_id,
+                    frame_id,
+                    orm.enum.SeriesType(series_type),
+                )
+            )
+        except ValueError:
+            logger.warning(
+                "Couldn't Change Series_Type, '%s' isn't a valid series", series_type
+            )
+
+    def data_request(
+        self,
+        container_id: str,
+        frame_id: str,
+        symbol: dict[str, str],
+        mult: int,
+        period: orm.types.Period,
+    ):
+        try:
+            self.rtn_queue.put(
+                (
+                    PY_CMD.DATA_REQUEST,
+                    container_id,
+                    frame_id,
+                    orm.Symbol(**symbol),
+                    orm.TF(mult, period),
+                )
+            )
         except ValueError as e:
             logger.warning(e)
 
@@ -100,9 +125,6 @@ class js_api:
         self.rtn_queue.put(
             (PY_CMD.SYMBOL_SEARCH, symbol, confirmed, types, brokers, exchanges)
         )
-
-    def symbol_select(self, item: Dict[str, str]):
-        self.rtn_queue.put((PY_CMD.SYMBOL_SELECT, orm.types.SymbolItem(**item)))
 
 
 ##### --------------------------------- Helper Classes --------------------------------- #####
@@ -208,7 +230,7 @@ class View(ABC):
                 cmd = cmds.add_container(args[0])
             case JS_CMD.REMOVE_CONTAINER, str():
                 cmd = cmds.remove_container(args[0])
-            case JS_CMD.REMOVE_REFERENCE, str():
+            case JS_CMD.REMOVE_REFERENCE, str(), *_:
                 cmd = cmds.remove_reference(*args)
             case JS_CMD.ADD_FRAME, str(), str():
                 cmd = cmds.add_frame(args[0], args[1])
@@ -216,8 +238,12 @@ class View(ABC):
                 cmd = cmds.add_pane(args[0], args[1])
             case JS_CMD.SET_LAYOUT, str(), orm.layouts():
                 cmd = cmds.set_layout(args[0], args[1])
-            case JS_CMD.SET_DATA, str(), pd.DataFrame():
-                cmd = cmds.set_data(args[0], args[1].lwc_df)
+            case JS_CMD.SET_DATA, str(), orm.series.Series_DF():
+                cmd = cmds.set_data(args[0], args[1])
+            case JS_CMD.SET_SYMBOL, str(), orm.Symbol():
+                cmd = cmds.set_symbol(args[0], args[1])
+            case JS_CMD.SET_TIMEFRAME, str(), orm.TF():
+                cmd = cmds.set_timeframe(args[0], args[1])
             case JS_CMD.SET_SYMBOL_ITEMS, list():
                 cmd = cmds.update_symbol_search(args[0])
             case JS_CMD.SET_SYMBOL_SEARCH_OPTS, str(), list():

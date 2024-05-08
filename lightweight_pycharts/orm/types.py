@@ -16,7 +16,7 @@ LineWidth: TypeAlias = Literal[1, 2, 3, 4]
 Coordinate: TypeAlias = int
 UTCTimestamp: TypeAlias = int
 
-Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y"]
+Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y", "E"]
 
 
 @dataclass
@@ -165,7 +165,7 @@ class TF:
     # region ---- TF Setters and Getters ----
 
     @property
-    def mult(self):
+    def mult(self) -> int:
         return self._mult
 
     @mult.setter
@@ -174,7 +174,7 @@ class TF:
         self._mult = value
 
     @property
-    def period(self) -> str:
+    def period(self) -> Period:
         return self._period
 
     @period.setter
@@ -213,7 +213,7 @@ class TF:
             case "M":
                 if amount not in (1, 2, 3, 6):
                     raise ValueError("Month units must be (1, 2, 3, 6)")
-            case "Y":
+            case "Y" | "E":
                 return
             case _:
                 raise ValueError(f"'{unit}' Not a valid timeframe period.")
@@ -449,12 +449,12 @@ class SeriesMarker:
 
 
 @dataclass
-class SymbolItem:
+class Symbol:
     "Dataclass interface used to send Symbol Search information to the Symbol Search Menu"
-    symbol: str
+    ticker: str
     name: Optional[str] = None
-    type: Optional[str] = None
     broker: Optional[str] = None
+    sec_type: Optional[str] = None
     exchange: Optional[str] = None
 
 

@@ -4,6 +4,7 @@ import { CanvasRenderingTarget2D } from "./fancy-canvas.js";
 
 //@ts-ignore
 import * as lwc from '../../js/lib/pkg.mjs';
+import { RoundedCandleSeriesOptions } from "../plugins/rounded-candles-series/rounded-candles-series.js";
 
 export const customSeriesDefaultOptions: CustomSeriesOptions = lwc.customSeriesDefaultOptions;
 
@@ -3789,7 +3790,7 @@ export type CustomSeries<TData extends CustomData<Time> = CustomData<Time>> = IS
 
 
 /**
- * Represents A Custom Series.
+ * Represents A Custom Rounded Candle Series.
  */
 export type RoundedCandleSeries<TData extends CustomData<Time> = CustomData<Time>> = ISeriesApi<"Rounded_Candle", Time, WhitespaceData<Time> | TData, CustomSeriesOptions, DeepPartial<CustomStyleOptions & SeriesOptionsCommon>>
 
@@ -3833,7 +3834,7 @@ export interface SeriesOptionsMap {
     /**
      * The type of a custom series options.
      */
-    Rounded_Candle: CustomSeriesOptions;
+    Rounded_Candle: RoundedCandleSeriesOptions;
     /**
      * The type of a custom series options.
      */

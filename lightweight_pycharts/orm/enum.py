@@ -42,23 +42,29 @@ class layouts(IntEnum):
             return 0
 
 
-class SeriesType(StrEnum):
+class SeriesType(IntEnum):
     """
     Represents the type of options for each series type.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriestype
-    The Value of these Enums is used when setting the data in Javascript. See JS Pane.set_data()
+
+    This Enum is ultimately a Super set of of the Series Types described in the above documentation.
+    In actuality this matches the Series_Type enum in util.ts
     """
 
-    Bar = "Bar"
-    Candlestick = "Candlestick"
-    Area = "Area"
-    Baseline = "Baseline"
-    Line = "Line"
-    Histogram = "Histogram"
-    OHLC_Data = "OHLC"
-    SingleValueData = "SingleValueData"
-    WhitespaceData = "WhitespaceData"
-    LineorHist = "LineorHistogram"  # Datatypes are indestinguishable
+    WhitespaceData = 0
+
+    SingleValueData = auto()
+    Area = auto()
+    Baseline = auto()
+    Line = auto()
+    Histogram = auto()
+
+    OHLC_Data = auto()
+    Bar = auto()
+    Candlestick = auto()
+
+    # HLC_AREA = auto()
+    Rounded_Candle = auto()
 
     @property
     def params(self) -> set[str]:
@@ -71,6 +77,8 @@ class SeriesType(StrEnum):
                 return {"color"}
             case SeriesType.Candlestick:  # Candlestick is an extention of Bar
                 return {"wickcolor", "bordercolor"}
+            case SeriesType.Rounded_Candle:
+                return {"wickcolor"}
             case SeriesType.Area:
                 return {"linecolor", "topcolor", "bottomcolor"}
             case SeriesType.Baseline:
@@ -82,8 +90,6 @@ class SeriesType(StrEnum):
                     "bottomfillcolor1",
                     "bottomfillcolor2",
                 }
-            case SeriesType.LineorHist:
-                return {"color"}
             case SeriesType.Line:
                 return {"color"}
             case SeriesType.Histogram:

@@ -6,6 +6,7 @@ from pandas import DataFrame
 from .util import dump
 from .orm import types
 from .orm.enum import layouts
+from .orm.series import Series_DF
 
 # from .util import dump
 # @pylint: disable=invalid-name
@@ -23,7 +24,7 @@ class PY_CMD(IntEnum):
     SYMBOL_SEARCH = auto()
     SYMBOL_SELECT = auto()
 
-    TIMEFRAME_CHANGE = auto()
+    DATA_REQUEST = auto()
     # RANGE_CHANGE = auto() # Maybe?
     SERIES_CHANGE = auto()
     LAYOUT_CHANGE = auto()
@@ -33,15 +34,18 @@ class PY_CMD(IntEnum):
 class JS_CMD(IntEnum):
     "Enumeration of the various commands that Python can send to Javascript"
     JS_CODE = auto()
-    ADD_CONTAINER = auto()
-    REMOVE_CONTAINER = auto()
     REMOVE_REFERENCE = auto()
 
-    ADD_FRAME = auto()
+    ADD_CONTAINER = auto()
+    REMOVE_CONTAINER = auto()
     SET_LAYOUT = auto()
 
-    ADD_PANE = auto()
+    ADD_FRAME = auto()
     SET_DATA = auto()
+    SET_SYMBOL = auto()
+    SET_TIMEFRAME = auto()
+
+    ADD_PANE = auto()
 
     SET_SYMBOL_ITEMS = auto()
     SET_SYMBOL_SEARCH_OPTS = auto()
@@ -85,12 +89,22 @@ def set_layout(container_id: str, layout: layouts) -> str:
     return f"{container_id}.set_layout({layout})"
 
 
-def set_data(frame_id: str, data: DataFrame) -> str:
-    # Assumes data is DataFrame.lwc_data Accessor Extention of a normal Dataframe.
-    return f"{frame_id}.set_data('{data.type.value}',{data.json})"
+def set_data(frame_id: str, data: Series_DF) -> str:
+    return f"""{frame_id}.set_data(
+        {data.type.value},
+        {data.json}
+    )"""
 
 
-def update_symbol_search(symbols: list[types.SymbolItem]) -> str:
+def set_symbol(frame_id: str, symbol: types.Symbol) -> str:
+    return f"{frame_id}.set_symbol({dump(symbol)})"
+
+
+def set_timeframe(frame_id: str, timeframe: types.TF) -> str:
+    return f"{frame_id}.set_timeframe('{timeframe.toString}')"
+
+
+def update_symbol_search(symbols: list[types.Symbol]) -> str:
     return f"overlay_manager.populate_symbol_list({dump(symbols)})"
 
 

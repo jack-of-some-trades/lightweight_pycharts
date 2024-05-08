@@ -219,17 +219,20 @@ export class overlay_manager {
         search_menu_list.replaceChildren();
         let list_item;
         items.forEach(item => {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e;
             list_item = document.createElement('tr');
             list_item.classList.add('symbol_list_item');
             list_item.innerHTML = symbol_search_item_template;
-            list_item.querySelector('#ticker_symbol').innerText = item.symbol;
+            list_item.querySelector('#ticker_symbol').innerText = item.ticker;
             list_item.querySelector('#ticker_name').innerText = (_a = item.name) !== null && _a !== void 0 ? _a : "-";
             list_item.querySelector('#ticker_exchange').innerText = (_b = item.exchange) !== null && _b !== void 0 ? _b : "-";
-            list_item.querySelector('#ticker_type').innerText = (_c = item.type) !== null && _c !== void 0 ? _c : "-";
-            list_item.querySelector('#ticker_broker').innerText = (_d = item.broker) !== null && _d !== void 0 ? _d : "-";
+            list_item.querySelector('#ticker_type').innerText = (_d = (_c = item.sec_type) === null || _c === void 0 ? void 0 : _c.toString()) !== null && _d !== void 0 ? _d : "-";
+            list_item.querySelector('#ticker_broker').innerText = (_e = item.broker) !== null && _e !== void 0 ? _e : "-";
             list_item.addEventListener('click', () => {
-                window.api.symbol_select(item);
+                if (window.active_frame)
+                    window.api.data_request(window.active_container.id, window.active_frame.id, item, window.active_frame.timeframe.multiplier, window.active_frame.timeframe.period);
+                else
+                    console.warn("Data Request Called, but Active_frame is null");
                 this.hide_all_menus();
             });
             search_menu_list.appendChild(list_item);

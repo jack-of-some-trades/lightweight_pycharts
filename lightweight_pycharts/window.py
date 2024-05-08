@@ -1,19 +1,22 @@
 """ Python Classes that handle the various GUI Widgets """
 
-import asyncio
 import logging
-from time import sleep
+import asyncio
 import threading as th
 import multiprocessing as mp
+from time import sleep
+from functools import partial
 from dataclasses import asdict
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
+
+from pandas import DataFrame
 
 from . import orm
 from . import util
-from .events import Events
+from .events import Events, Emitter, Socket_Switch_Protocol
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD, PY_CMD
-from .containers import Container
+from .containers import Container, Frame
 
 logger = logging.getLogger("lightweight-pycharts")
 
@@ -76,11 +79,14 @@ class Window:
             self._queue_manager.start()
 
         # -------- Create Subobjects  -------- #
-        self.events = Events(
-            symbol_search_func=lambda x: self._fwd_queue.put(
-                (JS_CMD.SET_SYMBOL_ITEMS, x)
-            )
+        self.events = Events()
+        self.events.symbol_search.response = partial(
+            self._symbol_search_rsp, fwd_queue=self._fwd_queue
         )
+        self.events.data_request.response = partial(
+            self._data_request_rsp, socket_switch=self.events.socket_switch
+        )
+
         self.js_id = "wrapper"
         self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
@@ -91,14 +97,15 @@ class Window:
     def _execute_cmd(self, cmd: PY_CMD, *args):
         logger.debug("Recieved Command: %s: %s", PY_CMD(cmd).name, str(args))
         match cmd, *args:
-            case PY_CMD.ADD_CONTAINER, *_:
-                self.new_tab()
-            case PY_CMD.REMOVE_CONTAINER, str():
-                self.del_tab(args[0])
-            case PY_CMD.REORDER_CONTAINERS, int(), int():
-                self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
-                self.containers.insert(args[1], self.containers.pop(args[0]))
-            case PY_CMD.TIMEFRAME_CHANGE, str(), str(), orm.TF():
+            case PY_CMD.SYMBOL_SEARCH, str(), bool(), list(), list(), list():
+                self.events.symbol_search(
+                    ticker=args[0],
+                    confirmed=args[1],
+                    types=args[2],
+                    brokers=args[3],
+                    exchanges=args[4],
+                )
+            case PY_CMD.DATA_REQUEST, str(), str(), orm.Symbol(), orm.TF():
                 if (container := self.get_container(args[0])) is None:
                     logger.warning(
                         "Failed Timeframe Switch, Couldn't find Conatiner ID %s",
@@ -107,41 +114,39 @@ class Window:
                     return
                 if (frame := container.get_frame(args[1])) is None:
                     logger.warning(
-                        "Failed Timeframe Switch, Could not find Frame ID '%s'", args[0]
+                        "Failed Timeframe Switch, Could not find Frame ID '%s'", args[1]
                     )
                     return
-                logger.debug(
-                    "Received TF Change Request: %s, Frame: %s", args[2], frame.js_id
-                )
-                self.events.tf_change(
-                    timeframe=args[2], container=container, frame=frame
-                )
+                kwargs = {"frame": frame, "symbol": args[2], "timeframe": args[3]}
+                self.events.data_request(symbol=args[2], tf=args[3], rsp_kwargs=kwargs)
             case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts():
-                container = self.get_container(args[0])
-                if container is None:
+                if (container := self.get_container(args[0])) is None:
+                    logger.warning("Couldn't find Container '%s'", args[0])
+                    return
+                container.set_layout(args[1])
+            case PY_CMD.SERIES_CHANGE, str(), str(), orm.enum.SeriesType():
+                if (container := self.get_container(args[0])) is None:
                     logger.warning(
-                        "Failed layout change, Couldn't find Container '%s'", args[0]
+                        "Failed Series Type Change, Couldn't find Conatiner ID %s",
+                        args[0],
                     )
                     return
-                self.events.layout_change(layout=args[1], container=container)
-                container.set_layout(args[1])
-            case (
-                PY_CMD.SYMBOL_SEARCH,
-                str(),
-                bool(),
-                list(),
-                list(),
-                list(),
-            ):
-                self.events.symbol_search(
-                    symbol=args[0],
-                    confirmed=args[1],
-                    types=args[2],
-                    brokers=args[3],
-                    exchanges=args[4],
-                )
+                if (frame := container.get_frame(args[1])) is None:
+                    logger.warning(
+                        "Failed Series Type Change, Couldn't find Frame ID %s",
+                        args[1],
+                    )
+                    return
+                logger.info("Series Change Request on frame %s", frame.js_id)
+            case PY_CMD.ADD_CONTAINER, *_:
+                self.new_tab()
+            case PY_CMD.REMOVE_CONTAINER, str():
+                self.del_tab(args[0])
+            case PY_CMD.REORDER_CONTAINERS, int(), int():
+                self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
+                self.containers.insert(args[1], self.containers.pop(args[0]))
             case PY_CMD.PY_EXEC, str():
-                logger.debug("Recieved Message from View: %s", args[0])
+                logger.info("Recieved Message from View: %s", args[0])
 
     def _manage_thread_queue(self):
         logger.debug("Entered Threaded Queue Manager")
@@ -195,6 +200,43 @@ class Window:
 
     # endregion
 
+    # region ------------------------ Private Event Response Methods  ------------------------ #
+
+    @staticmethod
+    def _symbol_search_rsp(items: list[orm.types.Symbol], *_, fwd_queue: mp.Queue):
+        fwd_queue.put((JS_CMD.SET_SYMBOL_ITEMS, items))
+
+    @staticmethod
+    def _data_request_rsp(
+        data: Optional[DataFrame],
+        *_,
+        frame: Frame,
+        symbol: orm.Symbol,
+        timeframe: orm.TF,
+        socket_switch: Emitter[Socket_Switch_Protocol],  # Set by Partial Func
+    ):
+        # Close the socket if there was a symbol change
+        if frame.socket_open and frame.symbol != symbol:
+            socket_switch("close", frame.symbol, frame)
+            frame.socket_open = False
+
+        if data is not None:
+            # Need to set frame.main_data before frame.update_data is called
+            frame.set_data(data, symbol)
+            if not frame.socket_open:
+                socket_switch("open", symbol, frame)
+                frame.socket_open = True
+        else:
+            if (
+                frame.socket_open
+            ):  # Closes the socket if an invalid timeframe was selected.
+                socket_switch("close", frame.symbol, frame)
+                frame.socket_open = False
+            # Clear Data after Socket close so socket close get passed the old symbol
+            frame.clear_data(timeframe, symbol)
+
+    # endregion
+
     # region ------------------------ Public Window Methods  ------------------------ #
 
     def show(self):
@@ -241,6 +283,10 @@ class Window:
                 self.containers.remove(container)
                 self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
                 self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
+
+                for frame in container.frames:
+                    if frame.socket_open:
+                        self.events.socket_switch("close", frame.symbol, frame)
                 return
 
     def get_container(self, _id: int | str) -> Optional[Container]:

@@ -31,37 +31,37 @@ export class Pane {
         let data_set = false;
         switch (series.seriesType()) {
             case "Candlestick":
-                if (dtype == 'OHLC' || dtype == 'Bar' || dtype == 'Candlestick') {
+                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR || dtype == u.Series_Type.CANDLESTICK) {
                     series.setData(data);
                     data_set = true;
                 }
                 break;
             case "Bar":
-                if (dtype == 'OHLC' || dtype == 'Bar') {
+                if (dtype == u.Series_Type.OHLC || dtype == u.Series_Type.BAR) {
                     series.setData(data);
                     data_set = true;
                 }
                 break;
             case "Line":
-                if (dtype == 'SingleValueData' || dtype == 'Line' || dtype == 'LineorHistogram') {
+                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.LINE || u.Series_Type.HISTOGRAM) {
                     series.setData(data);
                     data_set = true;
                 }
                 break;
             case "Histogram":
-                if (dtype == 'SingleValueData' || dtype == 'Histogram' || dtype == 'LineorHistogram') {
+                if (dtype == u.Series_Type.SingleValueData || u.Series_Type.HISTOGRAM || u.Series_Type.LINE) {
                     series.setData(data);
                     data_set = true;
                 }
                 break;
             case "Area":
-                if (dtype == 'SingleValueData' || dtype == 'Area') {
+                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.AREA) {
                     series.setData(data);
                     data_set = true;
                 }
                 break;
             case "Baseline":
-                if (dtype == 'SingleValueData' || dtype == 'Baseline') {
+                if (dtype == u.Series_Type.SingleValueData || dtype == u.Series_Type.BASELINE) {
                     series.setData(data);
                     data_set = true;
                 }
@@ -70,7 +70,7 @@ export class Pane {
                 series.setData(data);
                 data_set = true;
         }
-        if (!data_set && dtype == 'WhitespaceData') {
+        if (!data_set && dtype == u.Series_Type.WhitespaceData) {
             series.setData(data);
             data_set = true;
         }
@@ -109,4 +109,5 @@ export class Pane {
     fitcontent() { this.chart.timeScale().fitContent(); }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale(); }
     set_main_series(series) { this.main_series = series; }
+    update_timescale_opts(newOpts) { this.chart.timeScale().applyOptions(newOpts); }
 }

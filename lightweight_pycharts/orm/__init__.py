@@ -6,7 +6,7 @@ from . import style
 from . import series
 from . import options
 
-from .types import TF, Color
+from .types import TF, Color, Symbol
 from .enum import layouts, ColorLiteral
 
 __all__ = (
@@ -20,6 +20,7 @@ __all__ = (
     # Types
     "TF",
     "Color",
+    "Symbol",
     #
     # Enums
     "ColorLiteral",

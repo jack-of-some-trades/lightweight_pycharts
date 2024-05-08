@@ -76,44 +76,50 @@ export const layout_icon_map = {
     15: icons.layout_quad_top,
     16: icons.layout_quad_bottom
 };
-export var Series_Types;
-(function (Series_Types) {
-    Series_Types[Series_Types["BAR"] = 0] = "BAR";
-    Series_Types[Series_Types["CANDLESTICK"] = 1] = "CANDLESTICK";
-    Series_Types[Series_Types["LINE"] = 2] = "LINE";
-    Series_Types[Series_Types["AREA"] = 3] = "AREA";
-    Series_Types[Series_Types["HISTOGRAM"] = 4] = "HISTOGRAM";
-    Series_Types[Series_Types["BASELINE"] = 5] = "BASELINE";
-    Series_Types[Series_Types["HLC_AREA"] = 6] = "HLC_AREA";
-    Series_Types[Series_Types["ROUNDED_CANDLE"] = 7] = "ROUNDED_CANDLE";
-})(Series_Types || (Series_Types = {}));
+export var Series_Type;
+(function (Series_Type) {
+    Series_Type[Series_Type["WhitespaceData"] = 0] = "WhitespaceData";
+    Series_Type[Series_Type["SingleValueData"] = 1] = "SingleValueData";
+    Series_Type[Series_Type["LINE"] = 2] = "LINE";
+    Series_Type[Series_Type["AREA"] = 3] = "AREA";
+    Series_Type[Series_Type["HISTOGRAM"] = 4] = "HISTOGRAM";
+    Series_Type[Series_Type["BASELINE"] = 5] = "BASELINE";
+    Series_Type[Series_Type["OHLC"] = 6] = "OHLC";
+    Series_Type[Series_Type["BAR"] = 7] = "BAR";
+    Series_Type[Series_Type["CANDLESTICK"] = 8] = "CANDLESTICK";
+    Series_Type[Series_Type["ROUNDED_CANDLE"] = 9] = "ROUNDED_CANDLE";
+})(Series_Type || (Series_Type = {}));
 export const series_icon_map = {
-    0: icons.candle_bar,
-    1: icons.candle_regular,
+    0: icons.close_small,
+    1: icons.close_small,
     2: icons.series_line,
     3: icons.series_area,
     4: icons.series_histogram,
     5: icons.series_baseline,
-    6: icons.series_step_line,
-    7: icons.candle_rounded,
+    6: icons.close_small,
+    7: icons.candle_bar,
+    8: icons.candle_regular,
+    9: icons.candle_rounded,
 };
 export const series_label_map = {
-    0: "Bar",
-    1: "Candlestick",
+    0: "Whitespace Data",
+    1: "Single Value Data",
     2: "Line",
     3: "Area",
     4: "Histogram",
     5: "Baseline",
-    6: "HLC Area",
-    7: "Rounded Candlestick",
+    6: "OHLC Data",
+    7: "Bar",
+    8: "Candlestick",
+    9: "Rounded Candlestick",
 };
 const interval_list = ["s", "m", "h", "D", "W", "M", "Y"];
 const interval_val_map = { "s": 1, "m": 60, "h": 3600, "D": 86400, "W": 604800, "M": 18396000, "Y": 220752000, "E": 1 };
 export const interval_map = { "s": "Second", "m": "Minute", "h": "Hour", "D": "Day", "W": "Week", "M": "Month", "Y": "Year", "E": "Error" };
 export class tf {
-    constructor(mult, interval) {
+    constructor(mult, period) {
         this.multiplier = Math.floor(mult);
-        this.interval = interval;
+        this.period = period;
     }
     static from_str(str_in) {
         let interval_str = str_in.charAt(str_in.length - 1);
@@ -132,10 +138,10 @@ export class tf {
         }
         return new tf(-1, 'E');
     }
-    toSectionLabel() { return interval_map[this.interval]; }
-    toString() { return `${this.multiplier}${this.interval}`; }
-    toLabel() { return `${this.multiplier} ${interval_map[this.interval]}${(this.multiplier !== 1) ? 's' : ''}`; }
-    toValue() { return this.multiplier * interval_val_map[this.interval]; }
+    toSectionLabel() { return interval_map[this.period]; }
+    toString() { return `${this.multiplier}${this.period}`; }
+    toLabel() { return `${this.multiplier} ${interval_map[this.period]}${(this.multiplier !== 1) ? 's' : ''}`; }
+    toValue() { return this.multiplier * interval_val_map[this.period]; }
 }
 export const LAYOUT_MARGIN = 5;
 export const LAYOUT_CHART_MARGIN = 4;

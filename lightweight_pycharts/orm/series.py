@@ -21,22 +21,21 @@ class Series_DF:
     "Pandas DataFrame Extention to Typecheck for Lightweight_PyCharts"
 
     def __init__(self, pandas_df: pd.DataFrame):
+        if pandas_df.size == 0:
+            self.type = SeriesType.WhitespaceData
+            self.tf = TF(1, "E")
+            logger.warning("DataFrame given had no Data.")
+            return
+
         rename_dict = self._validate_names(pandas_df)
         if len(rename_dict) > 0:
             pandas_df.rename(columns=rename_dict, inplace=True)
-
-        if pandas_df["time"].size == 0:
-            self.type = None
-            self.tf = None
-            logger.warning("DataFrame given had no Data.")
-            return
 
         if not isinstance(pandas_df["time"].iloc(0), pd.Timestamp):
             pandas_df["time"] = pd.to_datetime(pandas_df["time"])
 
         self.type = self._determine_type(pandas_df)
         self.tf = self._determine_tf(pandas_df)
-        logger.info(self.tf)
         self._df = pandas_df
 
     @staticmethod
@@ -119,21 +118,21 @@ class Series_DF:
         if len(col_names.intersection(SeriesType.SingleValueData.params)) == 1:
             remainder = col_names.difference(SeriesType.SingleValueData.params, "time")
 
-            if len(remainder.intersection(SeriesType.LineorHist.params)) > 0:
-                return SeriesType.LineorHist
+            if len(remainder.intersection(SeriesType.Baseline.params)) > 0:
+                return SeriesType.Baseline
             elif len(remainder.intersection(SeriesType.Area.params)) > 0:
                 return SeriesType.Area
-            elif len(remainder.intersection(SeriesType.Baseline.params)) > 0:
-                return SeriesType.Baseline
+            # Histogram Check Un-neccessary since dataset will match line type
+            elif len(remainder.intersection(SeriesType.Line.params)) > 0:
+                return SeriesType.Line
             else:
                 return SeriesType.SingleValueData
 
-        else:
-            # if nothing else returned then only whitespace remains
-            return SeriesType.WhitespaceData
+        # if nothing else returned then only whitespace remains
+        return SeriesType.WhitespaceData
 
     @staticmethod
-    def _determine_tf(df: pd.DataFrame) -> TF | None:
+    def _determine_tf(df: pd.DataFrame) -> TF:
         interval: pd.Timedelta = df["time"].diff().min()
 
         # Ensure Interval Non-Zero
@@ -180,6 +179,8 @@ class Series_DF:
             return TF(comp.minutes, "m")
         elif comp.seconds > 0:
             return TF(comp.seconds, "s")
+
+        return TF(1, "E")
 
     @property
     def json(self) -> str:

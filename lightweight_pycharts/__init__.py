@@ -17,7 +17,7 @@ import lightweight_pycharts.orm.options as options
 from . import orm
 from .window import Window
 from .containers import Container, Frame, Pane
-from .orm.types import TF, Color
+from .orm.types import TF, Color, Symbol
 from .orm.enum import layouts, ColorLiteral
 
 __all__ = (
@@ -35,6 +35,7 @@ __all__ = (
     # Types
     "TF",
     "Color",
+    "Symbol",
     #
     # Enums
     "ColorLiteral",
