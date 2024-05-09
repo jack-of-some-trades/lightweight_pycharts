@@ -190,7 +190,7 @@ export class timeframe_selector {
     /**
      * Recreate the topbar given a formatted timeframe_json file
      */
-    update_topbar(json: timeframe_json) {
+    update_settings(json: timeframe_json) {
         let items = this.make_items_list(json)
         this.overlay_menu_div.remove()
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select)
@@ -202,7 +202,7 @@ export class timeframe_selector {
      * Update The topbar timeframe switcher to indicate the given timeframe was selected
      * Can be called from global scope through 'wrapper.top_bar.tf_select.update_topbar()'
      */
-    update_topbar_icon(data: tf) {
+    update_icon(data: tf) {
         let curr_tf_value = data.toValue()
         let found = false
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_tf')
@@ -380,7 +380,7 @@ export class timeframe_selector {
                     let tmp_div = this.make_topbar_button(null, false)
                     this.current_tf_div.replaceWith(tmp_div)
                     this.current_tf_div = tmp_div
-                    this.update_topbar_icon(data)
+                    this.update_icon(data)
                 }
                 this.update_menu_location()
                 return
@@ -398,7 +398,7 @@ export class timeframe_selector {
             let tmp_div = this.make_topbar_button(null, false)
             this.current_tf_div.replaceWith(tmp_div)
             this.current_tf_div = tmp_div
-            this.update_topbar_icon(data)
+            this.update_icon(data)
         }
         this.update_menu_location()
     }
@@ -417,7 +417,7 @@ export class timeframe_selector {
                 if (favorite_divs[i].classList.contains('selected')) {
                     //Remove then update the topbar
                     favorite_divs[i].remove()
-                    this.update_topbar_icon(data)
+                    this.update_icon(data)
                 } else {
                     //Remove visual element
                     favorite_divs[i].remove()
@@ -466,14 +466,14 @@ export class layout_selector {
     /**
     * Recreate the topbar given a formatted layout_json file
     */
-    update_topbar(json: layout_json) {
+    update_settings(json: layout_json) {
         let items = this.make_items_list(json)
         this.overlay_menu_div.remove()
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select)
 
         if (window.active_container && window.active_container.layout !== null) {
             //if there is a valid container & layout has been set update the icon
-            this.update_topbar_icon(window.active_container.layout)
+            this.update_icon(window.active_container.layout)
         }
     }
 
@@ -483,7 +483,7 @@ export class layout_selector {
      * Update The topbar layout switcher to indicate the given layout was selected
      * Can be called from global scope through 'wrapper.top_bar.tf_select.update_topbar()'
      */
-    update_topbar_icon(data: Container_Layouts) {
+    update_icon(data: Container_Layouts) {
         let curr_layout_value = data.valueOf()
         let found = false
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_layout')
@@ -646,7 +646,7 @@ export class layout_selector {
                     let tmp_div = this.make_topbar_button(null, false)
                     this.current_layout_div.replaceWith(tmp_div)
                     this.current_layout_div = tmp_div
-                    this.update_topbar_icon(data)
+                    this.update_icon(data)
                 }
                 return
             }
@@ -663,7 +663,7 @@ export class layout_selector {
             let tmp_div = this.make_topbar_button(null, false)
             this.current_layout_div.replaceWith(tmp_div)//Replace old selected element
             this.current_layout_div = tmp_div
-            this.update_topbar_icon(data) //Highlight the current favorite 
+            this.update_icon(data) //Highlight the current favorite 
         }
     }
 
@@ -681,7 +681,7 @@ export class layout_selector {
                 if (icon.classList.contains('selected')) {
                     //Remove then update the topbar
                     favorite_divs[i].remove()
-                    this.update_topbar_icon(data)
+                    this.update_icon(data)
                 } else {
                     //Remove visual element
                     favorite_divs[i].remove()
@@ -730,7 +730,7 @@ export class series_selector {
     /**
     * Recreate the topbar given a formatted series_json file
     */
-    update_topbar(json: series_json) {
+    update_settings(json: series_json) {
         let items = this.make_items_list(json)
         this.overlay_menu_div.remove()
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select)
@@ -742,7 +742,7 @@ export class series_selector {
      * Update The topbar series switcher to indicate the given series was selected
      * Can be called from global scope through 'wrapper.top_bar.tf_select.update_topbar()'
      */
-    update_topbar_icon(data: Series_Type) {
+    update_icon(data: Series_Type) {
         let curr_series_value = data.valueOf()
         let found = false
         let favorite_divs = this.wrapper_div.getElementsByClassName('fav_series')
@@ -892,7 +892,7 @@ export class series_selector {
                     let tmp_div = this.make_topbar_button(null, false)
                     this.current_series_div.replaceWith(tmp_div)
                     this.current_series_div = tmp_div
-                    this.update_topbar_icon(data)
+                    this.update_icon(data)
                 }
                 this.update_menu_location()
                 return
@@ -910,7 +910,7 @@ export class series_selector {
             let tmp_div = this.make_topbar_button(null, false)
             this.current_series_div.replaceWith(tmp_div)//Replace old selected element
             this.current_series_div = tmp_div
-            this.update_topbar_icon(data) //Highlight the current favorite 
+            this.update_icon(data) //Highlight the current favorite 
         }
         this.update_menu_location()
     }
@@ -929,7 +929,7 @@ export class series_selector {
                 if (icon.classList.contains('selected')) {
                     //Remove then update the topbar
                     favorite_divs[i].remove()
-                    this.update_topbar_icon(data)
+                    this.update_icon(data)
                 } else {
                     //Remove visual element
                     favorite_divs[i].remove()

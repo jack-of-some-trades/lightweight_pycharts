@@ -32,7 +32,7 @@ export class Container {
         window.active_container.div.setAttribute('active', '');
         window.titlebar.tab_manager.setCurrentTab(this.tab_div);
         if (this.layout)
-            window.layout_selector.update_topbar_icon(this.layout);
+            window.layout_selector.update_icon(this.layout);
         if (this.frames[0])
             this.frames[0].assign_active_frame();
         this.resize();
@@ -151,7 +151,7 @@ export class Container {
             this.div.appendChild(flex_item.div);
         });
         this.layout = layout;
-        window.layout_selector.update_topbar_icon(layout);
+        window.layout_selector.update_icon(layout);
         setTimeout(this.assign_active_container.bind(this), 50);
         this.resize();
     }

@@ -39,7 +39,29 @@ async def main():
     window.set_search_filters("type", ["Crypto", "Equity"])
     window.set_search_filters("broker", ["Local", "Alpaca"])
     window.set_search_filters("exchange", [])
-
+    window.set_layout_favs(
+        [
+            lwc.layouts.SINGLE,
+            lwc.layouts.DOUBLE_VERT,
+            lwc.layouts.TRIPLE_VERT_LEFT,
+            lwc.layouts.QUAD_SQ_H,
+        ]
+    )
+    window.set_series_favs(
+        [
+            lwc.SeriesType.Candlestick,
+            lwc.SeriesType.Rounded_Candle,
+            lwc.SeriesType.Line,
+            lwc.SeriesType.Area,
+        ]
+    )
+    window.set_timeframes(
+        favs=[
+            lwc.TF(1, "m"),
+            lwc.TF(5, "m"),
+            lwc.TF(30, "m"),
+        ],
+    )
     df = pd.read_csv("examples/data/ohlcv.csv")
     window.containers[0].frames[0].set_data(df)
 

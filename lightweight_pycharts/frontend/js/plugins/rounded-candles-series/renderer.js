@@ -20,15 +20,13 @@ export class RoundedCandleSeriesRenderer {
             this._options === null) {
             return;
         }
-        let lastClose = -Infinity;
         const bars = this._data.bars.map(bar => {
-            var _a, _b, _c, _d, _e;
-            const isUp = bar.originalData.close >= lastClose;
-            lastClose = (_a = bar.originalData.close) !== null && _a !== void 0 ? _a : lastClose;
-            const openY = (_b = priceToCoordinate(bar.originalData.open)) !== null && _b !== void 0 ? _b : 0;
-            const highY = (_c = priceToCoordinate(bar.originalData.high)) !== null && _c !== void 0 ? _c : 0;
-            const lowY = (_d = priceToCoordinate(bar.originalData.low)) !== null && _d !== void 0 ? _d : 0;
-            const closeY = (_e = priceToCoordinate(bar.originalData.close)) !== null && _e !== void 0 ? _e : 0;
+            var _a, _b, _c, _d;
+            const isUp = bar.originalData.close >= bar.originalData.open;
+            const openY = (_a = priceToCoordinate(bar.originalData.open)) !== null && _a !== void 0 ? _a : 0;
+            const highY = (_b = priceToCoordinate(bar.originalData.high)) !== null && _b !== void 0 ? _b : 0;
+            const lowY = (_c = priceToCoordinate(bar.originalData.low)) !== null && _c !== void 0 ? _c : 0;
+            const closeY = (_d = priceToCoordinate(bar.originalData.close)) !== null && _d !== void 0 ? _d : 0;
             return {
                 openY,
                 highY,

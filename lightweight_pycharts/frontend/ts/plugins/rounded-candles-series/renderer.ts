@@ -61,10 +61,8 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 			return;
 		}
 
-		let lastClose = -Infinity;
 		const bars: BarItem[] = this._data.bars.map(bar => {
-			const isUp = bar.originalData.close >= lastClose;
-			lastClose = bar.originalData.close ?? lastClose;
+			const isUp = bar.originalData.close >= bar.originalData.open;
 			const openY = priceToCoordinate(bar.originalData.open as number) ?? 0;
 			const highY = priceToCoordinate(bar.originalData.high as number) ?? 0;
 			const lowY = priceToCoordinate(bar.originalData.low as number) ?? 0;

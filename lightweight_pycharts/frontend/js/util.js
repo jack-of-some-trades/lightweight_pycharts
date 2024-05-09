@@ -82,8 +82,8 @@ export var Series_Type;
     Series_Type[Series_Type["SingleValueData"] = 1] = "SingleValueData";
     Series_Type[Series_Type["LINE"] = 2] = "LINE";
     Series_Type[Series_Type["AREA"] = 3] = "AREA";
-    Series_Type[Series_Type["HISTOGRAM"] = 4] = "HISTOGRAM";
-    Series_Type[Series_Type["BASELINE"] = 5] = "BASELINE";
+    Series_Type[Series_Type["BASELINE"] = 4] = "BASELINE";
+    Series_Type[Series_Type["HISTOGRAM"] = 5] = "HISTOGRAM";
     Series_Type[Series_Type["OHLC"] = 6] = "OHLC";
     Series_Type[Series_Type["BAR"] = 7] = "BAR";
     Series_Type[Series_Type["CANDLESTICK"] = 8] = "CANDLESTICK";
@@ -94,8 +94,8 @@ export const series_icon_map = {
     1: icons.close_small,
     2: icons.series_line,
     3: icons.series_area,
-    4: icons.series_histogram,
-    5: icons.series_baseline,
+    4: icons.series_baseline,
+    5: icons.series_histogram,
     6: icons.close_small,
     7: icons.candle_bar,
     8: icons.candle_regular,
@@ -106,8 +106,8 @@ export const series_label_map = {
     1: "Single Value Data",
     2: "Line",
     3: "Area",
-    4: "Histogram",
-    5: "Baseline",
+    4: "Baseline",
+    5: "Histogram",
     6: "OHLC Data",
     7: "Bar",
     8: "Candlestick",

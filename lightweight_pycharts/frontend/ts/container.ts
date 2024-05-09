@@ -62,7 +62,7 @@ export class Container {
         window.active_container.div.setAttribute('active', '')
         window.titlebar.tab_manager.setCurrentTab(this.tab_div)
         if (this.layout)
-            window.layout_selector.update_topbar_icon(this.layout)
+            window.layout_selector.update_icon(this.layout)
         if (this.frames[0])
             this.frames[0].assign_active_frame()
         this.resize() //Non-Active Containers aren't updated
@@ -239,7 +239,7 @@ export class Container {
         this.layout = layout
 
         //If succsessful, update container variable and UI
-        window.layout_selector.update_topbar_icon(layout)
+        window.layout_selector.update_icon(layout)
         //Delay on executing this is to make it so the Frame has time to create it's Pane
         //So that too can be made active
         setTimeout(this.assign_active_container.bind(this), 50)

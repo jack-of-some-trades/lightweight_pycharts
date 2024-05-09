@@ -34,7 +34,7 @@ export class py_api {
             //this.loaded() should only be called once and called from here
             this.loaded()
             //Window Size is very small when hidden, need to resize once it's visible
-            setTimeout(window.wrapper.resize.bind(window.wrapper), 75)
+            setTimeout(window.wrapper.resize.bind(window.wrapper), 200)
         } else {
             setTimeout(this._loaded_check, 50)
         }

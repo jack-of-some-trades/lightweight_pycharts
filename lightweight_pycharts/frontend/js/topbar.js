@@ -120,13 +120,13 @@ export class timeframe_selector {
         this.select = this.select.bind(this);
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
-    update_topbar(json) {
+    update_settings(json) {
         let items = this.make_items_list(json);
         this.overlay_menu_div.remove();
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'timeframe_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     get_json() { return this.json; }
-    update_topbar_icon(data) {
+    update_icon(data) {
         var _a, _b;
         let curr_tf_value = data.toValue();
         let found = false;
@@ -265,7 +265,7 @@ export class timeframe_selector {
                     let tmp_div = this.make_topbar_button(null, false);
                     this.current_tf_div.replaceWith(tmp_div);
                     this.current_tf_div = tmp_div;
-                    this.update_topbar_icon(data);
+                    this.update_icon(data);
                 }
                 this.update_menu_location();
                 return;
@@ -278,7 +278,7 @@ export class timeframe_selector {
             let tmp_div = this.make_topbar_button(null, false);
             this.current_tf_div.replaceWith(tmp_div);
             this.current_tf_div = tmp_div;
-            this.update_topbar_icon(data);
+            this.update_icon(data);
         }
         this.update_menu_location();
     }
@@ -290,7 +290,7 @@ export class timeframe_selector {
             if (curr_tf_value === parseInt((_a = favorite_divs[i].getAttribute('data-tf-value')) !== null && _a !== void 0 ? _a : '-1')) {
                 if (favorite_divs[i].classList.contains('selected')) {
                     favorite_divs[i].remove();
-                    this.update_topbar_icon(data);
+                    this.update_icon(data);
                 }
                 else {
                     favorite_divs[i].remove();
@@ -318,16 +318,16 @@ export class layout_selector {
         this.select = this.select.bind(this);
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
-    update_topbar(json) {
+    update_settings(json) {
         let items = this.make_items_list(json);
         this.overlay_menu_div.remove();
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'layout_selector', menu_location.BOTTOM_RIGHT, this.select);
         if (window.active_container && window.active_container.layout !== null) {
-            this.update_topbar_icon(window.active_container.layout);
+            this.update_icon(window.active_container.layout);
         }
     }
     get_json() { return this.json; }
-    update_topbar_icon(data) {
+    update_icon(data) {
         var _a, _b;
         let curr_layout_value = data.valueOf();
         let found = false;
@@ -458,7 +458,7 @@ export class layout_selector {
                     let tmp_div = this.make_topbar_button(null, false);
                     this.current_layout_div.replaceWith(tmp_div);
                     this.current_layout_div = tmp_div;
-                    this.update_topbar_icon(data);
+                    this.update_icon(data);
                 }
                 return;
             }
@@ -470,7 +470,7 @@ export class layout_selector {
             let tmp_div = this.make_topbar_button(null, false);
             this.current_layout_div.replaceWith(tmp_div);
             this.current_layout_div = tmp_div;
-            this.update_topbar_icon(data);
+            this.update_icon(data);
         }
     }
     remove_favorite(data) {
@@ -482,7 +482,7 @@ export class layout_selector {
                 let icon = favorite_divs[i].firstChild;
                 if (icon.classList.contains('selected')) {
                     favorite_divs[i].remove();
-                    this.update_topbar_icon(data);
+                    this.update_icon(data);
                 }
                 else {
                     favorite_divs[i].remove();
@@ -509,13 +509,13 @@ export class series_selector {
         this.select = this.select.bind(this);
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
-    update_topbar(json) {
+    update_settings(json) {
         let items = this.make_items_list(json);
         this.overlay_menu_div.remove();
         this.overlay_menu_div = window.overlay_manager.menu(this.menu_button, items, 'series_selector', menu_location.BOTTOM_RIGHT, this.select);
     }
     get_json() { return this.json; }
-    update_topbar_icon(data) {
+    update_icon(data) {
         var _a, _b;
         let curr_series_value = data.valueOf();
         let found = false;
@@ -629,7 +629,7 @@ export class series_selector {
                     let tmp_div = this.make_topbar_button(null, false);
                     this.current_series_div.replaceWith(tmp_div);
                     this.current_series_div = tmp_div;
-                    this.update_topbar_icon(data);
+                    this.update_icon(data);
                 }
                 this.update_menu_location();
                 return;
@@ -642,7 +642,7 @@ export class series_selector {
             let tmp_div = this.make_topbar_button(null, false);
             this.current_series_div.replaceWith(tmp_div);
             this.current_series_div = tmp_div;
-            this.update_topbar_icon(data);
+            this.update_icon(data);
         }
         this.update_menu_location();
     }
@@ -655,7 +655,7 @@ export class series_selector {
                 let icon = favorite_divs[i].firstChild;
                 if (icon.classList.contains('selected')) {
                     favorite_divs[i].remove();
-                    this.update_topbar_icon(data);
+                    this.update_icon(data);
                 }
                 else {
                     favorite_divs[i].remove();

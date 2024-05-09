@@ -44,8 +44,8 @@ export class Frame {
             this.panes[0].assign_active_pane()
 
         //Update Window Elements
-        window.topbar.series_select.update_topbar_icon(this.series_type)
-        window.topbar.tf_select.update_topbar_icon(this.timeframe)
+        window.topbar.series_select.update_icon(this.series_type)
+        window.topbar.tf_select.update_icon(this.timeframe)
         window.topbar.set_symbol_search_text(this.symbol.ticker)
         window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker })
     }
@@ -71,7 +71,7 @@ export class Frame {
             this.panes[0].set_main_data(data)
         if (this == window.active_frame) {
             window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker })
-            window.topbar.tf_select.update_topbar_icon(this.timeframe)
+            window.topbar.tf_select.update_icon(this.timeframe)
         }
     }
 
@@ -85,7 +85,7 @@ export class Frame {
     protected set_timeframe(new_tf_str: string) {
         this.timeframe = tf.from_str(new_tf_str)
         if (this == window.active_frame)
-            window.topbar.tf_select.update_topbar_icon(this.timeframe)
+            window.topbar.tf_select.update_icon(this.timeframe)
 
         //Update the Timeaxis to Show/Hide relevant timestamp
         let newOpts = { timeVisible: false, secondsVisible: false }
@@ -104,7 +104,7 @@ export class Frame {
 
         this.series_type = new_type
         if (this == window.active_frame)
-            window.topbar.series_select.update_topbar_icon(this.series_type)
+            window.topbar.series_select.update_icon(this.series_type)
     }
 
     protected add_pane(id: string = ''): Pane {

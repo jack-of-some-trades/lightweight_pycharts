@@ -4,7 +4,7 @@ export class py_api {
     _loaded_check() {
         if (icon_manager.loaded && window.loaded) {
             this.loaded();
-            setTimeout(window.wrapper.resize.bind(window.wrapper), 75);
+            setTimeout(window.wrapper.resize.bind(window.wrapper), 200);
         }
         else {
             setTimeout(this._loaded_check, 50);

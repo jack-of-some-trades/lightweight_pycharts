@@ -18,7 +18,7 @@ from . import orm
 from .window import Window
 from .containers import Container, Frame, Pane
 from .orm.types import TF, Color, Symbol
-from .orm.enum import layouts, ColorLiteral
+from .orm.enum import layouts, ColorLiteral, SeriesType
 
 __all__ = (
     "Window",
@@ -40,6 +40,7 @@ __all__ = (
     # Enums
     "ColorLiteral",
     "layouts",
+    "SeriesType",
 )
 
 _LOG_LVL = logging.WARNING

@@ -48,6 +48,9 @@ class JS_CMD(IntEnum):
 
     ADD_PANE = auto()
 
+    UPDATE_TF_OPTS = auto()
+    UPDATE_SERIES_FAVS = auto()
+    UPDATE_LAYOUT_FAVS = auto()
     SET_SYMBOL_ITEMS = auto()
     SET_SYMBOL_SEARCH_OPTS = auto()
 
@@ -104,6 +107,18 @@ def set_symbol(frame_id: str, symbol: types.Symbol) -> str:
 
 def set_timeframe(frame_id: str, timeframe: types.TF) -> str:
     return f"{frame_id}.set_timeframe('{timeframe.toString}')"
+
+
+def set_window_layouts(favs: dict) -> str:
+    return f"window.layout_selector.update_settings({dump(favs)})"
+
+
+def set_window_series_types(favs: dict) -> str:
+    return f"window.series_selector.update_settings({dump(favs)})"
+
+
+def set_window_timeframes(opts: dict) -> str:
+    return f"window.timeframe_selector.update_settings({dump(opts)})"
 
 
 def update_symbol_search(symbols: list[types.Symbol]) -> str:

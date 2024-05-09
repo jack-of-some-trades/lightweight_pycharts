@@ -252,6 +252,12 @@ class View(ABC):
                 cmd = cmds.update_symbol_search(args[0])
             case JS_CMD.SET_SYMBOL_SEARCH_OPTS, str(), list():
                 cmd = cmds.update_symbol_search_bubbles(args[0], args[1])
+            case JS_CMD.UPDATE_LAYOUT_FAVS, dict():
+                cmd = cmds.set_window_layouts(args[0])
+            case JS_CMD.UPDATE_SERIES_FAVS, dict():
+                cmd = cmds.set_window_series_types(args[0])
+            case JS_CMD.UPDATE_TF_OPTS, dict():
+                cmd = cmds.set_window_timeframes(args[0])
             case JS_CMD.SHOW, *_:
                 self.show()
             case JS_CMD.HIDE, *_:

@@ -91,8 +91,8 @@ export enum Series_Type {
     SingleValueData,
     LINE,
     AREA,
-    HISTOGRAM,
     BASELINE,
+    HISTOGRAM,
 
     OHLC,
     BAR,
@@ -108,8 +108,8 @@ export const series_icon_map: { [key: number]: icons; } = {
     1: icons.close_small,   //Single Value Data -> No Icon
     2: icons.series_line,
     3: icons.series_area,
-    4: icons.series_histogram,
-    5: icons.series_baseline,
+    4: icons.series_baseline,
+    5: icons.series_histogram,
 
     6: icons.close_small,   //OHLC Data -> No Icon
     7: icons.candle_bar,
@@ -125,8 +125,8 @@ export const series_label_map: { [key: number]: string; } = {
     1: "Single Value Data",
     2: "Line",
     3: "Area",
-    4: "Histogram",
-    5: "Baseline",
+    4: "Baseline",
+    5: "Histogram",
 
     6: "OHLC Data",
     7: "Bar",

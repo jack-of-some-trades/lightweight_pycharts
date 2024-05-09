@@ -2,12 +2,13 @@
 
 import logging
 import asyncio
+from re import L
 import threading as th
 import multiprocessing as mp
 from time import sleep
 from functools import partial
 from dataclasses import asdict
-from typing import Literal, Optional, Any
+from typing import Literal, Optional
 
 from pandas import DataFrame
 
@@ -306,5 +307,40 @@ class Window:
         'type'==Security Types, 'broker'==Data Brokers, 'exchange' == Security's Exchange
         """
         self._fwd_queue.put((JS_CMD.SET_SYMBOL_SEARCH_OPTS, category, items))
+
+    def set_layout_favs(self, favs: list[orm.layouts]):
+        "Set the layout types shown on the window's TopBar"
+        self._fwd_queue.put((JS_CMD.UPDATE_LAYOUT_FAVS, {"favorites": favs}))
+
+    def set_series_favs(self, favs: list[orm.enum.SeriesType]):
+        "Set the Series types shown on the window's TopBar"
+        self._fwd_queue.put((JS_CMD.UPDATE_SERIES_FAVS, {"favorites": favs}))
+
+    def set_timeframes(self, favs: list[orm.TF], opts: Optional[list[orm.TF]] = None):
+        "Set the Timeframes shown on the window's TopBar and in the dropdown menu"
+        menu_opts = {}
+        if opts is not None:
+            for fav in favs:
+                if fav not in opts:
+                    opts.append(fav)
+
+            for option in opts:
+                if option.period in menu_opts.keys():
+                    menu_opts[option.period] += [option.mult]
+                else:
+                    menu_opts[option.period] = [option.mult]
+        else:
+            menu_opts = {
+                "s": [1, 2, 5, 15, 30],
+                "m": [1, 2, 5, 15, 30],
+                "h": [1, 2, 4],
+                "D": [1],
+                "W": [1],
+            }
+        json_dict = {
+            "menu_listings": menu_opts,
+            "favorites": [tf.toString for tf in favs],
+        }
+        self._fwd_queue.put((JS_CMD.UPDATE_TF_OPTS, json_dict))
 
     # endregion

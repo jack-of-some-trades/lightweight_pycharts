@@ -18,8 +18,8 @@ export class Frame {
         window.active_frame.div.setAttribute('active', '');
         if (this.panes[0])
             this.panes[0].assign_active_pane();
-        window.topbar.series_select.update_topbar_icon(this.series_type);
-        window.topbar.tf_select.update_topbar_icon(this.timeframe);
+        window.topbar.series_select.update_icon(this.series_type);
+        window.topbar.tf_select.update_icon(this.timeframe);
         window.topbar.set_symbol_search_text(this.symbol.ticker);
         window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker });
     }
@@ -35,7 +35,7 @@ export class Frame {
             this.panes[0].set_main_data(data);
         if (this == window.active_frame) {
             window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker });
-            window.topbar.tf_select.update_topbar_icon(this.timeframe);
+            window.topbar.tf_select.update_icon(this.timeframe);
         }
     }
     set_symbol(new_symbol) {
@@ -47,7 +47,7 @@ export class Frame {
     set_timeframe(new_tf_str) {
         this.timeframe = tf.from_str(new_tf_str);
         if (this == window.active_frame)
-            window.topbar.tf_select.update_topbar_icon(this.timeframe);
+            window.topbar.tf_select.update_icon(this.timeframe);
         let newOpts = { timeVisible: false, secondsVisible: false };
         if (this.timeframe.period === 's') {
             newOpts.timeVisible = true;
@@ -62,7 +62,7 @@ export class Frame {
         this.panes[0].set_main_series(new_type, data);
         this.series_type = new_type;
         if (this == window.active_frame)
-            window.topbar.series_select.update_topbar_icon(this.series_type);
+            window.topbar.series_select.update_icon(this.series_type);
     }
     add_pane(id = '') {
         let child_div = document.createElement('div');

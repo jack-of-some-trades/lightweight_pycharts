@@ -54,9 +54,9 @@ class SeriesType(IntEnum):
     WhitespaceData = 0
 
     SingleValueData = auto()
+    Line = auto()
     Area = auto()
     Baseline = auto()
-    Line = auto()
     Histogram = auto()
 
     OHLC_Data = auto()
