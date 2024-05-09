@@ -1,6 +1,6 @@
 """ Series Datatypes and Custom Pandas Series DataFrame accessor """
 
-from typing import Optional
+from typing import Optional, TypeAlias
 from dataclasses import dataclass
 from math import floor
 from json import dumps
@@ -35,7 +35,7 @@ class Series_DF:
             pandas_df["time"] = pd.to_datetime(pandas_df["time"])
 
         self.type = self._determine_type(pandas_df)
-        self.tf = self._determine_tf(pandas_df)
+        self.tf, self.pd_tf = self._determine_tf(pandas_df)
         self._df = pandas_df
 
     @staticmethod
@@ -132,7 +132,7 @@ class Series_DF:
         return SeriesType.WhitespaceData
 
     @staticmethod
-    def _determine_tf(df: pd.DataFrame) -> TF:
+    def _determine_tf(df: pd.DataFrame) -> tuple[TF, pd.Timedelta]:
         interval: pd.Timedelta = df["time"].diff().min()
 
         # Ensure Interval Non-Zero
@@ -159,28 +159,28 @@ class Series_DF:
             if comp.hours + comp.minutes + comp.seconds > 0:
                 raise ValueError(errmsg)
             if comp.days < 7:
-                return TF(comp.days, "D")
+                return TF(comp.days, "D"), interval
             if comp.days < 28:
                 logger.warning("Attempting to Classify Weekly Interval, %s", interval)
-                return TF(floor(comp.days / 7), "W")
+                return TF(floor(comp.days / 7), "W"), interval
             if comp.days < 365:
                 logger.warning("Attempting to Classify Monthly Interval, %s", interval)
-                return TF(floor(comp.days / 28), "M")
+                return TF(floor(comp.days / 28), "M"), interval
             else:
                 logger.warning("Attempting to Classify Yearly Interval, %s", interval)
-                return TF(floor(comp.days / 365), "Y")
+                return TF(floor(comp.days / 365), "Y"), interval
         elif comp.hours > 0:
             if comp.minutes + comp.seconds > 0:
                 raise ValueError(errmsg)
-            return TF(comp.hours, "h")
+            return TF(comp.hours, "h"), interval
         elif comp.minutes > 0:
             if comp.seconds > 0:
                 raise ValueError(errmsg)
-            return TF(comp.minutes, "m")
+            return TF(comp.minutes, "m"), interval
         elif comp.seconds > 0:
-            return TF(comp.seconds, "s")
+            return TF(comp.seconds, "s"), interval
 
-        return TF(1, "E")
+        return TF(1, "E"), interval
 
     @property
     def json(self) -> str:
@@ -219,6 +219,14 @@ class Series_DF:
         col_names = set(self._df.columns)
         if len(col_names.intersection(("value", "close"))) == 1:
             self._df.rename(columns={"value": "close", "close": "value"}, inplace=True)
+
+    @property
+    def whitespace_df(self) -> pd.DataFrame:
+        "Returns a Dataframe with 500 extrapolation Whitespace Datapoints"
+        whitespace = pd.date_range(
+            start=self._df["time"].iloc[-1] + self.pd_tf, periods=500, freq=self.pd_tf
+        )
+        return pd.DataFrame({"time": whitespace})
 
 
 # region --------------------------------------- Series Data Types --------------------------------------- #
@@ -326,5 +334,16 @@ class BaselineData(SingleValueData):
     bottomFillColor1: Optional[Color] = None
     bottomFillColor2: Optional[Color] = None
 
+
+AnySeriesData: TypeAlias = (
+    WhitespaceData
+    | OhlcData
+    | LineData
+    | AreaData
+    | HistogramData
+    | BaselineData
+    | BarData
+    | CandlestickData
+)
 
 # endregion

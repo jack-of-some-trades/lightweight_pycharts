@@ -33,10 +33,18 @@ export class Frame {
     set_data(data) {
         if (this.panes[0])
             this.panes[0].set_main_data(data);
-        if (this == window.active_frame) {
-            window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker });
-            window.topbar.tf_select.update_icon(this.timeframe);
-        }
+    }
+    update_data(data) {
+        if (this.panes[0])
+            this.panes[0].update_main_data(data);
+    }
+    set_whitespace_data(data) {
+        if (this.panes[0])
+            this.panes[0].set_whitespace_data(data);
+    }
+    update_whitespace_data(data) {
+        if (this.panes[0])
+            this.panes[0].update_whitespace_data(data);
     }
     set_symbol(new_symbol) {
         this.symbol = new_symbol;

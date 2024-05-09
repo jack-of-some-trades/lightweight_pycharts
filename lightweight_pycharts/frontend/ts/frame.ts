@@ -1,4 +1,4 @@
-import { AnySeriesData } from "./lib/pkg.js";
+import { AnySeriesData, WhitespaceData } from "./lib/pkg.js";
 import { Pane } from "./pane.js";
 import { Series_Type, symbol_item, tf } from "./util.js";
 
@@ -69,10 +69,21 @@ export class Frame {
     protected set_data(data: AnySeriesData[]) {
         if (this.panes[0])
             this.panes[0].set_main_data(data)
-        if (this == window.active_frame) {
-            window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker })
-            window.topbar.tf_select.update_icon(this.timeframe)
-        }
+    }
+
+    protected update_data(data: AnySeriesData) {
+        if (this.panes[0])
+            this.panes[0].update_main_data(data)
+    }
+
+    protected set_whitespace_data(data: WhitespaceData[]) {
+        if (this.panes[0])
+            this.panes[0].set_whitespace_data(data)
+    }
+
+    protected update_whitespace_data(data: WhitespaceData) {
+        if (this.panes[0])
+            this.panes[0].update_whitespace_data(data)
     }
 
     protected set_symbol(new_symbol: symbol_item) {

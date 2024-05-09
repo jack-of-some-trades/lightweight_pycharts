@@ -15,7 +15,7 @@ from webview.errors import JavascriptException
 from . import orm
 from . import js_cmd as cmds
 from .orm.enum import SeriesType
-from .orm.series import Series_DF
+from .orm.series import AnySeriesData, Series_DF, WhitespaceData
 from .js_cmd import JS_CMD, PY_CMD
 
 file_dir = dirname(abspath(__file__))
@@ -242,6 +242,12 @@ class View(ABC):
                 cmd = cmds.set_layout(args[0], args[1])
             case JS_CMD.SET_DATA, str(), Series_DF():
                 cmd = cmds.set_data(args[0], args[1])
+            case JS_CMD.UPDATE_DATA, str(), _:  # Can't Pattern Match a Union
+                cmd = cmds.update_data(args[0], args[1])
+            case JS_CMD.SET_WHITESPACE_DATA, str(), Series_DF():
+                cmd = cmds.set_whitespace_data(args[0], args[1])
+            case JS_CMD.UPDATE_WHITESPACE_DATA, str(), WhitespaceData():
+                cmd = cmds.update_whitespace_data(args[0], args[1])
             case JS_CMD.SET_SYMBOL, str(), orm.Symbol():
                 cmd = cmds.set_symbol(args[0], args[1])
             case JS_CMD.SET_TIMEFRAME, str(), orm.TF():

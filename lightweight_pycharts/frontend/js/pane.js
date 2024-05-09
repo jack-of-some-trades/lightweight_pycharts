@@ -14,6 +14,7 @@ export class Pane {
         this.chart_div = this.chart.chartElement();
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this));
         this.main_series = this.chart.addCandlestickSeries();
+        this.whitespace_series = this.chart.addLineSeries();
     }
     assign_active_pane() {
         if (window.active_pane)
@@ -62,6 +63,22 @@ export class Pane {
         }
         this.main_series.setData(data);
         this.autoscale_time_axis();
+    }
+    update_main_data(data) {
+        if (this.main_series === undefined)
+            return;
+        this.main_series.update(data);
+        this.autoscale_time_axis();
+    }
+    set_whitespace_data(data) {
+        if (data.length === 0) {
+            this.whitespace_series.setData([]);
+            return;
+        }
+        this.whitespace_series.setData(data);
+    }
+    update_whitespace_data(data) {
+        this.whitespace_series.update(data);
     }
     resize(width, height) {
         let this_width = width * this.flex_width;

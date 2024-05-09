@@ -1,12 +1,11 @@
 "Function definitions that return formatted Javascript scripts as literal strings"
 
 from enum import IntEnum, auto
-from pandas import DataFrame
 
 from .util import dump
 from .orm import types
 from .orm.enum import layouts, SeriesType
-from .orm.series import Series_DF
+from .orm.series import AnySeriesData, Series_DF, WhitespaceData
 
 # from .util import dump
 # @pylint: disable=invalid-name
@@ -42,6 +41,9 @@ class JS_CMD(IntEnum):
 
     ADD_FRAME = auto()
     SET_DATA = auto()
+    UPDATE_DATA = auto()
+    SET_WHITESPACE_DATA = auto()
+    UPDATE_WHITESPACE_DATA = auto()
     SET_SYMBOL = auto()
     SET_TIMEFRAME = auto()
     SET_SERIES_TYPE = auto()
@@ -95,6 +97,18 @@ def set_layout(container_id: str, layout: layouts) -> str:
 
 def set_data(frame_id: str, data: Series_DF) -> str:
     return f"{frame_id}.set_data({data.json})"
+
+
+def update_data(frame_id: str, data: AnySeriesData) -> str:
+    return f"{frame_id}.update_data({dump(data)})"
+
+
+def set_whitespace_data(frame_id: str, data: Series_DF) -> str:
+    return f"{frame_id}.set_whitespace_data({data.json})"
+
+
+def update_whitespace_data(frame_id: str, data: WhitespaceData) -> str:
+    return f"{frame_id}.update_whitespace_data({dump(data)})"
 
 
 def set_series_type(frame_id: str, series: SeriesType, data: Series_DF) -> str:

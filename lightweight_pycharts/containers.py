@@ -79,6 +79,7 @@ class Frame:
         self.socket_open = False
         self.symbol: Optional[Symbol] = None
         self.main_data: Optional[Series_DF] = None
+        self.whitespace_data: Optional[Series_DF] = None
         self.series_type = SeriesType.Candlestick
 
         self._fwd_queue.put((JS_CMD.ADD_FRAME, js_id, parent_id))
@@ -164,6 +165,11 @@ class Frame:
 
         self._fwd_queue.put((JS_CMD.SET_DATA, self.js_id, self.main_data))
         self._fwd_queue.put((JS_CMD.SET_TIMEFRAME, self.js_id, self.main_data.tf))
+
+        self.whitespace_data = Series_DF(self.main_data.whitespace_df)
+        self._fwd_queue.put(
+            (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
+        )
 
     def update_data(self):
         "Updates the prexisting Frame's Primary Dataframe"

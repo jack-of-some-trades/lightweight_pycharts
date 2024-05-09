@@ -1,5 +1,5 @@
 import { Legend } from "./legend.js";
-import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, TimeChartOptions, createChart } from "./lib/pkg.js";
+import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, LineSeries, TimeChartOptions, WhitespaceData, createChart } from "./lib/pkg.js";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
 import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import * as u from "./util.js";
@@ -12,6 +12,7 @@ export class Pane {
     flex_height: number
     legend?: Legend
     main_series: AnySeries
+    whitespace_series: LineSeries
     series: AnySeries[] = []
 
     private chart: IChartApi
@@ -36,6 +37,7 @@ export class Pane {
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this))
 
         this.main_series = this.chart.addCandlestickSeries()
+        this.whitespace_series = this.chart.addLineSeries()
         // this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries())
     }
 
@@ -78,9 +80,7 @@ export class Pane {
 
     /**
      * Sets The Data of a Series to the data list given.
-     * @param dtype The type of data Series given
-     * @param data The List of Data. It is trusted that this data actually matches the dtype given
-     * @param series The Data Series to be updated. Can be any of the base SeriesAPI types
+     * @param data The List of Data. Type Checking presumed to have been done in Python
      */
     set_main_data(data: AnySeriesData[]) {
         if (data.length === 0) {
@@ -91,9 +91,33 @@ export class Pane {
             return
         }
 
-        //Type checking presumed to have been done on the python side
         this.main_series.setData(data)
         this.autoscale_time_axis()
+    }
+
+    /**
+     * Sets The Data of a Series to the data list given.
+     * @param data The List of Data. Type Checking presumed to have been done in Python
+     */
+    update_main_data(data: AnySeriesData) {
+        if (this.main_series === undefined) return
+
+        this.main_series.update(data)
+        this.autoscale_time_axis()
+    }
+
+    set_whitespace_data(data: WhitespaceData[]) {
+        if (data.length === 0) {
+            //Delete Present Data if none was given.
+            this.whitespace_series.setData([])
+            return
+        }
+
+        this.whitespace_series.setData(data)
+    }
+
+    update_whitespace_data(data: WhitespaceData) {
+        this.whitespace_series.update(data)
     }
 
     /**
