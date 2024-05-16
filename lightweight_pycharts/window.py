@@ -125,7 +125,7 @@ class Window:
                     logger.warning("Couldn't find Container '%s'", args[0])
                     return
                 container.set_layout(args[1])
-            case PY_CMD.SERIES_CHANGE, str(), str(), orm.enum.SeriesType():
+            case PY_CMD.SERIES_CHANGE, str(), str(), orm.series.SeriesType():
                 if (container := self.get_container(args[0])) is None:
                     logger.warning(
                         "Failed Series Type Change, Couldn't find Conatiner ID %s",
@@ -218,20 +218,19 @@ class Window:
     ):
         # Close the socket if there was a symbol change
         if frame.socket_open and frame.symbol != symbol:
-            socket_switch("close", frame.symbol, frame)
+            socket_switch(state="close", symbol=frame.symbol, frame=frame)
             frame.socket_open = False
 
         if data is not None:
             # Need to set frame.main_data before frame.update_data is called
             frame.set_data(data, symbol)
             if not frame.socket_open:
-                socket_switch("open", symbol, frame)
+                socket_switch(state="open", symbol=symbol, frame=frame)
                 frame.socket_open = True
         else:
-            if (
-                frame.socket_open
-            ):  # Closes the socket if an invalid timeframe was selected.
-                socket_switch("close", frame.symbol, frame)
+            if frame.socket_open:
+                # Closes the socket if an invalid timeframe was selected.
+                socket_switch(state="close", symbol=frame.symbol, frame=frame)
                 frame.socket_open = False
             # Clear Data after Socket close so socket close get passed the old symbol
             frame.clear_data(timeframe, symbol)
@@ -312,7 +311,7 @@ class Window:
         "Set the layout types shown on the window's TopBar"
         self._fwd_queue.put((JS_CMD.UPDATE_LAYOUT_FAVS, {"favorites": favs}))
 
-    def set_series_favs(self, favs: list[orm.enum.SeriesType]):
+    def set_series_favs(self, favs: list[orm.series.SeriesType]):
         "Set the Series types shown on the window's TopBar"
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_FAVS, {"favorites": favs}))
 

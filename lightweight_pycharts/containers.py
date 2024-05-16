@@ -2,14 +2,20 @@
 
 import logging
 import multiprocessing as mp
+from tokenize import Single
 from typing import Optional, Any
 
 import pandas as pd
 
 from . import util
 from .orm import layouts, Symbol, TF
-from .orm.enum import SeriesType
-from .orm.series import Series_DF
+from .orm.series import (
+    AnyBasicData,
+    Series_DF,
+    SeriesType,
+    SingleValueData,
+    WhitespaceData,
+)
 from .js_cmd import JS_CMD
 
 logger = logging.getLogger("lightweight-pycharts")
@@ -69,8 +75,9 @@ class Container:
 
 
 class Frame:
-    """Frame Objects primarily hold information about the timeseries that is being displayed.
-    They retain a copy of data that is used across all sub-panes as well as the references to said panes.
+    """
+    Frame Objects primarily hold information about the timeseries that is being displayed. They
+    retain a copy of data that is used across all sub-panes as well as the references to said panes.
     """
 
     def __init__(self, js_id: str, parent_id: str, queue: mp.Queue) -> None:
@@ -117,7 +124,7 @@ class Frame:
             return
 
         # Check that The Current Data Supports the Change
-        if series_type in SeriesType.OHLC_Derived():
+        if SeriesType.OHLC_Derived(series_type):
             if not self.main_data.is_ohlc:
                 self.main_data.convert()
                 if not self.main_data.is_ohlc:
@@ -125,7 +132,7 @@ class Frame:
                         "Series Change Failed, Main_Data had no 'close' or 'value'"
                     )
                     return
-        else:  # series_type in SeriesType.SValue_Derived():
+        else:  # SeriesType.SValue_Derived(series_type):
             if not self.main_data.is_svalue:
                 self.main_data.convert()
                 if not self.main_data.is_svalue:
@@ -166,13 +173,51 @@ class Frame:
         self._fwd_queue.put((JS_CMD.SET_DATA, self.js_id, self.main_data))
         self._fwd_queue.put((JS_CMD.SET_TIMEFRAME, self.js_id, self.main_data.tf))
 
-        self.whitespace_data = Series_DF(self.main_data.whitespace_df)
+        self.whitespace_data = Series_DF(self.main_data.whitespace_df())
         self._fwd_queue.put(
             (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
         )
 
-    def update_data(self):
-        "Updates the prexisting Frame's Primary Dataframe"
+    def update_data(self, data: AnyBasicData, accumulate=False):
+        """
+        Updates the prexisting Frame's Primary Dataframe.
+        The data point's time must be equal to or greater than the last data point.
+
+        Can Accept WhitespaceData, SingleValueData, and OhlcData.
+        Function will auto detect if this is a tick or bar update.
+        When Accumulate is set to True, tick updates will accumulate volume,
+        otherwise the last volume will be overwritten.
+        """
+        # Ignoring Operator issue, it's a false alarm since WhitespaceData.__post_init__()
+        # Will Always convert 'data.time' to a compatable pd.Timestamp.
+        if self.main_data is None or data.time < self.main_data.curr_bar_time:  # type: ignore
+            return
+
+        update_whitespace = data.time > self.main_data.next_bar_time  # type: ignore
+
+        if data.time < self.main_data.next_bar_time:  # type: ignore
+            display_data = self.main_data.update_from_tick(data, accumulate=accumulate)
+        else:
+            self.main_data.update(data)
+            display_data = data
+
+        if self.whitespace_data is not None:
+            if update_whitespace:
+                # New Data Jumped more than expected, Replace Whitespace Data So
+                # There are no unnecessary gaps.
+                self.whitespace_data = Series_DF(self.main_data.whitespace_df())
+                self._fwd_queue.put(
+                    (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
+                )
+            else:
+                # Lengthen Whitespace Data to keep 500bar Buffer
+                next_piece = self.whitespace_data.extend()
+                self._fwd_queue.put(
+                    (JS_CMD.UPDATE_WHITESPACE_DATA, self.js_id, next_piece)
+                )
+
+        # Whitespace Data must be manipulated before Main Series for proper display.
+        self._fwd_queue.put((JS_CMD.UPDATE_DATA, self.js_id, display_data))
 
     # The Timeframe and Symbol are inputs to prevent the symbol search from getting locked-up.
     # e.g. If the current symbol doesn't exist and no data exists at the current timeframe,
@@ -182,7 +227,13 @@ class Frame:
     ):
         """Clears the data in memory and on the screen and, if not none,
         updates the desired timeframe and symbol for the Frame"""
-        self.main_data = None  # todo: remove data in JS side
+        self.main_data = None
+        self.whitespace_data = None
+        self._fwd_queue.put((JS_CMD.CLEAR_DATA, self.js_id))
+        self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self.js_id))
+        if self.socket_open:
+            # TODO: Close Socket...? but how...
+            pass
         if symbol is not None:
             self.symbol = symbol
             self._fwd_queue.put((JS_CMD.SET_SYMBOL, self.js_id, symbol))

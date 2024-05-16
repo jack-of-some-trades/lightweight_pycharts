@@ -1,6 +1,8 @@
 """ Enumeration Defenitions """
 
 from enum import IntEnum, StrEnum, Enum, auto
+
+from . import series
 from .types import Color
 
 # pylint: disable=line-too-long
@@ -40,81 +42,6 @@ class layouts(IntEnum):
             return 4
         else:
             return 0
-
-
-class SeriesType(IntEnum):
-    """
-    Represents the type of options for each series type.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriestype
-
-    This Enum is ultimately a Super set of of the Series Types described in the above documentation.
-    In actuality this matches the Series_Type enum in util.ts
-    """
-
-    WhitespaceData = 0
-
-    SingleValueData = auto()
-    Line = auto()
-    Area = auto()
-    Baseline = auto()
-    Histogram = auto()
-
-    OHLC_Data = auto()
-    Bar = auto()
-    Candlestick = auto()
-
-    # HLC_AREA = auto()
-    Rounded_Candle = auto()
-
-    @staticmethod
-    def OHLC_Derived() -> tuple["SeriesType", ...]:
-        "Returns the Series Types that are derived from OHLC Data"
-        return (SeriesType.Bar, SeriesType.Candlestick, SeriesType.Rounded_Candle)
-
-    @staticmethod
-    def SValue_Derived() -> tuple["SeriesType", ...]:
-        "Returns the Series Types that are derived from Single-Value Data"
-        return (
-            SeriesType.Line,
-            SeriesType.Area,
-            SeriesType.Baseline,
-            SeriesType.Histogram,
-        )
-
-    @property
-    def params(self) -> set[str]:
-        """
-        Returns a set of the unique properties of that type. Properties of a Types' parent are omitted
-        e.g. SeriesType.Bar = {'color'} because properties of OHLC_Data and WhitespaceData are omited.
-        """
-        match self:
-            case SeriesType.Bar:
-                return {"color"}
-            case SeriesType.Candlestick:  # Candlestick is an extention of Bar
-                return {"wickcolor", "bordercolor"}
-            case SeriesType.Rounded_Candle:
-                return {"wickcolor"}
-            case SeriesType.Area:
-                return {"linecolor", "topcolor", "bottomcolor"}
-            case SeriesType.Baseline:
-                return {
-                    "toplinecolor",
-                    "topfillcolor1",
-                    "topfillcolor2",
-                    "bottomlinecolor",
-                    "bottomfillcolor1",
-                    "bottomfillcolor2",
-                }
-            case SeriesType.Line:
-                return {"color"}
-            case SeriesType.Histogram:
-                return {"color"}
-            case SeriesType.SingleValueData:
-                return {"value"}
-            case SeriesType.OHLC_Data:
-                return {"open", "high", "low", "close"}
-            case SeriesType.WhitespaceData:
-                return {"time"}
 
 
 class ColorType(StrEnum):

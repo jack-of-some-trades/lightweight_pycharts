@@ -4,7 +4,9 @@ from dataclasses import is_dataclass, asdict
 from random import choices
 from string import ascii_letters
 from typing import Any
+from math import floor
 from json import JSONEncoder, dumps
+from pandas import Timestamp
 
 from .orm.types import Color
 
@@ -17,6 +19,8 @@ class ORM_JSONEncoder(JSONEncoder):
             return asdict(  # Drop Nones
                 o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
             )
+        if isinstance(o, Timestamp):
+            return floor(o.timestamp())
         if isinstance(o, Color):
             return repr(o)
         if isinstance(o, bool):

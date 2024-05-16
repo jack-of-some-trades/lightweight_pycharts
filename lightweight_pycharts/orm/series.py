@@ -1,14 +1,15 @@
 """ Series Datatypes and Custom Pandas Series DataFrame accessor """
 
+from __future__ import annotations
+from enum import IntEnum, auto
 from typing import Optional, TypeAlias
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from math import floor
 from json import dumps
 import logging
 import pandas as pd
 
 from .types import TF, Color, Time
-from .enum import SeriesType
 
 
 logger = logging.getLogger("lightweight-pycharts")
@@ -31,12 +32,11 @@ class Series_DF:
         if len(rename_dict) > 0:
             pandas_df.rename(columns=rename_dict, inplace=True)
 
-        if not isinstance(pandas_df["time"].iloc(0), pd.Timestamp):
-            pandas_df["time"] = pd.to_datetime(pandas_df["time"])
+        pandas_df["time"] = pd.to_datetime(pandas_df["time"])
 
         self.type = self._determine_type(pandas_df)
         self.tf, self.pd_tf = self._determine_tf(pandas_df)
-        self._df = pandas_df
+        self._df: pd.DataFrame = pandas_df
 
     @staticmethod
     def _validate_names(df: pd.DataFrame) -> dict[str, str]:
@@ -67,7 +67,7 @@ class Series_DF:
         Series_DF._col_name_check(column_names, rename_map, ["high", "h", "max"])
         Series_DF._col_name_check(column_names, rename_map, ["low", "l", "min"])
         Series_DF._col_name_check(
-            column_names, rename_map, ["value", "v", "val", "data"]
+            column_names, rename_map, ["value", "v", "val", "data", "price"]
         )
 
         return rename_map
@@ -182,7 +182,6 @@ class Series_DF:
 
         return TF(1, "E"), interval
 
-    @property
     def json(self) -> str:
         "Convert to JSON suitable for plotting in a Javascript Lightweight Chart"
         # Time must be in Unix format to work with Lightweight Charts. If in String format,
@@ -204,12 +203,37 @@ class Series_DF:
 
     @property
     def is_ohlc(self) -> bool:
+        "Checks if DataFrame is OHLC-Value Derived"
         return "close" in set(self._df.columns)
-        # return set(self._df.columns).intersection("open", "high", "low", "close") == 4
 
     @property
     def is_svalue(self) -> bool:
+        "Checks if DataFrame is Single-Value Derived"
         return "value" in set(self._df.columns)
+
+    @property
+    def curr_bar_time(self) -> pd.Timestamp:
+        return self._df["time"].iloc[-1]
+
+    @property
+    def next_bar_time(self) -> pd.Timestamp:
+        return self.curr_bar_time + self.pd_tf
+
+    def update_from_tick(
+        self, data: AnyBasicData, accumulate: bool = False
+    ) -> AnyBasicData:
+        """
+        Updates the DF from a given tick. Accumulate volume if desired, overwrite by default.
+        Returns a Basic DataPoint than can be used to update the screen.
+        """
+        return data
+
+    def update(self, data: AnyBasicData):
+        "Update the DF from a given new bar. Data Assumed as next in sequence"
+        data_dict = asdict(  # Drop Nones
+            data, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
+        )
+        self._df = pd.concat([self._df, pd.DataFrame([data_dict])], ignore_index=True)
 
     def convert(self) -> None:
         """
@@ -220,7 +244,14 @@ class Series_DF:
         if len(col_names.intersection(("value", "close"))) == 1:
             self._df.rename(columns={"value": "close", "close": "value"}, inplace=True)
 
-    @property
+    def extend(self) -> AnyBasicData:
+        "Extends a series with one datapoint of whitespace. Predominately useful for padding Series."
+        rtn_data = WhitespaceData(self.next_bar_time)
+        self._df = pd.concat(
+            [self._df, pd.DataFrame([{"time": rtn_data.time}])], ignore_index=True
+        )
+        return rtn_data
+
     def whitespace_df(self) -> pd.DataFrame:
         "Returns a Dataframe with 500 extrapolation Whitespace Datapoints"
         whitespace = pd.date_range(
@@ -232,7 +263,7 @@ class Series_DF:
 # region --------------------------------------- Series Data Types --------------------------------------- #
 
 
-@dataclass
+@dataclass(slots=True)
 class WhitespaceData:
     """
     Represents a whitespace data item, which is a data point without a value.
@@ -240,23 +271,28 @@ class WhitespaceData:
     """
 
     time: Time
+
+    def __post_init__(self):
+        self.time = pd.Timestamp(self.time)  # Ensure Consistent Format.
+
     # custom_values: Optional[Dict[str, Any]] = None #Removed for now since The Default Arg is messing with initilization
 
 
-@dataclass
+@dataclass(slots=True)
 class OhlcData(WhitespaceData):
     """
     Represents a bar with a time, open, high, low, and close prices.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/OhlcData
     """
 
-    open: float
-    high: float
-    low: float
-    close: float
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    close: Optional[float] = None
+    volume: Optional[float] = None  # Added by this library
 
 
-@dataclass
+@dataclass(slots=True)
 class BarData(OhlcData):
     """
     Structure describing a single item of data for bar series.
@@ -266,7 +302,7 @@ class BarData(OhlcData):
     color: Optional[str] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class CandlestickData(OhlcData):
     """
     Structure describing a single item of data for candlestick series.
@@ -278,17 +314,18 @@ class CandlestickData(OhlcData):
     borderColor: Optional[str] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class SingleValueData(WhitespaceData):
     """
     Represents a data point of a single-value series.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SingleValueData
     """
 
-    value: float
+    value: Optional[float] = None
+    volume: Optional[float] = None  # Added by this library
 
 
-@dataclass
+@dataclass(slots=True)
 class HistogramData(SingleValueData):
     """
     Structure describing a single item of data for histogram series.
@@ -298,7 +335,7 @@ class HistogramData(SingleValueData):
     color: Optional[Color] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class LineData(SingleValueData):
     """
     Structure describing a single item of data for line series.
@@ -308,7 +345,7 @@ class LineData(SingleValueData):
     color: Optional[Color] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class AreaData(SingleValueData):
     """
     Structure describing a single item of data for area series.
@@ -320,7 +357,7 @@ class AreaData(SingleValueData):
     bottomColor: Optional[Color] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class BaselineData(SingleValueData):
     """
     Structure describing a single item of data for baseline series.
@@ -335,8 +372,11 @@ class BaselineData(SingleValueData):
     bottomFillColor2: Optional[Color] = None
 
 
+AnyBasicData: TypeAlias = WhitespaceData | SingleValueData | OhlcData
+
 AnySeriesData: TypeAlias = (
     WhitespaceData
+    | SingleValueData
     | OhlcData
     | LineData
     | AreaData
@@ -345,5 +385,105 @@ AnySeriesData: TypeAlias = (
     | BarData
     | CandlestickData
 )
+
+
+class SeriesType(IntEnum):
+    """
+    Represents the type of options for each series type.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriestype
+
+    This Enum is ultimately a Super set of of the Series Types described in the above documentation.
+    In actuality this matches the Series_Type enum in util.ts
+    """
+
+    WhitespaceData = 0
+
+    SingleValueData = auto()
+    Line = auto()
+    Area = auto()
+    Baseline = auto()
+    Histogram = auto()
+
+    OHLC_Data = auto()
+    Bar = auto()
+    Candlestick = auto()
+
+    # HLC_AREA = auto()
+    Rounded_Candle = auto()
+
+    @staticmethod
+    def OHLC_Derived(s_type: SeriesType | AnySeriesData) -> bool:
+        "Returns True if the given SeriesType or Data Class is derived from OHLC Data"
+        if isinstance(s_type, AnySeriesData):
+            return isinstance(
+                s_type,
+                (OhlcData, BarData, CandlestickData),
+            )
+        else:
+            return s_type in (
+                SeriesType.OHLC_Data,
+                SeriesType.Bar,
+                SeriesType.Candlestick,
+                SeriesType.Rounded_Candle,
+            )
+
+    @staticmethod
+    def SValue_Derived(s_type: SeriesType | AnySeriesData) -> bool:
+        "Returns True if the given SeriesType or Data Class is derived from Single-Value Data"
+        if isinstance(s_type, AnySeriesData):
+            return isinstance(
+                s_type,
+                (
+                    SingleValueData,
+                    LineData,
+                    AreaData,
+                    HistogramData,
+                    BaselineData,
+                ),
+            )
+        else:
+            return s_type in (
+                SeriesType.SingleValueData,
+                SeriesType.Line,
+                SeriesType.Area,
+                SeriesType.Baseline,
+                SeriesType.Histogram,
+            )
+
+    @property
+    def params(self) -> set[str]:
+        """
+        Returns a set of the unique properties of that type. Properties of a Types' parent are omitted
+        e.g. SeriesType.Bar = {'color'} because properties of OHLC_Data and WhitespaceData are omited.
+        """
+        match self:
+            case SeriesType.Bar:
+                return {"color"}
+            case SeriesType.Candlestick:  # Candlestick is an extention of Bar
+                return {"wickcolor", "bordercolor"}
+            case SeriesType.Rounded_Candle:
+                return {"wickcolor"}
+            case SeriesType.Area:
+                return {"linecolor", "topcolor", "bottomcolor"}
+            case SeriesType.Baseline:
+                return {
+                    "toplinecolor",
+                    "topfillcolor1",
+                    "topfillcolor2",
+                    "bottomlinecolor",
+                    "bottomfillcolor1",
+                    "bottomfillcolor2",
+                }
+            case SeriesType.Line:
+                return {"color"}
+            case SeriesType.Histogram:
+                return {"color"}
+            case SeriesType.SingleValueData:
+                return {"value"}
+            case SeriesType.OHLC_Data:
+                return {"open", "high", "low", "close"}
+            case SeriesType.WhitespaceData:
+                return {"time"}
+
 
 # endregion

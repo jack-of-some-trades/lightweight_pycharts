@@ -4,8 +4,8 @@ from enum import IntEnum, auto
 
 from .util import dump
 from .orm import types
-from .orm.enum import layouts, SeriesType
-from .orm.series import AnySeriesData, Series_DF, WhitespaceData
+from .orm.enum import layouts
+from .orm.series import AnySeriesData, Series_DF, WhitespaceData, SeriesType
 
 # from .util import dump
 # @pylint: disable=invalid-name
@@ -41,8 +41,10 @@ class JS_CMD(IntEnum):
 
     ADD_FRAME = auto()
     SET_DATA = auto()
+    CLEAR_DATA = auto()
     UPDATE_DATA = auto()
     SET_WHITESPACE_DATA = auto()
+    CLEAR_WHITESPACE_DATA = auto()
     UPDATE_WHITESPACE_DATA = auto()
     SET_SYMBOL = auto()
     SET_TIMEFRAME = auto()
@@ -96,7 +98,11 @@ def set_layout(container_id: str, layout: layouts) -> str:
 
 
 def set_data(frame_id: str, data: Series_DF) -> str:
-    return f"{frame_id}.set_data({data.json})"
+    return f"{frame_id}.set_data({data.json()})"
+
+
+def clear_data(frame_id: str) -> str:
+    return f"{frame_id}.set_data([])"
 
 
 def update_data(frame_id: str, data: AnySeriesData) -> str:
@@ -104,7 +110,11 @@ def update_data(frame_id: str, data: AnySeriesData) -> str:
 
 
 def set_whitespace_data(frame_id: str, data: Series_DF) -> str:
-    return f"{frame_id}.set_whitespace_data({data.json})"
+    return f"{frame_id}.set_whitespace_data({data.json()})"
+
+
+def clear_whitespace_data(frame_id: str) -> str:
+    return f"{frame_id}.set_whitespace_data([])"
 
 
 def update_whitespace_data(frame_id: str, data: WhitespaceData) -> str:
@@ -112,7 +122,7 @@ def update_whitespace_data(frame_id: str, data: WhitespaceData) -> str:
 
 
 def set_series_type(frame_id: str, series: SeriesType, data: Series_DF) -> str:
-    return f"{frame_id}.set_series_type({series},{data.json})"
+    return f"{frame_id}.set_series_type({series},{data.json()})"
 
 
 def set_symbol(frame_id: str, symbol: types.Symbol) -> str:

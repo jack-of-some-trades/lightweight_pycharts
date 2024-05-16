@@ -1,6 +1,8 @@
 """ Basic Types and TypeAliases """
 
-from typing import TypeAlias, Literal, Union, Optional
+from typing import TypeAlias, Literal, Optional
+from pandas import Timestamp
+from datetime import datetime
 from dataclasses import dataclass
 
 # pylint: disable=line-too-long
@@ -18,25 +20,11 @@ UTCTimestamp: TypeAlias = int
 
 Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y", "E"]
 
-
-@dataclass
-class BusinessDay:
-    """
-    Represents a time as a day/month/year.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BusinessDay
-
-    Example:
-    ```
-    day = BusinessDay(year=2019, month=6, day=1)  # June 1, 2019
-    ```
-    """
-
-    year: int
-    month: int
-    day: int
-
-
-Time: TypeAlias = Union[UTCTimestamp, BusinessDay, str]
+Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
+# Time: TypeAlias = Union[UTCTimestamp, BusinessDay, str]
+# BusinessDay is an object in the lightweight charts library. It is not included since
+# it only supports timefames of 'Day' or longer. Technically, this is true for string
+# as well, but this python library converts all times to a UTCtimestamp
 
 
 # Note, this object cannot be a dataclass otherwise json.dumps()

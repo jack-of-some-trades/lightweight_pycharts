@@ -72,10 +72,14 @@ export class Pane {
             default:
                 return // Whitespace
         }
+        let timescale = this.chart.timeScale()
+        let current_range = timescale.getVisibleRange()
         this.chart.removeSeries(this.main_series)
         //@ts-ignore (Type Checking Done in Python, Data should already be updated if it needed to be)
         new_series.setData(data)
         this.main_series = new_series
+        if (current_range !== null)
+            timescale.setVisibleRange(current_range)
     }
 
     /**
@@ -83,13 +87,7 @@ export class Pane {
      * @param data The List of Data. Type Checking presumed to have been done in Python
      */
     set_main_data(data: AnySeriesData[]) {
-        if (data.length === 0) {
-            //Delete Present Data if none was given.
-            this.main_series.setData([])
-            return
-        } else if (this.main_series === undefined) {
-            return
-        }
+        if (this.main_series === undefined) return
 
         this.main_series.setData(data)
         this.autoscale_time_axis()
@@ -107,12 +105,6 @@ export class Pane {
     }
 
     set_whitespace_data(data: WhitespaceData[]) {
-        if (data.length === 0) {
-            //Delete Present Data if none was given.
-            this.whitespace_series.setData([])
-            return
-        }
-
         this.whitespace_series.setData(data)
     }
 

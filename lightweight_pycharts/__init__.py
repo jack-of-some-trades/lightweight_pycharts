@@ -18,7 +18,8 @@ from . import orm
 from .window import Window
 from .containers import Container, Frame, Pane
 from .orm.types import TF, Color, Symbol
-from .orm.enum import layouts, ColorLiteral, SeriesType
+from .orm.enum import layouts, ColorLiteral
+from .orm.series import SeriesType
 
 __all__ = (
     "Window",

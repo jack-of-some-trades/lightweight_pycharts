@@ -49,18 +49,17 @@ export class Pane {
             default:
                 return;
         }
+        let timescale = this.chart.timeScale();
+        let current_range = timescale.getVisibleRange();
         this.chart.removeSeries(this.main_series);
         new_series.setData(data);
         this.main_series = new_series;
+        if (current_range !== null)
+            timescale.setVisibleRange(current_range);
     }
     set_main_data(data) {
-        if (data.length === 0) {
-            this.main_series.setData([]);
+        if (this.main_series === undefined)
             return;
-        }
-        else if (this.main_series === undefined) {
-            return;
-        }
         this.main_series.setData(data);
         this.autoscale_time_axis();
     }
@@ -71,10 +70,6 @@ export class Pane {
         this.autoscale_time_axis();
     }
     set_whitespace_data(data) {
-        if (data.length === 0) {
-            this.whitespace_series.setData([]);
-            return;
-        }
         this.whitespace_series.setData(data);
     }
     update_whitespace_data(data) {
