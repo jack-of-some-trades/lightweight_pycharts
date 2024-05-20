@@ -30,9 +30,9 @@ export class Frame {
         });
         this.div.addEventListener('mousedown', this.assign_active_frame.bind(this));
     }
-    set_data(data) {
+    set_data(data, ws_data) {
         if (this.panes[0])
-            this.panes[0].set_main_data(data);
+            this.panes[0].set_main_data(data, ws_data);
     }
     update_data(data) {
         if (this.panes[0])

@@ -14,6 +14,7 @@ from .orm.series import (
     Series_DF,
     SeriesType,
     SingleValueData,
+    WhiteSpace_DF,
     WhitespaceData,
 )
 from .js_cmd import JS_CMD
@@ -87,7 +88,7 @@ class Frame:
         self.symbol: Optional[Symbol] = None
         self.main_data: Optional[Series_DF] = None
         self.whitespace_data: Optional[Series_DF] = None
-        self.series_type = SeriesType.Candlestick
+        self.series_type: SeriesType = SeriesType.Candlestick
 
         self._fwd_queue.put((JS_CMD.ADD_FRAME, js_id, parent_id))
 
@@ -113,38 +114,21 @@ class Frame:
 
     def change_series_type(self, series_type: SeriesType):
         "Change the Series Type of the main dataset"
-        # Massage Input
+        # Check and Massage Input
         if series_type == SeriesType.WhitespaceData:
             return
         if series_type == SeriesType.OHLC_Data:
             series_type = SeriesType.Candlestick
         if series_type == SeriesType.SingleValueData:
             series_type = SeriesType.Line
-        if self.series_type == series_type or self.main_data is None:
+        if self.main_data is None or self.series_type == series_type:
             return
 
-        # Check that The Current Data Supports the Change
-        if SeriesType.OHLC_Derived(series_type):
-            if not self.main_data.is_ohlc:
-                self.main_data.convert()
-                if not self.main_data.is_ohlc:
-                    logger.warning(
-                        "Series Change Failed, Main_Data had no 'close' or 'value'"
-                    )
-                    return
-        else:  # SeriesType.SValue_Derived(series_type):
-            if not self.main_data.is_svalue:
-                self.main_data.convert()
-                if not self.main_data.is_svalue:
-                    logger.warning(
-                        "Series Change Failed, Main_Data had no 'close' or 'value'"
-                    )
-                    return
-
-        # Set.
+        # Set. No Data renaming needed, that is handeled when converting to json
         self.series_type = series_type
+        self.main_data.disp_type = series_type
         self._fwd_queue.put(
-            (JS_CMD.SET_SERIES_TYPE, self.js_id, self.series_type, self.main_data)
+            (JS_CMD.SET_SERIES_TYPE, self.js_id, series_type, self.main_data)
         )
 
     def set_data(
@@ -160,23 +144,25 @@ class Frame:
 
         if not isinstance(data, pd.DataFrame):
             data = pd.DataFrame(data)
-        self.main_data = Series_DF(data)
+        self.main_data = Series_DF(data, self.series_type)
+        self.main_data.disp_type = self.series_type
 
         # Clear and Return on bad data.
         if self.main_data.tf == TF(1, "E"):
             self.clear_data()
             return
-        if self.main_data.type == SeriesType.WhitespaceData:
+        if self.main_data.disp_type == SeriesType.WhitespaceData:
             self.clear_data(timeframe=self.main_data.tf)
             return
 
-        self._fwd_queue.put((JS_CMD.SET_DATA, self.js_id, self.main_data))
-        self._fwd_queue.put((JS_CMD.SET_TIMEFRAME, self.js_id, self.main_data.tf))
-
-        self.whitespace_data = Series_DF(self.main_data.whitespace_df())
-        self._fwd_queue.put(
-            (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
+        self.whitespace_data = Series_DF(
+            self.main_data.whitespace_df(), SeriesType.WhitespaceData
         )
+
+        self._fwd_queue.put(
+            (JS_CMD.SET_DATA, self.js_id, self.main_data, self.whitespace_data)
+        )
+        self._fwd_queue.put((JS_CMD.SET_TIMEFRAME, self.js_id, self.main_data.tf))
 
     def update_data(self, data: AnyBasicData, accumulate=False):
         """
@@ -189,7 +175,7 @@ class Frame:
         otherwise the last volume will be overwritten.
         """
         # Ignoring Operator issue, it's a false alarm since WhitespaceData.__post_init__()
-        # Will Always convert 'data.time' to a compatable pd.Timestamp.
+        # Will Always convert 'data.time' to a compatible pd.Timestamp.
         if self.main_data is None or data.time < self.main_data.curr_bar_time:  # type: ignore
             return
 
@@ -198,14 +184,15 @@ class Frame:
         if data.time < self.main_data.next_bar_time:  # type: ignore
             display_data = self.main_data.update_from_tick(data, accumulate=accumulate)
         else:
-            self.main_data.update(data)
-            display_data = data
+            display_data = self.main_data.update(data)
 
         if self.whitespace_data is not None:
             if update_whitespace:
                 # New Data Jumped more than expected, Replace Whitespace Data So
                 # There are no unnecessary gaps.
-                self.whitespace_data = Series_DF(self.main_data.whitespace_df())
+                self.whitespace_data = Series_DF(
+                    self.main_data.whitespace_df(), SeriesType.WhitespaceData
+                )
                 self._fwd_queue.put(
                     (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
                 )

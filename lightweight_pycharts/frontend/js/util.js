@@ -481,8 +481,10 @@ export const DEFAULT_PYCHART_OPTS = {
         touch: true
     },
     timeScale: {
+        shiftVisibleRangeOnNewBar: true,
+        allowShiftVisibleRangeOnWhitespaceReplacement: true,
         rightBarStaysOnScroll: true,
-        timeVisible: true
+        rightOffset: 20
     }
 };
 const DEFAULT_SERIES_OPTS = {

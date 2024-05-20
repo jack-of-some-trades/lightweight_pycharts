@@ -14,7 +14,21 @@ export class Pane {
         this.chart_div = this.chart.chartElement();
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this));
         this.main_series = this.chart.addCandlestickSeries();
-        this.whitespace_series = this.chart.addLineSeries();
+        this.whitespace_series = this.chart.addLineSeries({ priceScaleId: 'whitespace' });
+        this.chart_div.addEventListener('mousedown', () => {
+            this.chart.timeScale().applyOptions({
+                'shiftVisibleRangeOnNewBar': false,
+                'allowShiftVisibleRangeOnWhitespaceReplacement': false,
+                'rightBarStaysOnScroll': false
+            });
+        });
+        this.chart_div.addEventListener('mouseup', () => {
+            this.chart.timeScale().applyOptions({
+                'shiftVisibleRangeOnNewBar': true,
+                'allowShiftVisibleRangeOnWhitespaceReplacement': true,
+                'rightBarStaysOnScroll': true
+            });
+        });
     }
     assign_active_pane() {
         if (window.active_pane)
@@ -51,23 +65,23 @@ export class Pane {
         }
         let timescale = this.chart.timeScale();
         let current_range = timescale.getVisibleRange();
-        this.chart.removeSeries(this.main_series);
         new_series.setData(data);
+        this.chart.removeSeries(this.main_series);
         this.main_series = new_series;
         if (current_range !== null)
             timescale.setVisibleRange(current_range);
     }
-    set_main_data(data) {
+    set_main_data(data, ws_data) {
         if (this.main_series === undefined)
             return;
         this.main_series.setData(data);
+        this.whitespace_series.setData(ws_data);
         this.autoscale_time_axis();
     }
     update_main_data(data) {
         if (this.main_series === undefined)
             return;
         this.main_series.update(data);
-        this.autoscale_time_axis();
     }
     set_whitespace_data(data) {
         this.whitespace_series.setData(data);

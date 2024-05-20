@@ -66,9 +66,9 @@ export class Frame {
 
     // #region -------------- Python API Functions ------------------ //
 
-    protected set_data(data: AnySeriesData[]) {
+    protected set_data(data: AnySeriesData[], ws_data: AnySeriesData[]) {
         if (this.panes[0])
-            this.panes[0].set_main_data(data)
+            this.panes[0].set_main_data(data, ws_data)
     }
 
     protected update_data(data: AnySeriesData) {
@@ -109,7 +109,7 @@ export class Frame {
         this.panes.forEach(pane => { pane.update_timescale_opts(newOpts) });
     }
 
-    protected set_series_type(new_type: Series_Type, data: AnySeriesData) {
+    protected set_series_type(new_type: Series_Type, data: AnySeriesData[]) {
         //Type Checking and Error Prevention done in python, blindly follow directions
         this.panes[0].set_main_series(new_type, data)
 

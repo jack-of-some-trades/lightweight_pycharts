@@ -97,8 +97,8 @@ def set_layout(container_id: str, layout: layouts) -> str:
     return f"{container_id}.set_layout({layout})"
 
 
-def set_data(frame_id: str, data: Series_DF) -> str:
-    return f"{frame_id}.set_data({data.json()})"
+def set_data(frame_id: str, data: Series_DF, ws_data: Series_DF) -> str:
+    return f"{frame_id}.set_data({data.json()}, {ws_data.json()})"
 
 
 def clear_data(frame_id: str) -> str:

@@ -239,8 +239,8 @@ class View(ABC):
                 cmd = cmds.add_pane(args[0], args[1])
             case JS_CMD.SET_LAYOUT, str(), orm.layouts():
                 cmd = cmds.set_layout(args[0], args[1])
-            case JS_CMD.SET_DATA, str(), Series_DF():
-                cmd = cmds.set_data(args[0], args[1])
+            case JS_CMD.SET_DATA, str(), Series_DF(), Series_DF():
+                cmd = cmds.set_data(args[0], args[1], args[2])
             case JS_CMD.CLEAR_DATA, str():
                 cmd = cmds.clear_data(args[0])
             case JS_CMD.UPDATE_DATA, str(), _:  # Can't Pattern Match a Union

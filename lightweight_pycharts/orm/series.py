@@ -1,13 +1,16 @@
 """ Series Datatypes and Custom Pandas Series DataFrame accessor """
 
 from __future__ import annotations
-from enum import IntEnum, auto
-from typing import Optional, TypeAlias
-from dataclasses import asdict, dataclass
-from math import floor
-from json import dumps
 import logging
+from json import dumps
+from math import floor, inf
+from inspect import signature
+from enum import IntEnum, auto
+from typing import Optional, Self, TypeAlias, Dict, Any
+from dataclasses import asdict, dataclass, field
+
 import pandas as pd
+import pandas_market_calendars as mcal
 
 from .types import TF, Color, Time
 
@@ -21,9 +24,10 @@ logger = logging.getLogger("lightweight-pycharts")
 class Series_DF:
     "Pandas DataFrame Extention to Typecheck for Lightweight_PyCharts"
 
-    def __init__(self, pandas_df: pd.DataFrame):
+    def __init__(self, pandas_df: pd.DataFrame, display_type: SeriesType):
         if pandas_df.size == 0:
-            self.type = SeriesType.WhitespaceData
+            self.data_type = SeriesType.WhitespaceData
+            self.disp_type = SeriesType.WhitespaceData
             self.tf = TF(1, "E")
             logger.warning("DataFrame given had no Data.")
             return
@@ -33,8 +37,22 @@ class Series_DF:
             pandas_df.rename(columns=rename_dict, inplace=True)
 
         pandas_df["time"] = pd.to_datetime(pandas_df["time"])
+        try:
+            pandas_df["time"] = pandas_df["time"].dt.tz_convert("UTC")
+            pandas_df["time"] = pandas_df["time"].dt.tz_localize(None)
+        except TypeError:
+            pass  # Ignore Failed Conversion if it was already TZ Naive
 
-        self.type = self._determine_type(pandas_df)
+        # Data Type is used to simplify updateing. Should be considered a constant
+        self._data_type = self._determine_type(pandas_df)
+
+        self.disp_type = display_type
+        # Set ambiguous Data types to a default display series type
+        if self.disp_type == SeriesType.SingleValueData:
+            self.disp_type = SeriesType.Line
+        elif self.disp_type == SeriesType.OHLC_Data:
+            self.disp_type = SeriesType.Candlestick
+
         self.tf, self.pd_tf = self._determine_tf(pandas_df)
         self._df: pd.DataFrame = pandas_df
 
@@ -98,38 +116,14 @@ class Series_DF:
 
     @staticmethod
     def _determine_type(df: pd.DataFrame) -> SeriesType:
-        "Checks the column names and returns the most strict applicable series type"
-        col_names = set(df.columns)
-        if len(col_names.intersection(SeriesType.OHLC_Data.params)) == 4:
-            remainder = col_names.difference(SeriesType.OHLC_Data.params, "time")
-
-            if len(remainder.intersection(SeriesType.Candlestick.params)) > 0:
-                return SeriesType.Candlestick
-            elif len(remainder.intersection(SeriesType.Bar.params)) > 0:
-                return SeriesType.Bar
-            else:
-                return SeriesType.OHLC_Data
-
-        if len(col_names.intersection({"close"})) == 1:
-            # DataFrame was given 'close' but lacks Open, high, & low. rename to value and treat as singlevalue
-            # remainder of library should ignore the Open, high, & low columns
-            df.rename(columns={"close": "value"}, inplace=True)
-
-        if len(col_names.intersection(SeriesType.SingleValueData.params)) == 1:
-            remainder = col_names.difference(SeriesType.SingleValueData.params, "time")
-
-            if len(remainder.intersection(SeriesType.Baseline.params)) > 0:
-                return SeriesType.Baseline
-            elif len(remainder.intersection(SeriesType.Area.params)) > 0:
-                return SeriesType.Area
-            # Histogram Check Un-neccessary since dataset will match line type
-            elif len(remainder.intersection(SeriesType.Line.params)) > 0:
-                return SeriesType.Line
-            else:
-                return SeriesType.SingleValueData
-
-        # if nothing else returned then only whitespace remains
-        return SeriesType.WhitespaceData
+        "Checks the column names and returns the data type"
+        column_names = set(df.columns)
+        if "close" in column_names:
+            return SeriesType.OHLC_Data
+        elif "value" in column_names:
+            return SeriesType.SingleValueData
+        else:
+            return SeriesType.WhitespaceData
 
     @staticmethod
     def _determine_tf(df: pd.DataFrame) -> tuple[TF, pd.Timedelta]:
@@ -185,31 +179,33 @@ class Series_DF:
     def json(self) -> str:
         "Convert to JSON suitable for plotting in a Javascript Lightweight Chart"
         # Time must be in Unix format to work with Lightweight Charts. If in String format,
-        # The datetime will be truncated down to just the date leaving bars to print over each other.
-        # May look Janky, but int conversion and back is the fastest method + still works with -Epoch #s
-        self._df["time"] = self._df["time"].astype("int64") / 10**9
+        # The datetime will be truncated down to just the date leaving bars to print on top of each other.
+        # May look Janky, but int conversion and back is the fastest method + still works with neg Epoch #s
+        tmp_df = self._df.copy()
+        tmp_df["time"] = tmp_df["time"].astype("int64") / 10**9
 
-        # Not useing .to_json() since it leaves NaNs. NaNs need to be dropped on a per row basis
+        # Rename if required to display data the.
+        if SeriesType.SValue_Derived(self._data_type) != SeriesType.SValue_Derived(
+            self.disp_type
+        ):
+            tmp_df.rename(columns={"close": "value", "value": "close"}, inplace=True)
+
+        # Drop All Columns that LWC doesn't use (Why we made a copy of the data.)
+        visual_columns = set(signature(self.disp_type.cls).parameters.keys())
+        if "volume" in visual_columns:  # Volume handled as a separate series.
+            visual_columns.remove("volume")
+        col_to_drop = set(tmp_df.columns).difference(visual_columns)
+        tmp_df.drop(columns=col_to_drop, inplace=True)  # type: ignore : False Alarm Err? Arg *can* be a set().
+
+        # Not useing .to_json() since it leaves NaNs. NaNs need to be dropped on a per item basis
         json_df = dumps(
             [
                 {k: v for k, v in m.items() if pd.notnull(v)}
-                for m in self._df.to_dict(orient="records")
+                for m in tmp_df.to_dict(orient="records")
             ]
         )
 
-        # Convert Time back so that We can still use Timezone functionality
-        self._df["time"] = (self._df["time"] * 10**9).astype("datetime64[ns]")
         return json_df
-
-    @property
-    def is_ohlc(self) -> bool:
-        "Checks if DataFrame is OHLC-Value Derived"
-        return "close" in set(self._df.columns)
-
-    @property
-    def is_svalue(self) -> bool:
-        "Checks if DataFrame is Single-Value Derived"
-        return "value" in set(self._df.columns)
 
     @property
     def curr_bar_time(self) -> pd.Timestamp:
@@ -219,6 +215,18 @@ class Series_DF:
     def next_bar_time(self) -> pd.Timestamp:
         return self.curr_bar_time + self.pd_tf
 
+    @property
+    def last_bar(self) -> AnyBasicData:
+        if self.data_type == SeriesType.SingleValueData:
+            return SingleValueData.from_dict(self._df.iloc[-1].to_dict())
+        elif self.data_type == SeriesType.OHLC_Data:
+            return OhlcData.from_dict(self._df.iloc[-1].to_dict())
+        else:
+            return WhitespaceData.from_dict(self._df.iloc[-1].to_dict())
+
+        # except IndexError: # Catch Error on Empty DF?
+        #     return WhitespaceData(0)
+
     def update_from_tick(
         self, data: AnyBasicData, accumulate: bool = False
     ) -> AnyBasicData:
@@ -226,23 +234,74 @@ class Series_DF:
         Updates the DF from a given tick. Accumulate volume if desired, overwrite by default.
         Returns a Basic DataPoint than can be used to update the screen.
         """
+        last_data = self.last_bar
+
+        # Update price
+        match last_data, data:
+            case SingleValueData(), SingleValueData():
+                data.value = last_data.value
+            case OhlcData(), SingleValueData():
+                last_data.high = max(
+                    (last_data.high if last_data.high is not None else -inf),
+                    (data.value if data.value is not None else -inf),
+                )
+                last_data.low = min(
+                    (last_data.low if last_data.low is not None else inf),
+                    (data.value if data.value is not None else inf),
+                )
+                last_data.close = data.value
+                data.value = last_data.close
+            case SingleValueData(), OhlcData():
+                # in this instance it could be a Line is displayed but the data is actually OHLC.
+                ...
+            case OhlcData(), OhlcData():
+                last_data.high = max(
+                    (last_data.high if last_data.high is not None else -inf),
+                    (data.high if data.high is not None else -inf),
+                )
+                last_data.low = min(
+                    (last_data.low if last_data.low is not None else inf),
+                    (data.low if data.low is not None else inf),
+                )
+                last_data.close = data.close
+
+        # update volume
+
         return data
 
-    def update(self, data: AnyBasicData):
+    def update(self, data: AnyBasicData) -> AnyBasicData:
         "Update the DF from a given new bar. Data Assumed as next in sequence"
         data_dict = asdict(  # Drop Nones
             data, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
         )
+
+        # Convert Data to proper format (if needed) then append.
+        match self._data_type, data:
+            case SeriesType.OHLC_Data, SeriesType.SingleValueData:
+                data_dict["close"] = data_dict["value"]
+            case SeriesType.SingleValueData, SeriesType.OHLC_Data:
+                data_dict["value"] = data_dict["close"]
+
         self._df = pd.concat([self._df, pd.DataFrame([data_dict])], ignore_index=True)
 
-    def convert(self) -> None:
-        """
-        Converts the Value Column name to Close and vise-versa depending on which is present
-        Does Nothing if both value and close are present
-        """
-        col_names = set(self._df.columns)
-        if len(col_names.intersection(("value", "close"))) == 1:
-            self._df.rename(columns={"value": "close", "close": "value"}, inplace=True)
+        # Return proper formatted data to update screen with
+        match (
+            self._data_type,
+            SeriesType.SValue_Derived(self.disp_type),
+            SeriesType.OHLC_Derived(self.disp_type),
+        ):
+            case SeriesType.OHLC_Data, False, True:
+                return OhlcData.from_dict(data_dict)
+            case SeriesType.OHLC_Data, True, False:
+                data_dict["value"] = data_dict["close"]
+                return SingleValueData.from_dict(data_dict)
+            case SeriesType.SingleValueData, False, True:
+                data_dict["close"] = data_dict["value"]
+                return OhlcData.from_dict(data_dict)
+            case SeriesType.SingleValueData, True, False:
+                return SingleValueData.from_dict(data_dict)
+            case _:
+                return WhitespaceData.from_dict(data_dict)
 
     def extend(self) -> AnyBasicData:
         "Extends a series with one datapoint of whitespace. Predominately useful for padding Series."
@@ -260,10 +319,26 @@ class Series_DF:
         return pd.DataFrame({"time": whitespace})
 
 
+class WhiteSpace_DF:
+    """
+    Pandas DataFrame Wrapper to Generate Whitespace for Lightweight PyCharts
+
+    Whitespace ahead of a series is useful to be able to extend drawings into that space.
+    Without the whitespace, nothing can be drawn in that area. Ideally this whitespace
+    is already set to the times market data is expected. If it's not, likely because it was just
+    blindly extended at the chart timeframe, then there will be potentially large gaps between bars.
+    The only way to fix this is to generate an entirely new whitespace that overwrites the old.
+    While that works, it's jittery when re-setting and overall inefficient.
+    """
+
+    def __init__(self, tf: TF, calendar: mcal.MarketCalendar, ext: bool):
+        pass
+
+
 # region --------------------------------------- Series Data Types --------------------------------------- #
 
 
-@dataclass(slots=True)
+@dataclass
 class WhitespaceData:
     """
     Represents a whitespace data item, which is a data point without a value.
@@ -271,14 +346,26 @@ class WhitespaceData:
     """
 
     time: Time
+    custom_values: Optional[Dict[str, Any]] = field(default=None, kw_only=True)
+    # Anything placed in the custom_values dict can be retrieved by a TS/JS LWC Plugin.
+    # Any other values given to a JavaScript Lightweight_Charts series through setData()
+    # are ignored and deleted and thus inaccessible beyond python.
 
-    def __post_init__(self):
-        self.time = pd.Timestamp(self.time)  # Ensure Consistent Format.
+    def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Naive).
+        self.time = pd.Timestamp(self.time)
+        try:
+            self.time = self.time.tz_convert("UTC")
+            self.time = self.time.tz_localize(None)
+        except TypeError:
+            pass  # Ignore Failed Conversion if it was already TZ Naive
 
-    # custom_values: Optional[Dict[str, Any]] = None #Removed for now since The Default Arg is messing with initilization
+    @classmethod
+    def from_dict(cls, obj: dict) -> Self:
+        "Create an instance from a dict ignoring extraneous params"
+        return cls(**{k: v for k, v in obj.items() if k in signature(cls).parameters})
 
 
-@dataclass(slots=True)
+@dataclass
 class OhlcData(WhitespaceData):
     """
     Represents a bar with a time, open, high, low, and close prices.
@@ -292,7 +379,7 @@ class OhlcData(WhitespaceData):
     volume: Optional[float] = None  # Added by this library
 
 
-@dataclass(slots=True)
+@dataclass
 class BarData(OhlcData):
     """
     Structure describing a single item of data for bar series.
@@ -302,7 +389,7 @@ class BarData(OhlcData):
     color: Optional[str] = None
 
 
-@dataclass(slots=True)
+@dataclass
 class CandlestickData(OhlcData):
     """
     Structure describing a single item of data for candlestick series.
@@ -314,7 +401,7 @@ class CandlestickData(OhlcData):
     borderColor: Optional[str] = None
 
 
-@dataclass(slots=True)
+@dataclass
 class SingleValueData(WhitespaceData):
     """
     Represents a data point of a single-value series.
@@ -325,7 +412,7 @@ class SingleValueData(WhitespaceData):
     volume: Optional[float] = None  # Added by this library
 
 
-@dataclass(slots=True)
+@dataclass
 class HistogramData(SingleValueData):
     """
     Structure describing a single item of data for histogram series.
@@ -335,7 +422,7 @@ class HistogramData(SingleValueData):
     color: Optional[Color] = None
 
 
-@dataclass(slots=True)
+@dataclass
 class LineData(SingleValueData):
     """
     Structure describing a single item of data for line series.
@@ -345,7 +432,7 @@ class LineData(SingleValueData):
     color: Optional[Color] = None
 
 
-@dataclass(slots=True)
+@dataclass
 class AreaData(SingleValueData):
     """
     Structure describing a single item of data for area series.
@@ -357,7 +444,7 @@ class AreaData(SingleValueData):
     bottomColor: Optional[Color] = None
 
 
-@dataclass(slots=True)
+@dataclass
 class BaselineData(SingleValueData):
     """
     Structure describing a single item of data for baseline series.
@@ -484,6 +571,31 @@ class SeriesType(IntEnum):
                 return {"open", "high", "low", "close"}
             case SeriesType.WhitespaceData:
                 return {"time"}
+
+    @property
+    def cls(self) -> type:
+        "Returns the DataClass this Type corresponds too"
+        match self:
+            case SeriesType.Bar:
+                return BarData
+            case SeriesType.Candlestick:
+                return CandlestickData
+            case SeriesType.Rounded_Candle:
+                return CandlestickData
+            case SeriesType.Area:
+                return AreaData
+            case SeriesType.Baseline:
+                return BaselineData
+            case SeriesType.Line:
+                return LineData
+            case SeriesType.Histogram:
+                return HistogramData
+            case SeriesType.SingleValueData:
+                return SingleValueData
+            case SeriesType.OHLC_Data:
+                return OhlcData
+            case SeriesType.WhitespaceData:
+                return WhitespaceData
 
 
 # endregion

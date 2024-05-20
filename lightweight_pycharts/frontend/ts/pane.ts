@@ -37,8 +37,24 @@ export class Pane {
         this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this))
 
         this.main_series = this.chart.addCandlestickSeries()
-        this.whitespace_series = this.chart.addLineSeries()
+        this.whitespace_series = this.chart.addLineSeries({ priceScaleId: 'whitespace' })
         // this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries())
+
+        // Without these, chart cannot be moved in a replay like mode
+        this.chart_div.addEventListener('mousedown', () => {
+            this.chart.timeScale().applyOptions({
+                'shiftVisibleRangeOnNewBar': false,
+                'allowShiftVisibleRangeOnWhitespaceReplacement': false,
+                'rightBarStaysOnScroll': false
+            })
+        })
+        this.chart_div.addEventListener('mouseup', () => {
+            this.chart.timeScale().applyOptions({
+                'shiftVisibleRangeOnNewBar': true,
+                'allowShiftVisibleRangeOnWhitespaceReplacement': true,
+                'rightBarStaysOnScroll': true
+            })
+        })
     }
 
     /**
@@ -52,7 +68,7 @@ export class Pane {
         window.active_pane.div.setAttribute('active', '')
     }
 
-    set_main_series(series_type: u.Series_Type, data: AnySeriesData) {
+    set_main_series(series_type: u.Series_Type, data: AnySeriesData[]) {
         let new_series: AnySeries
         switch (series_type) {
             case (u.Series_Type.LINE):
@@ -74,10 +90,12 @@ export class Pane {
         }
         let timescale = this.chart.timeScale()
         let current_range = timescale.getVisibleRange()
-        this.chart.removeSeries(this.main_series)
+
         //@ts-ignore (Type Checking Done in Python, Data should already be updated if it needed to be)
         new_series.setData(data)
+        this.chart.removeSeries(this.main_series)
         this.main_series = new_series
+
         if (current_range !== null)
             timescale.setVisibleRange(current_range)
     }
@@ -86,10 +104,10 @@ export class Pane {
      * Sets The Data of a Series to the data list given.
      * @param data The List of Data. Type Checking presumed to have been done in Python
      */
-    set_main_data(data: AnySeriesData[]) {
+    set_main_data(data: AnySeriesData[], ws_data: AnySeriesData[]) {
         if (this.main_series === undefined) return
-
         this.main_series.setData(data)
+        this.whitespace_series.setData(ws_data)
         this.autoscale_time_axis()
     }
 
@@ -99,9 +117,7 @@ export class Pane {
      */
     update_main_data(data: AnySeriesData) {
         if (this.main_series === undefined) return
-
         this.main_series.update(data)
-        this.autoscale_time_axis()
     }
 
     set_whitespace_data(data: WhitespaceData[]) {

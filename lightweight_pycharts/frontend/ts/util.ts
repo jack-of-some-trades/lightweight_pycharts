@@ -703,8 +703,10 @@ export const DEFAULT_PYCHART_OPTS: DP<TimeChartOptions> = {
         touch: true
     },
     timeScale: {
+        shiftVisibleRangeOnNewBar: true,
+        allowShiftVisibleRangeOnWhitespaceReplacement: true,
         rightBarStaysOnScroll: true,
-        timeVisible: true
+        rightOffset: 20
     }
 }
 
