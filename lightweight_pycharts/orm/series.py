@@ -36,12 +36,12 @@ class Series_DF:
         if len(rename_dict) > 0:
             pandas_df.rename(columns=rename_dict, inplace=True)
 
+        # Ensure Consistant Time format (Pd.Timestamp, UTC, TZ Aware)
         pandas_df["time"] = pd.to_datetime(pandas_df["time"])
         try:
             pandas_df["time"] = pandas_df["time"].dt.tz_convert("UTC")
-            pandas_df["time"] = pandas_df["time"].dt.tz_localize(None)
         except TypeError:
-            pass  # Ignore Failed Conversion if it was already TZ Naive
+            pandas_df["time"] = pandas_df["time"].dt.tz_localize("UTC")
 
         # Data Type is used to simplify updateing. Should be considered a constant
         self._data_type = self._determine_type(pandas_df)
@@ -217,29 +217,31 @@ class Series_DF:
 
     @property
     def last_bar(self) -> AnyBasicData:
-        if self.data_type == SeriesType.SingleValueData:
+        if self._data_type == SeriesType.SingleValueData:
             return SingleValueData.from_dict(self._df.iloc[-1].to_dict())
-        elif self.data_type == SeriesType.OHLC_Data:
+        elif self._data_type == SeriesType.OHLC_Data:
             return OhlcData.from_dict(self._df.iloc[-1].to_dict())
         else:
             return WhitespaceData.from_dict(self._df.iloc[-1].to_dict())
 
-        # except IndexError: # Catch Error on Empty DF?
-        #     return WhitespaceData(0)
-
+    # Next line Silences a False-Positive Flag. Dunno why it thinks last_data's vars aren't initialized
+    # @pylint: disable=attribute-defined-outside-init
     def update_from_tick(
         self, data: AnyBasicData, accumulate: bool = False
     ) -> AnyBasicData:
         """
-        Updates the DF from a given tick. Accumulate volume if desired, overwrite by default.
+        Updates the DF from a given tick with the assumption a new bar should not be created.
+        Accumulate volume if desired, overwrite by default.
         Returns a Basic DataPoint than can be used to update the screen.
         """
+        if not isinstance(data, (SingleValueData, OhlcData)):
+            return data  # Nothing to update
         last_data = self.last_bar
 
         # Update price
         match last_data, data:
             case SingleValueData(), SingleValueData():
-                data.value = last_data.value
+                last_data.value = data.value
             case OhlcData(), SingleValueData():
                 last_data.high = max(
                     (last_data.high if last_data.high is not None else -inf),
@@ -251,9 +253,6 @@ class Series_DF:
                 )
                 last_data.close = data.value
                 data.value = last_data.close
-            case SingleValueData(), OhlcData():
-                # in this instance it could be a Line is displayed but the data is actually OHLC.
-                ...
             case OhlcData(), OhlcData():
                 last_data.high = max(
                     (last_data.high if last_data.high is not None else -inf),
@@ -264,27 +263,55 @@ class Series_DF:
                     (data.low if data.low is not None else inf),
                 )
                 last_data.close = data.close
+            # Last Two are VERY unlikely Scenarios
+            case SingleValueData(), OhlcData():
+                last_data.value = data.close
+            case WhitespaceData(), _:
+                last_data = data
+                if accumulate:  # Needed as setup for volume accumulation
+                    data.volume = 0
 
         # update volume
+        if last_data.volume is not None and data.volume is not None:
+            if accumulate:
+                last_data.volume += data.volume
+            else:
+                last_data.volume = data.volume
 
-        return data
+        # Ensure time is constant, If not a new bar will be created on screen
+        last_data.time = self.curr_bar_time
+
+        # Somehow this is the easist way to update the last row in the DF??
+        last_ind = self._df.index[-1]
+        data_dict = last_data.as_dict
+        for k, v in data_dict.items():
+            if k in self._df.columns:
+                self._df.loc[last_ind, k] = v
+
+        return self._get_render_data_fmt(data_dict)
+
+    # @pylint: enable=attribute-defined-outside-init
 
     def update(self, data: AnyBasicData) -> AnyBasicData:
         "Update the DF from a given new bar. Data Assumed as next in sequence"
-        data_dict = asdict(  # Drop Nones
-            data, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
-        )
-
+        data_dict = data.as_dict
         # Convert Data to proper format (if needed) then append.
         match self._data_type, data:
-            case SeriesType.OHLC_Data, SeriesType.SingleValueData:
+            case SeriesType.OHLC_Data, SingleValueData():
+                # Ensure both open an close are defined when storeing OHLC data from a single data point
+                data_dict["open"] = data_dict["value"]
+                data_dict["high"] = data_dict["value"]
+                data_dict["low"] = data_dict["value"]
                 data_dict["close"] = data_dict["value"]
-            case SeriesType.SingleValueData, SeriesType.OHLC_Data:
+            case SeriesType.SingleValueData, OhlcData():
                 data_dict["value"] = data_dict["close"]
 
         self._df = pd.concat([self._df, pd.DataFrame([data_dict])], ignore_index=True)
 
-        # Return proper formatted data to update screen with
+        return self._get_render_data_fmt(data_dict)
+
+    def _get_render_data_fmt(self, data_dict) -> AnyBasicData:
+        "Takes a Dict of Data and returns an object that is used to update the screen"
         match (
             self._data_type,
             SeriesType.SValue_Derived(self.disp_type),
@@ -293,10 +320,12 @@ class Series_DF:
             case SeriesType.OHLC_Data, False, True:
                 return OhlcData.from_dict(data_dict)
             case SeriesType.OHLC_Data, True, False:
-                data_dict["value"] = data_dict["close"]
+                if "value" not in data_dict:
+                    data_dict["value"] = data_dict["close"]
                 return SingleValueData.from_dict(data_dict)
             case SeriesType.SingleValueData, False, True:
-                data_dict["close"] = data_dict["value"]
+                if "close" not in data_dict:
+                    data_dict["close"] = data_dict["value"]
                 return OhlcData.from_dict(data_dict)
             case SeriesType.SingleValueData, True, False:
                 return SingleValueData.from_dict(data_dict)
@@ -351,13 +380,18 @@ class WhitespaceData:
     # Any other values given to a JavaScript Lightweight_Charts series through setData()
     # are ignored and deleted and thus inaccessible beyond python.
 
-    def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Naive).
+    def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Aware).
         self.time = pd.Timestamp(self.time)
         try:
             self.time = self.time.tz_convert("UTC")
-            self.time = self.time.tz_localize(None)
         except TypeError:
-            pass  # Ignore Failed Conversion if it was already TZ Naive
+            self.time = self.time.tz_localize("UTC")
+
+    @property
+    def as_dict(self) -> dict:
+        return asdict(  # Drop Nones
+            self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
+        )
 
     @classmethod
     def from_dict(cls, obj: dict) -> Self:

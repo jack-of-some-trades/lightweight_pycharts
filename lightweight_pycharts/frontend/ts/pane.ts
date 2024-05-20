@@ -34,7 +34,7 @@ export class Pane {
         this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.chart.chartElement()
 
-        this.chart_div.addEventListener('mousedown', this.assign_active_pane.bind(this))
+        this.assign_active_pane = this.assign_active_pane.bind(this)
 
         this.main_series = this.chart.addCandlestickSeries()
         this.whitespace_series = this.chart.addLineSeries({ priceScaleId: 'whitespace' })
@@ -42,13 +42,14 @@ export class Pane {
 
         // Without these, chart cannot be moved in a replay like mode
         this.chart_div.addEventListener('mousedown', () => {
+            this.assign_active_pane()
             this.chart.timeScale().applyOptions({
                 'shiftVisibleRangeOnNewBar': false,
                 'allowShiftVisibleRangeOnWhitespaceReplacement': false,
                 'rightBarStaysOnScroll': false
             })
         })
-        this.chart_div.addEventListener('mouseup', () => {
+        window.document.addEventListener('mouseup', () => {
             this.chart.timeScale().applyOptions({
                 'shiftVisibleRangeOnNewBar': true,
                 'allowShiftVisibleRangeOnWhitespaceReplacement': true,

@@ -43,13 +43,13 @@ async def socket_request_handler(state: str, symbol: lwc.Symbol, frame: lwc.Fram
         df = pd.read_csv("examples/data/lwpc_next_ohlcv.csv")
         for _, _, t, o, h, l, c, v in df.itertuples():
             frame.update_data(OhlcData(t, o, h, l, c, v))
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.08)
 
     if state == "open" and symbol.ticker == "LWPC-TICK":
         df = pd.read_csv("examples/data/lwpc_ticks.csv")
         for _, _, t, p in df.itertuples():
             frame.update_data(SingleValueData(t, p))
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.02)
 
 
 async def main():

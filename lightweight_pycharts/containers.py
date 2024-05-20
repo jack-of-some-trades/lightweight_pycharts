@@ -179,29 +179,35 @@ class Frame:
         if self.main_data is None or data.time < self.main_data.curr_bar_time:  # type: ignore
             return
 
-        update_whitespace = data.time > self.main_data.next_bar_time  # type: ignore
-
         if data.time < self.main_data.next_bar_time:  # type: ignore
             display_data = self.main_data.update_from_tick(data, accumulate=accumulate)
         else:
+            if data.time != self.main_data.next_bar_time:
+                # Update given is not the expected time. Ensure it fits the data's time interval
+                time_delta = data.time - self.main_data.next_bar_time  # type: ignore
+                data.time -= time_delta % self.main_data.pd_tf
+
+            update_whitespace = data.time > self.main_data.next_bar_time  # type: ignore
+
             display_data = self.main_data.update(data)
 
-        if self.whitespace_data is not None:
-            if update_whitespace:
-                # New Data Jumped more than expected, Replace Whitespace Data So
-                # There are no unnecessary gaps.
-                self.whitespace_data = Series_DF(
-                    self.main_data.whitespace_df(), SeriesType.WhitespaceData
-                )
-                self._fwd_queue.put(
-                    (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
-                )
-            else:
-                # Lengthen Whitespace Data to keep 500bar Buffer
-                next_piece = self.whitespace_data.extend()
-                self._fwd_queue.put(
-                    (JS_CMD.UPDATE_WHITESPACE_DATA, self.js_id, next_piece)
-                )
+            if self.whitespace_data is not None:
+                if update_whitespace:
+                    # New Data Jumped more than expected, Replace Whitespace Data So
+                    # There are no unnecessary gaps.
+                    self.whitespace_data = Series_DF(
+                        self.main_data.whitespace_df(), SeriesType.WhitespaceData
+                    )
+                    self._fwd_queue.put(
+                        (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
+                    )
+                else:
+                    # Lengthen Whitespace Data to keep 500bar Buffer
+                    next_piece = self.whitespace_data.extend()
+                    self._fwd_queue.put(
+                        (JS_CMD.UPDATE_WHITESPACE_DATA, self.js_id, next_piece)
+                    )
+            # TODO: Send out new_bar emitter here
 
         # Whitespace Data must be manipulated before Main Series for proper display.
         self._fwd_queue.put((JS_CMD.UPDATE_DATA, self.js_id, display_data))
