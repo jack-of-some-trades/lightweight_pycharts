@@ -2,7 +2,6 @@
 
 import logging
 import multiprocessing as mp
-from tokenize import Single
 from typing import Optional, Any
 
 import pandas as pd
@@ -13,11 +12,9 @@ from .orm.series import (
     AnyBasicData,
     Series_DF,
     SeriesType,
-    SingleValueData,
     WhiteSpace_DF,
-    WhitespaceData,
 )
-from .js_cmd import JS_CMD
+from .js_cmd import JS_CMD, PY_CMD
 
 logger = logging.getLogger("lightweight-pycharts")
 # Membership test is a false-positive error
@@ -27,8 +24,9 @@ logger = logging.getLogger("lightweight-pycharts")
 class Container:
     "A Container Class instance manages the all sub frames and the layout that contains them."
 
-    def __init__(self, js_id: str, fwd_queue: mp.Queue) -> None:
+    def __init__(self, js_id: str, fwd_queue: mp.Queue, rtn_queue: mp.Queue) -> None:
         self._fwd_queue = fwd_queue
+        self._rtn_queue = rtn_queue
         self.js_id = js_id
         self.layout_type = layouts.SINGLE
         self.frame_ids = util.ID_List(f"{js_id}_f")
@@ -44,7 +42,9 @@ class Container:
         # Only Add a frame if the layout can support it
         if len(self.frames) < self.layout_type.num_frames:
             new_id = self.frame_ids.generate()
-            self.frames.append(Frame(new_id, self.js_id, self._fwd_queue))
+            self.frames.append(
+                Frame(new_id, self.js_id, self._fwd_queue, self._rtn_queue)
+            )
 
     def set_layout(self, layout: layouts):
         "Set the layout of the Container creating Frames as needed"
@@ -81,9 +81,12 @@ class Frame:
     retain a copy of data that is used across all sub-panes as well as the references to said panes.
     """
 
-    def __init__(self, js_id: str, parent_id: str, queue: mp.Queue) -> None:
+    def __init__(
+        self, js_id: str, parent_id: str, fwd_queue: mp.Queue, rtn_queue: mp.Queue
+    ) -> None:
         self.js_id = js_id
-        self._fwd_queue = queue
+        self._fwd_queue = fwd_queue
+        self._rtn_queue = rtn_queue
         self.socket_open = False
         self.symbol: Optional[Symbol] = None
         self.main_data: Optional[Series_DF] = None
@@ -96,14 +99,14 @@ class Frame:
         self.panes: list[Pane] = []
         self.pane_ids = util.ID_List(f"{js_id}_p")
         new_id = self.pane_ids.affix("main")
-        self.panes.append(Pane(new_id, self.js_id, self._fwd_queue))
+        self.panes.append(Pane(new_id, self.js_id, self._fwd_queue, self._rtn_queue))
 
     def __del__(self):
         logger.debug("Deleteing Frame: %s", self.js_id)
 
     def _add_pane(self):
         new_id = self.pane_ids.generate()
-        self.panes.append(Pane(new_id, self.js_id, self._fwd_queue))
+        self.panes.append(Pane(new_id, self.js_id, self._fwd_queue, self._rtn_queue))
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"
@@ -225,8 +228,8 @@ class Frame:
         self._fwd_queue.put((JS_CMD.CLEAR_DATA, self.js_id))
         self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self.js_id))
         if self.socket_open:
-            # TODO: Close Socket...? but how...
-            pass
+            self._rtn_queue.put((PY_CMD.CLOSE_SOCKET, self.symbol, self))
+
         if symbol is not None:
             self.symbol = symbol
             self._fwd_queue.put((JS_CMD.SET_SYMBOL, self.js_id, symbol))
@@ -237,8 +240,11 @@ class Frame:
 class Pane:
     """An individual charting window, can contain seriesCommon objects and indicators"""
 
-    def __init__(self, js_id: str, parent_id: str, queue: mp.Queue) -> None:
-        self._fwd_queue = queue
+    def __init__(
+        self, js_id: str, parent_id: str, fwd_queue: mp.Queue, rtn_queue: mp.Queue
+    ) -> None:
+        self._fwd_queue = fwd_queue
+        self._rtn_queue = rtn_queue
         self.js_id = js_id
         self.sources = []
 

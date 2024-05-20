@@ -29,6 +29,8 @@ class PY_CMD(IntEnum):
     LAYOUT_CHANGE = auto()
     INDICATOR_ADD = auto()
 
+    CLOSE_SOCKET = auto()
+
 
 class JS_CMD(IntEnum):
     "Enumeration of the various commands that Python can send to Javascript"

@@ -90,8 +90,10 @@ async def main():
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 
 
-# lightweight_pycharts Spawns a new Process to manage the display
+# lightweight_pycharts Spawns a new process to manage the display
 # so any code that uses it must have a __name__ == __main__ block.
+# Additionally, The internal Queue Manager works using Asyncio. While event
+# handlers can be either Async or Blocking, the Main function must be Async
 if __name__ == "__main__":
     try:
         asyncio.run(main())

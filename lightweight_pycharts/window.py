@@ -2,10 +2,7 @@
 
 import logging
 import asyncio
-from re import L
-import threading as th
 import multiprocessing as mp
-from time import sleep
 from functools import partial
 from dataclasses import asdict
 from typing import Literal, Optional
@@ -39,7 +36,6 @@ class Window:
         self,
         *,
         daemon: bool = False,
-        use_async: bool = True,
         options: Optional[orm.options.PyWebViewOptions] = None,
         **kwargs,
     ) -> None:
@@ -71,13 +67,7 @@ class Window:
             )
 
         # Begin Listening for any responses from PyWV Process
-        if use_async:
-            self._queue_manager = asyncio.create_task(self._manage_queue())
-        else:
-            self._queue_manager = th.Thread(
-                target=self._manage_thread_queue, daemon=daemon
-            )
-            self._queue_manager.start()
+        self._queue_manager = asyncio.create_task(self._manage_queue())
 
         # -------- Create Subobjects  -------- #
         self.events = Events()
@@ -146,23 +136,10 @@ class Window:
             case PY_CMD.REORDER_CONTAINERS, int(), int():
                 self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
                 self.containers.insert(args[1], self.containers.pop(args[0]))
+            case PY_CMD.CLOSE_SOCKET, orm.Symbol(), Frame():
+                self.events.socket_switch(state="close", symbol=args[0], frame=args[1])
             case PY_CMD.PY_EXEC, str():
                 logger.info("Recieved Message from View: %s", args[0])
-
-    def _manage_thread_queue(self):
-        logger.debug("Entered Threaded Queue Manager")
-        while not self._stop_event.is_set():
-            if self._rtn_queue.empty():
-                sleep(0.05)
-            else:
-                msg = self._rtn_queue.get()
-                if isinstance(msg, tuple):
-                    cmd, *rsp = msg
-                else:
-                    cmd = msg
-                    rsp = tuple()
-                self._execute_cmd(cmd, *rsp)
-        logger.debug("Exited Threaded Queue Manager")
 
     async def _manage_queue(self):
         logger.debug("Entered Async Queue Manager")
@@ -179,11 +156,6 @@ class Window:
                 self._execute_cmd(cmd, *rsp)
                 # logger.debug("Window Recieved Command: %s: %s", cmd, rsp)
         logger.debug("Exited Async Queue Manager")
-
-    def await_thread_close(self):
-        "Await thread closure if using threading. Useful if Daemon = True"
-        if isinstance(self._queue_manager, th.Thread):
-            self._queue_manager.join()
 
     async def await_close(self):
         "Await closure if using asyncio. Useful if Daemon = True"
@@ -222,7 +194,7 @@ class Window:
             frame.socket_open = False
 
         if data is not None:
-            # Need to set frame.main_data before frame.update_data is called
+            # Set Data *before* frame.update_data can be called
             frame.set_data(data, symbol)
             if not frame.socket_open:
                 socket_switch(state="open", symbol=symbol, frame=frame)
@@ -232,7 +204,7 @@ class Window:
                 # Closes the socket if an invalid timeframe was selected.
                 socket_switch(state="close", symbol=frame.symbol, frame=frame)
                 frame.socket_open = False
-            # Clear Data after Socket close so socket close get passed the old symbol
+            # Clear Data *after* Socket close so socket close get passed the old symbol
             frame.clear_data(timeframe, symbol)
 
     # endregion
@@ -269,7 +241,7 @@ class Window:
         :returns: A Container obj that represents the Tab's Contents
         """
         new_id = self._container_ids.generate()
-        new_container = Container(new_id, self._fwd_queue)
+        new_container = Container(new_id, self._fwd_queue, self._rtn_queue)
         self.containers.append(new_container)
         return new_container
 
