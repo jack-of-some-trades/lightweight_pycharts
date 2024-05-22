@@ -15,8 +15,7 @@ import lightweight_pycharts.orm.options as options
 
 # Without the following line Pylance shows the above lines as errors?
 from . import orm
-from .window import Window
-from .containers import Container, Frame, Pane
+from .window import Window, Container, Frame, Pane
 from .orm.types import TF, Color, Symbol
 from .orm.enum import layouts, ColorLiteral
 from .orm.series import SeriesType

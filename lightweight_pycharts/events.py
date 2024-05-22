@@ -1,13 +1,24 @@
 """ Utility functions and objects that are used across the library """
 
 from asyncio import iscoroutinefunction, create_task
-from typing import Literal, Protocol, Self, TypeAlias, Callable, Optional, Any
+from typing import (
+    Literal,
+    Protocol,
+    Self,
+    TypeAlias,
+    Callable,
+    Optional,
+    Any,
+    TYPE_CHECKING,
+)
 
 from pandas import DataFrame
 
-from lightweight_pycharts import containers
-
 from .orm import types
+
+# prevent circular import
+if TYPE_CHECKING:
+    from .window import Frame
 
 
 class Events:
@@ -70,14 +81,14 @@ class Socket_switch_sync(Protocol):
         self,
         state: Literal["open", "close"],
         symbol: types.Symbol,
-        frame: containers.Frame,
+        frame: "Frame",
     ) -> None: ...
 class Socket_switch_async(Protocol):
     async def __call__(
         self,
         state: Literal["open", "close"],
         symbol: types.Symbol,
-        frame: containers.Frame,
+        frame: "Frame",
     ) -> None: ...
 
 

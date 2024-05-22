@@ -61,7 +61,7 @@ export class Container {
         window.active_container = this
         window.active_container.div.setAttribute('active', '')
         window.titlebar.tab_manager.setCurrentTab(this.tab_div)
-        if (this.layout)
+        if (this.layout !== null)
             window.layout_selector.update_icon(this.layout)
         if (this.frames[0])
             this.frames[0].assign_active_frame()

@@ -37,10 +37,9 @@ export class Pane {
         this.assign_active_pane = this.assign_active_pane.bind(this)
 
         this.main_series = this.chart.addCandlestickSeries()
-        this.whitespace_series = this.chart.addLineSeries({ priceScaleId: 'whitespace' })
-        // this.main_series = this.chart.addCustomSeries(new RoundedCandleSeries())
+        this.whitespace_series = this.chart.addLineSeries()
 
-        // Without these, chart cannot be moved in a replay like mode
+        // Without these listeners, chart cannot be moved in a replay like mode
         this.chart_div.addEventListener('mousedown', () => {
             this.assign_active_pane()
             this.chart.timeScale().applyOptions({
@@ -150,7 +149,6 @@ export class Pane {
     create_line() {
         const data = this.main_series.data() as CandlestickData[]
         const dataLength = data.length
-        console.log(data[0].time)
         const point1 = {
             time: data[dataLength - 50].time,
             value: data[dataLength - 50].close * 0.9,

@@ -44,10 +44,10 @@ def data_request_handler(symbol: lwc.Symbol, tf: lwc.TF) -> Optional[pd.DataFram
                 return pd.read_csv(f"examples/data/GOOGL_{tf.mult}min.csv")
             case "TSLA":
                 return pd.read_csv(f"examples/data/TSLA_{tf.mult}min.csv")
-            case "LWPC":
-                return pd.read_csv("examples/data/lwpc_ohlcv.csv")
-            case "LWPC-TICK":
-                return pd.read_csv("examples/data/lwpc_ohlc.csv")
+    if symbol.ticker == "LWPC":
+        return pd.read_csv("examples/data/lwpc_ohlcv.csv")
+    if symbol.ticker == "LWPC-TICK":
+        return pd.read_csv("examples/data/lwpc_ohlc.csv")
 
 
 async def socket_request_handler(state: str, symbol: lwc.Symbol, frame: lwc.Frame):
