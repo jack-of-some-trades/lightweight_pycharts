@@ -2,7 +2,6 @@
 
 from . import types
 from . import enum
-from . import style
 from . import series
 from . import options
 
@@ -14,7 +13,6 @@ __all__ = (
     "types",
     "enum",
     "series",
-    "style",
     "options",
     #
     # Types

@@ -9,6 +9,7 @@ import pandas as pd
 from typing import Optional
 
 import lightweight_pycharts as lwc
+from lightweight_pycharts.indicator import Series
 from lightweight_pycharts.orm.types import Symbol
 from lightweight_pycharts.orm.series import OhlcData, SingleValueData
 
@@ -50,7 +51,7 @@ def data_request_handler(symbol: lwc.Symbol, tf: lwc.TF) -> Optional[pd.DataFram
                 return pd.read_csv("examples/data/lwpc_ohlc.csv")
 
 
-async def socket_request_handler(state: str, symbol: lwc.Symbol, frame: lwc.Frame):
+async def socket_request_handler(state: str, symbol: lwc.Symbol, series: lwc.Series):
     """
     Request Handler for Web-Sockets. The requested 'state' is determined by Symbol Changes
     and the frame.socket_open Boolean. The user should keep this Boolean as up-to-date as possible.
@@ -63,37 +64,37 @@ async def socket_request_handler(state: str, symbol: lwc.Symbol, frame: lwc.Fram
     """
     if state == "open" and symbol.ticker == "LWPC":
         df = pd.read_csv("examples/data/lwpc_next_ohlcv.csv")
-        frame.socket_open = True
+        series.sockets.append(symbol)
         for _, _, t, o, h, l, c, v in df.itertuples():
-            frame.update_data(OhlcData(t, o, h, l, c, v))
+            series.update_data(OhlcData(t, o, h, l, c, v))
             await asyncio.sleep(0.08)
-        frame.socket_open = False
+        series.sockets.remove(symbol)
 
     if state == "open" and symbol.ticker == "LWPC-TICK":
         df = pd.read_csv("examples/data/lwpc_ticks.csv")
-        frame.socket_open = True
+        series.sockets.append(symbol)
         for _, _, t, p in df.itertuples():
-            frame.update_data(SingleValueData(t, p))
+            series.update_data(SingleValueData(t, p))
             await asyncio.sleep(0.02)
-        frame.socket_open = False
+        series.sockets.remove(symbol)
 
 
 async def main():
     """
     Main Function for creating a Window. While the implementation of this is largely
     left for the user, there should be two constants: The Function is Async and called
-    from a __name__ == __main__ block.
+    from a [ if __name__ == "__main__": ] block.
 
     The window internally runs a loop manager that handles a return queue. This loop manager
     is run using async/await hence the need for main() to be an async function.
 
     The Loop that is managed is a multi-process Queue that receives feedback commands
     from the window. The spawning of a child process is what necessitates
-    the if __name__ == __main__ block.
+    the use of a [ if __name__ == "__main__": ] block.
     """
     window = lwc.Window(debug=True, daemon=True, frameless=False)
-    window.events.symbol_search += symbol_search_handler
     window.events.data_request += data_request_handler
+    window.events.symbol_search += symbol_search_handler
     window.events.socket_switch += socket_request_handler
 
     window.set_search_filters("type", ["Crypto", "Equity"])
@@ -123,7 +124,8 @@ async def main():
         ],
     )
     df = pd.read_csv("examples/data/ohlcv.csv")
-    window.containers[0].frames[0].set_data(df)
+
+    window.containers[0].frames[0].main_series.set_data(df)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

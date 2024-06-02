@@ -12,12 +12,16 @@ from dataclasses import asdict, dataclass, field
 import pandas as pd
 import pandas_market_calendars as mcal
 
-from .types import TF, Color, Time
+from .types import TF, Time, Color, PriceFormat, BaseValuePrice, LineWidth
+from .enum import LineStyle, PriceLineSource, LastPriceAnimationMode, LineType
 
 
 logger = logging.getLogger("lightweight-pycharts")
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
+
+
+# region --------------------------------------- Pandas Series Objects --------------------------------------- #
 
 
 @pd.api.extensions.register_dataframe_accessor("lwc_df")
@@ -207,16 +211,34 @@ class Series_DF:
 
         return json_df
 
+    def visual_data(
+        self,
+        start: Optional[pd.Timestamp],
+        end: Optional[pd.Timestamp],
+        data_column: Optional[str],
+    ) -> pd.DataFrame:
+        """
+        Return a Dataframe that is optimized for data transfer across an MP.Queue.
+
+        This process drops all irrelevant columns, drops rows outside of the [start, end] range
+        and renames 'close'/'value'/(user_data_col_name) as needed based on the underlying
+        data_type and display_type of the Series_DF.
+        """
+        raise NotImplementedError
+
     @property
     def curr_bar_time(self) -> pd.Timestamp:
+        "Open Time of the Current Bar"
         return self._df["time"].iloc[-1]
 
     @property
     def next_bar_time(self) -> pd.Timestamp:
+        "Open Time of the next Bar"
         return self.curr_bar_time + self.pd_tf
 
     @property
     def last_bar(self) -> AnyBasicData:
+        "The current bar (last entry in the dataframe) returned as AnyBasicType"
         if self._data_type == SeriesType.SingleValueData:
             return SingleValueData.from_dict(self._df.iloc[-1].to_dict())
         elif self._data_type == SeriesType.OHLC_Data:
@@ -364,6 +386,8 @@ class WhiteSpace_DF:
         pass
 
 
+# endregion
+
 # region --------------------------------------- Series Data Types --------------------------------------- #
 
 
@@ -378,7 +402,7 @@ class WhitespaceData:
     custom_values: Optional[Dict[str, Any]] = field(default=None, kw_only=True)
     # Anything placed in the custom_values dict can be retrieved by a TS/JS LWC Plugin.
     # Any other values given to a JavaScript Lightweight_Charts series through setData()
-    # are ignored and deleted and thus inaccessible beyond python.
+    # are ignored and deleted and thus are inaccessible beyond python.
 
     def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Aware).
         self.time = pd.Timestamp(self.time)
@@ -389,6 +413,7 @@ class WhitespaceData:
 
     @property
     def as_dict(self) -> dict:
+        "The Object in dictionary form with 'Nones' Dropped."
         return asdict(  # Drop Nones
             self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
         )
@@ -433,6 +458,16 @@ class CandlestickData(OhlcData):
     color: Optional[str] = None
     wickColor: Optional[str] = None
     borderColor: Optional[str] = None
+
+
+@dataclass
+class RoundedCandleData(OhlcData):
+    """
+    Structure describing a single item of data for rounded candlestick series.
+    """
+
+    color: Optional[str] = None
+    wickColor: Optional[str] = None
 
 
 @dataclass
@@ -505,6 +540,7 @@ AnySeriesData: TypeAlias = (
     | BaselineData
     | BarData
     | CandlestickData
+    | RoundedCandleData
 )
 
 
@@ -529,7 +565,6 @@ class SeriesType(IntEnum):
     Bar = auto()
     Candlestick = auto()
 
-    # HLC_AREA = auto()
     Rounded_Candle = auto()
 
     @staticmethod
@@ -538,7 +573,7 @@ class SeriesType(IntEnum):
         if isinstance(s_type, AnySeriesData):
             return isinstance(
                 s_type,
-                (OhlcData, BarData, CandlestickData),
+                (OhlcData, BarData, CandlestickData, RoundedCandleData),
             )
         else:
             return s_type in (
@@ -572,41 +607,6 @@ class SeriesType(IntEnum):
             )
 
     @property
-    def params(self) -> set[str]:
-        """
-        Returns a set of the unique properties of that type. Properties of a Types' parent are omitted
-        e.g. SeriesType.Bar = {'color'} because properties of OHLC_Data and WhitespaceData are omited.
-        """
-        match self:
-            case SeriesType.Bar:
-                return {"color"}
-            case SeriesType.Candlestick:  # Candlestick is an extention of Bar
-                return {"wickcolor", "bordercolor"}
-            case SeriesType.Rounded_Candle:
-                return {"wickcolor"}
-            case SeriesType.Area:
-                return {"linecolor", "topcolor", "bottomcolor"}
-            case SeriesType.Baseline:
-                return {
-                    "toplinecolor",
-                    "topfillcolor1",
-                    "topfillcolor2",
-                    "bottomlinecolor",
-                    "bottomfillcolor1",
-                    "bottomfillcolor2",
-                }
-            case SeriesType.Line:
-                return {"color"}
-            case SeriesType.Histogram:
-                return {"color"}
-            case SeriesType.SingleValueData:
-                return {"value"}
-            case SeriesType.OHLC_Data:
-                return {"open", "high", "low", "close"}
-            case SeriesType.WhitespaceData:
-                return {"time"}
-
-    @property
     def cls(self) -> type:
         "Returns the DataClass this Type corresponds too"
         match self:
@@ -615,7 +615,7 @@ class SeriesType(IntEnum):
             case SeriesType.Candlestick:
                 return CandlestickData
             case SeriesType.Rounded_Candle:
-                return CandlestickData
+                return RoundedCandleData
             case SeriesType.Area:
                 return AreaData
             case SeriesType.Baseline:
@@ -633,3 +633,197 @@ class SeriesType(IntEnum):
 
 
 # endregion
+
+
+@dataclass
+class SeriesOptionsCommon:
+    """
+    Represents options common for all types of series. All options may be Optional,
+    but the Lightweight Charts API does assign default values to each. See the Docs for default values
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SeriesOptionsCommon
+    """
+
+    title: Optional[str] = None
+    visible: Optional[bool] = None
+    lastValueVisible: Optional[bool] = None
+    priceScaleId: Optional[str] = None
+
+    priceLineVisible: Optional[bool] = None
+    priceLineWidth: Optional[LineWidth] = None
+    priceLineColor: Optional[Color] = None
+    priceLineStyle: Optional[LineStyle] = None
+    priceLineSource: Optional[PriceLineSource] = None
+    priceFormat: Optional[PriceFormat] = None
+
+    # BaseLine is for 'IndexTo' and Percent Modes
+    baseLineVisible: Optional[bool] = None
+    baseLineWidth: Optional[LineWidth] = None
+    baseLineStyle: Optional[LineStyle] = None
+    baseLineColor: Optional[Color] = None
+    # autoscaleInfoProvider: Optional[str]
+    # removed to keep JS Funcitons in JS files. May Enable this later though.
+
+
+# region --------------------------------------- Single Value Series Objects --------------------------------------- #
+
+
+@dataclass
+class LineStyleOptions(SeriesOptionsCommon):
+    """
+    Represents style options for a line series.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LineStyleOptions
+    """
+
+    color: Optional[Color] = None
+    lineVisible: Optional[bool] = None
+    lineWidth: Optional[int] = None
+    lineType: Optional[LineType] = None
+    lineStyle: Optional[LineStyle] = None
+
+    pointMarkersRadius: Optional[int] = None
+    pointMarkersVisible: Optional[bool] = None
+
+    crosshairMarkerVisible: Optional[bool] = None
+    crosshairMarkerRadius: Optional[int] = None
+    crosshairMarkerBorderWidth: Optional[int] = None
+    crosshairMarkerBorderColor: Optional[Color] = None
+    crosshairMarkerBackgroundColor: Optional[Color] = None
+    lastPriceAnimation: Optional[LastPriceAnimationMode] = None
+
+
+@dataclass
+class HistogramStyleOptions(SeriesOptionsCommon):
+    """
+    Represents style options for a histogram series.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/HistogramStyleOptions
+    """
+
+    base: Optional[float] = None
+    color: Optional[Color] = None
+
+
+@dataclass
+class AreaStyleOptions(SeriesOptionsCommon):
+    """
+    Represents style options for an area series.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AreaStyleOptions
+    """
+
+    lineColor: Optional[Color] = None
+    lineStyle: Optional[LineStyle] = None
+    lineType: Optional[LineType] = None
+    lineWidth: Optional[LineWidth] = None
+    lineVisible: Optional[bool] = None
+
+    topColor: Optional[Color] = None
+    bottomColor: Optional[Color] = None
+
+    crosshairMarkerVisible: Optional[bool] = None
+    crosshairMarkerRadius: Optional[int] = None
+    crosshairMarkerBorderColor: Optional[Color] = None
+    crosshairMarkerBackgroundColor: Optional[Color] = None
+    crosshairMarkerBorderWidth: Optional[int] = None
+
+    invertFilledArea: Optional[bool] = None
+    pointMarkersVisible: Optional[bool] = None
+    pointMarkersRadius: Optional[int] = None
+    lastPriceAnimation: Optional[LastPriceAnimationMode] = None
+
+
+@dataclass
+class BaselineStyleOptions(SeriesOptionsCommon):
+    """
+    Represents style options for a baseline series.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BaselineStyleOptions
+    """
+
+    baseValue: Optional[BaseValuePrice] = None
+    lineVisible: Optional[bool] = None
+    lineWidth: Optional[LineWidth] = None
+    lineType: Optional[LineType] = None
+    lineStyle: Optional[LineStyle] = None
+
+    topLineColor: Optional[Color] = None
+    topFillColor1: Optional[Color] = None
+    topFillColor2: Optional[Color] = None
+
+    bottomLineColor: Optional[Color] = None
+    bottomFillColor1: Optional[Color] = None
+    bottomFillColor2: Optional[Color] = None
+
+    pointMarkersVisible: Optional[bool] = None
+    pointMarkersRadius: Optional[int] = None
+    crosshairMarkerVisible: Optional[bool] = None
+    crosshairMarkerRadius: Optional[int] = None
+    crosshairMarkerBorderColor: Optional[str] = None
+    crosshairMarkerBackgroundColor: Optional[str] = None
+    crosshairMarkerBorderWidth: Optional[int] = None
+    lastPriceAnimation: Optional[LastPriceAnimationMode] = None
+
+
+# endregion
+
+# region --------------------------------------- OHLC Value Series Objects --------------------------------------- #
+
+
+@dataclass
+class BarStyleOptions(SeriesOptionsCommon):
+    """
+    Represents style options for a bar series.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BarStyleOptions
+    """
+
+    thinBars: Optional[bool] = None
+    openVisible: Optional[bool] = None
+    upColor: Optional[Color] = None
+    downColor: Optional[Color] = None
+
+
+@dataclass
+class CandlestickStyleOptions(SeriesOptionsCommon):
+    """
+    Represents style options for a candlestick series.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/CandlestickStyleOptions
+    """
+
+    upColor: Optional[Color] = None
+    downColor: Optional[Color] = None
+
+    borderVisible: Optional[bool] = None
+    borderColor: Optional[Color] = None
+    borderUpColor: Optional[Color] = None
+    borderDownColor: Optional[Color] = None
+
+    wickVisible: Optional[bool] = None
+    wickColor: Optional[Color] = None
+    wickUpColor: Optional[Color] = None
+    wickDownColor: Optional[Color] = None
+
+
+@dataclass
+class RoundedCandleStyleOptions(SeriesOptionsCommon):
+    """
+    Represents style options for a rounded candlestick series.
+    """
+
+    upColor: Optional[Color] = None
+    downColor: Optional[Color] = None
+
+    wickVisible: Optional[bool] = None
+    wickColor: Optional[Color] = None
+    wickUpColor: Optional[Color] = None
+    wickDownColor: Optional[Color] = None
+
+
+# endregion
+
+AnySeriesOptions: TypeAlias = (
+    SeriesOptionsCommon
+    | LineStyleOptions
+    | HistogramStyleOptions
+    | AreaStyleOptions
+    | BaselineStyleOptions
+    | BarStyleOptions
+    | CandlestickStyleOptions
+    | RoundedCandleStyleOptions
+)

@@ -1,46 +1,16 @@
 """ Utility functions and objects that are used across the library """
 
-from dataclasses import is_dataclass, asdict
+from itertools import islice
 from random import choices
 from string import ascii_letters
-from typing import Any
-from math import floor
-from json import JSONEncoder, dumps
-from pandas import Timestamp
-
-from .orm.types import Color
-
-
-class ORM_JSONEncoder(JSONEncoder):
-    "Enhanced JSON Encoder that encodes DataClasses as dicts, Color as JS rgba(), bools as JS bools"
-
-    def default(self, o):
-        if is_dataclass(o):
-            return asdict(  # Drop Nones
-                o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
-            )
-        if isinstance(o, Timestamp):
-            return floor(o.timestamp())
-        if isinstance(o, Color):
-            return repr(o)
-        if isinstance(o, bool):
-            return "true" if o else "false"
-        return super().default(o)
-
-
-def dump(obj: Any) -> str:
-    "Enchanced JSON.dumps() to serialize all ORM Objects"
-    return str(dumps(obj, cls=ORM_JSONEncoder))
-
-
-def load(obj: str) -> Any:
-    "Enchanced JSON.loads() to load ORM Objects"
-    raise NotImplementedError
+from typing import Optional
 
 
 class ID_List(list[str]):
     """
-    A List of ID Strings with a generator function.
+    A List of ID Strings with a generator function. Requires a separate list to store objects.
+
+    Used in place of an ID_Dict when it is desired to manipulate the order of objects.
     """
 
     def __init__(self, prefix: str):
@@ -48,7 +18,7 @@ class ID_List(list[str]):
         super().__init__()
 
     def generate(self) -> str:
-        "Generate a new ID and add it to the list"
+        "Generates a new ID, adds it to the list, and returns it for use."
         _id = self.prefix + "".join(choices(ascii_letters, k=4))
 
         if _id not in self:
@@ -58,10 +28,58 @@ class ID_List(list[str]):
             return self.generate()
 
     def affix(self, _id: str) -> str:
-        "Add a specifc ID string to the List"
+        "Add a given ID string to the List. If already present then a new ID is generated."
         _id_prefixed = self.prefix + _id
         if _id_prefixed not in self:
             self.append(_id_prefixed)
             return _id_prefixed
         else:  # In case of a collision.
             return self.generate()
+
+
+# @pylint: disable=undefined-variable # Pylint thinks T is undefined
+class ID_Dict[T](dict[str, T]):
+    """
+    A Dict that can store objects of a pre-defined or randomly generated key.
+    """
+
+    def __init__(self, prefix: str):
+        self.prefix = prefix + "_"
+        super().__init__()
+
+    def __getitem__(self, key: str | int) -> T:
+        "Accessor overload so the Dict can be accessed like a list"
+        if isinstance(key, int):
+            # Recall this function with the nth Key.
+            try:
+                return self[next(islice(iter(self), key, key + 1))]
+            except StopIteration as exc:  # re-raise a more informative error msg.
+                raise IndexError(f"'{key}' not a valid index of '{self}'") from exc
+
+        return super().__getitem__(key)
+
+    def generate(self, item: Optional[T] = None) -> str:
+        "Generates and returns a new Key. If an item is given it is added to the dictionary"
+        _id = self.prefix + "".join(choices(ascii_letters, k=4))
+
+        if _id not in self:
+            if item is not None:
+                self[_id] = item
+            return _id
+        else:  # In case of a collision.
+            return self.generate()
+
+    def affix(self, _id: str, item: Optional[T] = None) -> str:
+        """
+        Try to add a specific Key to the Dict. If the Key is already present
+        then a new one is generated.
+
+        If an item is given it is automatically added to the dictionary.
+        """
+        _id_prefixed = self.prefix + _id
+        if _id_prefixed not in self:
+            if item is not None:
+                self[_id_prefixed] = item
+            return _id_prefixed
+        else:  # In case of a collision.
+            return self.generate(item)

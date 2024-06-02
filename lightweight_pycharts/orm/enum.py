@@ -2,7 +2,6 @@
 
 from enum import IntEnum, StrEnum, Enum, auto
 
-from . import series
 from .types import Color
 
 # pylint: disable=line-too-long

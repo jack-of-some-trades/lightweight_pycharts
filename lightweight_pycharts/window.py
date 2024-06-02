@@ -6,12 +6,13 @@ import asyncio
 import multiprocessing as mp
 from functools import partial
 from dataclasses import asdict
-from typing import Literal, Optional, Any
+from typing import Literal, Optional, TYPE_CHECKING, TypeVar
 
 import pandas as pd
 
 from . import orm
 from . import util
+from .indicator import Indicator, Series
 from .orm import layouts, Symbol, TF
 from .events import Events, Emitter, Socket_Switch_Protocol
 from .js_api import PyWv, MpHooks
@@ -21,6 +22,8 @@ from .orm.series import (
     Series_DF,
     SeriesType,
 )
+from lightweight_pycharts import indicator
+
 
 logger = logging.getLogger("lightweight-pycharts")
 
@@ -109,12 +112,16 @@ class Window:
                         args[0],
                     )
                     return
-                if (frame := container.get_frame(args[1])) is None:
+                if (frame := container.frames[args[1]]) is None:
                     logger.warning(
                         "Failed Timeframe Switch, Could not find Frame ID '%s'", args[1]
                     )
                     return
-                kwargs = {"frame": frame, "symbol": args[2], "timeframe": args[3]}
+                kwargs = {
+                    "series": frame.main_series,
+                    "symbol": args[2],
+                    "timeframe": args[3],
+                }
                 self.events.data_request(symbol=args[2], tf=args[3], rsp_kwargs=kwargs)
             case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts():
                 if (container := self.get_container(args[0])) is None:
@@ -128,13 +135,13 @@ class Window:
                         args[0],
                     )
                     return
-                if (frame := container.get_frame(args[1])) is None:
+                if (frame := container.frames[args[1]]) is None:
                     logger.warning(
                         "Failed Series Type Change, Couldn't find Frame ID %s",
                         args[1],
                     )
                     return
-                frame.change_series_type(args[2])
+                frame.main_series.change_series_type(args[2])
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
             case PY_CMD.REMOVE_CONTAINER, str():
@@ -187,26 +194,26 @@ class Window:
     def _data_request_rsp(
         data: Optional[pd.DataFrame],
         *_,
-        frame: Frame,
+        series: Series,
         symbol: orm.Symbol,
         timeframe: orm.TF,
         socket_switch: Emitter[Socket_Switch_Protocol],  # Set by Partial Func
     ):
         # Close the socket if there was a symbol change
-        if frame.socket_open and frame.symbol != symbol:
-            socket_switch(state="close", symbol=frame.symbol, frame=frame)
+        if symbol in series.sockets and series.symbol != symbol:
+            socket_switch(state="close", symbol=series.symbol, series=series)
 
         if data is not None:
             # Set Data *before* frame.update_data can be called
-            frame.set_data(data, symbol)
-            if not frame.socket_open:
-                socket_switch(state="open", symbol=symbol, frame=frame)
+            series.set_data(data, symbol)
+            if not series.socket_open:
+                socket_switch(state="open", symbol=symbol, series=series)
         else:
-            if frame.socket_open:
+            if series.socket_open:
                 # Closes the socket if an invalid timeframe was selected.
-                socket_switch(state="close", symbol=frame.symbol, frame=frame)
+                socket_switch(state="close", symbol=series.symbol, series=series)
             # Clear Data *after* Socket close so socket close get passed the old symbol
-            frame.clear_data(timeframe, symbol)
+            series.clear_data(timeframe, symbol)
 
     # endregion
 
@@ -257,9 +264,11 @@ class Window:
                 self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
                 self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
 
-                for frame in container.frames:
-                    if frame.socket_open:
-                        self.events.socket_switch("close", frame.symbol, frame)
+                # Be sure to close all active sockets
+                for _, frame in container.frames.items():
+                    for _, series in frame.get_indicators_of_type(Series).items():
+                        if series.socket_open:
+                            self.events.socket_switch("close", series.symbol, series)
                 return
 
     def get_container(self, _id: int | str) -> Optional[Container]:
@@ -326,8 +335,7 @@ class Container:
         self._window = window
         self.js_id = js_id
         self.layout_type = layouts.SINGLE
-        self.frame_ids = util.ID_List(f"{js_id}_f")
-        self.frames: list[Frame] = []
+        self.frames = util.ID_Dict[Frame](f"{js_id}_f")
 
         self._fwd_queue.put((JS_CMD.ADD_CONTAINER, self.js_id))
         self.set_layout(self.layout_type)  # Adds First Frame
@@ -335,11 +343,9 @@ class Container:
     def __del__(self):
         logger.debug("Deleteing Container: %s", self.js_id)
 
-    def _add_frame_(self):
-        # Only Add a frame if the layout can support it
-        if len(self.frames) < self.layout_type.num_frames:
-            new_id = self.frame_ids.generate()
-            self.frames.append(Frame(new_id, self.js_id, self._fwd_queue, self._window))
+    def add_frame(self, js_id: Optional[str] = None) -> Frame:
+        "Creates a new Frame. Frame will only be displayed once the layout supports a new frame."
+        return Frame(self, js_id)
 
     def set_layout(self, layout: layouts):
         "Set the layout of the Container creating Frames as needed"
@@ -347,25 +353,15 @@ class Container:
         self.layout_type = layout
 
         # If there arent enough Frames to support the layout then generate them
-        frame_diff = len(self.frame_ids) - self.layout_type.num_frames
+        frame_diff = len(self.frames) - self.layout_type.num_frames
         if frame_diff < 0:
             for _ in range(-frame_diff):
-                self._add_frame_()
-
-    def get_frame(self, _id: int | str) -> Optional["Frame"]:
-        "Return the container that either matchs the given js_id string, or the integer tab number"
-        if isinstance(_id, str):
-            for frame in self.frames:
-                if _id == frame.js_id:
-                    return frame
-        else:
-            if _id >= 0 and _id < len(self.frames):
-                return self.frames[_id]
+                self.add_frame()
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"
         _ids = [self.js_id]
-        for frame in self.frames:
+        for id, frame in self.frames.items():
             _ids += frame.all_ids()
         return _ids
 
@@ -374,183 +370,114 @@ class Frame:
     """
     Frame Objects primarily hold information about the timeseries that is being displayed. They
     retain a copy of data that is used across all sub-panes as well as the references to said panes.
+
+    Since the Main Series Data (and whitespace data) is common across all sub-panes the Python Frame
+    object owns the data and is responsible for setting / updating it. This contrasts the Javascript
+    structure where the Main Series Data is owned by the JS Pane Object that is displaying the data
     """
 
-    AUTO_DISP_VOLUME: bool = True
+    def __init__(self, parent: Container, js_id: Optional[str] = None) -> None:
+        if js_id is None:
+            self.js_id = parent.frames.generate(self)
+        else:
+            self.js_id = parent.frames.affix(js_id, self)
 
-    def __init__(
-        self, js_id: str, parent_id: str, fwd_queue: mp.Queue, window: Window
-    ) -> None:
-        self.js_id = js_id
-        self._fwd_queue = fwd_queue
-        self._window = window
-        self.panes: list[Pane] = []
-        self.pane_ids = util.ID_List(f"{js_id}_p")
+        self._window = parent._window
+        self._fwd_queue = parent._fwd_queue
+        self.panes = util.ID_Dict[Pane](f"{self.js_id}_p")
 
-        self.socket_open = False
+        # Dict of all applied indicators. Indicators, using the supplied reference to a frame,
+        # append themselves to this when created. See Indicator DocString for reasoning.
+        self.indicators = util.ID_Dict[Indicator]("i")
+
         self.symbol: Optional[Symbol] = None
-        self.main_data: Optional[Series_DF] = None
-        self.whitespace_data: Optional[Series_DF] = None
         self.series_type: SeriesType = SeriesType.Candlestick
 
-        self._fwd_queue.put((JS_CMD.ADD_FRAME, js_id, parent_id))
+        self._fwd_queue.put((JS_CMD.ADD_FRAME, self.js_id, parent.js_id))
 
-        # Add main pane
-        new_id = self.pane_ids.affix("main")
-        self.main_pane = Pane(new_id, self.js_id, self._fwd_queue, self._window)
+        # Add main pane and Series, should never be deleted
+        self.add_pane(Pane.__special_id__)
+        Series(self, Series.__special_id__)
 
     def __del__(self):
         logger.debug("Deleteing Frame: %s", self.js_id)
 
-    def _add_pane_(self):
-        new_id = self.pane_ids.generate()
-        self.panes.append(Pane(new_id, self.js_id, self._fwd_queue, self._window))
+    def add_pane(self, js_id: Optional[str] = None) -> Pane:
+        "Add a Pane to the Current Frame"
+        return Pane(self, js_id)  # Pane Appends itself to Frame.panes
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"
         _ids = [self.js_id]
-        for pane in self.panes:
+        for _, pane in self.panes.items():
             _ids += pane.all_ids()
         return _ids
 
-    def change_series_type(self, series_type: SeriesType):
-        "Change the Series Type of the main dataset"
-        # Check and Massage Input
-        if series_type == SeriesType.WhitespaceData:
-            return
-        if series_type == SeriesType.OHLC_Data:
-            series_type = SeriesType.Candlestick
-        if series_type == SeriesType.SingleValueData:
-            series_type = SeriesType.Line
-        if self.main_data is None or self.series_type == series_type:
-            return
+    def all_pane_ids(self) -> list[str]:
+        "Return a List of all Panes Ids of this object"
+        return list(self.panes.keys())
 
-        # Set. No Data renaming needed, that is handeled when converting to json
-        self.series_type = series_type
-        self.main_data.disp_type = series_type
-        self._fwd_queue.put(
-            (JS_CMD.SET_SERIES_TYPE, self.js_id, series_type, self.main_data)
-        )
+    @property
+    def main_pane(self) -> Pane:
+        "Main Display Pane of the Frame"
+        return self.panes[self.panes.prefix + Pane.__special_id__]
 
-    def set_data(
-        self,
-        data: pd.DataFrame | list[dict[str, Any]],
-        symbol: Optional[Symbol] = None,
-    ):
-        "Sets the main source of data for this Frame"
-        # Update the Symbol Regardless if data is good or not
-        if symbol is not None:
-            self.symbol = symbol
-            self._fwd_queue.put((JS_CMD.SET_SYMBOL, self.js_id, symbol))
+    @property
+    def main_series(self) -> Series:
+        "Series Indicator that contain's the Frame's main symbol data"
+        main_series = self.indicators[self.indicators.prefix + Series.__special_id__]
+        if isinstance(main_series, Series):
+            return main_series
+        raise AttributeError(f"Cannot find Main Series for Frame {self.js_id}")
 
-        if not isinstance(data, pd.DataFrame):
-            data = pd.DataFrame(data)
-        self.main_data = Series_DF(data, self.series_type)
-        self.main_data.disp_type = self.series_type
+    # region ------------- Indicator Functions ------------- #
 
-        # Clear and Return on bad data.
-        if self.main_data.tf == TF(1, "E"):
-            self.clear_data()
-            return
-        if self.main_data.disp_type == SeriesType.WhitespaceData:
-            self.clear_data(timeframe=self.main_data.tf)
-            return
+    def get_indicators_of_type[T: Indicator](self, ind_type: type[T]) -> dict[str, T]:
+        "Returns a Dictionary of Indicators applied to this Frame that are of the Given Type"
+        rtn_dict = {}
+        for _key, _ind in self.indicators.items():
+            if isinstance(_ind, ind_type):
+                rtn_dict[_key] = _ind
+        return rtn_dict
 
-        self.whitespace_data = Series_DF(
-            self.main_data.whitespace_df(), SeriesType.WhitespaceData
-        )
+    def move_indicator(self): ...
 
-        self._fwd_queue.put(
-            (JS_CMD.SET_DATA, self.js_id, self.main_data, self.whitespace_data)
-        )
-        self._fwd_queue.put((JS_CMD.SET_TIMEFRAME, self.js_id, self.main_data.tf))
+    def remove_indicator(self): ...
 
-    def update_data(self, data: AnyBasicData, accumulate=False):
-        """
-        Updates the prexisting Frame's Primary Dataframe.
-        The data point's time must be equal to or greater than the last data point.
+    # endregion
 
-        Can Accept WhitespaceData, SingleValueData, and OhlcData.
-        Function will auto detect if this is a tick or bar update.
-        When Accumulate is set to True, tick updates will accumulate volume,
-        otherwise the last volume will be overwritten.
-        """
-        # Ignoring Operator issue, it's a false alarm since WhitespaceData.__post_init__()
-        # Will Always convert 'data.time' to a compatible pd.Timestamp.
-        if self.main_data is None or data.time < self.main_data.curr_bar_time:  # type: ignore
-            return
+    # region ------------- Primative Functions ------------- #
 
-        if data.time < self.main_data.next_bar_time:  # type: ignore
-            display_data = self.main_data.update_from_tick(data, accumulate=accumulate)
-        else:
-            if data.time != self.main_data.next_bar_time:
-                # Update given is not the expected time. Ensure it fits the data's time interval
-                time_delta = data.time - self.main_data.next_bar_time  # type: ignore
-                data.time -= time_delta % self.main_data.pd_tf
+    def add_primitive(self): ...
 
-            update_whitespace = data.time > self.main_data.next_bar_time  # type: ignore
-
-            display_data = self.main_data.update(data)
-
-            if self.whitespace_data is not None:
-                if update_whitespace:
-                    # New Data Jumped more than expected, Replace Whitespace Data So
-                    # There are no unnecessary gaps.
-                    self.whitespace_data = Series_DF(
-                        self.main_data.whitespace_df(), SeriesType.WhitespaceData
-                    )
-                    self._fwd_queue.put(
-                        (JS_CMD.SET_WHITESPACE_DATA, self.js_id, self.whitespace_data)
-                    )
-                else:
-                    # Lengthen Whitespace Data to keep 500bar Buffer
-                    next_piece = self.whitespace_data.extend()
-                    self._fwd_queue.put(
-                        (JS_CMD.UPDATE_WHITESPACE_DATA, self.js_id, next_piece)
-                    )
-            # TODO?: Send out new_bar emitter here
-
-        # Whitespace Data must be manipulated before Main Series for proper display.
-        self._fwd_queue.put((JS_CMD.UPDATE_DATA, self.js_id, display_data))
-
-    # The Timeframe and Symbol are inputs to prevent the symbol search from getting locked-up.
-    # e.g. If the current symbol doesn't exist and no data exists at the current timeframe,
-    # then the frame would be in a locked state if it only ever updated when setting valid data.
-    def clear_data(
-        self, timeframe: Optional[TF] = None, symbol: Optional[Symbol] = None
-    ):
-        """Clears the data in memory and on the screen and, if not none,
-        updates the desired timeframe and symbol for the Frame"""
-        self.main_data = None
-        self.whitespace_data = None
-        self._fwd_queue.put((JS_CMD.CLEAR_DATA, self.js_id))
-        self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self.js_id))
-        if self.socket_open:
-            # Ensure Socket is Closed
-            self._window.events.socket_switch(
-                state="close", symbol=self.symbol, frame=self
-            )
-
-        if symbol is not None:
-            self.symbol = symbol
-            self._fwd_queue.put((JS_CMD.SET_SYMBOL, self.js_id, symbol))
-        if timeframe is not None:
-            self._fwd_queue.put((JS_CMD.SET_TIMEFRAME, self.js_id, timeframe))
+    # endregion
 
 
 class Pane:
-    """An individual charting window, can contain seriesCommon objects and indicators"""
+    """
+    An individual charting window, can contain seriesCommon objects and indicators.
+    """
 
-    def __init__(
-        self, js_id: str, parent_id: str, fwd_queue: mp.Queue, window: Window
-    ) -> None:
-        self._fwd_queue = fwd_queue
-        self._window = window
-        self.js_id = js_id
-        self.main_series = None
+    __special_id__ = "main"  # Must match Pane.ts Special ID
 
-        self._fwd_queue.put((JS_CMD.ADD_PANE, js_id, parent_id))
+    def __init__(self, parent: Frame, js_id: Optional[str] = None) -> None:
+        if js_id is None:
+            new_id = parent.panes.generate(self)
+        else:
+            new_id = parent.panes.affix(js_id, self)
+
+        self.js_id = new_id
+        self._window = parent._window
+        self._fwd_queue = parent._fwd_queue
+        self.__main_pane__ = self.js_id == Pane.__special_id__
+
+        self._fwd_queue.put((JS_CMD.ADD_PANE, self.js_id, parent.js_id))
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"
+        # Maybe this isn't needed. Not Sure it's advantageous to place Pane Sub-Objects into the
+        # Javascript global scope. Tbh that's just excessive.
         return [self.js_id]
+
+    def add_primitive(self):
+        raise NotImplementedError

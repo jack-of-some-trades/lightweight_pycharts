@@ -75,10 +75,10 @@ class Color:
             raise ValueError(f"Hex Color of length {len(hex_value)} is not valid.")
         return cls(r, g, b, alpha)
 
-    # @classmethod
-    # def from_jdict(cls, j_dict: dict):
-    #     "Instantiate a new Color Instance from a Loaded JSON Dict"
-    #     raise NotImplementedError
+    @classmethod
+    def from_jdict(cls, j_dict: dict):
+        "Instantiate a new Color Instance from a Loaded JSON Dict"
+        raise NotImplementedError
 
     # region // -------------- Color Getters & Setters -------------- //
     @property
@@ -238,7 +238,7 @@ class TF:
 
 # pylint: disable="wrong-import-position"
 # Moving the Import to here fixes a circular import error w/Color
-from .enum import ColorType, SeriesMarkerShape, SeriesMarkerPosition
+from .enum import ColorType, SeriesMarkerShape, SeriesMarkerPosition, LineStyle
 
 # Some of these will likely not be used unless further Javascript <-> Python integeration
 # is done; specifically around passing MouseEvents and Timeframe Changes back to Python.
@@ -429,6 +429,26 @@ class SeriesMarker:
     size: Optional[int] = 1
     color: Optional[Color] = None
     text: Optional[str] = None
+
+
+@dataclass
+class SeriesPriceLine:
+    """
+    Represents a price line.
+    """
+
+    title: str = ""
+    id: Optional[str] = None
+    price: float = 0
+    color: Optional[Color] = None
+
+    lineWidth: int = 1
+    lineVisible: bool = True
+    lineStyle: LineStyle = LineStyle.Solid
+
+    axisLabelVisible: bool = True
+    axisLabelColor: Optional[Color] = None
+    axisLabelTextColor: Optional[Color] = None
 
 
 # endregion

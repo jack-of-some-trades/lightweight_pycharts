@@ -182,7 +182,7 @@ export class Container {
                 return true
             }
         });
-        if (rtn_frame)
+        if (rtn_frame !== undefined)
             return rtn_frame
 
         //Need to actually create a new Frame

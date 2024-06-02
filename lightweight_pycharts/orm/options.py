@@ -40,26 +40,6 @@ class PriceScaleMargins:
 
 
 @dataclass
-class PriceLineOptions:
-    """
-    Represents a price line options.
-    """
-
-    title: str = ""
-    id: Optional[str] = None
-    price: float = 0
-    color: Optional[Color] = None
-
-    lineWidth: int = 1
-    lineVisible: bool = True
-    lineStyle: LineStyle = LineStyle.Solid
-
-    axisLabelVisible: bool = True
-    axisLabelColor: Optional[Color] = None
-    axisLabelTextColor: Optional[Color] = None
-
-
-@dataclass
 class OverlayPriceScaleOptions:
     """
     Structure that describes overlay price scale options.

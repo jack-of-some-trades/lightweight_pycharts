@@ -18,7 +18,7 @@ from .orm import types
 
 # prevent circular import
 if TYPE_CHECKING:
-    from .window import Frame
+    from .indicator import Series
 
 
 class Events:
@@ -81,14 +81,14 @@ class Socket_switch_sync(Protocol):
         self,
         state: Literal["open", "close"],
         symbol: types.Symbol,
-        frame: "Frame",
+        series: "Series",
     ) -> None: ...
 class Socket_switch_async(Protocol):
     async def __call__(
         self,
         state: Literal["open", "close"],
         symbol: types.Symbol,
-        frame: "Frame",
+        series: "Series",
     ) -> None: ...
 
 
@@ -129,13 +129,15 @@ class Emitter[T: Emitter_Protocols](list[T]):
         - Timeframe_Protocol: ( arg1:TF, ) => {None}
     """
 
-    def __init__(self, response: Optional[Callable] = None):
+    def __init__(self, response: Optional[Callable] = None, single_responder=True):
         super().__init__()
         self.response = response
+        self.__single_responder__ = single_responder
 
     def __iadd__(self, func: T) -> Self:
         if func not in self:
-            self.clear()
+            if self.__single_responder__:
+                self.clear()
             self.append(func)
         return self
 

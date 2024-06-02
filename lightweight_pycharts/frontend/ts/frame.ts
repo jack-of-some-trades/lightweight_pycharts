@@ -1,4 +1,4 @@
-import { AnySeriesData, WhitespaceData } from "./lib/pkg.js";
+import { WhitespaceData } from "./lib/pkg.js";
 import { Pane } from "./pane.js";
 import { Series_Type, symbol_item, tf } from "./util.js";
 
@@ -16,6 +16,7 @@ export class Frame {
     series_type: Series_Type
 
     private panes: Pane[] = []
+    private main_pane: Pane | undefined = undefined
 
     constructor(id: string, div: HTMLDivElement, tab_div: HTMLDivElement) {
         this.id = id
@@ -56,6 +57,8 @@ export class Frame {
      */
     reassign_div(div: HTMLDivElement) {
         this.div = div
+        if (this.main_pane !== undefined)
+            this.div.appendChild(this.main_pane.div)
         this.panes.forEach(pane => {
             this.div.appendChild(pane.div)
         });
@@ -66,24 +69,14 @@ export class Frame {
 
     // #region -------------- Python API Functions ------------------ //
 
-    protected set_data(data: AnySeriesData[], ws_data: AnySeriesData[]) {
-        if (this.panes[0])
-            this.panes[0].set_main_data(data, ws_data)
-    }
-
-    protected update_data(data: AnySeriesData) {
-        if (this.panes[0])
-            this.panes[0].update_main_data(data)
-    }
-
     protected set_whitespace_data(data: WhitespaceData[]) {
-        if (this.panes[0])
-            this.panes[0].set_whitespace_data(data)
+        this.main_pane?.set_whitespace_data(data)
+        this.panes.forEach(pane => { pane.set_whitespace_data(data) })
     }
 
     protected update_whitespace_data(data: WhitespaceData) {
-        if (this.panes[0])
-            this.panes[0].update_whitespace_data(data)
+        this.main_pane?.update_whitespace_data(data)
+        this.panes.forEach(pane => { pane.update_whitespace_data(data) })
     }
 
     protected set_symbol(new_symbol: symbol_item) {
@@ -106,25 +99,31 @@ export class Frame {
         } else if (this.timeframe.period === 'm' || this.timeframe.period === 'h') {
             newOpts.timeVisible = true
         }
+
+        this.main_pane?.update_timescale_opts(newOpts)
         this.panes.forEach(pane => { pane.update_timescale_opts(newOpts) });
     }
 
-    protected set_series_type(new_type: Series_Type, data: AnySeriesData[]) {
-        //Type Checking and Error Prevention done in python, blindly follow directions
-        this.panes[0].set_main_series(new_type, data)
-
+    protected set_series_type(new_type: Series_Type) {
         this.series_type = new_type
         if (this == window.active_frame)
             window.topbar.series_select.update_icon(this.series_type)
     }
 
-    protected add_pane(id: string = ''): Pane {
+    protected add_pane(id: string): Pane {
         let child_div = document.createElement('div')
         child_div.classList.add('chart_pane')
         this.div.appendChild(child_div)
 
         let new_pane = new Pane(id, child_div)
-        this.panes.push(new_pane)
+
+        if (this.main_pane === undefined)
+            //This should be the pane w/ ID '*_p_main'
+            //Assuming this.main_pane is never overwritten or deleted, it will be.
+            this.main_pane = new_pane
+        else
+            this.panes.push(new_pane)
+
         this.resize()
         return new_pane
     }
@@ -138,18 +137,21 @@ export class Frame {
         let this_width = this.div.clientWidth - 2
         let this_height = this.div.clientHeight - 2
 
+        this.main_pane?.resize(this_width, this_height)
         this.panes.forEach(pane => {
             pane.resize(this_width, this_height)
         });
     }
 
     fitcontent() {
+        this.main_pane?.fitcontent()
         this.panes.forEach(pane => {
             pane.fitcontent()
         });
     }
 
     autoscale_content() {
+        this.main_pane?.autoscale_time_axis()
         this.panes.forEach(pane => {
             pane.autoscale_time_axis()
         });

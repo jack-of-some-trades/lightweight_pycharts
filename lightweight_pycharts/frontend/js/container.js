@@ -116,7 +116,7 @@ export class Container {
                 return true;
             }
         });
-        if (rtn_frame)
+        if (rtn_frame !== undefined)
             return rtn_frame;
         let null_div = document.createElement('div');
         null_div.style.display = 'none';

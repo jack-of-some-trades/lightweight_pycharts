@@ -1,21 +1,26 @@
+import { indicator } from "./indicator.js";
 import { Legend } from "./legend.js";
-import { AnySeries, AnySeriesData, CandlestickData, CandlestickSeriesOptions, DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, LineSeries, TimeChartOptions, WhitespaceData, createChart } from "./lib/pkg.js";
+import { DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, LineSeries, SingleValueData, TimeChartOptions, WhitespaceData, createChart } from "./lib/pkg.js";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
-import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import * as u from "./util.js";
+
 
 //The portion of a chart where things are actually drawn
 export class Pane {
+    static _special_id_ = 'main' // Must match Python Pane Special ID
+
     id: string = ''
     div: HTMLDivElement
     flex_width: number
     flex_height: number
     legend?: Legend
-    main_series: AnySeries
-    whitespace_series: LineSeries
-    series: AnySeries[] = []
 
-    private chart: IChartApi
+    chart: IChartApi
+    indicators = new Map<string, indicator>()
+
+    primitive_left: LineSeries
+    primitive_right: LineSeries
+    whitespace_series: LineSeries
     private chart_div: HTMLDivElement
 
     constructor(
@@ -34,10 +39,21 @@ export class Pane {
         this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.chart.chartElement()
 
-        this.assign_active_pane = this.assign_active_pane.bind(this)
+        //Add Blank Series that primtives can be attached to
+        this.primitive_left = this.chart.addLineSeries({ priceScaleId: 'left', visible: false, autoscaleInfoProvider: undefined })
+        this.primitive_right = this.chart.addLineSeries({ priceScaleId: 'right', visible: false, autoscaleInfoProvider: undefined })
+        this.whitespace_series = this.chart.addLineSeries({
+            visible: false,
+            priceScaleId: '',
+            autoscaleInfoProvider: () => ({
+                priceRange: { //Set visible range regardless of data
+                    minValue: 0,
+                    maxValue: 100,
+                },
+            })
+        })
 
-        this.main_series = this.chart.addCandlestickSeries()
-        this.whitespace_series = this.chart.addLineSeries()
+        this.assign_active_pane = this.assign_active_pane.bind(this)
 
         // Without these listeners, chart cannot be moved in a replay like mode
         this.chart_div.addEventListener('mousedown', () => {
@@ -68,64 +84,32 @@ export class Pane {
         window.active_pane.div.setAttribute('active', '')
     }
 
-    set_main_series(series_type: u.Series_Type, data: AnySeriesData[]) {
-        let new_series: AnySeries
-        switch (series_type) {
-            case (u.Series_Type.LINE):
-                new_series = this.chart.addLineSeries(); break;
-            case (u.Series_Type.AREA):
-                new_series = this.chart.addAreaSeries(); break;
-            case (u.Series_Type.HISTOGRAM):
-                new_series = this.chart.addHistogramSeries(); break;
-            case (u.Series_Type.BASELINE):
-                new_series = this.chart.addBaselineSeries(); break;
-            case (u.Series_Type.BAR):
-                new_series = this.chart.addBarSeries(); break;
-            case (u.Series_Type.CANDLESTICK):
-                new_series = this.chart.addCandlestickSeries(); break;
-            case (u.Series_Type.ROUNDED_CANDLE):
-                new_series = this.chart.addCustomSeries(new RoundedCandleSeries()); break;
-            default:
-                return // Whitespace
-        }
-        let timescale = this.chart.timeScale()
-        let current_range = timescale.getVisibleRange()
-
-        //@ts-ignore (Type Checking Done in Python, Data should already be updated if it needed to be)
-        new_series.setData(data)
-        this.chart.removeSeries(this.main_series)
-        this.main_series = new_series
-
-        if (current_range !== null)
-            timescale.setVisibleRange(current_range)
-    }
-
-    /**
-     * Sets The Data of a Series to the data list given.
-     * @param data The List of Data. Type Checking presumed to have been done in Python
-     */
-    set_main_data(data: AnySeriesData[], ws_data: AnySeriesData[]) {
-        if (this.main_series === undefined) return
-        this.main_series.setData(data)
-        this.whitespace_series.setData(ws_data)
-        this.autoscale_time_axis()
-    }
-
-    /**
-     * Sets The Data of a Series to the data list given.
-     * @param data The List of Data. Type Checking presumed to have been done in Python
-     */
-    update_main_data(data: AnySeriesData) {
-        if (this.main_series === undefined) return
-        this.main_series.update(data)
-    }
-
     set_whitespace_data(data: WhitespaceData[]) {
+        //We also want to set the values of a few data points so that anything attached to the Left/Right 
+        //primitive display series' will be drawn appropriately (all resulting series lines are invisible and don't autoscale)
+        //This is done here so that the timestamp will be guarenteed to be part of the data set given to the chart
+        if (data.length > 0) {
+            this.primitive_left.setData([{ time: data[0].time, value: 0 }])
+            this.primitive_right.setData([{ time: data[0].time, value: 0 }])
+        }
+
         this.whitespace_series.setData(data)
     }
 
     update_whitespace_data(data: WhitespaceData) {
         this.whitespace_series.update(data)
+    }
+
+    protected add_indicator(_id: string, type: string) {
+        this.indicators.set(_id, new indicator(_id, type, this))
+    }
+
+    protected remove_indicator(_id: string) {
+        let indicator = this.indicators.get(_id)
+        if (indicator === undefined) return
+
+        indicator.delete()
+        this.indicators.delete(_id)
     }
 
     /**
@@ -142,23 +126,9 @@ export class Pane {
         this.chart.resize(this_width, this_height, false)
     }
 
-    add_candlestick_series(options?: DP<CandlestickSeriesOptions>) {
-        this.series.push(this.chart.addCandlestickSeries(options))
-    }
-
-    create_line() {
-        const data = this.main_series.data() as CandlestickData[]
-        const dataLength = data.length
-        const point1 = {
-            time: data[dataLength - 50].time,
-            value: data[dataLength - 50].close * 0.9,
-        };
-        const point2 = {
-            time: data[dataLength - 5].time,
-            value: data[dataLength - 5].close * 1.1,
-        };
+    create_line(point1: SingleValueData, point2: SingleValueData) {
         const trend = new TrendLine(point1, point2);
-        this.main_series.attachPrimitive(trend);
+        this.primitive_right.attachPrimitive(trend);
     }
 
 

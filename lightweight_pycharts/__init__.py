@@ -9,12 +9,12 @@ import logging
 
 import lightweight_pycharts.orm.enum as enum
 import lightweight_pycharts.orm.types as types
-import lightweight_pycharts.orm.style as style
 import lightweight_pycharts.orm.series as series
 import lightweight_pycharts.orm.options as options
 
 # Without the following line Pylance shows the above lines as errors?
 from . import orm
+from .indicator import Indicator, Series
 from .window import Window, Container, Frame, Pane
 from .orm.types import TF, Color, Symbol
 from .orm.enum import layouts, ColorLiteral
@@ -29,7 +29,6 @@ __all__ = (
     "types",
     "enum",
     "series",
-    "style",
     "options",
     #
     # Types
@@ -41,6 +40,9 @@ __all__ = (
     "ColorLiteral",
     "layouts",
     "SeriesType",
+    # Indicators
+    "Indicator",
+    "Series",
 )
 
 _LOG_LVL = logging.WARNING
@@ -48,7 +50,7 @@ _LOG_LVL = logging.WARNING
 # _LOG_LVL = logging.DEBUG
 
 logger = logging.getLogger("lightweight-pycharts")
-handler = logging.StreamHandler()
+handler = logging.StreamHandler(None)
 formatter = logging.Formatter(
     "[pycharts] - [.\\%(filename)s Line: %(lineno)d] - %(levelname)s: %(message)s"
 )

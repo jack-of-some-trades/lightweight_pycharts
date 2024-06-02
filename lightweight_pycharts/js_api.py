@@ -205,86 +205,40 @@ class View(ABC):
             elif isinstance(msg, JS_CMD):
                 cmd = msg
                 args = tuple()
+                # Handle Case where only a cmd was put in queue
             else:
                 logger.warning("Ignoring Invalid Message: %s", msg)
                 continue
 
-            try:
-                self._execute_cmd(cmd, *args)
-            except IndexError:
-                logger.error("incorrect number of args given for command: %s", cmd)
-            except TypeError as e:
-                logger.error(e)
+            logger.debug("Received CMD: %s, args: %s", cmd.name, args)
 
-    def _execute_cmd(self, js_cmd: JS_CMD, *args):
-        "Execute command with Argument Pattern Matching"
-        logger.debug("JS_CMD: %s: %s", JS_CMD(js_cmd).name, str(args))
-        cmd = ""
-        match js_cmd, *args:
-            # case JS_CMD.JS_CODE, Callable(), *scripts:
-            # Unfortunately this doesn't work since Callables are not pickleable
-            # and thus cannot make it through the process queue
-            case JS_CMD.JS_CODE, *scripts:
-                for script in scripts:
-                    cmd += (script + ";") if isinstance(script, str) else ""
-            case JS_CMD.ADD_CONTAINER, str():
-                cmd = cmds.add_container(args[0])
-            case JS_CMD.REMOVE_CONTAINER, str():
-                cmd = cmds.remove_container(args[0])
-            case JS_CMD.REMOVE_REFERENCE, str(), *_:
-                cmd = cmds.remove_reference(*args)
-            case JS_CMD.ADD_FRAME, str(), str():
-                cmd = cmds.add_frame(args[0], args[1])
-            case JS_CMD.ADD_PANE, str(), str():
-                cmd = cmds.add_pane(args[0], args[1])
-            case JS_CMD.SET_LAYOUT, str(), orm.layouts():
-                cmd = cmds.set_layout(args[0], args[1])
-            case JS_CMD.SET_DATA, str(), Series_DF(), Series_DF():
-                cmd = cmds.set_data(args[0], args[1], args[2])
-            case JS_CMD.CLEAR_DATA, str():
-                cmd = cmds.clear_data(args[0])
-            case JS_CMD.UPDATE_DATA, str(), _:  # Can't Pattern Match a Union
-                cmd = cmds.update_data(args[0], args[1])
-            case JS_CMD.SET_WHITESPACE_DATA, str(), Series_DF():
-                cmd = cmds.set_whitespace_data(args[0], args[1])
-            case JS_CMD.CLEAR_WHITESPACE_DATA, str():
-                cmd = cmds.clear_whitespace_data(args[0])
-            case JS_CMD.UPDATE_WHITESPACE_DATA, str(), WhitespaceData():
-                cmd = cmds.update_whitespace_data(args[0], args[1])
-            case JS_CMD.SET_SYMBOL, str(), orm.Symbol():
-                cmd = cmds.set_symbol(args[0], args[1])
-            case JS_CMD.SET_TIMEFRAME, str(), orm.TF():
-                cmd = cmds.set_timeframe(args[0], args[1])
-            case JS_CMD.SET_SERIES_TYPE, str(), SeriesType(), Series_DF():
-                cmd = cmds.set_series_type(args[0], args[1], args[2])
-            case JS_CMD.SET_SYMBOL_ITEMS, list():
-                cmd = cmds.update_symbol_search(args[0])
-            case JS_CMD.SET_SYMBOL_SEARCH_OPTS, str(), list():
-                cmd = cmds.update_symbol_search_bubbles(args[0], args[1])
-            case JS_CMD.UPDATE_LAYOUT_FAVS, dict():
-                cmd = cmds.set_window_layouts(args[0])
-            case JS_CMD.UPDATE_SERIES_FAVS, dict():
-                cmd = cmds.set_window_series_types(args[0])
-            case JS_CMD.UPDATE_TF_OPTS, dict():
-                cmd = cmds.set_window_timeframes(args[0])
-            case JS_CMD.SHOW, *_:
-                self.show()
-            case JS_CMD.HIDE, *_:
-                self.hide()
-            case JS_CMD.CLOSE, *_:
-                self.close()
-            case JS_CMD.MAXIMIZE, *_:
-                self.maximize()
-            case JS_CMD.MINIMIZE, *_:
-                self.minimize()
-            case JS_CMD.RESTORE, *_:
-                self.restore()
-            case _:
-                raise TypeError(
-                    f"""incorrect Type of args given for command:
-                    {cmd}: Given {[type(arg) for arg in args]}"""
+            try:
+                # Lookup JS Command
+                cmd_str = cmds.CMD_ROLODEX[cmd](*args)
+                if cmd_str != "":
+                    self.run_script(cmd_str)
+                else:
+                    # Not Given JS_CMD, check against PyWv Commands
+                    match cmd:
+                        case JS_CMD.SHOW:
+                            self.show()
+                        case JS_CMD.HIDE:
+                            self.hide()
+                        case JS_CMD.CLOSE:
+                            self.close()
+                        case JS_CMD.MAXIMIZE:
+                            self.maximize()
+                        case JS_CMD.MINIMIZE:
+                            self.minimize()
+                        case JS_CMD.RESTORE:
+                            self.restore()
+            except TypeError as e:
+                logger.error(
+                    "Command:%s: Given %s \n\tError msg: %s",
+                    cmd,
+                    [type(arg) for arg in args],
+                    e,
                 )
-        self.run_script(cmd)
 
 
 class PyWv(View):
