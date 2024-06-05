@@ -1,9 +1,11 @@
 """ Basic Types and TypeAliases """
 
-from typing import TypeAlias, Literal, Optional
-from pandas import Timestamp
+from math import floor
 from datetime import datetime
 from dataclasses import dataclass
+from typing import TypeAlias, Literal, Optional, Self
+
+from pandas import Timestamp
 
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
@@ -35,14 +37,14 @@ class Color:
     Original Object: https://www.w3schools.com/cssref/func_rgba.php
     """
 
-    def __init__(self, r: int, b: int, g: int, a: float):
+    def __init__(self, r: int, g: int, b: int, a: float):
         self._r = r
         self._b = b
         self._g = g
         self._a = a
 
     @classmethod
-    def from_rgb(cls, r: int, b: int, g: int, a: float = 1):
+    def from_rgb(cls, r: int, g: int, b: int, a: float = 1):
         "Instantiate a new Color Instance from RGB Values"
         new_inst = cls(0, 0, 0, 0)
         # Pass variables after construction to Value Check them w/ setter funcs
@@ -74,6 +76,24 @@ class Color:
         else:
             raise ValueError(f"Hex Color of length {len(hex_value)} is not valid.")
         return cls(r, g, b, alpha)
+
+    @classmethod
+    def from_gradient(
+        cls, value: float, bot: float, top: float, bot_color: Self, top_color: Self
+    ) -> Self:
+        "Returns a color based on the relative position of value in the [bot, top] Range."
+        if value <= bot:
+            return bot_color
+        if value >= top:
+            return top_color
+        ratio = (value - bot) / (top - bot)
+
+        r = floor((top_color._r - bot_color._r) * ratio + bot_color._r)
+        g = floor((top_color._g - bot_color._g) * ratio + bot_color._g)
+        b = floor((top_color._b - bot_color._b) * ratio + bot_color._b)
+        a = floor((top_color._a - bot_color._a) * ratio + bot_color._a)
+
+        return cls(r, g, b, a)
 
     @classmethod
     def from_jdict(cls, j_dict: dict):

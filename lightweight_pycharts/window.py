@@ -6,23 +6,20 @@ import asyncio
 import multiprocessing as mp
 from functools import partial
 from dataclasses import asdict
-from typing import Literal, Optional, TYPE_CHECKING, TypeVar
+from typing import Literal, Optional
 
 import pandas as pd
 
+from lightweight_pycharts.orm.types import TF
+
 from . import orm
 from . import util
-from .indicator import Indicator, Series
-from .orm import layouts, Symbol, TF
+from . import indicator as ind
+from .orm import layouts, Symbol
 from .events import Events, Emitter, Socket_Switch_Protocol
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD, PY_CMD
-from .orm.series import (
-    AnyBasicData,
-    Series_DF,
-    SeriesType,
-)
-from lightweight_pycharts import indicator
+from .orm.series import AnyBasicData, Series_DF, SeriesType
 
 
 logger = logging.getLogger("lightweight-pycharts")
@@ -87,7 +84,7 @@ class Window:
             self._data_request_rsp, socket_switch=self.events.socket_switch
         )
 
-        self.js_id = "wrapper"
+        self._js_id = "wrapper"
         self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
         self.new_tab()
@@ -150,6 +147,7 @@ class Window:
                 self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
                 self.containers.insert(args[1], self.containers.pop(args[0]))
             case PY_CMD.PY_EXEC, str():
+                # TODO: Determine if this will stay as part of the code's functionality
                 logger.info("Recieved Message from View: %s", args[0])
 
     async def _manage_queue(self):
@@ -194,30 +192,35 @@ class Window:
     def _data_request_rsp(
         data: Optional[pd.DataFrame],
         *_,
-        series: Series,
+        series: ind.Series,
         symbol: orm.Symbol,
         timeframe: orm.TF,
         socket_switch: Emitter[Socket_Switch_Protocol],  # Set by Partial Func
     ):
         # Close the socket if there was a symbol change
-        if symbol in series.sockets and series.symbol != symbol:
+        if series.socket_open and series.symbol != symbol:
             socket_switch(state="close", symbol=series.symbol, series=series)
 
         if data is not None:
-            # Set Data *before* frame.update_data can be called
-            series.set_data(data, symbol)
+            # Set Data *before* series.update_data can be called
+            series.set_data(data, symbol=symbol)
             if not series.socket_open:
                 socket_switch(state="open", symbol=symbol, series=series)
         else:
             if series.socket_open:
                 # Closes the socket if an invalid timeframe was selected.
                 socket_switch(state="close", symbol=series.symbol, series=series)
-            # Clear Data *after* Socket close so socket close get passed the old symbol
+            # Clear Data *after* Socket close so socket close gets passed the old symbol
             series.clear_data(timeframe, symbol)
 
     # endregion
 
     # region ------------------------ Public Window Methods  ------------------------ #
+
+    @property
+    def js_id(self) -> str:
+        "Immutable Copy of the Object's Javascript_ID"
+        return self._js_id
 
     def show(self):
         "Show the PyWebView Window"
@@ -255,7 +258,7 @@ class Window:
 
     def del_tab(self, container_id: str) -> None:
         """
-        Deletes a Tab. Argument Passed should be the JS_ID of the container
+        Deletes a Tab. Argument Passed should be the _js_id of the container
         """
         for container in self.containers:
             if container.js_id == container_id:
@@ -264,21 +267,21 @@ class Window:
                 self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
                 self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
 
-                # Be sure to close all active sockets
+                # Be sure to allow indicators to clear themselves
+                # This ensures web-sockets and other assets are closed.
                 for _, frame in container.frames.items():
-                    for _, series in frame.get_indicators_of_type(Series).items():
-                        if series.socket_open:
-                            self.events.socket_switch("close", series.symbol, series)
+                    for _, ind in frame.indicators.items():
+                        ind.delete()
                 return
 
     def get_container(self, _id: int | str) -> Optional[Container]:
-        "Return the container that either matchs the given js_id string, or the integer tab number"
+        "Return the container that either matchs the given _js_id string, or the integer tab number"
         if isinstance(_id, str):
             for container in self.containers:
                 if _id == container.js_id:
                     return container
         else:
-            if _id >= 0 and _id < len(self.containers):
+            if 0 <= _id < len(self.containers):
                 return self.containers[_id]
 
     def set_search_filters(
@@ -330,26 +333,31 @@ class Window:
 class Container:
     "A Container Class instance manages the all sub frames and the layout that contains them."
 
-    def __init__(self, js_id: str, fwd_queue: mp.Queue, window: Window) -> None:
+    def __init__(self, _js_id: str, fwd_queue: mp.Queue, window: Window) -> None:
         self._fwd_queue = fwd_queue
         self._window = window
-        self.js_id = js_id
+        self._js_id = _js_id
         self.layout_type = layouts.SINGLE
-        self.frames = util.ID_Dict[Frame](f"{js_id}_f")
+        self.frames = util.ID_Dict[Frame](f"{_js_id}_f")
 
-        self._fwd_queue.put((JS_CMD.ADD_CONTAINER, self.js_id))
+        self._fwd_queue.put((JS_CMD.ADD_CONTAINER, self._js_id))
         self.set_layout(self.layout_type)  # Adds First Frame
 
     def __del__(self):
-        logger.debug("Deleteing Container: %s", self.js_id)
+        logger.debug("Deleteing Container: %s", self._js_id)
 
-    def add_frame(self, js_id: Optional[str] = None) -> Frame:
+    @property
+    def js_id(self) -> str:
+        "Immutable Copy of the Object's Javascript_ID"
+        return self._js_id
+
+    def add_frame(self, _js_id: Optional[str] = None) -> Frame:
         "Creates a new Frame. Frame will only be displayed once the layout supports a new frame."
-        return Frame(self, js_id)
+        return Frame(self, _js_id)
 
     def set_layout(self, layout: layouts):
         "Set the layout of the Container creating Frames as needed"
-        self._fwd_queue.put((JS_CMD.SET_LAYOUT, self.js_id, layout))
+        self._fwd_queue.put((JS_CMD.SET_LAYOUT, self._js_id, layout))
         self.layout_type = layout
 
         # If there arent enough Frames to support the layout then generate them
@@ -360,8 +368,8 @@ class Container:
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"
-        _ids = [self.js_id]
-        for id, frame in self.frames.items():
+        _ids = [self._js_id]
+        for _, frame in self.frames.items():
             _ids += frame.all_ids()
         return _ids
 
@@ -376,31 +384,56 @@ class Frame:
     structure where the Main Series Data is owned by the JS Pane Object that is displaying the data
     """
 
-    def __init__(self, parent: Container, js_id: Optional[str] = None) -> None:
-        if js_id is None:
-            self.js_id = parent.frames.generate(self)
+    def __init__(self, parent: Container, _js_id: Optional[str] = None) -> None:
+        if _js_id is None:
+            self._js_id = parent.frames.generate(self)
         else:
-            self.js_id = parent.frames.affix(js_id, self)
+            self._js_id = parent.frames.affix(_js_id, self)
 
         self._window = parent._window
         self._fwd_queue = parent._fwd_queue
-        self.panes = util.ID_Dict[Pane](f"{self.js_id}_p")
+        self.panes = util.ID_Dict[Pane](f"{self._js_id}_p")
 
         # Dict of all applied indicators. Indicators, using the supplied reference to a frame,
         # append themselves to this when created. See Indicator DocString for reasoning.
-        self.indicators = util.ID_Dict[Indicator]("i")
+        self.indicators = util.ID_Dict[ind.Indicator]("i")
 
         self.symbol: Optional[Symbol] = None
         self.series_type: SeriesType = SeriesType.Candlestick
 
-        self._fwd_queue.put((JS_CMD.ADD_FRAME, self.js_id, parent.js_id))
+        self._fwd_queue.put((JS_CMD.ADD_FRAME, self._js_id, parent._js_id))
 
         # Add main pane and Series, should never be deleted
         self.add_pane(Pane.__special_id__)
-        Series(self, Series.__special_id__)
+        ind.Series(self, ind.Series.__special_id__)
 
     def __del__(self):
-        logger.debug("Deleteing Frame: %s", self.js_id)
+        logger.debug("Deleteing Frame: %s", self._js_id)
+
+    # region ------------- Dunder Control Functions ------------- #
+
+    def __set_displayed_symbol__(self, symbol: Symbol):
+        "*Does not change underlying data*"
+        self._fwd_queue.put((JS_CMD.SET_FRAME_SYMBOL, self._js_id, symbol))
+
+    def __set_displayed_timeframe__(self, timeframe: TF):
+        "*Does not change underlying data*"
+        self._fwd_queue.put((JS_CMD.SET_FRAME_TIMEFRAME, self._js_id, timeframe))
+
+    def __set_displayed_series_type__(self, series_type: SeriesType):
+        "*Does not change underlying data*"
+        self._fwd_queue.put((JS_CMD.SET_FRAME_SERIES_TYPE, self._js_id, series_type))
+
+    def __set_whitespace__(self, data: Series_DF):
+        self._fwd_queue.put((JS_CMD.SET_WHITESPACE_DATA, self._js_id, data))
+
+    def __clear_whitespace__(self):
+        self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self._js_id))
+
+    def __update_whitespace__(self, data: AnyBasicData):
+        self._fwd_queue.put((JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data))
+
+    # endregion
 
     def add_pane(self, js_id: Optional[str] = None) -> Pane:
         "Add a Pane to the Current Frame"
@@ -408,14 +441,16 @@ class Frame:
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"
-        _ids = [self.js_id]
-        for _, pane in self.panes.items():
-            _ids += pane.all_ids()
-        return _ids
+        return [self._js_id] + self.all_pane_ids()
 
     def all_pane_ids(self) -> list[str]:
         "Return a List of all Panes Ids of this object"
         return list(self.panes.keys())
+
+    @property
+    def js_id(self) -> str:
+        "Immutable Copy of the Object's Javascript_ID"
+        return self._js_id
 
     @property
     def main_pane(self) -> Pane:
@@ -423,16 +458,20 @@ class Frame:
         return self.panes[self.panes.prefix + Pane.__special_id__]
 
     @property
-    def main_series(self) -> Series:
+    def main_series(self) -> ind.Series:
         "Series Indicator that contain's the Frame's main symbol data"
-        main_series = self.indicators[self.indicators.prefix + Series.__special_id__]
-        if isinstance(main_series, Series):
+        main_series = self.indicators[
+            self.indicators.prefix + ind.Series.__special_id__
+        ]
+        if isinstance(main_series, ind.Series):
             return main_series
-        raise AttributeError(f"Cannot find Main Series for Frame {self.js_id}")
+        raise AttributeError(f"Cannot find Main Series for Frame {self._js_id}")
 
     # region ------------- Indicator Functions ------------- #
 
-    def get_indicators_of_type[T: Indicator](self, ind_type: type[T]) -> dict[str, T]:
+    def get_indicators_of_type[
+        T: ind.Indicator
+    ](self, ind_type: type[T]) -> dict[str, T]:
         "Returns a Dictionary of Indicators applied to this Frame that are of the Given Type"
         rtn_dict = {}
         for _key, _ind in self.indicators.items():
@@ -440,15 +479,16 @@ class Frame:
                 rtn_dict[_key] = _ind
         return rtn_dict
 
-    def move_indicator(self): ...
-
-    def remove_indicator(self): ...
-
-    # endregion
-
-    # region ------------- Primative Functions ------------- #
-
-    def add_primitive(self): ...
+    def remove_indicator(self, _id: str):
+        "Remove and Delete an Indicator"
+        try:
+            self.indicators[_id].delete()
+        except (KeyError, IndexError):
+            logger.warning(
+                "Could not delete Indicator '%s'. It does not exist on frame '%s'",
+                _id,
+                self._js_id,
+            )
 
     # endregion
 
@@ -462,22 +502,20 @@ class Pane:
 
     def __init__(self, parent: Frame, js_id: Optional[str] = None) -> None:
         if js_id is None:
-            new_id = parent.panes.generate(self)
+            self._js_id = parent.panes.generate(self)
         else:
-            new_id = parent.panes.affix(js_id, self)
+            self._js_id = parent.panes.affix(js_id, self)
 
-        self.js_id = new_id
         self._window = parent._window
         self._fwd_queue = parent._fwd_queue
-        self.__main_pane__ = self.js_id == Pane.__special_id__
+        self.__main_pane__ = self._js_id == Pane.__special_id__
 
-        self._fwd_queue.put((JS_CMD.ADD_PANE, self.js_id, parent.js_id))
+        self._fwd_queue.put((JS_CMD.ADD_PANE, self._js_id, parent._js_id))
 
-    def all_ids(self) -> list[str]:
-        "Return a List of all Ids of this object and sub-objects"
-        # Maybe this isn't needed. Not Sure it's advantageous to place Pane Sub-Objects into the
-        # Javascript global scope. Tbh that's just excessive.
-        return [self.js_id]
+    @property
+    def js_id(self) -> str:
+        "Immutable Copy of the Object's Javascript_ID"
+        return self._js_id
 
     def add_primitive(self):
         raise NotImplementedError

@@ -1,6 +1,10 @@
-""" Classes and functions that handle implementation of chart series objects """
+""" 
+Classes that handle the implementation of Abstract and Specific Chart Series Objects 
 
-from __future__ import annotations
+(Classes known as ISeriesAPI in the Lightweight-Charts API) 
+Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeriesApi
+"""
+
 from typing import Optional, TYPE_CHECKING
 
 from .js_cmd import JS_CMD
@@ -26,9 +30,9 @@ class SeriesCommon:
 
     def __init__(
         self,
-        indicator: Indicator,
+        indicator: "Indicator",
         series_type: s.SeriesType,
-        display_pane_id: Optional[str],
+        display_pane_id: Optional[str] = None,
         options=s.SeriesOptionsCommon(),
     ) -> None:
         if display_pane_id is None:
@@ -36,9 +40,9 @@ class SeriesCommon:
             # default to display_pane of the parent indicator
 
         self._options = options
-        self.series_type = series_type
-        self.js_id = indicator._series_.generate(self)
-        self._ids = display_pane_id, indicator.js_id, self.js_id
+        self.series_type = self._series_type_check_(series_type)
+        self._js_id = indicator._series_.generate(self)
+        self._ids = display_pane_id, indicator._js_id, self._js_id
         # Tuple of Ids to make addressing easier through Queue: order = (pane, indicator, series)
 
         self._parent = indicator
@@ -48,13 +52,32 @@ class SeriesCommon:
         self.apply_options(self._options)
 
     @property
+    def js_id(self) -> str:
+        "Immutable Copy of the Object's Javascript_ID"
+        return self._js_id
+
+    @property
     def options(self) -> s.SeriesOptionsCommon:
+        "Copy of the Object's Series Options Dataclass"
         # Using a Property Tag here so there's some indication options should be updated through
         # apply_options and not via direct dataclass manipulation
         return self._options
 
+    @staticmethod
+    def _series_type_check_(series_type: s.SeriesType) -> s.SeriesType:
+        "Set a default series_type for the display ambiguous series types"
+        if (
+            series_type == s.SeriesType.SingleValueData
+            or series_type == s.SeriesType.WhitespaceData
+        ):
+            return s.SeriesType.Line
+        elif series_type == s.SeriesType.OHLC_Data:
+            return s.SeriesType.Candlestick
+        return series_type
+
     def delete(self) -> None:
-        self._parent._series_.pop(self.js_id)  # Ensure all references are removed
+        "Remove the Series Object from the Chart and the Parent Indicator"
+        self._parent._series_.pop(self._js_id)  # Ensure all references are removed
         self._fwd_queue.put((JS_CMD.REMOVE_SERIES, *self._ids))
 
     def set_data(self, data: s.Series_DF) -> None:
@@ -79,9 +102,10 @@ class SeriesCommon:
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_OPTS, *self._ids, options))
 
     def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF) -> None:
+        "Change the type of Series object that is displayed on the screen."
         # Set display type so data.json() only passes relevant information
-        data.disp_type = series_type
-        self.series_type = series_type
+        self.series_type = self._series_type_check_(series_type)
+        data.disp_type = self.series_type
         self._fwd_queue.put((JS_CMD.CHANGE_SERIES_TYPE, *self._ids, series_type, data))
 
     def change_pane(self, new_pane: str) -> None: ...
@@ -106,7 +130,7 @@ class LineSeries(SeriesCommon):
 
     def __init__(
         self,
-        indicator: Indicator,
+        indicator: "Indicator",
         display_pane_id: Optional[str] = None,
         options=s.LineStyleOptions(),
     ):
@@ -158,7 +182,7 @@ class BarSeries(SeriesCommon):
 class CandlestickSeries(SeriesCommon):
     "Subclass of SeriesCommon that Type Hints for a Candlestick Series"
 
-    def __init__(self, indicator: Indicator, display_pane_id: Optional[str] = None):
+    def __init__(self, indicator: "Indicator", display_pane_id: Optional[str] = None):
         super().__init__(indicator, s.SeriesType.Candlestick, display_pane_id)
 
     def update_data(

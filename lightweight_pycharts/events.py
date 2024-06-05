@@ -149,17 +149,17 @@ class Emitter[T: Emitter_Protocols](list[T]):
     # rsp_kwargs are set when the event it emitted, They are arguments
     # passed directly to the response function of the emitter.
     # Needed so Multiple Emits can safely be done at once.
-    def __call__(self, *_, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs):
+    def __call__(self, *args, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs):
         if len(self) == 0:
             return
         if iscoroutinefunction(call := self[0]):
             # Run Self, Asynchronously
             create_task(
-                self._async_response_wrap_(call, **kwargs, rsp_kwargs=rsp_kwargs)
+                self._async_response_wrap_(call, *args, **kwargs, rsp_kwargs=rsp_kwargs)
             )
         else:
             # Run Self, Synchronously
-            rsp = call(**kwargs)
+            rsp = call(*args, **kwargs)
             if self.response is None:
                 return
 
@@ -169,10 +169,10 @@ class Emitter[T: Emitter_Protocols](list[T]):
             )
 
     async def _async_response_wrap_(
-        self, call, *_, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs
+        self, call, *args, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs
     ):
         "Simple Wrapper to 'await' the initial 'call' function."
-        rsp = await call(**kwargs)
+        rsp = await call(*args, **kwargs)
         if self.response is None:
             return
 

@@ -64,19 +64,19 @@ async def socket_request_handler(state: str, symbol: lwc.Symbol, series: lwc.Ser
     """
     if state == "open" and symbol.ticker == "LWPC":
         df = pd.read_csv("examples/data/lwpc_next_ohlcv.csv")
-        series.sockets.append(symbol)
+        series.socket_open = True
         for _, _, t, o, h, l, c, v in df.itertuples():
             series.update_data(OhlcData(t, o, h, l, c, v))
             await asyncio.sleep(0.08)
-        series.sockets.remove(symbol)
+        series.socket_open = False
 
     if state == "open" and symbol.ticker == "LWPC-TICK":
         df = pd.read_csv("examples/data/lwpc_ticks.csv")
-        series.sockets.append(symbol)
+        series.socket_open = True
         for _, _, t, p in df.itertuples():
             series.update_data(SingleValueData(t, p))
             await asyncio.sleep(0.02)
-        series.sockets.remove(symbol)
+        series.socket_open = False
 
 
 async def main():
@@ -126,6 +126,10 @@ async def main():
     df = pd.read_csv("examples/data/ohlcv.csv")
 
     window.containers[0].frames[0].main_series.set_data(df)
+
+    # await asyncio.sleep(5)
+
+    lwc.indicator.SMA(window.containers[0].frames[0], 20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

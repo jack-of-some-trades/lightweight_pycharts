@@ -23,6 +23,9 @@ export class Frame {
         this.div = div
         this.tab_div = tab_div
 
+        // The following 3 variables are actually properties of a frame's primary Series(Indicator) obj.
+        // While these really should be owned by an indicator and not a frame, this is how the 
+        // implementation will stay until when/if indicator sub-types have their own classes in typescript.
         this.symbol = { ticker: 'LWPC' }
         this.timeframe = new tf(1, 'D')
         this.series_type = Series_Type.CANDLESTICK

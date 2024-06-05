@@ -6,6 +6,7 @@ from string import ascii_letters
 from typing import Optional
 
 
+# @pylint: disable=invalid-name
 class ID_List(list[str]):
     """
     A List of ID Strings with a generator function. Requires a separate list to store objects.

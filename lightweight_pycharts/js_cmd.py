@@ -19,9 +19,8 @@ from .orm.series import (
     SeriesType,
 )
 
+
 # @pylint: disable=invalid-name
-
-
 class ORM_JSONEncoder(JSONEncoder):
     "Enhanced JSON Encoder that encodes various pycharts/pandas objects in JSON"
 
