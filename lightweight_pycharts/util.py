@@ -18,7 +18,7 @@ class ID_List(list[str]):
         self.prefix = prefix + "_"
         super().__init__()
 
-    def generate(self) -> str:
+    def generate_id(self) -> str:
         "Generates a new ID, adds it to the list, and returns it for use."
         _id = self.prefix + "".join(choices(ascii_letters, k=4))
 
@@ -26,16 +26,16 @@ class ID_List(list[str]):
             self.append(_id)
             return _id
         else:  # In case of a collision.
-            return self.generate()
+            return self.generate_id()
 
-    def affix(self, _id: str) -> str:
+    def affix_id(self, _id: str) -> str:
         "Add a given ID string to the List. If already present then a new ID is generated."
         _id_prefixed = self.prefix + _id
         if _id_prefixed not in self:
             self.append(_id_prefixed)
             return _id_prefixed
         else:  # In case of a collision.
-            return self.generate()
+            return self.generate_id()
 
 
 # @pylint: disable=undefined-variable # Pylint thinks T is undefined
@@ -59,7 +59,7 @@ class ID_Dict[T](dict[str, T]):
 
         return super().__getitem__(key)
 
-    def generate(self, item: Optional[T] = None) -> str:
+    def generate_id(self, item: Optional[T] = None) -> str:
         "Generates and returns a new Key. If an item is given it is added to the dictionary"
         _id = self.prefix + "".join(choices(ascii_letters, k=4))
 
@@ -68,9 +68,9 @@ class ID_Dict[T](dict[str, T]):
                 self[_id] = item
             return _id
         else:  # In case of a collision.
-            return self.generate()
+            return self.generate_id(item)
 
-    def affix(self, _id: str, item: Optional[T] = None) -> str:
+    def affix_id(self, _id: str, item: Optional[T] = None) -> str:
         """
         Try to add a specific Key to the Dict. If the Key is already present
         then a new one is generated.
@@ -83,4 +83,4 @@ class ID_Dict[T](dict[str, T]):
                 self[_id_prefixed] = item
             return _id_prefixed
         else:  # In case of a collision.
-            return self.generate(item)
+            return self.generate_id(item)

@@ -16,6 +16,7 @@ from .orm.series import (
     Series_DF,
     SeriesType,
     AnyBasicData,
+    Whitespace_DF,
     SingleValueData,
 )
 
@@ -67,28 +68,28 @@ class Indicator(ABC):
 
         if isinstance(parent, win.Frame):
             self._parent_frame = parent
-            try:
-                self._parent_indicator = parent.main_series
-            except KeyError:
-                # prevents Error where the main_series is looking for a reference to itself.
-                self._parent_indicator = self
         else:
-            self._parent_indicator = parent
             self._parent_frame = parent._parent_frame
-
-        self._events = self._parent_frame._window.events
-        self._fwd_queue = self._parent_frame._fwd_queue
 
         if display_pane_id is None:
             display_pane_id = self._parent_frame.main_pane._js_id
 
         if js_id is None:
-            self._js_id = self._parent_frame.indicators.generate(self)
+            self._js_id = self._parent_frame.indicators.generate_id(self)
         else:
-            self._js_id = self._parent_frame.indicators.affix(js_id, self)
+            self._js_id = self._parent_frame.indicators.affix_id(js_id, self)
 
-        # Tuple of Ids to make addressing easier through Queue: order = (pane, indicator)
+        # Must preform this check after id generation so parent.main_series is guaranteed valid.
+        # (Specifically for when parent.main_series is trying to find a reference to itself)
+        if isinstance(parent, win.Frame):
+            self._parent_indicator = parent.main_series
+        else:
+            self._parent_indicator = parent
+
+        # Tuple of Ids to make addressing through Queue easier: order = (pane, indicator)
         self._ids = display_pane_id, self._js_id
+        self._fwd_queue = self._parent_frame._fwd_queue
+        self._events = self._parent_frame._window.events
 
         self.__observers__: list[Indicator] = []
         self.__observables__: list[Indicator] = []
@@ -172,11 +173,9 @@ class Indicator(ABC):
     def hoist(self):
         "Hoist Data From another indicator into this one."
 
-    @abstractmethod
     def subscribe(self, indicator: "Indicator"):
         "Subscribe an indicator to data updates. May not be Implemented"
 
-    @abstractmethod
     def unsubscribe(self, indicator: "Indicator"):
         "Unsubscribe an indicator from data updates. May not be Implemented"
         try:
@@ -217,9 +216,9 @@ class Series(Indicator):
 
         self.opts = options
         self.socket_open = False
-        self.symbol: Optional[Symbol] = None
+        self.symbol = Symbol("LWPC")
         self.main_data: Optional[Series_DF] = None
-        self.whitespace_data: Optional[Series_DF] = None
+        self.whitespace_data: Optional[Whitespace_DF] = None
 
         self.main_series = sc.SeriesCommon(self, self.opts.series_type)
 
@@ -241,32 +240,35 @@ class Series(Indicator):
             self.symbol = symbol
             if self.__frame_primary_src__:
                 self._parent_frame.__set_displayed_symbol__(self.symbol)
+        else:
+            self.symbol = Symbol("LWPC")
 
+        if self.__frame_primary_src__:
+            self._parent_frame.__set_displayed_symbol__(self.symbol)
+
+        # Initilize Data
         if not isinstance(data, pd.DataFrame):
             data = pd.DataFrame(data)
-        self.main_data = Series_DF(data, self.opts.series_type)
-        self.main_data.disp_type = self.opts.series_type
+        self.main_data = Series_DF(data, self.symbol.exchange)
 
         # Clear and Return on bad data.
-        if self.main_data.tf == TF(1, "E"):
+        if self.main_data.timeframe == TF(1, "E"):
             self.clear_data()
             return
-        if self.main_data.disp_type == SeriesType.WhitespaceData:
-            self.clear_data(timeframe=self.main_data.tf)
+        if self.main_data.data_type == SeriesType.WhitespaceData:
+            self.clear_data(timeframe=self.main_data.timeframe)
             return
 
         # Only make Whitespace Series if this is the primary dataset
         if self.__frame_primary_src__:
-            self.whitespace_data = Series_DF(
-                self.main_data.whitespace_df(), SeriesType.WhitespaceData
-            )
-            self._parent_frame.__set_whitespace__(self.whitespace_data)
+            self.whitespace_data = Whitespace_DF(self.main_data)
+            self._parent_frame.__set_whitespace__(self.whitespace_data.df)
 
         self.main_series.set_data(self.main_data)
 
         if self.__frame_primary_src__:
             # Only do this once everything else has completed and not Error'd.
-            self._parent_frame.__set_displayed_timeframe__(self.main_data.tf)
+            self._parent_frame.__set_displayed_timeframe__(self.main_data.timeframe)
 
         # Notify Observers
         for ind in self.__observers__:
@@ -284,30 +286,38 @@ class Series(Indicator):
         """
         # Ignoring Operator issue, it's a false alarm since WhitespaceData.__post_init__()
         # Will Always convert 'data.time' to a compatible pd.Timestamp.
-        if self.main_data is None or data.time < self.main_data.curr_bar_time:  # type: ignore
+        if self.main_data is None or data.time < self.main_data.curr_bar_open_time:  # type: ignore
             return
 
         if data.time < self.main_data.next_bar_time:  # type: ignore
+            # Update the last bar
             display_data = self.main_data.update_from_tick(data, accumulate=accumulate)
         else:
+            # Create new Bar
             if data.time != self.main_data.next_bar_time:
-                # Update given is not the expected time. Ensure it fits the data's time interval
+                # Update given is a new bar, but not the expected time
+                # Ensure it fits the data's time interval
                 time_delta = data.time - self.main_data.next_bar_time  # type: ignore
-                data.time -= time_delta % self.main_data.pd_tf
+                data.time -= time_delta % self.main_data.timedelta
 
-            update_whitespace = data.time > self.main_data.next_bar_time  # type: ignore
+            curr_bar_time = self.main_data.curr_bar_open_time
             display_data = self.main_data.update(data)
 
             # Manage Whitespace Series
-            if self.__frame_primary_src__:
-                if update_whitespace:
+            if self.__frame_primary_src__ and self.whitespace_data is not None:
+                if data.time != (
+                    expected_time := self.whitespace_data.next_timestamp(curr_bar_time)
+                ):
                     # New Data Jumped more than expected, Replace Whitespace Data So
                     # There are no unnecessary gaps.
-                    self.whitespace_data = Series_DF(
-                        self.main_data.whitespace_df(), SeriesType.WhitespaceData
+                    logger.info(
+                        "Whitespace_DF Predicted incorrectly. Expected_time: %s, Recieved_time: %s",
+                        expected_time,
+                        data.time,
                     )
-                    self._parent_frame.__set_whitespace__(self.whitespace_data)
-                elif self.whitespace_data is not None:
+                    self.whitespace_data = Whitespace_DF(self.main_data)
+                    self._parent_frame.__set_whitespace__(self.whitespace_data.df)
+                else:
                     # Lengthen Whitespace Data to keep 500bar Buffer
                     self._parent_frame.__update_whitespace__(
                         self.whitespace_data.extend()
@@ -396,11 +406,10 @@ class SMA(Indicator):
             Series_DF(
                 pd.DataFrame(
                     {
-                        "time": data._df["time"],
-                        "value": data._df["close"].rolling(window=self.period).mean(),
+                        "time": data.df["time"],
+                        "value": data.df["close"].rolling(window=self.period).mean(),
                     }
-                ),
-                SeriesType.Line,
+                )
             )
         )
 

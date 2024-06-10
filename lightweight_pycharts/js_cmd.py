@@ -14,7 +14,6 @@ from .orm.enum import layouts
 from .orm.series import (
     AnySeriesData,
     AnySeriesOptions,
-    Series_DF,
     WhitespaceData,
     SeriesType,
 )
@@ -32,7 +31,7 @@ class ORM_JSONEncoder(JSONEncoder):
                 o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
             )
         if isinstance(o, DataFrame):
-            return [  # Drop Nones, Not using .to_json() since it leaves NaNs.
+            return [  # Drop NaNs & Nones (.to_json() leaves NaNs & Nones)
                 {k: v for k, v in m.items() if notnull(v)}
                 for m in o.to_dict(orient="records")
             ]
@@ -195,8 +194,8 @@ def set_frame_timeframe(frame_id: str, timeframe: types.TF) -> str:
     return f"{frame_id}.set_timeframe('{timeframe.toString}')"
 
 
-def set_whitespace_data(frame_id: str, data: Series_DF) -> str:
-    return f"{frame_id}.set_whitespace_data({data.json()})"
+def set_whitespace_data(frame_id: str, data: DataFrame) -> str:
+    return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')})"
 
 
 def clear_whitespace_data(frame_id: str) -> str:
@@ -248,11 +247,11 @@ def remove_series(pane_id: str, indicator_id: str, series_id: str) -> str:
 
 
 def set_series_data(
-    pane_id: str, indicator_id: str, series_id: str, data: Series_DF
+    pane_id: str, indicator_id: str, series_id: str, data: DataFrame
 ) -> str:
     return (
         indicator_preamble(pane_id, indicator_id)
-        + f"indicator.set_series_data('{series_id}', {data.json()});"
+        + f"indicator.set_series_data('{series_id}', {dump(data)});"
     )
 
 
@@ -277,11 +276,11 @@ def change_series_type(
     indicator_id: str,
     series_id: str,
     series_type: SeriesType,
-    data: Series_DF,
+    data: DataFrame,
 ) -> str:
     return (
         indicator_preamble(pane_id, indicator_id)
-        + f"indicator.change_series_type('{series_id}', {series_type}, {data.json()});"
+        + f"indicator.change_series_type('{series_id}', {series_type}, {dump(data)});"
     )
 
 

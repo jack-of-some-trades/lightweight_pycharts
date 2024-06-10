@@ -19,7 +19,7 @@ from .orm import layouts, Symbol
 from .events import Events, Emitter, Socket_Switch_Protocol
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD, PY_CMD
-from .orm.series import AnyBasicData, Series_DF, SeriesType
+from .orm.series import AnyBasicData, SeriesType
 
 
 logger = logging.getLogger("lightweight-pycharts")
@@ -42,6 +42,7 @@ class Window:
         self,
         *,
         daemon: bool = False,
+        events: Optional[Events] = None,
         options: Optional[orm.options.PyWebViewOptions] = None,
         **kwargs,
     ) -> None:
@@ -76,7 +77,10 @@ class Window:
         self._queue_manager = asyncio.create_task(self._manage_queue())
 
         # -------- Create Subobjects  -------- #
-        self.events = Events()
+        if events is not None:
+            self.events = events
+        else:
+            self.events = Events()
         self.events.symbol_search.response = partial(
             self._symbol_search_rsp, fwd_queue=self._fwd_queue
         )
@@ -251,7 +255,7 @@ class Window:
         Add a new Tab to the Window interface
         :returns: A Container obj that represents the Tab's Contents
         """
-        new_id = self._container_ids.generate()
+        new_id = self._container_ids.generate_id()
         new_container = Container(new_id, self._fwd_queue, self)
         self.containers.append(new_container)
         return new_container
@@ -386,9 +390,9 @@ class Frame:
 
     def __init__(self, parent: Container, _js_id: Optional[str] = None) -> None:
         if _js_id is None:
-            self._js_id = parent.frames.generate(self)
+            self._js_id = parent.frames.generate_id(self)
         else:
-            self._js_id = parent.frames.affix(_js_id, self)
+            self._js_id = parent.frames.affix_id(_js_id, self)
 
         self._window = parent._window
         self._fwd_queue = parent._fwd_queue
@@ -424,7 +428,7 @@ class Frame:
         "*Does not change underlying data*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_SERIES_TYPE, self._js_id, series_type))
 
-    def __set_whitespace__(self, data: Series_DF):
+    def __set_whitespace__(self, data: pd.DataFrame):
         self._fwd_queue.put((JS_CMD.SET_WHITESPACE_DATA, self._js_id, data))
 
     def __clear_whitespace__(self):
@@ -502,9 +506,9 @@ class Pane:
 
     def __init__(self, parent: Frame, js_id: Optional[str] = None) -> None:
         if js_id is None:
-            self._js_id = parent.panes.generate(self)
+            self._js_id = parent.panes.generate_id(self)
         else:
-            self._js_id = parent.panes.affix(js_id, self)
+            self._js_id = parent.panes.affix_id(js_id, self)
 
         self._window = parent._window
         self._fwd_queue = parent._fwd_queue

@@ -103,6 +103,7 @@ class Color:
     # region // -------------- Color Getters & Setters -------------- //
     @property
     def r(self):
+        "Red: int [0, 255]"
         return self._r
 
     @r.setter
@@ -115,6 +116,7 @@ class Color:
 
     @property
     def g(self):
+        "Green: int [0, 255]"
         return self._g
 
     @g.setter
@@ -127,6 +129,7 @@ class Color:
 
     @property
     def b(self):
+        "Blue: int [0, 255]"
         return self._b
 
     @b.setter
@@ -139,6 +142,7 @@ class Color:
 
     @property
     def a(self):
+        "alpha: float [0, 1]"
         return self._a
 
     @a.setter
@@ -163,7 +167,7 @@ class TF:
     _period: Period
 
     def __init__(self, mult: int, period: Period):
-        self.validate(mult, period)
+        self._validate(mult, period)
         self._period = period
         self._mult = mult
 
@@ -174,28 +178,31 @@ class TF:
 
     @property
     def mult(self) -> int:
+        "Timeframe Multipliar"
         return self._mult
 
     @mult.setter
     def amount(self, value: int):
-        self.validate(value, self._period)
+        self._validate(value, self._period)
         self._mult = value
 
     @property
     def period(self) -> Period:
+        "Timeframe Period"
         return self._period
 
     @period.setter
     def period(self, value: Period):
-        self.validate(self._mult, value)
+        self._validate(self._mult, value)
         self._period = value
 
     @property
     def toString(self) -> str:
+        "String representation fmt:{multipliar}{period}"
         return f"{self._mult}{self._period}"
 
     @staticmethod
-    def validate(amount: int, unit: Period):
+    def _validate(amount: int, unit: Period):
         if amount <= 0:
             raise ValueError(
                 f"Timeframe Period Multiplier,{amount}, must be a positive value."

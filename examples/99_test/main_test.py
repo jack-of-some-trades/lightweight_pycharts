@@ -9,7 +9,6 @@ import pandas as pd
 from typing import Optional
 
 import lightweight_pycharts as lwc
-from lightweight_pycharts.indicator import Series
 from lightweight_pycharts.orm.types import Symbol
 from lightweight_pycharts.orm.series import OhlcData, SingleValueData
 
@@ -125,11 +124,11 @@ async def main():
     )
     df = pd.read_csv("examples/data/ohlcv.csv")
 
-    window.containers[0].frames[0].main_series.set_data(df)
+    window.containers[0].frames[0].main_series.set_data(
+        df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
+    )
 
-    # await asyncio.sleep(5)
-
-    lwc.indicator.SMA(window.containers[0].frames[0], 20)
+    # lwc.indicator.SMA(window.containers[0].frames[0], 20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 
