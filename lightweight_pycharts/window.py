@@ -43,6 +43,7 @@ class Window:
         *,
         daemon: bool = False,
         events: Optional[Events] = None,
+        log_level: logging._Level = "Warning",
         options: Optional[orm.options.PyWebViewOptions] = None,
         **kwargs,
     ) -> None:
@@ -51,6 +52,7 @@ class Window:
             # PyWebviewOptions Given, overwrite anything in kwargs.
             kwargs = asdict(options)
 
+        logger.setLevel(log_level)
         if "debug" in kwargs.keys() and kwargs["debug"]:
             logger.setLevel(logging.DEBUG)
 
@@ -274,8 +276,8 @@ class Window:
                 # Be sure to allow indicators to clear themselves
                 # This ensures web-sockets and other assets are closed.
                 for _, frame in container.frames.items():
-                    for _, ind in frame.indicators.items():
-                        ind.delete()
+                    for _, indicator in frame.indicators.items():
+                        indicator.delete()
                 return
 
     def get_container(self, _id: int | str) -> Optional[Container]:
@@ -313,7 +315,7 @@ class Window:
                     opts.append(fav)
 
             for option in opts:
-                if option.period in menu_opts.keys():
+                if option.period in menu_opts:
                     menu_opts[option.period] += [option.mult]
                 else:
                     menu_opts[option.period] = [option.mult]
@@ -409,9 +411,11 @@ class Frame:
 
         # Add main pane and Series, should never be deleted
         self.add_pane(Pane.__special_id__)
-        ind.Series(self, ind.Series.__special_id__)
+        ind.Series(self, js_id=ind.Series.__special_id__)
 
     def __del__(self):
+        for _, indicator in self.indicators.copy().items():
+            indicator.delete()
         logger.debug("Deleteing Frame: %s", self._js_id)
 
     # region ------------- Dunder Control Functions ------------- #
@@ -522,4 +526,5 @@ class Pane:
         return self._js_id
 
     def add_primitive(self):
+        """TBD"""
         raise NotImplementedError

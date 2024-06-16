@@ -30,7 +30,7 @@ class Events:
         self.socket_switch = Emitter[Socket_Switch_Protocol]()
 
 
-# region --------------------------------------- Python Event Protocol Definitions --------------------------------------- #
+# region -------------------------- Python Event Protocol Definitions -------------------------- #
 # pylint: disable=invalid-name disable=missing-class-docstring
 
 
@@ -124,9 +124,6 @@ class Emitter[T: Emitter_Protocols](list[T]):
 
     This class can be instantiated with a callable function. This function will be
     called with the appended functions's return args as parameters if there are any.
-
-    Applicable Protocol Types:
-        - Timeframe_Protocol: ( arg1:TF, ) => {None}
     """
 
     def __init__(self, response: Optional[Callable] = None, single_responder=True):

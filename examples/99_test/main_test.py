@@ -91,7 +91,7 @@ async def main():
     from the window. The spawning of a child process is what necessitates
     the use of a [ if __name__ == "__main__": ] block.
     """
-    window = lwc.Window(debug=True, daemon=True, frameless=False)
+    window = lwc.Window(daemon=True, log_level="INFO")
     window.events.data_request += data_request_handler
     window.events.symbol_search += symbol_search_handler
     window.events.socket_switch += socket_request_handler
@@ -122,13 +122,15 @@ async def main():
             lwc.TF(30, "m"),
         ],
     )
+
+    main_frame = window.containers[0].frames[0]
     df = pd.read_csv("examples/data/ohlcv.csv")
 
-    window.containers[0].frames[0].main_series.set_data(
+    main_frame.main_series.set_data(
         df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
     )
 
-    # lwc.indicator.SMA(window.containers[0].frames[0], 20)
+    sma_20 = lwc.indicator.SMA(main_frame, 20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

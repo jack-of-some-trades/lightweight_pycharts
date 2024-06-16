@@ -41,7 +41,15 @@ ALT_EXCHANGE_NAMES = {
 class Series_DF:
     "Pandas DataFrame Extention to Typecheck for Lightweight_PyCharts"
 
-    def __init__(self, pandas_df: pd.DataFrame, exchange: Optional[str] = None):
+    def __init__(
+        self,
+        pandas_df: pd.DataFrame | Series_DF,
+        exchange: Optional[str] = None,
+    ):
+        if isinstance(pandas_df, Series_DF):
+            self._init_from_series_df_(pandas_df)
+            return
+
         if pandas_df.size == 0:
             self._data_type = SeriesType.WhitespaceData
             self._tf = TF(1, "E")
@@ -61,6 +69,7 @@ class Series_DF:
         else:
             self.calendar = mcal.get_calendar("24/7")
 
+        # Ensure Consistent Column Naming Convention
         rename_dict = self._validate_names(pandas_df)
         if len(rename_dict) > 0:
             pandas_df.rename(columns=rename_dict, inplace=True)
@@ -73,7 +82,7 @@ class Series_DF:
             pandas_df["time"] = pandas_df["time"].dt.tz_localize("UTC")
 
         # Data Type is used to simplify updateing. Should be considered a constant
-        self._data_type: AnyBasicSeriesType = self._determine_type(pandas_df)
+        self._data_type: AnyBasicSeriesType = SeriesType.data_type(pandas_df)
 
         self._tf, self._pd_tf = self._determine_tf(pandas_df)
         self.df: pd.DataFrame = pandas_df
@@ -86,6 +95,16 @@ class Series_DF:
         else:
             self.only_days = False
         self._ext = False
+
+    def _init_from_series_df_(self, base_df: Series_DF):
+        "Copy the attributes (TF, Calendar) and time column of the given Series_DF into a new object"
+        self.df = pd.DataFrame({"time": base_df.df["time"]})
+        self._tf = base_df.timeframe
+        self._ext = base_df.ext
+        self._pd_tf = base_df.timedelta
+        self.calendar = base_df.calendar
+        self.only_days = base_df.only_days
+        self._data_type = SeriesType.Custom
 
     @property
     def ext(self) -> bool:
@@ -186,20 +205,6 @@ class Series_DF:
             rename_map[name_intersect[0]] = expected_names[0]
 
     @staticmethod
-    def _determine_type(df: pd.DataFrame) -> AnyBasicSeriesType:
-        "Checks the column names and returns the data type"
-        column_names = set(df.columns)
-        if "close" in column_names:
-            return SeriesType.OHLC_Data
-        elif "value" in column_names:
-            return SeriesType.SingleValueData
-        elif len(column_names) > 1:
-            # Something beyond just a 'time' Column exists in the DF.
-            return SeriesType.Custom
-        else:  # Only a time Column Exists
-            return SeriesType.WhitespaceData
-
-    @staticmethod
     def _determine_tf(df: pd.DataFrame) -> tuple[TF, pd.Timedelta]:
         interval: pd.Timedelta = df["time"].diff().min()  # type: ignore (pandas false alarm)
 
@@ -261,12 +266,13 @@ class Series_DF:
 
     def populate_ext_col(
         self,
-        open: Optional[pd.Timestamp],
-        close: Optional[pd.Timestamp],
-        pre: Optional[pd.Timestamp] = None,
-        post: Optional[pd.Timestamp] = None,
+        mkt_open: Optional[pd.Timestamp],
+        mkt_close: Optional[pd.Timestamp],
+        premkt_open: Optional[pd.Timestamp] = None,
+        postmkt_close: Optional[pd.Timestamp] = None,
     ) -> None:
         "Checks the sample times of the data set and determines if each datapoint is RTH, ETH or neither"
+        raise NotImplementedError
 
     # Next line Silences a False-Positive Flag. Dunno why it thinks last_data's vars aren't initialized
     # @pylint: disable=attribute-defined-outside-init
@@ -439,11 +445,17 @@ class Whitespace_DF:
         start_index = dt_index.get_indexer_for([start_date])[0]
         if start_index == -1:
             # Most likely cause of this error is that start_date was not a valid bar-time for the day
-            # i.e. a 5Min bar that starts at 8:32 instead of 8:30. Alternatively, the calendar starts
-            # at a stupid time like XX:01 or something... (*eye-roll*, yup. that's possible...)
-            raise ArithmeticError(
-                f"mcal.date_range() couldn't calculate start_date!. {start_date=}"
+            # i.e. a 5Min bar that starts at 8:32 instead of 8:30, or a start time outside of RTH & ETH
+            # Alternatively, the calendar starts at a stupid time like XX:01 or something...
+            # (*eye-roll*, yup. that's possible...)
+            logger.error(
+                "mcal.date_range() couldn't calculate start_date!. start_date = %s, dt_index[0] = %s",
+                start_date,
+                dt_index[0],
             )
+            self.simple_override = True
+            self.df = self._simple_whitespace_df(base_data.curr_bar_open_time)
+            return
 
         # mcal.date_range returns all bar times for all days requested.
         # Trim off the overlapping start, and trim total length down to a consistent 500 bars
@@ -472,8 +484,8 @@ class Whitespace_DF:
             next_bar_time = next_bar_time.normalize()
 
         rtn_data = WhitespaceData(next_bar_time)
-        self._df = pd.concat(
-            [self._df, pd.DataFrame([{"time": rtn_data.time}])], ignore_index=True
+        self.df = pd.concat(
+            [self.df, pd.DataFrame([{"time": rtn_data.time}])], ignore_index=True
         )
         return rtn_data
 
@@ -759,6 +771,22 @@ class SeriesType(IntEnum):
                 SeriesType.Baseline,
                 SeriesType.Histogram,
             )
+
+    @staticmethod
+    def data_type(df: pd.DataFrame) -> AnyBasicSeriesType:
+        "Checks the column names of a DataFrame and return the data type"
+        column_names = set(df.columns)
+        if set(["close", "value"]).issubset(column_names):
+            return SeriesType.Custom  # Both OHLC & Single Value?
+        elif "close" in column_names:
+            return SeriesType.OHLC_Data
+        elif "value" in column_names:
+            return SeriesType.SingleValueData
+        elif len(column_names) > 1:
+            # No value or close, but more than 'time' Column exists in the DF.
+            return SeriesType.Custom
+        else:  # Only a time Column Exists
+            return SeriesType.WhitespaceData
 
     @property
     def cls(self) -> type:
