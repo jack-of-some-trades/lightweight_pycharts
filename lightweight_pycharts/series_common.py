@@ -11,6 +11,7 @@ from dataclasses import dataclass, asdict
 from typing import Optional, TYPE_CHECKING
 
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype
 
 from .js_cmd import JS_CMD
 from .orm import series as s
@@ -117,10 +118,12 @@ class SeriesCommon:
         return series_type
 
     def _to_transfer_dataframe_(
-        self, data: pd.DataFrame, data_type: s.AnyBasicSeriesType
+        self,
+        data: s.Series_DF | pd.DataFrame | pd.Series,
     ) -> pd.DataFrame:
         """
-        Creates a formatted Dataframe from a Series_DF object. This formatted dataframe:
+        Creates a formatted Dataframe from a Series/Series_DF/DataFrame object.
+        This formatted dataframe:
 
         - Renames the columns to OHLC / value as needed.
         - Drops all unnecessary columns and rows
@@ -129,29 +132,46 @@ class SeriesCommon:
         This is the smallest form factor dataset that is optimized for transfer over a
         multiprocessor Queue.
         """
+        # Format 'data' to a dataframe called '_df' (A reference)
+        if isinstance(data, s.Series_DF):
+            _df = data.df
+            data_type = data.data_type
+        elif isinstance(data, pd.DataFrame):
+            _df = data
+            data_type = s.SeriesType.data_type(data)
+        else:
+            if not is_datetime64_any_dtype(data.index):
+                raise AttributeError(
+                    "Pandas Series must have a datetimeindex to be displayed."
+                )
+            _df = data.rename("value")
+            _df.index.set_names("time", inplace=True)
+            _df = _df.reset_index()
+            data_type = s.SeriesType.data_type(_df)
+
         # region -------------------- Column Renaming --------------------
         if (
             s.SeriesType.SValue_Derived(self._series_type)
             and self.value_map is not None
         ):
             drop_list = []
-            if self.value_map.value != "value" and "value" in data.columns:
+            if self.value_map.value != "value" and "value" in _df.columns:
                 drop_list.append("value")
 
-            tmp_df = data.drop(columns=drop_list).rename(columns=asdict(self.value_map))
+            tmp_df = _df.drop(columns=drop_list).rename(columns=asdict(self.value_map))
 
         elif s.SeriesType.OHLC_Derived(self._series_type) and self.ohlc_map is not None:
             drop_list = []
-            if self.ohlc_map.open != "open" and "open" in data.columns:
+            if self.ohlc_map.open != "open" and "open" in _df.columns:
                 drop_list.append("open")
-            if self.ohlc_map.open != "high" and "high" in data.columns:
+            if self.ohlc_map.open != "high" and "high" in _df.columns:
                 drop_list.append("high")
-            if self.ohlc_map.open != "low" and "low" in data.columns:
+            if self.ohlc_map.open != "low" and "low" in _df.columns:
                 drop_list.append("low")
-            if self.ohlc_map.close != "close" and "close" in data.columns:
+            if self.ohlc_map.close != "close" and "close" in _df.columns:
                 drop_list.append("close")
 
-            tmp_df = data.drop(columns=drop_list).rename(columns=asdict(self.ohlc_map))
+            tmp_df = _df.drop(columns=drop_list).rename(columns=asdict(self.ohlc_map))
 
         elif (
             data_type == s.SeriesType.Custom
@@ -161,16 +181,16 @@ class SeriesCommon:
             logger.warning(
                 "Attempting to display Custom Data without specifying what to display."
             )
-            tmp_df = data.copy()
+            tmp_df = _df.copy()
 
         elif s.SeriesType.SValue_Derived(data_type) != s.SeriesType.SValue_Derived(
             self._series_type
         ):  # No remapping given, but data type doesn't match the display type.
-            tmp_df = data.rename(columns={"close": "value", "value": "close"})
+            tmp_df = _df.rename(columns={"close": "value", "value": "close"})
 
         else:
             # Data Type inherently matches the display type.
-            tmp_df = data.copy()
+            tmp_df = _df.copy()
 
         # endregion
 
@@ -185,19 +205,25 @@ class SeriesCommon:
 
         # endregion
 
+        # Ensure 'Time' is a column
+        if "time" not in tmp_df.columns:
+            if is_datetime64_any_dtype(tmp_df.index):
+                tmp_df.index.set_names("time", inplace=True)
+                tmp_df.reset_index(inplace=True)
+            else:
+                raise AttributeError(
+                    "Cannot Display Series_Common Data. Need a 'time' index / column"
+                )
+
         # Convert pd.Timestamp to Unix Epoch time (confirmed working w/ pre Jan 1, 1970 dates)
         tmp_df["time"] = tmp_df["time"].astype("int64") / 10**9
 
         return tmp_df
 
-    def set_data(self, data: s.Series_DF | pd.DataFrame) -> None:
+    def set_data(self, data: s.Series_DF | pd.DataFrame | pd.Series) -> None:
         "Sets the Data of the Series to the given data set. All irrlevant data is ignored"
         # Set display type so data.json() only passes relevant information
-        if isinstance(data, s.Series_DF):
-            xfer_df = self._to_transfer_dataframe_(data.df, data.data_type)
-        else:
-            xfer_df = self._to_transfer_dataframe_(data, s.SeriesType.data_type(data))
-
+        xfer_df = self._to_transfer_dataframe_(data)
         self._fwd_queue.put((JS_CMD.SET_SERIES_DATA, *self._ids, xfer_df))
 
     def clear_data(self) -> None:
@@ -225,7 +251,7 @@ class SeriesCommon:
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_OPTS, *self._ids, options))
 
     def change_series_type(
-        self, series_type: s.SeriesType, data: s.Series_DF | pd.DataFrame
+        self, series_type: s.SeriesType, data: s.Series_DF | pd.DataFrame | pd.Series
     ) -> None:
         "Change the type of Series object that is displayed on the screen."
         # Set display type so data.json() only passes relevant information
@@ -233,17 +259,12 @@ class SeriesCommon:
         self._series_data_cls = self._series_type.cls
         self._series_ohlc_derived = s.SeriesType.OHLC_Derived(self._series_type)
 
-        if isinstance(data, s.Series_DF):
-            xfer_df = self._to_transfer_dataframe_(data.df, data.data_type)
-        else:
-            xfer_df = self._to_transfer_dataframe_(data, s.SeriesType.data_type(data))
-
         self._fwd_queue.put(
             (
                 JS_CMD.CHANGE_SERIES_TYPE,
                 *self._ids,
                 series_type,
-                xfer_df,
+                self._to_transfer_dataframe_(data),
             )
         )
 

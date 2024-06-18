@@ -81,6 +81,7 @@ class Watcher:
         self._set_data = parent.set_data
         self._clear_data = parent.clear_data
         self._update_data = parent.update_data
+        self._notify_observers = parent.notify_observers
 
         self._set = False
 
@@ -94,26 +95,25 @@ class Watcher:
         "Notify the Watcher that an update occured in the given Indicator"
         if notification == "set":
             if notifier is not None and notifier not in self.set_notifiers:
-                raise Warning(
-                    f"'{notifier.name}' tried to set {self}, but Watcher doesn't care."
-                )
+                return  # This Notifier not involved in setting data (Probably just updates data)
 
             if notifier is not None:
                 self.set_notifiers[notifier] = True
             if all(self.set_args.values()):
                 # Ready, Fire Set Calc then reset set_Notifier Readiness State
+                # Will Fire on Notifier = None, intentional so Watcher self-fires on init
                 self._set_data(
                     **dict([(name, func()) for name, func in self.set_args.items()])
                 )
                 self.set_notifiers = dict.fromkeys(self.set_notifiers.keys(), False)
                 self._set = True
+                self._notify_observers("set")
             return
 
         if notification == "update" and notifier is not None:
             if notifier not in self.update_notifiers:
-                raise Warning(
-                    f"'{notifier.name}' tried to update {self}, but Watcher doesn't care."
-                )
+                return  # This Notifier not involved in updating data (Probably just sets data)
+
             if not self._set:
                 raise Warning(
                     f"'{notifier.name}' tried to update {self} before Watcher got 'Set' command"
@@ -128,6 +128,7 @@ class Watcher:
                 self.update_notifiers = dict.fromkeys(
                     self.update_notifiers.keys(), False
                 )
+                self._notify_observers("update")
             return
 
         if notification == "clear":
@@ -303,7 +304,6 @@ class Indicator(metaclass=IndicatorMeta):
 
         # Name is used as an identifier when linking args from the screen.
         self.name = self.__class__.__name__
-        self.main_data: Optional[Series_DF] = None
         self.events = self.parent_frame._window.events
 
         self._fwd_queue.put((JS_CMD.ADD_INDICATOR, *self._ids, self.__class__.__name__))
@@ -722,16 +722,30 @@ class Series(Indicator):
         "BarState Object that represents the most recent data update"
         if self._bar_state is not None:
             return self._bar_state
-        logger.warning(
-            "Series '%s'.bar_state requested before it was ready.", self.name
-        )
         return BarState()
 
     @output_property
-    def data(self) -> Series_DF:
+    def blank_series_df(self) -> Series_DF:
+        "A new Series_DF object that shares the source Series' parameters & time index."
         if self.main_data is not None:
-            return self.main_data
+            new_series_df = Series_DF(self.main_data)
+            new_series_df.df.drop(columns=new_series_df.df.columns, inplace=True)
+            return new_series_df
         return Series_DF(pd.DataFrame({}))
+
+    @output_property
+    def dataframe(self) -> pd.DataFrame:
+        "A Reference to the full series dataframe"
+        if self.main_data is not None:
+            return self.main_data.df
+        return pd.DataFrame({})
+
+    @output_property
+    def close(self) -> pd.Series:
+        "A Series' Bar closing value"
+        if self.main_data is not None:
+            return self.main_data.df["close"]
+        return pd.Series({})
 
     # endregion
 
@@ -783,40 +797,29 @@ class SMA(Indicator):
     ):
         super().__init__(parent)
 
-        if src is None and isinstance(self.parent_indicator, Series):
-            src = self.parent_indicator.data
         if src is None:
-            raise ValueError("SMA Indicator needs a source of Data")
+            src = self.parent_frame.main_series.close
 
         self.period = period
-        self.main_data = None
+        self._data = pd.Series()
         self.line_series = sc.LineSeries(self)
 
         self.link_args({"data": src})
 
-    def set_data(self, data: Series_DF, *_, **__):
-        self.main_data = Series_DF(data)
-        self.main_data.df["value"] = data.df["close"].rolling(window=self.period).mean()
-        self.line_series.set_data(self.main_data)
+    def set_data(self, data: pd.Series, *_, **__):
+        self._data = data.rolling(window=self.period).mean()
+        self.line_series.set_data(self._data)
 
-    def update_data(self, data: Series_DF, bar_state: BarState, *_, **__):
-        avg = data.df["close"].tail(self.period).mean()
-        update_val = SingleValueData(bar_state.time, avg)
-        self.line_series.update_data(update_val)
-
-        if self.main_data is not None:
-            self.main_data.df = pd.concat(
-                [self.main_data.df, pd.DataFrame([update_val.as_dict])]
-            )
+    def update_data(self, bar_state: BarState, data: pd.Series, *_, **__):
+        avg = data.tail(self.period).mean()
+        self.line_series.update_data(SingleValueData(bar_state.time, avg))
+        self._data = pd.concat([self._data, pd.Series(avg, index=[bar_state.time])])
 
     def clear_data(self):
-        if self.main_data is not None:
-            logger.info(self.main_data.df)
-            self.main_data = None
+        self._data = pd.Series()
         super().clear_data()
 
     @output_property
     def average(self) -> pd.Series:
-        if self.main_data is not None:
-            return self.main_data.df["value"]
-        return pd.Series()
+        "The resulting SMA"
+        return self._data

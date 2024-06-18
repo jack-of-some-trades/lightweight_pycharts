@@ -85,7 +85,7 @@ class Series_DF:
         self._data_type: AnyBasicSeriesType = SeriesType.data_type(pandas_df)
 
         self._tf, self._pd_tf = self._determine_tf(pandas_df)
-        self.df: pd.DataFrame = pandas_df
+        self.df = pandas_df.set_index("time")  # Set Time as index after TF check
 
         # True if 'Time' is only days, or has an opening time
         if self._pd_tf >= pd.Timedelta(days=1):
@@ -129,7 +129,7 @@ class Series_DF:
     @property
     def curr_bar_open_time(self) -> pd.Timestamp:
         "Open Time of the Current Bar"
-        return self.df["time"].iloc[-1]
+        return self.df.index[-1]
 
     @property
     def curr_bar_close_time(self) -> pd.Timestamp:
@@ -364,9 +364,12 @@ class Series_DF:
                     data_dict.pop("low")
                 data_dict["value"] = data_dict.pop("close")
 
-        self.df = pd.concat([self.df, pd.DataFrame([data_dict])], ignore_index=True)
+        datacls_inst = self._to_dataclass_instance_(data_dict)
 
-        return self._to_dataclass_instance_(data_dict)
+        time = data_dict.pop("time")
+        self.df = pd.concat([self.df, pd.DataFrame([data_dict], index=[time])])
+
+        return datacls_inst
 
 
 class Whitespace_DF:
@@ -422,7 +425,7 @@ class Whitespace_DF:
         else:
             smudge_factor = 1.2
 
-        start_date: pd.Timestamp = base_data.df["time"].iloc[-1]
+        start_date: pd.Timestamp = base_data.df.index[-1]
         end_date = start_date + pd.Timedelta(
             days=ceil(500 * smudge_factor / bars_per_day)
         )

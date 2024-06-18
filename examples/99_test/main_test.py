@@ -131,6 +131,7 @@ async def main():
     )
 
     sma_20 = lwc.indicator.SMA(main_frame, 20)
+    sma_20_20 = lwc.indicator.SMA(main_frame, 20, sma_20.average)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 
