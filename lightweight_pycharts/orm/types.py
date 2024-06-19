@@ -29,6 +29,16 @@ Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
 # as well, but this python library converts all times to a UTCtimestamp
 
 
+class j_func:
+    "String Subclass to alter json dump behavior"
+
+    def __init__(self, func: str):
+        self.func = func.replace(" ", "").replace("\n", "")
+
+    def __str__(self) -> str:
+        return self.func
+
+
 # Note, this object cannot be a dataclass otherwise json.dumps()
 # will dump this out as a dict. For functionality we need to call repr() on dumps()
 class Color:
@@ -315,9 +325,9 @@ class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [Pr
     Docs Reference the Built-in Values only, PriceFormatCustom is not implemented here
     """
 
-    type: PriceFormatType = "price"
-    precision: int = 2
-    minMove: float = 0.01
+    type: Optional[PriceFormatType] = None
+    precision: Optional[int] = None
+    minMove: Optional[float] = None
 
 
 # @dataclass
@@ -330,7 +340,7 @@ class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [Pr
 
 #     type = Literal["custom"]
 #     minMove: float = 0.01
-#     formatter: PriceFormatterFn
+#     formatter: Optional[j_func]
 
 
 @dataclass

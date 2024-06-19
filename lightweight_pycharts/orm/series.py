@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass, field
 import pandas as pd
 import pandas_market_calendars as mcal
 
-from .types import TF, Time, Color, PriceFormat, BaseValuePrice, LineWidth
+from .types import TF, Time, Color, PriceFormat, BaseValuePrice, LineWidth, j_func
 from .enum import LineStyle, PriceLineSource, LastPriceAnimationMode, LineType
 
 
@@ -144,7 +144,9 @@ class Series_DF:
     @property
     def last_bar(self) -> AnyBasicData:
         "The current bar (last entry in the dataframe) returned as AnyBasicType"
-        return self._to_dataclass_instance_(self.df.iloc[-1].to_dict())
+        data_dict = self.df.iloc[-1].to_dict()
+        data_dict["time"] = self.df.index[-1]
+        return self._to_dataclass_instance_(data_dict)
 
     @staticmethod
     def _validate_names(df: pd.DataFrame) -> dict[str, str]:
@@ -174,8 +176,10 @@ class Series_DF:
         Series_DF._col_name_check(column_names, rename_map, ["close", "c", "last"])
         Series_DF._col_name_check(column_names, rename_map, ["high", "h", "max"])
         Series_DF._col_name_check(column_names, rename_map, ["low", "l", "min"])
+        Series_DF._col_name_check(column_names, rename_map, ["volume", "v", "vol"])
+        Series_DF._col_name_check(column_names, rename_map, ["tick", "count"])
         Series_DF._col_name_check(
-            column_names, rename_map, ["value", "v", "val", "data", "price"]
+            column_names, rename_map, ["value", "val", "data", "price"]
         )
 
         return rename_map
@@ -853,8 +857,7 @@ class SeriesOptionsCommon:
     baseLineWidth: Optional[LineWidth] = None
     baseLineStyle: Optional[LineStyle] = None
     baseLineColor: Optional[Color] = None
-    # autoscaleInfoProvider: Optional[str]
-    # removed to keep JS Funcitons in JS files. May Enable this later though.
+    autoscaleInfoProvider: Optional[j_func] = None
 
 
 # region --------------------------------------- Single Value Series Objects --------------------------------------- #

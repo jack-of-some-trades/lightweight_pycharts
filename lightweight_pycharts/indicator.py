@@ -9,7 +9,8 @@ from typing import Literal, Optional, Any, Callable
 import pandas as pd
 from numpy import nan
 
-from lightweight_pycharts.orm.types import Color
+from lightweight_pycharts.orm.options import PriceScaleMargins, PriceScaleOptions
+from lightweight_pycharts.orm.types import Color, PriceFormat, j_func
 
 from . import window as win
 from . import series_common as sc
@@ -17,6 +18,8 @@ from .util import ID_List, ID_Dict
 from .js_cmd import JS_CMD
 from .orm import Symbol, TF
 from .orm.series import (
+    HistogramData,
+    HistogramStyleOptions,
     LineStyleOptions,
     Series_DF,
     SeriesType,
@@ -750,33 +753,87 @@ class Series(Indicator):
     # endregion
 
 
-# @dataclass
-# class VolumeIndicatorOptions:
-#     "Options for a volume series"
-#     up_color: Color = Color.from_hex("#26a69a")
-#     down_color: Color = Color.from_hex("#ef5350")
+@dataclass
+class VolumeIndicatorOptions:
+    "Options for a volume series"
+    up_color: Color = Color.from_hex("#26a69a")
+    down_color: Color = Color.from_hex("#ef5350")
 
-#     src_data: str = "volume"
-#     src_open: str = "open"
-#     src_close: str = "close"
+    series_opts = HistogramStyleOptions(
+        priceScaleId="vol", priceFormat=PriceFormat("volume")
+    )
+    price_scale_opts = PriceScaleOptions(scaleMargins=PriceScaleMargins(0.7, 0))
 
 
-# class Volume(Indicator):
-#     "Histogram Series that plots the Volume of a given Series(Indicator)"
+class Volume(Indicator):
+    "Histogram Series that plots the Volume of a given Series(Indicator)"
 
-#     def __init__(
-#         self, parent: win.Frame | Series, options=VolumeIndicatorOptions()
-#     ) -> None:
-#         super().__init__(parent)
+    def __init__(
+        self,
+        parent: win.Frame | Series,
+        src: Optional[Callable] = None,
+        options=VolumeIndicatorOptions(),
+    ) -> None:
+        super().__init__(parent)
 
-#         self.opts = options
-#         self.series = sc.HistogramSeries(self)
+        self.opts = options
+        self._data = pd.DataFrame()
+        self.series = sc.HistogramSeries(self, self.opts.series_opts)
+        self.series.apply_scale_options(self.opts.price_scale_opts)
 
-#         self.subscribe_to(self.parent_indicator, {options.src_data})
+        if src is None:
+            src = self.parent_frame.main_series.dataframe
 
-#     def set_data(self, data: Series_DF, *_, **__): ...
+        self.link_args({"data": src})
 
-#     def update_data(self, data: Series_DF, *_, **__): ...
+    def set_data(self, data: pd.DataFrame, *_, **__):
+        if "volume" not in data.columns:
+            return
+
+        self._data = pd.DataFrame(data["volume"]).rename(columns={"volume": "value"})
+
+        if set(["open", "close"]).issubset(data.columns):
+            color = data["close"] > data["open"]
+            self._data["color"] = color.replace(
+                {True: self.opts.up_color, False: self.opts.down_color}
+            )
+        self.series.set_data(self._data)
+
+    def update_data(self, bar_state: BarState, *_, **__):
+        if bar_state.volume is nan:
+            return
+
+        if bar_state.close is nan or bar_state.open is nan:
+            color = None
+        elif bar_state.close > bar_state.open:
+            color = self.opts.up_color
+        else:
+            color = self.opts.down_color
+
+        self.series.update_data(
+            HistogramData(bar_state.time, bar_state.volume, color=color)
+        )
+
+        if color is not None:
+            self._data = pd.concat(
+                [
+                    self._data,
+                    pd.DataFrame(
+                        [{"value": bar_state.volume, "color": color}],
+                        index=[bar_state.time],
+                    ),
+                ]
+            )
+        else:
+            self._data = pd.concat(
+                [
+                    self._data,
+                    pd.DataFrame(
+                        [{"value": bar_state.volume}],
+                        index=[bar_state.time],
+                    ),
+                ]
+            )
 
 
 @dataclass
@@ -816,6 +873,7 @@ class SMA(Indicator):
         self._data = pd.concat([self._data, pd.Series(avg, index=[bar_state.time])])
 
     def clear_data(self):
+        logger.info(self._data)
         self._data = pd.Series()
         super().clear_data()
 

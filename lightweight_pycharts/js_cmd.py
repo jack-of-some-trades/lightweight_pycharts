@@ -8,8 +8,10 @@ from dataclasses import is_dataclass, asdict
 
 from pandas import DataFrame, Timestamp, notnull
 
+from lightweight_pycharts.orm.options import PriceScaleOptions
+
 from .orm import types
-from .orm.types import Color
+from .orm.types import Color, j_func
 from .orm.enum import layouts
 from .orm.series import (
     AnySeriesData,
@@ -39,12 +41,15 @@ class ORM_JSONEncoder(JSONEncoder):
             return repr(o)
         if isinstance(o, bool):
             return "true" if o else "false"
+        if isinstance(o, j_func):
+            print("j_func call")
+            return str(o)
         return super().default(o)
 
 
 def dump(obj: Any) -> str:
     "Enchanced JSON.dumps() to serialize all ORM Objects"
-    return dumps(obj, cls=ORM_JSONEncoder)
+    return dumps(obj, cls=ORM_JSONEncoder, separators=(",", ":"))
 
 
 class PY_CMD(IntEnum):
@@ -106,6 +111,7 @@ class JS_CMD(IntEnum):
     UPDATE_SERIES_DATA = auto()
     CHANGE_SERIES_TYPE = auto()
     UPDATE_SERIES_OPTS = auto()
+    UPDATE_PRICE_SCALE_OPTS = auto()
 
     # PyWebView Commands
     SHOW = auto()
@@ -287,9 +293,27 @@ def change_series_type(
 def update_series_opts(
     pane_id: str, indicator_id: str, series_id: str, opts: AnySeriesOptions
 ) -> str:
-    return (
+    rtn_str = (
         indicator_preamble(pane_id, indicator_id)
         + f"indicator.update_series_opts('{series_id}', {dump(opts)});"
+    )
+
+    if opts.autoscaleInfoProvider is not None:
+        # Strip the quotations from around the autoscale function
+        func_str = str(opts.autoscaleInfoProvider)
+        strt = rtn_str.find(func_str)
+        end = strt + len(func_str)
+        rtn_str = rtn_str[: strt - 1] + func_str + rtn_str[end + 1 :]
+    print(rtn_str)
+    return rtn_str
+
+
+def update_scale_opts(
+    pane_id: str, indicator_id: str, series_id: str, opts: PriceScaleOptions
+):
+    return (
+        indicator_preamble(pane_id, indicator_id)
+        + f"indicator.update_scale_opts('{series_id}', {dump(opts)});"
     )
 
 
@@ -341,6 +365,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.UPDATE_SERIES_DATA: update_series_data,
     JS_CMD.CHANGE_SERIES_TYPE: change_series_type,
     JS_CMD.UPDATE_SERIES_OPTS: update_series_opts,
+    JS_CMD.UPDATE_PRICE_SCALE_OPTS: update_scale_opts,
     # ---- PyWebView Commands ----
     JS_CMD.SHOW: return_blank,
     JS_CMD.HIDE: return_blank,

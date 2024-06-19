@@ -93,6 +93,12 @@ export class indicator {
             return;
         series.applyOptions(opts);
     }
+    update_scale_opts(_id, opts) {
+        let series = this.series.get(_id);
+        if (series === undefined)
+            return;
+        series.priceScale().applyOptions(opts);
+    }
     add_primitive() { }
     edit_primitive() { }
     remove_primitive() { }

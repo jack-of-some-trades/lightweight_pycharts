@@ -13,6 +13,8 @@ from typing import Optional, TYPE_CHECKING
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
+from lightweight_pycharts.orm.options import PriceScaleOptions
+
 from .js_cmd import JS_CMD
 from .orm import series as s
 from .orm.types import SeriesPriceLine, SeriesMarker
@@ -249,6 +251,10 @@ class SeriesCommon:
         "Update the Display Options of the Series."
         self._options = options
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_OPTS, *self._ids, options))
+
+    def apply_scale_options(self, options: PriceScaleOptions) -> None:
+        "Update the Display Options of the Series."
+        self._fwd_queue.put((JS_CMD.UPDATE_PRICE_SCALE_OPTS, *self._ids, options))
 
     def change_series_type(
         self, series_type: s.SeriesType, data: s.Series_DF | pd.DataFrame | pd.Series

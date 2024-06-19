@@ -24,8 +24,8 @@ class PriceRange:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceRange
     """
 
-    minValue: float
-    maxValue: float
+    minValue: Optional[float] = None
+    maxValue: Optional[float] = None
 
 
 @dataclass
@@ -35,8 +35,8 @@ class PriceScaleMargins:
     Docs:https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceScaleMargins
     """
 
-    top: float = 0.2
-    bottom: float = 0.1
+    top: Optional[float] = None
+    bottom: Optional[float] = None
 
 
 @dataclass
@@ -46,18 +46,18 @@ class OverlayPriceScaleOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceScaleOptions
     """
 
-    invertScale: bool = False
-    ticksVisible: bool = False
+    invertScale: Optional[bool] = None
+    ticksVisible: Optional[bool] = None
 
-    minimumWidth: int = 0
-    mode: PriceScaleMode = PriceScaleMode.Normal
-    scaleMargins: PriceScaleMargins = field(default_factory=PriceScaleMargins)
+    minimumWidth: Optional[int] = None
+    mode: Optional[PriceScaleMode] = None
+    scaleMargins: Optional[PriceScaleMargins] = None
 
-    borderVisible: bool = True
-    borderColor: Color = field(default_factory=lambda: Color.from_hex("#2B2B43"))
+    borderVisible: Optional[bool] = None
+    borderColor: Optional[Color] = None
 
-    alignLabels: bool = True
-    entireTextOnly: bool = False
+    alignLabels: Optional[bool] = None
+    entireTextOnly: Optional[bool] = None
     textColor: Optional[Color] = None
 
 
@@ -68,8 +68,8 @@ class PriceScaleOptions(OverlayPriceScaleOptions):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceScaleOptions
     """
 
-    visible: bool = True
-    autoScale: bool = True
+    visible: Optional[bool] = None
+    autoScale: Optional[bool] = None
 
 
 @dataclass
@@ -79,8 +79,8 @@ class AutoScaleMargins:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AutoScaleMargins
     """
 
-    below: float
-    above: float
+    below: Optional[float] = None
+    above: Optional[float] = None
 
 
 @dataclass
@@ -90,7 +90,7 @@ class AutoscaleInfo:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AutoscaleInfo
     """
 
-    priceRange: PriceRange
+    priceRange: Optional[PriceRange] = None
     margins: Optional[AutoScaleMargins] = None
 
 
@@ -101,8 +101,8 @@ class AxisDoubleClickOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AxisDoubleClickOptions
     """
 
-    time: bool = True
-    price: bool = True
+    time: Optional[bool] = None
+    price: Optional[bool] = None
 
 
 @dataclass
@@ -112,8 +112,8 @@ class AxisPressedMouseMoveOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AxisPressedMouseMoveOptions
     """
 
-    time: bool = True
-    price: bool = True
+    time: Optional[bool] = None
+    price: Optional[bool] = None
 
 
 @dataclass
@@ -123,8 +123,8 @@ class KineticScrollOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/KineticScrollOptions
     """
 
-    touch: bool = True
-    mouse: bool = False
+    touch: Optional[bool] = None
+    mouse: Optional[bool] = None
 
 
 @dataclass
@@ -134,8 +134,8 @@ class Background:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LayoutOptions#background
     """
 
-    type: ColorType
-    color: Color
+    type: Optional[ColorType] = None
+    color: Optional[Color] = None
 
 
 @dataclass
@@ -145,9 +145,9 @@ class GridLineOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/GridLineOptions
     """
 
-    visible: bool = True
-    style: LineStyle = LineStyle.Solid
-    color: Color = field(default_factory=lambda: Color.from_hex("#D6DCDE"))
+    visible: Optional[bool] = None
+    style: Optional[LineStyle] = None
+    color: Optional[Color] = None
 
 
 @dataclass
@@ -157,8 +157,8 @@ class GridOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/GridOptions
     """
 
-    vertLines: GridLineOptions = field(default_factory=GridLineOptions)
-    horzLines: GridLineOptions = field(default_factory=GridLineOptions)
+    vertLines: Optional[GridLineOptions] = None
+    horzLines: Optional[GridLineOptions] = None
 
 
 @dataclass
@@ -168,10 +168,10 @@ class HandleScaleOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/HandleScrollOptions
     """
 
-    mouseWheel: bool = True
-    pinch: bool = True
-    axisPressedMouseMove: Union[AxisPressedMouseMoveOptions, bool] = True
-    axisDoubleClickReset: Union[AxisDoubleClickOptions, bool] = True
+    mouseWheel: Optional[bool] = None
+    pinch: Optional[bool] = None
+    axisPressedMouseMove: Optional[Union[AxisPressedMouseMoveOptions, bool]] = None
+    axisDoubleClickReset: Optional[Union[AxisDoubleClickOptions, bool]] = None
 
 
 @dataclass
@@ -181,10 +181,10 @@ class HandleScrollOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/HandleScrollOptions
     """
 
-    mouse_wheel: bool = True
-    pressed_mouse_move: bool = True
-    horz_touch_drag: bool = True
-    vert_touch_drag: bool = True
+    mouse_wheel: Optional[bool] = None
+    pressed_mouse_move: Optional[bool] = None
+    horz_touch_drag: Optional[bool] = None
+    vert_touch_drag: Optional[bool] = None
 
 
 @dataclass
@@ -198,7 +198,7 @@ class TrackingModeOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TrackingModeOptions
     """
 
-    exitMode: TrackingModeExitMode = TrackingModeExitMode.OnNextTap
+    exitMode: Optional[TrackingModeExitMode] = None
 
 
 @dataclass
@@ -208,15 +208,13 @@ class CrosshairLineOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/CrosshairLineOptions
     """
 
-    visible: bool = True
-    width: int = 1
-    color: Color = field(default_factory=lambda: Color.from_hex("#758696"))
-    style: LineStyle = LineStyle.LargeDashed
+    visible: Optional[bool] = None
+    width: Optional[int] = None
+    color: Optional[Color] = None
+    style: Optional[LineStyle] = None
 
-    labelVisible: bool = True
-    labelBackgroundColor: Color = field(
-        default_factory=lambda: Color.from_hex("#4c525e")
-    )
+    labelVisible: Optional[bool] = None
+    labelBackgroundColor: Optional[Color] = None
 
 
 @dataclass
@@ -226,9 +224,9 @@ class CrosshairOptions:
     Docs:https://tradingview.github.io/lightweight-charts/docs/api/interfaces/CrosshairOptions
     """
 
-    mode: CrosshairMode = CrosshairMode.Normal
-    vertLine: CrosshairLineOptions = field(default_factory=CrosshairLineOptions)
-    horzLine: CrosshairLineOptions = field(default_factory=CrosshairLineOptions)
+    mode: Optional[CrosshairMode] = None
+    vertLine: Optional[CrosshairLineOptions] = None
+    horzLine: Optional[CrosshairLineOptions] = None
 
 
 @dataclass
@@ -238,7 +236,7 @@ class LocalizationOptionsBase:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LocalizationOptionsBase
     """
 
-    locale: str = "navigator.language"
+    locale: Optional[str] = None
     # price_formatter: Optional[Callable[[float], str]] = None      #May implement in the Future.
     # percentage_formatter: Optional[Callable[[float], str]] = None
 
@@ -256,28 +254,28 @@ class HorzScaleOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/HorzScaleOptions
     """
 
-    visible: bool = True
-    timeVisible: bool = False
-    fixLeftEdge: bool = False
-    fixRightEdge: bool = False
+    visible: Optional[bool] = None
+    timeVisible: Optional[bool] = None
+    fixLeftEdge: Optional[bool] = None
+    fixRightEdge: Optional[bool] = None
 
-    barSpacing: int = 6
-    rightOffset: int = 0
-    minBarSpacing: float = 0.5
-    minimumHeight: int = 0
-    shiftVisibleRangeOnNewBar: bool = True
-    lockVisibleTimeRangeOnResize: bool = False
-    allowShiftVisibleRangeOnWhitespaceReplacement: bool = False
+    barSpacing: Optional[int] = None
+    rightOffset: Optional[int] = None
+    minBarSpacing: Optional[float] = None
+    minimumHeight: Optional[int] = None
+    shiftVisibleRangeOnNewBar: Optional[bool] = None
+    lockVisibleTimeRangeOnResize: Optional[bool] = None
+    allowShiftVisibleRangeOnWhitespaceReplacement: Optional[bool] = None
 
-    uniformDistribution: bool = False
-    rightBarStaysOnScroll: bool = False
+    uniformDistribution: Optional[bool] = None
+    rightBarStaysOnScroll: Optional[bool] = None
 
-    allowBoldLabels: bool = True
-    secondsVisible: bool = True
-    borderVisible: bool = True
-    borderColor: Color = field(default_factory=lambda: Color.from_hex("#2B2B43"))
+    allowBoldLabels: Optional[bool] = None
+    secondsVisible: Optional[bool] = None
+    borderVisible: Optional[bool] = None
+    borderColor: Optional[Color] = None
 
-    ticksVisible: bool = False
+    ticksVisible: Optional[bool] = None
     tickMarkMaxCharacterLength: Optional[int] = None
 
 
@@ -288,17 +286,10 @@ class LayoutOptions:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LayoutOptions
     """
 
-    background: Background = field(
-        default_factory=lambda: Background(
-            type=ColorType.Solid,
-            color=Color.from_hex("#FFFFFF"),
-        )
-    )
-    textColor: Color = field(default_factory=lambda: Color.from_hex("#191919"))
-    fontSize: int = 12
-    fontFamily: str = (
-        "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif"
-    )
+    background: Optional[Background] = None
+    textColor: Optional[Color] = None
+    fontSize: Optional[int] = None
+    fontFamily: Optional[str] = None
 
 
 @dataclass
@@ -310,16 +301,14 @@ class WatermarkOptions:
     Tutorial: https://tradingview.github.io/lightweight-charts/tutorials/how_to/watermark
     """
 
-    color: Color = field(default_factory=lambda: Color.from_rgb(0, 0, 0, 0))
-    visible: bool = False
-    text: str = ""
-    fontSize: int = 48
-    fontStyle: str = ""
-    fontFamily: str = (
-        "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif"
-    )
-    horzAlign: HorzAlign = "center"
-    vertAlign: VertAlign = "center"
+    color: Optional[Color] = None
+    visible: Optional[bool] = None
+    text: Optional[str] = None
+    fontSize: Optional[int] = None
+    fontStyle: Optional[str] = None
+    fontFamily: Optional[str] = None
+    horzAlign: Optional[HorzAlign] = None
+    vertAlign: Optional[VertAlign] = None
 
 
 @dataclass
@@ -329,32 +318,22 @@ class ChartOptionsBase:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ChartOptionsBase
     """
 
-    width: int = 0
-    height: int = 0
-    autoSize: bool = False
-    watermark: WatermarkOptions = field(default_factory=WatermarkOptions)
-    layout: LayoutOptions = field(default_factory=LayoutOptions)
-    leftPriceScale: PriceScaleOptions = field(
-        default_factory=lambda: PriceScaleOptions(visible=False)
-    )
-    rightPriceScale: PriceScaleOptions = field(default_factory=PriceScaleOptions)
-    overlayPriceScales: OverlayPriceScaleOptions = field(
-        default_factory=OverlayPriceScaleOptions
-    )
-    timeScale: HorzScaleOptions = field(default_factory=HorzScaleOptions)
-    crosshair: CrosshairOptions = field(default_factory=CrosshairOptions)
-    grid: GridOptions = field(default_factory=GridOptions)
-    handleScroll: Union[HandleScrollOptions, bool] = field(
-        default_factory=HandleScrollOptions
-    )
-    handleScale: Union[HandleScaleOptions, bool] = field(
-        default_factory=HandleScaleOptions
-    )
-    kineticScroll: KineticScrollOptions = field(default_factory=KineticScrollOptions)
-    trackingMode: TrackingModeOptions = field(default_factory=TrackingModeOptions)
-    localization: LocalizationOptionsBase = field(
-        default_factory=LocalizationOptionsBase
-    )
+    width: Optional[int] = None
+    height: Optional[int] = None
+    autoSize: Optional[bool] = None
+    watermark: Optional[WatermarkOptions] = None
+    layout: Optional[LayoutOptions] = None
+    leftPriceScale: Optional[PriceScaleOptions] = None
+    rightPriceScale: Optional[PriceScaleOptions] = None
+    overlayPriceScales: Optional[OverlayPriceScaleOptions] = None
+    timeScale: Optional[HorzScaleOptions] = None
+    crosshair: Optional[CrosshairOptions] = None
+    grid: Optional[GridOptions] = None
+    handleScroll: Optional[Union[HandleScrollOptions, bool]] = None
+    handleScale: Optional[Union[HandleScaleOptions, bool]] = None
+    kineticScroll: Optional[KineticScrollOptions] = None
+    trackingMode: Optional[TrackingModeOptions] = None
+    localization: Optional[LocalizationOptionsBase] = None
 
 
 @dataclass
