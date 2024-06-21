@@ -323,7 +323,6 @@ class Indicator(metaclass=IndicatorMeta):
 
     def delete(self):
         "Remove the indicator and all of it's instance objects"
-        self.main_data = None
         for series in self._series.copy().values():
             series.delete()
         # for primitive in self._primitives_.copy().values():
@@ -337,53 +336,51 @@ class Indicator(metaclass=IndicatorMeta):
     def set_data(self, *_, **__):
         """
         Set the base data of the indicator. This is called when the base dataset of the indicator
-        becomes available or changes due to a timeframe / symbol change.
+        becomes available or changes due to a timeframe / symbol change. This is analogous to
+        historical bar calculation in Pinescript, however should be done in vectorized calculations
+        on Pandas' DataFrames / Series Objects
 
-        The typical set_data() function should take a single positional argument:
-        data:Optional[Series_DF]. This is the main dataset stored by a Indicator Objects.
+        The arguments of this function are completely arbitrary. They can be any data type so long
+        as they have a unique keyword. If this keyword is used by the update_data() method then they
+        must share the same datatype. set_data() and update_data() can have different signatures and
+        dependencies though!
 
-        Series_DF objects hold a pandas dataframe of either OHLCV or SingleValue Data.
-        They also contains other useful identification parameters such as data_type, Timeframe,
-        and potentially the relevant financial calendar (Market Hours and Holidays).
+        During initialization / A change in options this indicator may call the link_args() method.
+        This method takes a dict[str:Callable]. The string is a keyword that matches a keyword arg
+        of the set_data() or update_data() methods. The Callable must be an output property of
+        another indicator. Once all source Indicators have be set/updated this indicator will
+        have it's respective set_data() / update_data() method automatically called.
 
-        This function should calculate what it needs to across the entire dataset and prepare
-        its instance variables for iterable calculation when prompted with calls to update_data().
-
-        Any additional arguments required by the indicator should be taken as optional
-        Key Word arguments with a default value of 'None'.
+        This method does not have to be dependent on other indicators though. The Series(Indicator)
+        class is a great example. It only recieves data from external sources. Those sources simply
+        invoke the set_data() / update_data() methods manually.
         """
 
     @abstractmethod
     def update_data(self, *_, **__):
-        """# TODO : Update DOCSTRING
-        Update the indicator given a single realtime or new bar update. This is only called once
-        set_data has been called on this Indicator at least once.
+        """
+        Update the output of the indicator given an incremental update. This method will typically
+        require bar_state:BarState as an argument.
 
-        The Data recieved from a Series(Indicator) instance will be AnyBasicData, and a bar_state.
-        The BasicData's time will always be the opening time of the bar. This is crucial information
-        since this time must be passed to any series object
-        the lightweight charts API to update/draw new bars appropriately)
+        bar_state is a default argument that will automatically link when present in the signature
+        of a set_data()/update_data() method. The automatic link will connect to the base source of
+        series data on the Frame this indicator is attached too. This connection can be overwritten
+        by manually passing the desired connection to link_args().
         """
 
     def clear_data(self):
         "Clear Data from the indicator, resetting it the post __init__ state"
-        self.main_data = None
         for _, series in self._series.items():
             series.clear_data()
         # for _, primative in self._primitives_.items():
         #     primative.delete()?
-        # for observer in self._observers:
-        #     observer.indicator.clear_data()
         # Notify Observers
         self.notify_observers("clear")
 
     def apply_options(self):
         "Applies the given set of indicator options"
 
-    def retrieve(self):
-        "Fetch Data from this indicator"
-
-    def hoist(self):
+    def hoist(self, *_, **__):
         "Hoist Data From another indicator into this one."
 
     def notify_observers(self, notif_type: Notification):
@@ -456,7 +453,6 @@ class Indicator(metaclass=IndicatorMeta):
         bound_arg_funcs = self._watcher.observables.values()
         for bound_func_cls in set([func.__self__ for func in bound_arg_funcs]):
             bound_func_cls._observers.remove(self._watcher)
-            # TODO: Remove watcher inside bound cls so it can throw error?
 
         # Clear Watcher
         self._watcher.set_args = {}

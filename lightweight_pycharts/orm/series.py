@@ -66,11 +66,13 @@ def update_dataframe(
     for key in set(data_dict.keys()).difference(df.columns):
         del data_dict[key]
 
-    if df.index[-1] == time:  # Update Last Entry
+    if df.index[-1] == time:
+        # Update Last Entry
         for key, value in data_dict.items():
             df.loc[time, key] = value
         return df
-    else:  # Add New Entry
+    else:
+        # Add New Entry
         return pd.concat([df, pd.DataFrame([data_dict], index=[time])])
 
 

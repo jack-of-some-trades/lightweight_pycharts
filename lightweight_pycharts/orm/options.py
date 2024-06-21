@@ -1,5 +1,7 @@
+"""Dataclass representations of various Lightweight-Charts scale and chart interfaces"""
+
+from dataclasses import dataclass
 from typing import Optional, Union
-from dataclasses import dataclass, field
 
 from .types import Color, VertAlign, HorzAlign
 from .enum import (

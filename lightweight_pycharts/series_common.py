@@ -11,10 +11,9 @@ from typing import Optional, TYPE_CHECKING
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
-from lightweight_pycharts.orm.options import PriceScaleOptions
-
 from .js_cmd import JS_CMD
 from .orm import series as s
+from .orm.options import PriceScaleOptions
 from .orm.types import SeriesPriceLine, SeriesMarker
 
 if TYPE_CHECKING:

@@ -71,7 +71,7 @@ class Color:
         if len(hex_value) == 6 or len(hex_value) == 8:
             # Hex String of 6 or 8 Chars
             r, g, b = [int(hex_value[i : i + 2], 16) for i in (0, 2, 4)]
-            alpha = 1 if (len(hex_value) != 8) else int(hex_value[6:8], 16) / 255
+            alpha = 1 if (len(hex_value) != 8) else int(hex_value[6:8], 16) / 256
 
         elif len(hex_value) == 3 or len(hex_value) == 4:
             # Hex String of 3 or 4 Chars
@@ -81,7 +81,7 @@ class Color:
             alpha = (
                 1
                 if (len(hex_value) != 4)
-                else ((int(hex_value[3], 16) << 4) + int(hex_value[3], 16)) / 255
+                else ((int(hex_value[3], 16) << 4) + int(hex_value[3], 16)) / 256
             )
         else:
             raise ValueError(f"Hex Color of length {len(hex_value)} is not valid.")
