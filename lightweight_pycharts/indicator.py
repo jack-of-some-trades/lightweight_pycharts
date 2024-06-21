@@ -10,7 +10,7 @@ import pandas as pd
 from numpy import nan
 
 from lightweight_pycharts.orm.options import PriceScaleMargins, PriceScaleOptions
-from lightweight_pycharts.orm.types import Color, PriceFormat, j_func
+from lightweight_pycharts.orm.types import Color, PriceFormat
 
 from . import window as win
 from . import series_common as sc
@@ -24,8 +24,10 @@ from .orm.series import (
     Series_DF,
     SeriesType,
     AnyBasicData,
+    ValueMap,
     Whitespace_DF,
     SingleValueData,
+    update_dataframe,
 )
 
 # pylint: disable=protected-access
@@ -756,8 +758,8 @@ class Series(Indicator):
 @dataclass
 class VolumeIndicatorOptions:
     "Options for a volume series"
-    up_color: Color = Color.from_hex("#26a69a")
-    down_color: Color = Color.from_hex("#ef5350")
+    up_color: Color = Color.from_hex("#26a69a80")
+    down_color: Color = Color.from_hex("#ef535080")
 
     series_opts = HistogramStyleOptions(
         priceScaleId="vol", priceFormat=PriceFormat("volume")
@@ -778,7 +780,10 @@ class Volume(Indicator):
 
         self.opts = options
         self._data = pd.DataFrame()
-        self.series = sc.HistogramSeries(self, self.opts.series_opts)
+        self.series_map = ValueMap("volume", color="vol_color")
+        self.series = sc.SeriesCommon(
+            self, SeriesType.Histogram, self.opts.series_opts, None, self.series_map
+        )
         self.series.apply_scale_options(self.opts.price_scale_opts)
 
         if src is None:
@@ -787,14 +792,15 @@ class Volume(Indicator):
         self.link_args({"data": src})
 
     def set_data(self, data: pd.DataFrame, *_, **__):
+        logger.info(self._data)
         if "volume" not in data.columns:
             return
 
-        self._data = pd.DataFrame(data["volume"]).rename(columns={"volume": "value"})
+        self._data = pd.DataFrame(data["volume"])
 
         if set(["open", "close"]).issubset(data.columns):
             color = data["close"] > data["open"]
-            self._data["color"] = color.replace(
+            self._data["vol_color"] = color.replace(
                 {True: self.opts.up_color, False: self.opts.down_color}
             )
         self.series.set_data(self._data)
@@ -810,30 +816,9 @@ class Volume(Indicator):
         else:
             color = self.opts.down_color
 
-        self.series.update_data(
-            HistogramData(bar_state.time, bar_state.volume, color=color)
-        )
-
-        if color is not None:
-            self._data = pd.concat(
-                [
-                    self._data,
-                    pd.DataFrame(
-                        [{"value": bar_state.volume, "color": color}],
-                        index=[bar_state.time],
-                    ),
-                ]
-            )
-        else:
-            self._data = pd.concat(
-                [
-                    self._data,
-                    pd.DataFrame(
-                        [{"value": bar_state.volume}],
-                        index=[bar_state.time],
-                    ),
-                ]
-            )
+        update_data = HistogramData(bar_state.time, bar_state.volume, color=color)
+        self.series.update_data(update_data)
+        self._data = update_dataframe(self._data, update_data, self.series_map)
 
 
 @dataclass
@@ -868,14 +853,10 @@ class SMA(Indicator):
         self.line_series.set_data(self._data)
 
     def update_data(self, bar_state: BarState, data: pd.Series, *_, **__):
-        avg = data.tail(self.period).mean()
-        self.line_series.update_data(SingleValueData(bar_state.time, avg))
-        self._data = pd.concat([self._data, pd.Series(avg, index=[bar_state.time])])
-
-    def clear_data(self):
-        logger.info(self._data)
-        self._data = pd.Series()
-        super().clear_data()
+        self._data[bar_state.time] = data.tail(self.period).mean()
+        self.line_series.update_data(
+            SingleValueData(bar_state.time, self._data.iloc[-1])
+        )
 
     @output_property
     def average(self) -> pd.Series:

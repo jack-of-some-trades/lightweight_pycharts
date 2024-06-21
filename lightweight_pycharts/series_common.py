@@ -6,8 +6,6 @@ Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeri
 """
 
 import logging
-from inspect import signature
-from dataclasses import dataclass, asdict
 from typing import Optional, TYPE_CHECKING
 
 import pandas as pd
@@ -23,21 +21,6 @@ if TYPE_CHECKING:
     from .indicator import Indicator
 
 logger = logging.getLogger("lightweight-pycharts")
-
-
-@dataclass
-class SingleValueMap:
-    "Renaming map to specify which DataFrame Columns should be displayed as Single Value Data"
-    value: str
-
-
-@dataclass
-class OHLCValueMap:
-    "Renaming map to specify which DataFrame Columns should be displayed as OHLC Data"
-    close: str
-    open: str = "open"
-    high: str = "high"
-    low: str = "low"
 
 
 # This was placed here and not in orm.Series because of the Queue & Pane Dependency
@@ -58,8 +41,7 @@ class SeriesCommon:
         series_type: s.SeriesType,
         options=s.SeriesOptionsCommon(),
         display_pane_id: Optional[str] = None,
-        ohlc_map: Optional[OHLCValueMap] = None,
-        value_map: Optional[SingleValueMap] = None,
+        v_map: s.ValueMap | dict[str, str] = {"close": "value", "value": "close"},
     ) -> None:
         if display_pane_id is None:
             display_pane_id = indicator._ids[0]
@@ -74,8 +56,19 @@ class SeriesCommon:
         # Tuple of Ids to make addressing through Queue easier: order = (pane, indicator, series)
         self._ids = display_pane_id, indicator.js_id, self._js_id
 
-        self.ohlc_map = ohlc_map
-        self.value_map = value_map
+        if isinstance(v_map, s.ValueMap):
+            self._value_map = v_map.as_dict
+        else:
+            # Ensure data can be displayed as both OHLC and Single Value based
+            self._value_map = v_map.copy()
+            if "close" not in v_map and "value" in v_map:
+                self._value_map["close"] = v_map["value"]
+            elif "value" not in v_map and "close" in v_map:
+                self._value_map["value"] = v_map["close"]
+            if "value" not in v_map:
+                self._value_map["value"] = "close"
+            if "close" not in v_map:
+                self._value_map["close"] = "value"
 
         self._parent = indicator
         self._fwd_queue = indicator._fwd_queue
@@ -137,10 +130,8 @@ class SeriesCommon:
         # Format 'data' to a dataframe called '_df' (A reference)
         if isinstance(data, s.Series_DF):
             _df = data.df
-            data_type = data.data_type
         elif isinstance(data, pd.DataFrame):
             _df = data
-            data_type = s.SeriesType.data_type(data)
         else:
             if not is_datetime64_any_dtype(data.index):
                 raise AttributeError(
@@ -149,63 +140,33 @@ class SeriesCommon:
             _df = data.rename("value")
             _df.index.set_names("time", inplace=True)
             _df = _df.reset_index()
-            data_type = s.SeriesType.data_type(_df)
 
-        # region -------------------- Column Renaming --------------------
-        if (
-            s.SeriesType.SValue_Derived(self._series_type)
-            and self.value_map is not None
-        ):
-            drop_list = []
-            if self.value_map.value != "value" and "value" in _df.columns:
-                drop_list.append("value")
+        # Rename the Columns based on the display type and the rename map
+        valid_keys = self._series_type.params.difference({"volume"})
+        rename_keys = valid_keys.intersection(self._value_map.keys())
+        rename_dict = dict(
+            [
+                (self._value_map[key], key)
+                for key in rename_keys
+                if key != self._value_map[key] and self._value_map[key] in _df.columns
+            ]
+        )
+        conflict_keys = list(set(rename_dict.values()).intersection(_df.columns))
 
-            tmp_df = _df.drop(columns=drop_list).rename(columns=asdict(self.value_map))
+        # Turn (Reference) _df into new instance tmp_df with columns renamed as needed.
+        tmp_df = _df.drop(columns=conflict_keys).rename(columns=rename_dict)
 
-        elif s.SeriesType.OHLC_Derived(self._series_type) and self.ohlc_map is not None:
-            drop_list = []
-            if self.ohlc_map.open != "open" and "open" in _df.columns:
-                drop_list.append("open")
-            if self.ohlc_map.open != "high" and "high" in _df.columns:
-                drop_list.append("high")
-            if self.ohlc_map.open != "low" and "low" in _df.columns:
-                drop_list.append("low")
-            if self.ohlc_map.close != "close" and "close" in _df.columns:
-                drop_list.append("close")
+        # Drop Unused Data
+        unused_cols = list(set(tmp_df.columns).difference(valid_keys))
+        tmp_df.drop(columns=unused_cols, inplace=True)
 
-            tmp_df = _df.drop(columns=drop_list).rename(columns=asdict(self.ohlc_map))
-
-        elif (
-            data_type == s.SeriesType.Custom
-            and self.ohlc_map is None
-            and self.value_map is None
-        ):
+        # Need atleast one of the following to display anything on the screen
+        if len(set(tmp_df.columns).intersection({"value", "close"})) == 0:
             logger.warning(
-                "Attempting to display Custom Data without specifying what to display."
+                "Series %s of type %s doesn't know what to display!",
+                self._ids,
+                self._series_type,
             )
-            tmp_df = _df.copy()
-
-        elif s.SeriesType.SValue_Derived(data_type) != s.SeriesType.SValue_Derived(
-            self._series_type
-        ):  # No remapping given, but data type doesn't match the display type.
-            tmp_df = _df.rename(columns={"close": "value", "value": "close"})
-
-        else:
-            # Data Type inherently matches the display type.
-            tmp_df = _df.copy()
-
-        # endregion
-
-        # region -------------------- Drop Unused Data --------------------
-
-        # Get the list of columns that are valid to pass to the window
-        visual_columns = set(signature(self._series_type.cls).parameters.keys())
-        visual_columns.remove("volume")
-
-        columns_to_drop = set(tmp_df.columns).difference(visual_columns)
-        tmp_df.drop(columns=columns_to_drop, inplace=True)  # type: ignore (set is valid type)
-
-        # endregion
 
         # Ensure 'Time' is a column
         if "time" not in tmp_df.columns:
@@ -214,7 +175,7 @@ class SeriesCommon:
                 tmp_df.reset_index(inplace=True)
             else:
                 raise AttributeError(
-                    "Cannot Display Series_Common Data. Need a 'time' index / column"
+                    "Cannot Display Series_Common Data. Need a 'time' index or column"
                 )
 
         # Convert pd.Timestamp to Unix Epoch time (confirmed working w/ pre Jan 1, 1970 dates)
@@ -253,7 +214,10 @@ class SeriesCommon:
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_OPTS, *self._ids, options))
 
     def apply_scale_options(self, options: PriceScaleOptions) -> None:
-        "Update the Display Options of the Series."
+        """
+        Update the Options for the Price Scale this Series belongs too.
+        **Warning**: These changes may be shared with other series objects!
+        """
         self._fwd_queue.put((JS_CMD.UPDATE_PRICE_SCALE_OPTS, *self._ids, options))
 
     def change_series_type(

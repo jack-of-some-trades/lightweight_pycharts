@@ -30,7 +30,7 @@ Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
 
 
 class j_func:
-    "String Subclass to alter json dump behavior"
+    "String Subclass to strip whitespace. Ideally, this string represents a Javascript Function"
 
     def __init__(self, func: str):
         self.func = func.replace(" ", "").replace("\n", "")

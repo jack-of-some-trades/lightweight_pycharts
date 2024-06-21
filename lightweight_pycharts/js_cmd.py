@@ -304,7 +304,7 @@ def update_series_opts(
         strt = rtn_str.find(func_str)
         end = strt + len(func_str)
         rtn_str = rtn_str[: strt - 1] + func_str + rtn_str[end + 1 :]
-    print(rtn_str)
+
     return rtn_str
 
 

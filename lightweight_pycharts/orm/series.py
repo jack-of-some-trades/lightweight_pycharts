@@ -34,7 +34,49 @@ ALT_EXCHANGE_NAMES = {
 
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
-# region --------------------------------------- Pandas Series Objects --------------------------------------- #
+# region ------------------------------ DataFrame Update Function ------------------------------ #
+
+
+def update_dataframe(
+    df: pd.DataFrame,
+    data: AnySeriesData | dict[str, Any],
+    v_map: Optional[ValueMap | dict[str, str]] = None,
+) -> pd.DataFrame:
+    """
+    Convenience Function to Update a Pandas DataFrame from a given piece of data w/ optional rename
+
+    Unfortunately, no, The dataframe cannot be efficiently updated in place since a reference
+    is passed. The new DataFrame can only be returned to update the reference in the higher scope.
+    """
+    if isinstance(data, AnySeriesData):
+        data_dict = data.as_dict
+    else:
+        data_dict = data.copy()
+
+    time = data_dict.pop("time")  # Must have a 'time':pd.Timestamp pair
+
+    if v_map is not None:
+        map_dict = v_map.as_dict if isinstance(v_map, ValueMap) else v_map.copy()
+
+        # Rename and drop old keys
+        for key in set(map_dict.keys()).intersection(data_dict.keys()):
+            data_dict[map_dict[key]] = data_dict.pop(key)
+
+    # Drop anything not in the columns of the Dict
+    for key in set(data_dict.keys()).difference(df.columns):
+        del data_dict[key]
+
+    if df.index[-1] == time:  # Update Last Entry
+        for key, value in data_dict.items():
+            df.loc[time, key] = value
+        return df
+    else:  # Add New Entry
+        return pd.concat([df, pd.DataFrame([data_dict], index=[time])])
+
+
+# endregion
+
+# region -------------------------------- Pandas Series Objects -------------------------------- #
 
 
 @pd.api.extensions.register_dataframe_accessor("lwc_df")
@@ -336,15 +378,10 @@ class Series_DF:
 
         # Ensure time is constant, If not a new bar will be created on screen
         last_data.time = self.curr_bar_open_time
+        update_dataframe(self.df, last_data)
 
-        # Somehow this is the easist way to update the last row in the DataFrame??
-        last_ind = self.df.index[-1]
-        data_dict = last_data.as_dict
-        for k, v in data_dict.items():
-            if k in self.df.columns:
-                self.df.loc[last_ind, k] = v
-
-        return self._to_dataclass_instance_(data_dict)
+        # The next line ensures the return dataclass matches the type stored by the Dataframe.
+        return self._to_dataclass_instance_(last_data.as_dict)
 
     def update(self, data: AnyBasicData) -> AnyBasicData:
         "Update the OHLC / Single Value DataFrame from a new bar. Data Assumed as next in sequence"
@@ -560,7 +597,71 @@ class Whitespace_DF:
 
 # endregion
 
-# region --------------------------------------- Series Data Types --------------------------------------- #
+
+# region --------------------------------- Series Name Mappers --------------------------------- #
+
+
+@dataclass
+class ValueMap:
+    """
+    Renaming map to specify how the columns of a DataFrame should map to a Displayable Series.
+    This object can cover value mapping for Line, Histogram, and Bar series
+
+    If needed, new names can be dynamically added for custom series behavior. Note: This would
+    require a custom series primitive to be made within the TypeScript portion of this module.
+    """
+
+    value: Optional[str] = None
+    close: Optional[str] = None
+    open: Optional[str] = None
+    high: Optional[str] = None
+    low: Optional[str] = None
+    color: Optional[str] = None
+    custom_values: Optional[str] = None
+    custom_values: Optional[str] = None
+
+    def __post_init__(self):
+        # Ensure cross display compatability between single value and OHLC series
+        if self.value is None and self.close is not None:
+            self.value = self.close
+        elif self.close is None and self.value is not None:
+            self.close = self.value
+
+    @property
+    def as_dict(self) -> Dict[str, str]:
+        "Object as a dictionary with Nones and equivalent kv pairs (e.g. 'value' == 'value') dropped"
+        return asdict(
+            self,
+            dict_factory=lambda x: {k: v for (k, v) in x if v is not None and k != v},
+        )
+
+
+class CandleValueMap(ValueMap):
+    "Value Map Extention for Candlestick and Rounded Candlestick Series"
+    wickColor: Optional[str] = None
+    borderColor: Optional[str] = None
+
+
+class AreaValueMap(ValueMap):
+    "Value Map Extention for an Area Series"
+    lineColor: Optional[str] = None  # TODO: Remove once Line and Area are unified
+    topColor: Optional[str] = None
+    bottomColor: Optional[str] = None
+
+
+class BaselineValueMap(ValueMap):
+    "Value Map Extention for a Baseline Series"
+    topLineColor: Optional[str] = None
+    topFillColor1: Optional[str] = None
+    topFillColor2: Optional[str] = None
+    bottomLineColor: Optional[str] = None
+    bottomFillColor1: Optional[str] = None
+    bottomFillColor2: Optional[str] = None
+
+
+# endregion
+
+# region ---------------------------------- Series Data Types ---------------------------------- #
 
 
 @dataclass
@@ -593,7 +694,8 @@ class WhitespaceData:
     @classmethod
     def from_dict(cls, obj: dict) -> Self:
         "Create an instance from a dict ignoring extraneous params"
-        return cls(**{k: v for k, v in obj.items() if k in signature(cls).parameters})
+        params = signature(cls).parameters
+        return cls(**{k: v for k, v in obj.items() if k in params})
 
 
 @dataclass
@@ -819,6 +921,11 @@ class SeriesType(IntEnum):
                 return OhlcData
             case _:  # Whitespace and Custom
                 return WhitespaceData
+
+    @property
+    def params(self) -> set:
+        "A set of the Parameters that compose this Series Type"
+        return set(signature(self.cls).parameters.keys())
 
 
 AnyBasicSeriesType = Literal[

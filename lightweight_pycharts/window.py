@@ -43,7 +43,7 @@ class Window:
         *,
         daemon: bool = False,
         events: Optional[Events] = None,
-        log_level: logging._Level = "Warning",
+        log_level: logging._Level = "WARNING",
         options: Optional[orm.options.PyWebViewOptions] = None,
         **kwargs,
     ) -> None:

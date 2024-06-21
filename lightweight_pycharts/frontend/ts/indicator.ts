@@ -88,6 +88,16 @@ export class indicator {
         series.update(data)
     }
 
+    /**
+     * Unfortunately, change_series_type changes the draw order of the Series on screen.
+     * This is the result of deleteing the old series and creating a new one. The draw order
+     * appears to be determined by the order in which the series objects are added to the screen.
+     * After some trial testing it appears the chart object has an 'rw' property. This is a map
+     * w/ the series objects as keys. I do not know the type of the value. This 'rw' map gets
+     * reordered when adding/removing series objects. I already tried to reorder this map
+     * to change the display order, but that had no effect on the display. of note: it did not
+     * break anything.
+     */
     protected change_series_type(_id: string, series_type: u.Series_Type, data: AnySeriesData[]) {
         let series = this.series.get(_id)
         if (series === undefined) {
