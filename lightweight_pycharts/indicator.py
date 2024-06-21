@@ -4,7 +4,7 @@ from logging import getLogger
 from dataclasses import dataclass
 from abc import ABCMeta, abstractmethod
 from inspect import Signature, signature, _empty
-from typing import Literal, Optional, Any, Callable
+from typing import Literal, Optional, Any, Callable, Tuple
 
 import pandas as pd
 from numpy import nan
@@ -42,6 +42,13 @@ class Null:
 def output_property[T: Callable](func: T) -> T:
     "Property Decorator used to expose Indicator Parameters to other Indicators"
     func.__expose_param__ = True
+    return func
+
+
+def default_output_property[T: Callable](func: T) -> T:
+    "Property Decorator used to expose Indicator Parameters to other Indicators"
+    func.__expose_param__ = True
+    func.__default_param__ = True
     return func
 
 
@@ -184,7 +191,9 @@ class IndicatorMeta(ABCMeta):
         setattr(cls, "__input_args__", dict(set_args, **update_args))
 
         # Determine Exposed Parameters
-        setattr(cls, "__exposed_outputs__", mcs.parse_output_type(name, namespace))
+        outputs, default_out = mcs.parse_output_type(name, namespace)
+        setattr(cls, "__exposed_outputs__", outputs)
+        setattr(cls, "__default_output__", default_out)
 
         # Dunder Defined by Indicator Base Class.
         cls.__registered_indicators__[name] = cls  # type: ignore
@@ -221,9 +230,12 @@ class IndicatorMeta(ABCMeta):
         return args
 
     @staticmethod
-    def parse_output_type(cls_name, namespace) -> dict[str, type]:
+    def parse_output_type(
+        cls_name, namespace
+    ) -> Tuple[dict[str, type], Optional[Callable]]:
         "Parse the return signatures of output properties"
         outputs = {}
+        __default_output__ = None
         for output_name, output_func in namespace.items():
             if not getattr(output_func, "__expose_param__", False):
                 continue
@@ -240,7 +252,16 @@ class IndicatorMeta(ABCMeta):
             rtn_type = output_func_sig.return_annotation
 
             outputs[output_name] = object if isinstance(rtn_type, _empty) else rtn_type
-        return outputs
+
+            if (
+                getattr(output_func, "__default_param__", False)
+                and rtn_type == pd.Series
+            ):
+                # Default output must be a single series for consistency
+                # May change this to default_output_series & default_output_dataframe
+                __default_output__ = output_func
+
+        return outputs, __default_output__
 
 
 class Indicator(metaclass=IndicatorMeta):
@@ -265,6 +286,7 @@ class Indicator(metaclass=IndicatorMeta):
     __set_args__: dict[str, tuple[type, Any]]
     __input_args__: dict[str, tuple[type, Any]]
     __update_args__: dict[str, tuple[type, Any]]
+    __default_output__: Optional[Callable[[], pd.Series]]
     __exposed_outputs__: dict[str, type]
     __registered_indicators__: dict[str, "Indicator"]
 
@@ -299,6 +321,14 @@ class Indicator(metaclass=IndicatorMeta):
         self._ids = display_pane_id, self._js_id
         self._fwd_queue = self.parent_frame._fwd_queue
 
+        # Bind the default output function to this instance
+        if self.__default_output__ is not None:
+            self.default_output: Optional[Callable[[], pd.Series]] = (
+                self.__default_output__.__get__(self, self.__class__)
+            )
+        else:
+            self.default_output = None
+
         self._series = ID_Dict[sc.SeriesCommon]("s")
         self._primitives = ID_List("p")
         # TODO: Make into an ID_Dict once Primitive Baseclass is made.
@@ -317,6 +347,17 @@ class Indicator(metaclass=IndicatorMeta):
     def js_id(self) -> str:
         "Immutable Copy of the Object's Javascript_ID"
         return self._js_id
+
+    @property
+    def default_parent_src(self) -> Callable[[], pd.Series]:
+        """
+        The default series output of the parent indicator. If the parent does not have a default
+        output then the 'close' of the current frame's main series is returned.
+        """
+        if self.parent_indicator.default_output is not None:
+            return self.parent_indicator.default_output
+
+        return self.parent_frame.main_series.close
 
     def __del__(self):
         logger.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
@@ -399,9 +440,11 @@ class Indicator(metaclass=IndicatorMeta):
 
         cls = self.__class__
 
-        # Auto-Link Bar_State if the Indicator requests it.
+        # Auto-Link default args if the Indicator requests it.
         if "bar_state" in cls.__input_args__ and "bar_state" not in args:
             args["bar_state"] = self.parent_frame.main_series.bar_state
+        if "time" in cls.__input_args__ and "time" not in args:
+            args["time"] = self.parent_frame.main_series.time
 
         # Check all required argument links are present
         if not set(cls.__input_args__.keys()).issubset(args.keys()):
@@ -726,6 +769,11 @@ class Series(Indicator):
         return BarState()
 
     @output_property
+    def time(self) -> pd.Timestamp:
+        "A Reference to the full series dataframe"
+        return pd.Timestamp(0) if self._bar_state is None else self._bar_state.time
+
+    @output_property
     def blank_series_df(self) -> Series_DF:
         "A new Series_DF object that shares the source Series' parameters & time index."
         if self.main_data is not None:
@@ -741,7 +789,7 @@ class Series(Indicator):
             return self.main_data.df
         return pd.DataFrame({})
 
-    @output_property
+    @default_output_property
     def close(self) -> pd.Series:
         "A Series' Bar closing value"
         if self.main_data is not None:
@@ -836,7 +884,7 @@ class SMA(Indicator):
         super().__init__(parent)
 
         if src is None:
-            src = self.parent_frame.main_series.close
+            src = self.default_parent_src
 
         self.period = period
         self._data = pd.Series()
@@ -848,13 +896,11 @@ class SMA(Indicator):
         self._data = data.rolling(window=self.period).mean()
         self.line_series.set_data(self._data)
 
-    def update_data(self, bar_state: BarState, data: pd.Series, *_, **__):
-        self._data[bar_state.time] = data.tail(self.period).mean()
-        self.line_series.update_data(
-            SingleValueData(bar_state.time, self._data.iloc[-1])
-        )
+    def update_data(self, time: pd.Timestamp, data: pd.Series, *_, **__):
+        self._data[time] = data.tail(self.period).mean()
+        self.line_series.update_data(SingleValueData(time, self._data.iloc[-1]))
 
-    @output_property
+    @default_output_property
     def average(self) -> pd.Series:
         "The resulting SMA"
         return self._data
