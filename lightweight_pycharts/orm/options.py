@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from .types import Color, VertAlign, HorzAlign
+from .types import JS_Color, VertAlign, HorzAlign
 from .enum import (
     LineStyle,
     PriceScaleMode,
@@ -56,11 +56,11 @@ class OverlayPriceScaleOptions:
     scaleMargins: Optional[PriceScaleMargins] = None
 
     borderVisible: Optional[bool] = None
-    borderColor: Optional[Color] = None
+    borderColor: Optional[JS_Color] = None
 
     alignLabels: Optional[bool] = None
     entireTextOnly: Optional[bool] = None
-    textColor: Optional[Color] = None
+    textColor: Optional[JS_Color] = None
 
 
 @dataclass
@@ -137,7 +137,7 @@ class Background:
     """
 
     type: Optional[ColorType] = None
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
 
 
 @dataclass
@@ -149,7 +149,7 @@ class GridLineOptions:
 
     visible: Optional[bool] = None
     style: Optional[LineStyle] = None
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
 
 
 @dataclass
@@ -212,11 +212,11 @@ class CrosshairLineOptions:
 
     visible: Optional[bool] = None
     width: Optional[int] = None
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
     style: Optional[LineStyle] = None
 
     labelVisible: Optional[bool] = None
-    labelBackgroundColor: Optional[Color] = None
+    labelBackgroundColor: Optional[JS_Color] = None
 
 
 @dataclass
@@ -275,7 +275,7 @@ class HorzScaleOptions:
     allowBoldLabels: Optional[bool] = None
     secondsVisible: Optional[bool] = None
     borderVisible: Optional[bool] = None
-    borderColor: Optional[Color] = None
+    borderColor: Optional[JS_Color] = None
 
     ticksVisible: Optional[bool] = None
     tickMarkMaxCharacterLength: Optional[int] = None
@@ -289,7 +289,7 @@ class LayoutOptions:
     """
 
     background: Optional[Background] = None
-    textColor: Optional[Color] = None
+    textColor: Optional[JS_Color] = None
     fontSize: Optional[int] = None
     fontFamily: Optional[str] = None
 
@@ -303,7 +303,7 @@ class WatermarkOptions:
     Tutorial: https://tradingview.github.io/lightweight-charts/tutorials/how_to/watermark
     """
 
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
     visible: Optional[bool] = None
     text: Optional[str] = None
     fontSize: Optional[int] = None

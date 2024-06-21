@@ -1,3 +1,4 @@
+import { primitives } from "./lwpc-plugins/primitives.js";
 import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import * as u from "./util.js";
 export class indicator {
@@ -99,7 +100,13 @@ export class indicator {
             return;
         series.priceScale().applyOptions(opts);
     }
-    add_primitive() { }
-    edit_primitive() { }
+    add_primitive(_id, _type, params) {
+        let primitive_type = primitives.get(_type);
+        if (primitive_type === undefined)
+            return;
+        let new_obj = new primitive_type(params);
+        this.primitives_right.set(_id, new_obj);
+        this.pane.primitive_right.attachPrimitive(new_obj);
+    }
     remove_primitive() { }
 }

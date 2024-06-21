@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass, field
 import pandas as pd
 import pandas_market_calendars as mcal
 
-from .types import TF, Time, Color, PriceFormat, BaseValuePrice, LineWidth, j_func
+from .types import TF, Time, JS_Color, PriceFormat, BaseValuePrice, LineWidth, j_func
 from .enum import LineStyle, PriceLineSource, LastPriceAnimationMode, LineType
 
 
@@ -764,7 +764,7 @@ class HistogramData(SingleValueData):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/HistogramData
     """
 
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
 
 
 @dataclass
@@ -774,7 +774,7 @@ class LineData(SingleValueData):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LineData
     """
 
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
 
 
 @dataclass
@@ -784,9 +784,9 @@ class AreaData(SingleValueData):
     Docs:https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AreaData
     """
 
-    lineColor: Optional[Color] = None
-    topColor: Optional[Color] = None
-    bottomColor: Optional[Color] = None
+    lineColor: Optional[JS_Color] = None
+    topColor: Optional[JS_Color] = None
+    bottomColor: Optional[JS_Color] = None
 
 
 @dataclass
@@ -796,12 +796,12 @@ class BaselineData(SingleValueData):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BaselineData
     """
 
-    topLineColor: Optional[Color] = None
-    topFillColor1: Optional[Color] = None
-    topFillColor2: Optional[Color] = None
-    bottomLineColor: Optional[Color] = None
-    bottomFillColor1: Optional[Color] = None
-    bottomFillColor2: Optional[Color] = None
+    topLineColor: Optional[JS_Color] = None
+    topFillColor1: Optional[JS_Color] = None
+    topFillColor2: Optional[JS_Color] = None
+    bottomLineColor: Optional[JS_Color] = None
+    bottomFillColor1: Optional[JS_Color] = None
+    bottomFillColor2: Optional[JS_Color] = None
 
 
 AnyBasicData: TypeAlias = WhitespaceData | SingleValueData | OhlcData
@@ -956,7 +956,7 @@ class SeriesOptionsCommon:
 
     priceLineVisible: Optional[bool] = None
     priceLineWidth: Optional[LineWidth] = None
-    priceLineColor: Optional[Color] = None
+    priceLineColor: Optional[JS_Color] = None
     priceLineStyle: Optional[LineStyle] = None
     priceLineSource: Optional[PriceLineSource] = None
     priceFormat: Optional[PriceFormat] = None
@@ -965,7 +965,7 @@ class SeriesOptionsCommon:
     baseLineVisible: Optional[bool] = None
     baseLineWidth: Optional[LineWidth] = None
     baseLineStyle: Optional[LineStyle] = None
-    baseLineColor: Optional[Color] = None
+    baseLineColor: Optional[JS_Color] = None
     autoscaleInfoProvider: Optional[j_func] = None
 
 
@@ -979,7 +979,7 @@ class LineStyleOptions(SeriesOptionsCommon):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LineStyleOptions
     """
 
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
     lineVisible: Optional[bool] = None
     lineWidth: Optional[int] = None
     lineType: Optional[LineType] = None
@@ -991,8 +991,8 @@ class LineStyleOptions(SeriesOptionsCommon):
     crosshairMarkerVisible: Optional[bool] = None
     crosshairMarkerRadius: Optional[int] = None
     crosshairMarkerBorderWidth: Optional[int] = None
-    crosshairMarkerBorderColor: Optional[Color] = None
-    crosshairMarkerBackgroundColor: Optional[Color] = None
+    crosshairMarkerBorderColor: Optional[JS_Color] = None
+    crosshairMarkerBackgroundColor: Optional[JS_Color] = None
     lastPriceAnimation: Optional[LastPriceAnimationMode] = None
 
 
@@ -1004,7 +1004,7 @@ class HistogramStyleOptions(SeriesOptionsCommon):
     """
 
     base: Optional[float] = None
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
 
 
 @dataclass
@@ -1014,19 +1014,19 @@ class AreaStyleOptions(SeriesOptionsCommon):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AreaStyleOptions
     """
 
-    lineColor: Optional[Color] = None
+    lineColor: Optional[JS_Color] = None
     lineStyle: Optional[LineStyle] = None
     lineType: Optional[LineType] = None
     lineWidth: Optional[LineWidth] = None
     lineVisible: Optional[bool] = None
 
-    topColor: Optional[Color] = None
-    bottomColor: Optional[Color] = None
+    topColor: Optional[JS_Color] = None
+    bottomColor: Optional[JS_Color] = None
 
     crosshairMarkerVisible: Optional[bool] = None
     crosshairMarkerRadius: Optional[int] = None
-    crosshairMarkerBorderColor: Optional[Color] = None
-    crosshairMarkerBackgroundColor: Optional[Color] = None
+    crosshairMarkerBorderColor: Optional[JS_Color] = None
+    crosshairMarkerBackgroundColor: Optional[JS_Color] = None
     crosshairMarkerBorderWidth: Optional[int] = None
 
     invertFilledArea: Optional[bool] = None
@@ -1048,13 +1048,13 @@ class BaselineStyleOptions(SeriesOptionsCommon):
     lineType: Optional[LineType] = None
     lineStyle: Optional[LineStyle] = None
 
-    topLineColor: Optional[Color] = None
-    topFillColor1: Optional[Color] = None
-    topFillColor2: Optional[Color] = None
+    topLineColor: Optional[JS_Color] = None
+    topFillColor1: Optional[JS_Color] = None
+    topFillColor2: Optional[JS_Color] = None
 
-    bottomLineColor: Optional[Color] = None
-    bottomFillColor1: Optional[Color] = None
-    bottomFillColor2: Optional[Color] = None
+    bottomLineColor: Optional[JS_Color] = None
+    bottomFillColor1: Optional[JS_Color] = None
+    bottomFillColor2: Optional[JS_Color] = None
 
     pointMarkersVisible: Optional[bool] = None
     pointMarkersRadius: Optional[int] = None
@@ -1080,8 +1080,8 @@ class BarStyleOptions(SeriesOptionsCommon):
 
     thinBars: Optional[bool] = None
     openVisible: Optional[bool] = None
-    upColor: Optional[Color] = None
-    downColor: Optional[Color] = None
+    upColor: Optional[JS_Color] = None
+    downColor: Optional[JS_Color] = None
 
 
 @dataclass
@@ -1091,18 +1091,18 @@ class CandlestickStyleOptions(SeriesOptionsCommon):
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/CandlestickStyleOptions
     """
 
-    upColor: Optional[Color] = None
-    downColor: Optional[Color] = None
+    upColor: Optional[JS_Color] = None
+    downColor: Optional[JS_Color] = None
 
     borderVisible: Optional[bool] = None
-    borderColor: Optional[Color] = None
-    borderUpColor: Optional[Color] = None
-    borderDownColor: Optional[Color] = None
+    borderColor: Optional[JS_Color] = None
+    borderUpColor: Optional[JS_Color] = None
+    borderDownColor: Optional[JS_Color] = None
 
     wickVisible: Optional[bool] = None
-    wickColor: Optional[Color] = None
-    wickUpColor: Optional[Color] = None
-    wickDownColor: Optional[Color] = None
+    wickColor: Optional[JS_Color] = None
+    wickUpColor: Optional[JS_Color] = None
+    wickDownColor: Optional[JS_Color] = None
 
 
 @dataclass
@@ -1111,13 +1111,13 @@ class RoundedCandleStyleOptions(SeriesOptionsCommon):
     Represents style options for a rounded candlestick series.
     """
 
-    upColor: Optional[Color] = None
-    downColor: Optional[Color] = None
+    upColor: Optional[JS_Color] = None
+    downColor: Optional[JS_Color] = None
 
     wickVisible: Optional[bool] = None
-    wickColor: Optional[Color] = None
-    wickUpColor: Optional[Color] = None
-    wickDownColor: Optional[Color] = None
+    wickColor: Optional[JS_Color] = None
+    wickUpColor: Optional[JS_Color] = None
+    wickDownColor: Optional[JS_Color] = None
 
 
 # endregion

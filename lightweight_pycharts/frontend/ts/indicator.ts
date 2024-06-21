@@ -1,5 +1,6 @@
 import { AnySeries, AnySeriesData, AnySeriesOptions, PriceScaleOptions } from "./lib/pkg.js";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base.js";
+import { primitives } from "./lwpc-plugins/primitives.js";
 import { Pane } from "./pane.js";
 import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series.js";
 import * as u from "./util.js";
@@ -126,7 +127,6 @@ export class indicator {
         if (series === undefined) return
         series.applyOptions(opts)
     }
-
     
     protected update_scale_opts(_id: string, opts: PriceScaleOptions) {
         let series = this.series.get(_id)
@@ -134,9 +134,14 @@ export class indicator {
         series.priceScale().applyOptions(opts)
     }
 
-    add_primitive() { }
+    add_primitive(_id: string, _type: string, params:any) {
+        let primitive_type = primitives.get(_type)
+        if (primitive_type === undefined) return
+        let new_obj = new primitive_type(params)
 
-    edit_primitive() { }
+        this.primitives_right.set(_id, new_obj)
+        this.pane.primitive_right.attachPrimitive(new_obj)
+    }
 
     remove_primitive() { }
 }

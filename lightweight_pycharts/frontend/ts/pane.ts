@@ -127,7 +127,7 @@ export class Pane {
     }
 
     create_line(point1: SingleValueData, point2: SingleValueData) {
-        const trend = new TrendLine(point1, point2);
+        const trend = new TrendLine({p1:point1, p2:point2});
         this.primitive_right.attachPrimitive(trend);
     }
 

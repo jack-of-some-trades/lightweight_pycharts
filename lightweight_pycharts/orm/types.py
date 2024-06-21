@@ -170,6 +170,10 @@ class Color:
         return f"rgba({self._r},{self._g},{self._b},{self._a})"
 
 
+Hex_Color: TypeAlias = str
+JS_Color: TypeAlias = Hex_Color | Color
+
+
 @dataclass
 class TF:
     "Dataclass Representation of a Timeframe"
@@ -289,7 +293,7 @@ class SolidColor:
     """
 
     type: Literal[ColorType.Solid]
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
 
 
 @dataclass
@@ -300,8 +304,8 @@ class VerticalGradientColor:
     """
 
     type: Literal[ColorType.VerticalGradient]
-    topColor: Optional[Color] = None
-    bottomColor: Optional[Color] = None
+    topColor: Optional[JS_Color] = None
+    bottomColor: Optional[JS_Color] = None
 
 
 @dataclass
@@ -464,7 +468,7 @@ class SeriesMarker:
     position: SeriesMarkerPosition
     id: Optional[str] = None
     size: Optional[int] = 1
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
     text: Optional[str] = None
 
 
@@ -477,15 +481,15 @@ class SeriesPriceLine:
     title: str = ""
     id: Optional[str] = None
     price: float = 0
-    color: Optional[Color] = None
+    color: Optional[JS_Color] = None
 
     lineWidth: int = 1
     lineVisible: bool = True
     lineStyle: LineStyle = LineStyle.Solid
 
     axisLabelVisible: bool = True
-    axisLabelColor: Optional[Color] = None
-    axisLabelTextColor: Optional[Color] = None
+    axisLabelColor: Optional[JS_Color] = None
+    axisLabelTextColor: Optional[JS_Color] = None
 
 
 # endregion

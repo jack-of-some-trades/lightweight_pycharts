@@ -13,8 +13,9 @@ from lightweight_pycharts.orm.options import PriceScaleMargins, PriceScaleOption
 from lightweight_pycharts.orm.types import Color, PriceFormat
 
 from . import window as win
+from . import primative as pr
 from . import series_common as sc
-from .util import ID_List, ID_Dict
+from .util import ID_Dict
 from .js_cmd import JS_CMD
 from .orm import Symbol, TF
 from .orm.series import (
@@ -330,8 +331,7 @@ class Indicator(metaclass=IndicatorMeta):
             self.default_output = None
 
         self._series = ID_Dict[sc.SeriesCommon]("s")
-        self._primitives = ID_List("p")
-        # TODO: Make into an ID_Dict once Primitive Baseclass is made.
+        self._primitives = ID_Dict[pr.Primitive]("p")
 
         # Setup Indicator Observer Structures
         self._watcher = Watcher(self)
@@ -895,6 +895,9 @@ class SMA(Indicator):
     def set_data(self, data: pd.Series, *_, **__):
         self._data = data.rolling(window=self.period).mean()
         self.line_series.set_data(self._data)
+        p1 = SingleValueData(self._data.index[-5], self._data[-5] - 10)
+        p2 = SingleValueData(self._data.index[-30], self._data[-30] + 10)
+        self.trend_line = pr.TrendLine(self, p1, p2)
 
     def update_data(self, time: pd.Timestamp, data: pd.Series, *_, **__):
         self._data[time] = data.tail(self.period).mean()

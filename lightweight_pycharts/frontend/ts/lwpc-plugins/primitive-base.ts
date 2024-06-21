@@ -15,8 +15,6 @@ import {
     Time
 } from '../lib/pkg.js';
 
-//List of the implemented primitive types
-type primitiveType = "line" | "ray"
 
 /**
  * This is a near identical implementation of the plugin-base that comes with 
@@ -32,7 +30,7 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
     protected _series: ISeriesApi<keyof SeriesOptionsMap> | undefined = undefined;
 
     protected _id: string = ""
-    protected _type: primitiveType | null = null
+    protected _type: string = "null"
     protected _autoscale: boolean = false
 
     private _requestUpdate?: () => void;
@@ -44,6 +42,12 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
     protected onMouseDown?(param: MouseEventParams<Time>): void;
     protected onDblClick?(param: MouseEventParams<Time>): void;
     protected onCrosshairMove?(param: MouseEventParams<Time>): void;
+
+    constructor(_type:string, _id:string, _autoscale:boolean){
+        this._type = _type
+        this._id = _id
+        this._autoscale = _autoscale
+    }
 
     public attached({ chart, series, requestUpdate }: SeriesAttachedParameter<Time>) {
         this._chart = chart;
@@ -160,7 +164,7 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
         let y = this.series.priceToCoordinate(pt.value)
         if (!x || !y) return null
 
-        //Timescale Conversion to Logical and back required for consistant operation
+        //Timescale Conversion to Logical and back required for consistent operation
         let l = this.chart.timeScale().coordinateToLogical(x)
         if (!l) return null
         x = this.chart.timeScale().logicalToCoordinate(l + dx as Logical)

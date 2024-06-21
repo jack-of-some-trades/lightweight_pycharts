@@ -91,7 +91,7 @@ async def main():
     from the window. The spawning of a child process is what necessitates
     the use of a [ if __name__ == "__main__": ] block.
     """
-    window = lwc.Window(daemon=True, log_level="INFO")
+    window = lwc.Window(daemon=True, log_level="INFO", debug=True)
     window.events.data_request += data_request_handler
     window.events.symbol_search += symbol_search_handler
     window.events.socket_switch += socket_request_handler
@@ -131,8 +131,8 @@ async def main():
     )
 
     lwc.indicator.Volume(main_frame)
-    sma_20 = lwc.indicator.SMA(main_frame, 20)
-    lwc.indicator.SMA(sma_20, 20)
+    sma = lwc.indicator.SMA(main_frame, 20)
+    lwc.indicator.SMA(sma, 20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

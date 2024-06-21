@@ -8,11 +8,11 @@ const defaultOptions = {
     labelTextColor: 'rgb(0, 0, 0)',
 };
 export class TrendLine extends PrimitiveBase {
-    constructor(p1, p2, options) {
-        super();
-        this._p1 = p1;
-        this._p2 = p2;
-        this._options = Object.assign(Object.assign({}, defaultOptions), options);
+    constructor(params) {
+        super('TrendLine', 'id', false);
+        this._p1 = params.p1;
+        this._p2 = params.p2;
+        this._options = Object.assign(Object.assign({}, defaultOptions), params.options);
         this._paneView = new TrendLinePaneView(this);
     }
     _pointIndex(p) {

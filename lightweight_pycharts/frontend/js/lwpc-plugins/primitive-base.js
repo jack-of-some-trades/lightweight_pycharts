@@ -1,10 +1,12 @@
 import { ensureDefined } from '../helpers/assertions.js';
 export class PrimitiveBase {
-    constructor() {
+    requestUpdate() { if (this._requestUpdate)
+        this._requestUpdate(); }
+    constructor(_type, _id, _autoscale) {
         this._chart = undefined;
         this._series = undefined;
         this._id = "";
-        this._type = null;
+        this._type = "null";
         this._autoscale = false;
         this._fireDataUpdated = (scope) => {
             if (this.onDataUpdate) {
@@ -31,9 +33,10 @@ export class PrimitiveBase {
                 this.onDblClick(e);
             }
         };
+        this._type = _type;
+        this._id = _id;
+        this._autoscale = _autoscale;
     }
-    requestUpdate() { if (this._requestUpdate)
-        this._requestUpdate(); }
     attached({ chart, series, requestUpdate }) {
         this._chart = chart;
         this._series = series;

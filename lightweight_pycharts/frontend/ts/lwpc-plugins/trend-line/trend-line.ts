@@ -36,6 +36,12 @@ const defaultOptions: TrendLineOptions = {
 	labelTextColor: 'rgb(0, 0, 0)',
 };
 
+interface TrendLineParameters {
+	p1: SingleValueData | null,
+	p2: SingleValueData | null,
+	options?: Partial<TrendLineOptions>
+}
+
 /* --------------------- Primitive Main Class ----------------------- */
 
 export class TrendLine extends PrimitiveBase {
@@ -44,17 +50,13 @@ export class TrendLine extends PrimitiveBase {
 	_paneView: TrendLinePaneView;
 	_options: TrendLineOptions;
 
-	constructor(
-		p1: SingleValueData | null,
-		p2: SingleValueData | null,
-		options?: Partial<TrendLineOptions>
-	) {
-		super()
-		this._p1 = p1;
-		this._p2 = p2;
+	constructor(params:TrendLineParameters) {
+		super('TrendLine', 'id', false)
+		this._p1 = params.p1;
+		this._p2 = params.p2;
 		this._options = {
 			...defaultOptions,
-			...options,
+			...params.options,
 		};
 		this._paneView = new TrendLinePaneView(this);
 	}

@@ -100,8 +100,8 @@ class JS_CMD(IntEnum):
     # Pane Commands
     ADD_INDICATOR = auto()
     REMOVE_INDICATOR = auto()
-    ADD_PRIMITVE = auto()
-    REMOVE_PRIMITVE = auto()
+    ADD_PRIMITIVE = auto()
+    REMOVE_PRIMITIVE = auto()
 
     # Indicator Commands
     ADD_SERIES = auto()
@@ -320,6 +320,21 @@ def update_scale_opts(
 # endregion
 
 # region ------------------------ Indicator Primitives ------------------------ #
+
+
+def add_primitive(
+    pane_id: str,
+    indicator_id: str,
+    primitive_id: str,
+    primitive_type: str,
+    args: dict[str, Any],
+) -> str:
+    return (
+        indicator_preamble(pane_id, indicator_id)
+        + f"indicator.add_primitive('{primitive_id}','{primitive_type}', {dump(args)})"
+    )
+
+
 # endregion
 
 # endregion
@@ -355,7 +370,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     # ---- Pane Commands ----
     JS_CMD.ADD_INDICATOR: add_indicator,
     JS_CMD.REMOVE_INDICATOR: remove_indicator,
-    # JS_CMD.ADD_PRIMITIVE: None,
+    JS_CMD.ADD_PRIMITIVE: add_primitive,
     # JS_CMD.REMOVE_PRIMITIVE: None,
     # ---- Indicator Commands ----
     JS_CMD.ADD_SERIES: add_series,

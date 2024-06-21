@@ -75,7 +75,7 @@ export class Pane {
         this.chart.resize(this_width, this_height, false);
     }
     create_line(point1, point2) {
-        const trend = new TrendLine(point1, point2);
+        const trend = new TrendLine({ p1: point1, p2: point2 });
         this.primitive_right.attachPrimitive(trend);
     }
     fitcontent() { this.chart.timeScale().fitContent(); }
