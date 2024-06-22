@@ -12,9 +12,10 @@ export class Pane {
         this.flex_height = flex_height;
         this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.chart.chartElement();
+        this.whitespace_series = this.chart.addLineSeries();
         this.primitive_left = this.chart.addLineSeries({ priceScaleId: 'left', visible: false, autoscaleInfoProvider: undefined });
         this.primitive_right = this.chart.addLineSeries({ priceScaleId: 'right', visible: false, autoscaleInfoProvider: undefined });
-        this.whitespace_series = this.chart.addLineSeries({
+        this.primitive_overlay = this.chart.addLineSeries({
             visible: false,
             priceScaleId: '',
             autoscaleInfoProvider: () => ({
@@ -47,15 +48,17 @@ export class Pane {
         window.active_pane = this;
         window.active_pane.div.setAttribute('active', '');
     }
-    set_whitespace_data(data) {
-        if (data.length > 0) {
-            this.primitive_left.setData([{ time: data[0].time, value: 0 }]);
-            this.primitive_right.setData([{ time: data[0].time, value: 0 }]);
-        }
+    set_whitespace_data(data, primitive_data) {
         this.whitespace_series.setData(data);
+        this.primitive_left.setData([primitive_data]);
+        this.primitive_right.setData([primitive_data]);
+        this.primitive_overlay.setData([primitive_data]);
     }
-    update_whitespace_data(data) {
+    update_whitespace_data(data, primitive_data) {
         this.whitespace_series.update(data);
+        this.primitive_left.setData([primitive_data]);
+        this.primitive_right.setData([primitive_data]);
+        this.primitive_overlay.setData([primitive_data]);
     }
     add_indicator(_id, type) {
         this.indicators.set(_id, new indicator(_id, type, this));

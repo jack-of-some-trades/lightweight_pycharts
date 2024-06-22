@@ -33,15 +33,17 @@ export class Frame {
         });
         this.div.addEventListener('mousedown', this.assign_active_frame.bind(this));
     }
-    set_whitespace_data(data) {
+    set_whitespace_data(data, Primitive_data) {
         var _a;
-        (_a = this.main_pane) === null || _a === void 0 ? void 0 : _a.set_whitespace_data(data);
-        this.panes.forEach(pane => { pane.set_whitespace_data(data); });
+        if (Primitive_data === undefined)
+            Primitive_data = { time: '1970-01-01', value: 0 };
+        (_a = this.main_pane) === null || _a === void 0 ? void 0 : _a.set_whitespace_data(data, Primitive_data);
+        this.panes.forEach(pane => { pane.set_whitespace_data(data, Primitive_data); });
     }
-    update_whitespace_data(data) {
+    update_whitespace_data(data, Primitive_data) {
         var _a;
-        (_a = this.main_pane) === null || _a === void 0 ? void 0 : _a.update_whitespace_data(data);
-        this.panes.forEach(pane => { pane.update_whitespace_data(data); });
+        (_a = this.main_pane) === null || _a === void 0 ? void 0 : _a.update_whitespace_data(data, Primitive_data);
+        this.panes.forEach(pane => { pane.update_whitespace_data(data, Primitive_data); });
     }
     set_symbol(new_symbol) {
         this.symbol = new_symbol;

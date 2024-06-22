@@ -267,9 +267,9 @@ class PyWv(View):
         # Pass Hooks and run_script to super
         super().__init__(mp_hooks, run_script=self._handle_eval_js)
 
-        if debug:
-            logger.setLevel(logging.DEBUG)
-            # webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
+        # if debug:
+        #     logger.setLevel(logging.DEBUG)
+        # webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
 
         # assign default js_api if it was not provided
         if api is None:

@@ -228,7 +228,6 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 		let x1 = timeScale.timeToCoordinate(this._source._p1.time);
 		let x2 = timeScale.timeToCoordinate(this._source._p2.time);
 
-		//TODO: Fix this, if a line transitions from in whitespace to over a series, the line disappears 
 		if (x1 === null || x2 === null || y1 === null || y2 === null) {
 			this._p1 = null
 			this._p2 = null

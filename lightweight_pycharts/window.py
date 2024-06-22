@@ -19,7 +19,7 @@ from .orm import layouts, Symbol
 from .events import Events, Emitter, Socket_Switch_Protocol
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD, PY_CMD
-from .orm.series import AnyBasicData, SeriesType
+from .orm.series import AnyBasicData, SeriesType, SingleValueData
 
 
 logger = logging.getLogger("lightweight-pycharts")
@@ -43,7 +43,7 @@ class Window:
         *,
         daemon: bool = False,
         events: Optional[Events] = None,
-        log_level: logging._Level = "WARNING",
+        log_level: Optional[logging._Level] = None,
         options: Optional[orm.options.PyWebViewOptions] = None,
         **kwargs,
     ) -> None:
@@ -52,8 +52,9 @@ class Window:
             # PyWebviewOptions Given, overwrite anything in kwargs.
             kwargs = asdict(options)
 
-        logger.setLevel(log_level)
-        if "debug" in kwargs.keys() and kwargs["debug"]:
+        if log_level is not None:
+            logger.setLevel(log_level)
+        elif "debug" in kwargs.keys() and kwargs["debug"]:
             logger.setLevel(logging.DEBUG)
 
         # create and then unpack the hooks directly into class variables
@@ -432,14 +433,14 @@ class Frame:
         "*Does not change underlying data*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_SERIES_TYPE, self._js_id, series_type))
 
-    def __set_whitespace__(self, data: pd.DataFrame):
-        self._fwd_queue.put((JS_CMD.SET_WHITESPACE_DATA, self._js_id, data))
+    def __set_whitespace__(self, data: pd.DataFrame, p_data: SingleValueData):
+        self._fwd_queue.put((JS_CMD.SET_WHITESPACE_DATA, self._js_id, data, p_data))
 
     def __clear_whitespace__(self):
         self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self._js_id))
 
-    def __update_whitespace__(self, data: AnyBasicData):
-        self._fwd_queue.put((JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data))
+    def __update_whitespace__(self, data: AnyBasicData, p_data: SingleValueData):
+        self._fwd_queue.put((JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data, p_data))
 
     # endregion
 

@@ -16,6 +16,7 @@ from .orm.enum import layouts
 from .orm.series import (
     AnySeriesData,
     AnySeriesOptions,
+    SingleValueData,
     WhitespaceData,
     SeriesType,
 )
@@ -200,16 +201,18 @@ def set_frame_timeframe(frame_id: str, timeframe: types.TF) -> str:
     return f"{frame_id}.set_timeframe('{timeframe.toString}')"
 
 
-def set_whitespace_data(frame_id: str, data: DataFrame) -> str:
-    return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')})"
+def set_whitespace_data(frame_id: str, data: DataFrame, p_data: SingleValueData) -> str:
+    return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')}, {dump(p_data)})"
 
 
 def clear_whitespace_data(frame_id: str) -> str:
     return f"{frame_id}.set_whitespace_data([])"
 
 
-def update_whitespace_data(frame_id: str, data: WhitespaceData) -> str:
-    return f"{frame_id}.update_whitespace_data({dump(data)})"
+def update_whitespace_data(
+    frame_id: str, data: WhitespaceData, p_data: SingleValueData
+) -> str:
+    return f"{frame_id}.update_whitespace_data({dump(data)}, {dump(p_data)})"
 
 
 # endregion

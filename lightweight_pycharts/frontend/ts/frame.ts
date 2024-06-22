@@ -1,4 +1,4 @@
-import { WhitespaceData } from "./lib/pkg.js";
+import { SingleValueData, WhitespaceData } from "./lib/pkg.js";
 import { Pane } from "./pane.js";
 import { Series_Type, symbol_item, tf } from "./util.js";
 
@@ -72,14 +72,15 @@ export class Frame {
 
     // #region -------------- Python API Functions ------------------ //
 
-    protected set_whitespace_data(data: WhitespaceData[]) {
-        this.main_pane?.set_whitespace_data(data)
-        this.panes.forEach(pane => { pane.set_whitespace_data(data) })
+    protected set_whitespace_data(data: WhitespaceData[], Primitive_data:SingleValueData) {
+        if (Primitive_data === undefined) Primitive_data = {time:'1970-01-01', value:0}
+        this.main_pane?.set_whitespace_data(data, Primitive_data)
+        this.panes.forEach(pane => { pane.set_whitespace_data(data, Primitive_data) })
     }
 
-    protected update_whitespace_data(data: WhitespaceData) {
-        this.main_pane?.update_whitespace_data(data)
-        this.panes.forEach(pane => { pane.update_whitespace_data(data) })
+    protected update_whitespace_data(data: WhitespaceData, Primitive_data:SingleValueData) {
+        this.main_pane?.update_whitespace_data(data, Primitive_data)
+        this.panes.forEach(pane => { pane.update_whitespace_data(data, Primitive_data) })
     }
 
     protected set_symbol(new_symbol: symbol_item) {

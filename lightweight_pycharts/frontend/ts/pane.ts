@@ -20,6 +20,7 @@ export class Pane {
 
     primitive_left: LineSeries
     primitive_right: LineSeries
+    primitive_overlay: LineSeries
     whitespace_series: LineSeries
     private chart_div: HTMLDivElement
 
@@ -34,15 +35,15 @@ export class Pane {
         this.div = div
         this.flex_width = flex_width
         this.flex_height = flex_height
-
         //Only One Chart per pane, so this is the only definition needed
         this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.chart.chartElement()
 
+        this.whitespace_series = this.chart.addLineSeries()
         //Add Blank Series that primtives can be attached to
         this.primitive_left = this.chart.addLineSeries({ priceScaleId: 'left', visible: false, autoscaleInfoProvider: undefined })
         this.primitive_right = this.chart.addLineSeries({ priceScaleId: 'right', visible: false, autoscaleInfoProvider: undefined })
-        this.whitespace_series = this.chart.addLineSeries({
+        this.primitive_overlay = this.chart.addLineSeries({
             visible: false,
             priceScaleId: '',
             autoscaleInfoProvider: () => ({
@@ -84,20 +85,18 @@ export class Pane {
         window.active_pane.div.setAttribute('active', '')
     }
 
-    set_whitespace_data(data: WhitespaceData[]) {
-        //We also want to set the values of a few data points so that anything attached to the Left/Right 
-        //primitive display series' will be drawn appropriately (all resulting series lines are invisible and don't autoscale)
-        //This is done here so that the timestamp will be guarenteed to be part of the data set given to the chart
-        if (data.length > 0) {
-            this.primitive_left.setData([{ time: data[0].time, value: 0 }])
-            this.primitive_right.setData([{ time: data[0].time, value: 0 }])
-        }
-
+    set_whitespace_data(data: WhitespaceData[], primitive_data:SingleValueData) {
         this.whitespace_series.setData(data)
+        this.primitive_left.setData([primitive_data])
+        this.primitive_right.setData([primitive_data])
+        this.primitive_overlay.setData([primitive_data])
     }
 
-    update_whitespace_data(data: WhitespaceData) {
+    update_whitespace_data(data: WhitespaceData, primitive_data:SingleValueData) {
         this.whitespace_series.update(data)
+        this.primitive_left.setData([primitive_data])
+        this.primitive_right.setData([primitive_data])
+        this.primitive_overlay.setData([primitive_data])
     }
 
     protected add_indicator(_id: string, type: string) {
@@ -136,3 +135,14 @@ export class Pane {
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
     update_timescale_opts(newOpts: DeepPartial<HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
 }
+
+
+/** Important Note about the Primitive [Left / Right / Overlay] Series
+ * 
+ * These are blank series that only contain Primitives as the name would imply. For them to display anything
+ * they need at least 1 data-point with a value and a time that is either on screen or in the future. 
+ * If they is only whitespace then they are not rendered. Similarly, if their only data is off screen *in the 
+ * past* then they are not rendered. Because of this they each carry 1 data-point the is {time: ****, value:0}
+ * where the time is always the Current bar time of the main series. Any further in the past and things may
+ * de-render. Any further in the Future and it will mess up auto-scroll on new data.
+ */

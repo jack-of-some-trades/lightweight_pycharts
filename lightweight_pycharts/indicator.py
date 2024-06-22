@@ -640,7 +640,10 @@ class Series(Indicator):
         # Only make Whitespace Series if this is the primary dataset
         if self.__frame_primary_src__:
             self.whitespace_data = Whitespace_DF(self.main_data)
-            self.parent_frame.__set_whitespace__(self.whitespace_data.df)
+            self.parent_frame.__set_whitespace__(
+                self.whitespace_data.df,
+                SingleValueData(self.main_data.curr_bar_open_time, 0),
+            )
 
         if self.__frame_primary_src__:
             # Only do this once everything else has completed and not Error'd.
@@ -697,11 +700,15 @@ class Series(Indicator):
                         data_update.time,
                     )
                     self.whitespace_data = Whitespace_DF(self.main_data)
-                    self.parent_frame.__set_whitespace__(self.whitespace_data.df)
+                    self.parent_frame.__set_whitespace__(
+                        self.whitespace_data.df,
+                        SingleValueData(self.main_data.curr_bar_open_time, 0),
+                    )
                 else:
                     # Lengthen Whitespace Data to keep 500bar Buffer
                     self.parent_frame.__update_whitespace__(
-                        self.whitespace_data.extend()
+                        self.whitespace_data.extend(),
+                        SingleValueData(self.main_data.curr_bar_open_time, 0),
                     )
 
         self._update_bar_state()
@@ -836,7 +843,6 @@ class Volume(Indicator):
         self.link_args({"data": src})
 
     def set_data(self, data: pd.DataFrame, *_, **__):
-        logger.info(self._data)
         if "volume" not in data.columns:
             return
 
@@ -895,8 +901,8 @@ class SMA(Indicator):
     def set_data(self, data: pd.Series, *_, **__):
         self._data = data.rolling(window=self.period).mean()
         self.line_series.set_data(self._data)
-        p1 = SingleValueData(self._data.index[-5], self._data[-5] - 10)
-        p2 = SingleValueData(self._data.index[-30], self._data[-30] + 10)
+        p1 = SingleValueData(self._data.index[-5], self._data.iloc[-5] * 0.9)
+        p2 = SingleValueData(self._data.index[-30], self._data.iloc[-30] * 1.1)
         self.trend_line = pr.TrendLine(self, p1, p2)
 
     def update_data(self, time: pd.Timestamp, data: pd.Series, *_, **__):
