@@ -57,9 +57,9 @@ class BarState:
     """
 
     index: int = -1
-    time: pd.Timestamp = pd.Timestamp(-1)
-    timestamp: pd.Timestamp = pd.Timestamp(-1)
-    time_close: pd.Timestamp = pd.Timestamp(-1)
+    time: pd.Timestamp = pd.Timestamp(0)
+    timestamp: pd.Timestamp = pd.Timestamp(0)
+    time_close: pd.Timestamp = pd.Timestamp(0)
     time_length: pd.Timedelta = pd.Timedelta(0)
 
     open: float = nan
@@ -91,7 +91,7 @@ class Watcher:
         self._set_data = parent.set_data
         self._clear_data = parent.clear_data
         self._update_data = parent.update_data
-        self._notify_observers = parent.notify_observers
+        self._notify_observers = parent._notify_observers
 
         self._set = False
 
@@ -353,6 +353,12 @@ class Indicator(metaclass=IndicatorMeta):
     def __del__(self):
         logger.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
 
+    def _notify_observers(self, notif_type: Notification):
+        "Loop through observers notifying them there is an update to be made"
+        for watcher in self._observers:
+            if (watcher := watcher()) is not None:
+                watcher.notify(self, notif_type)
+
     def delete(self):
         "Remove the indicator and all of it's instance objects"
         self.unlink_all_args()
@@ -360,6 +366,7 @@ class Indicator(metaclass=IndicatorMeta):
             series.delete()
         for primative in self._primitives.copy().values():
             primative.delete()
+        self.clear_data()  # Clear data after deleting sub-objects to limit redundant actions
         self.parent_frame.indicators.pop(self._js_id)
         self._fwd_queue.put((JS_CMD.REMOVE_INDICATOR, *self._ids))
 
@@ -400,25 +407,19 @@ class Indicator(metaclass=IndicatorMeta):
         """
 
     def clear_data(self):
-        "Clear Data from the indicator, resetting it the post __init__ state"
+        """
+        Clear Data from the indicator, resetting it the post __init__ state. This is also called
+        just prior to indicator deletion, so can reliably clean up the state of linked objects.
+
+        The series and primitive objects are not guaranteed to exist since this might be called
+        ahead of deletion.
+        """
         for series in self._series.values():
             series.clear_data()
-        # for _, primative in self._primitives_.items():
-        #     primative.delete()?
+        for primative in self._primitives.values():
+            primative.clear()
         # Notify Observers
-        self.notify_observers("clear")
-
-    def apply_options(self):
-        "Applies the given set of indicator options"
-
-    def hoist(self, *_, **__):
-        "Hoist Data From another indicator into this one."
-
-    def notify_observers(self, notif_type: Notification):
-        "Loop through observers notifying them there is an update to be made"
-        for watcher in self._observers:
-            if (watcher := watcher()) is not None:
-                watcher.notify(self, notif_type)
+        self._notify_observers("clear")
 
     def link_args(self, args: dict[str, Callable]):
         """
@@ -435,7 +436,9 @@ class Indicator(metaclass=IndicatorMeta):
         if "bar_state" in cls.__input_args__ and "bar_state" not in args:
             args["bar_state"] = self.parent_frame.main_series.bar_state
         if "time" in cls.__input_args__ and "time" not in args:
-            args["time"] = self.parent_frame.main_series.time
+            args["time"] = self.parent_frame.main_series.last_bar_time
+        if "bar_index" in cls.__input_args__ and "bar_index" not in args:
+            args["bar_index"] = self.parent_frame.main_series.last_bar_index
 
         # Check all required argument links are present
         if not set(cls.__input_args__.keys()).issubset(args.keys()):
@@ -495,6 +498,63 @@ class Indicator(metaclass=IndicatorMeta):
         self._watcher.update_args = {}
         self._watcher.update_notifiers = {}
         self._watcher.observables = {}
+
+    def get_primitives_of_type[T: pr.Primitive](self, _type: type[T]) -> dict[str, T]:
+        "Returns a Dictionary of Primitives owned by this indicator of the Given Type"
+        if _type == pr.Primitive:
+            return self._primitives.copy()  # type: ignore ... I know what I'm doing? wtf?
+        rtn_dict = {}
+        for _key, _primitive in self._primitives.items():
+            if isinstance(_primitive, _type):
+                rtn_dict[_key] = _primitive
+        return rtn_dict
+
+    def get_series_of_type[T: sc.SeriesCommon](self, _type: type[T]) -> dict[str, T]:
+        "Returns a Dictionary of Series Objects owned by this indicator of the Given Type"
+        if _type == sc.SeriesCommon:
+            return self._series.copy()  # type: ignore
+        rtn_dict = {}
+        for _key, _series in self._series.items():
+            if isinstance(_series, _type):
+                rtn_dict[_key] = _series
+        return rtn_dict
+
+    def delete_primitives(self, _type: type = pr.Primitive):
+        """
+        Deletes all Primitives owned by this indicator of the given type.
+        If no argument is given, all of the primitives will be deleted.
+        """
+        for _primitive in self._primitives.copy().values():
+            if isinstance(_primitive, _type):
+                _primitive.delete()
+
+    def delete_series(self, _type: type = sc.SeriesCommon):
+        """
+        Deletes all Primitives owned by this indicator of the given type.
+        If no argument is given, all of the primitives will be deleted.
+        """
+        for _series in self._series.copy().values():
+            if isinstance(_series, _type):
+                _series.delete()
+
+    def bar_time(self, index: int) -> pd.Timestamp:
+        """
+        Get the timestamp at a given bar index. Negative indices are valid and will start at
+        the last bar time.
+
+        The returned timestamp will always be bound to the limits of the underlying dataset
+        e.g. [FirstBarTime, LastBarTime]. If no underlying data exists 1970-01-01[UTC] is returned.
+
+        The index may be up to 500 bars into the future, though this timestamp is not guaranteed to
+        always remain valid depending on the data received. This can cause Primitives to de-render.
+
+        For example, say the projected time of the next bar is 4:15pm and we draw a Primitive at
+        that timestamp. The next piece of bar data is received with an opening time of 5PM so the
+        4:15PM Bar is skipped. The Library will remove the Whitespace between 4:15PM and 5PM so
+        the chart doesn't have visible gaps. If the Primitive is still supposed to be drawn at
+        4:15PM, it will de-render until a valid timestamp is given.
+        """
+        return self.parent_frame.main_series.bar_time(index)
 
 
 # pylint: enable=protected-access
@@ -642,7 +702,7 @@ class Series(Indicator):
             self.parent_frame.__set_displayed_timeframe__(self.main_data.timeframe)
 
         # Notify Observers
-        self.notify_observers("set")
+        self._notify_observers("set")
 
     def update_data(self, data_update: AnyBasicData, *_, accumulate=False, **__):
         """
@@ -709,7 +769,7 @@ class Series(Indicator):
         self.main_series.update_data(display_data)
 
         # Notify Observers
-        self.notify_observers("update")
+        self._notify_observers("update")
 
     def clear_data(
         self, timeframe: Optional[TF] = None, symbol: Optional[Symbol] = None, **_
@@ -759,7 +819,58 @@ class Series(Indicator):
         if self.__frame_primary_src__:
             self.parent_frame.__set_displayed_series_type__(self.opts.series_type)
 
+    def bar_time(self, index: int) -> pd.Timestamp:
+        """
+        Get the timestamp at a given bar index. Negative indices are valid and will start
+        at the last bar time.
+
+        The returned timestamp will always be bound to the limits of the underlying dataset
+        e.g. [FirstBarTime, LastBarTime]. If no underlying data exists 1970-01-01[UTC] is returned.
+
+        The index may be up to 500 bars into the future, though this is only guaranteed to be the
+        desired timestamp if this Series Indicator is the Main Series Data for it's parent Frame.
+        Depending on the data received, Future Timestamps may not always remain valid.
+        """
+        if self.main_data is None:
+            logger.warning("Requested Bar-Time prior setting series data!")
+            return pd.Timestamp(0)
+
+        if self.whitespace_data is not None:
+            # Find index given main dataset and Whitespace Projection
+            total_len = len(self.main_data.df) + len(self.whitespace_data.df)
+            if index > total_len - 1:
+                logger.warning("Requested Bar-Time beyond 500 Bars in the Future.")
+                return self.whitespace_data.df.index[-1]
+            elif index < -(len(self.main_data.df) - 1):
+                logger.warning("Requested Bar-Time prior to start of the dataset.")
+                return self.main_data.df.index[0]
+            else:
+                if index < len(self.main_data.df):
+                    return self.main_data.df.index[index]
+                else:
+                    return self.whitespace_data.df.index[index - len(self.main_data.df)]
+        else:
+            # Series has no Whitespace projection
+            if index > len(self.main_data.df) - 1:
+                logger.warning("Requested Bar-Time beyond the dataset.")
+                return self.main_data.df.index[-1]
+            elif index < -(len(self.main_data.df) - 1):
+                logger.warning("Requested Bar-Time prior to start of the dataset.")
+                return self.main_data.df.index[0]
+            else:
+                return self.main_data.df.index[index]
+
     # region ---------------- Output Properties ----------------
+
+    @output_property
+    def last_bar_index(self) -> int:
+        "Last Bar Index of the dataset. Returns -1 if there is no valid data"
+        return -1 if self._bar_state is None else self._bar_state.index
+
+    @output_property
+    def last_bar_time(self) -> pd.Timestamp:
+        "Open Time of the Last Bar. Returns 1970-01-01 if there is no valid data"
+        return pd.Timestamp(0) if self._bar_state is None else self._bar_state.time
 
     @output_property
     def bar_state(self) -> BarState:
@@ -767,11 +878,6 @@ class Series(Indicator):
         if self._bar_state is not None:
             return self._bar_state
         return BarState()
-
-    @output_property
-    def time(self) -> pd.Timestamp:
-        "A Reference to the full series dataframe"
-        return pd.Timestamp(0) if self._bar_state is None else self._bar_state.time
 
     @output_property
     def blank_series_df(self) -> Series_DF:
@@ -894,13 +1000,17 @@ class SMA(Indicator):
     def set_data(self, data: pd.Series, *_, **__):
         self._data = data.rolling(window=self.period).mean()
         self.line_series.set_data(self._data)
-        p1 = SingleValueData(self._data.index[-5], self._data.iloc[-5] * 0.9)
-        p2 = SingleValueData(self._data.index[-30], self._data.iloc[-30] * 1.1)
-        self.trend_line = pr.TrendLine(self, p1, p2)
+        # p1 = SingleValueData(self.bar_time(-5), self._data.iloc[-5] * 0.9)
+        # p2 = SingleValueData(self.bar_time(-30), self._data.iloc[-30] * 1.1)
+        # self.trend_line = pr.TrendLine(self, p1, p2)
 
     def update_data(self, time: pd.Timestamp, data: pd.Series, *_, **__):
         self._data[time] = data.tail(self.period).mean()
         self.line_series.update_data(SingleValueData(time, self._data.iloc[-1]))
+        # self.trend_line.delete()
+        # p1 = SingleValueData(self.bar_time(-5), self._data.iloc[-5] * 0.9)
+        # p2 = SingleValueData(self.bar_time(-30), self._data.iloc[-30] * 1.1)
+        # self.trend_line = pr.TrendLine(self, p1, p2)
 
     @default_output_property
     def average(self) -> pd.Series:

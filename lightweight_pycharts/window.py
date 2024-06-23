@@ -478,17 +478,15 @@ class Frame:
 
     # region ------------- Indicator Functions ------------- #
 
-    def get_indicators_of_type[
-        T: ind.Indicator
-    ](self, ind_type: type[T]) -> dict[str, T]:
+    def get_indicators_of_type[T: ind.Indicator](self, _type: type[T]) -> dict[str, T]:
         "Returns a Dictionary of Indicators applied to this Frame that are of the Given Type"
         rtn_dict = {}
         for _key, _ind in self.indicators.items():
-            if isinstance(_ind, ind_type):
+            if isinstance(_ind, _type):
                 rtn_dict[_key] = _ind
         return rtn_dict
 
-    def remove_indicator(self, _id: str):
+    def remove_indicator(self, _id: str | int):
         "Remove and Delete an Indicator"
         try:
             self.indicators[_id].delete()

@@ -1,7 +1,7 @@
 "Python Object Representations of Primitive HTML Canvas drawing objects"
 
 from weakref import ref
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from dataclasses import dataclass
 from typing import Any, Optional, TYPE_CHECKING
@@ -56,6 +56,10 @@ class Primitive(metaclass=ABCMeta):
             parent_dict.pop(self._js_id)  # Ensure all references are gone
         self._fwd_queue.put((JS_CMD.REMOVE_IND_PRIMITIVE, *self._ids))
 
+    @abstractmethod
+    def clear(self):
+        "Clear the state of the Primitive so the object is not visible, though it still exists"
+
 
 class TrendLine(Primitive):
 
@@ -65,6 +69,9 @@ class TrendLine(Primitive):
     def __init__(self, parent: "Indicator", p1: SingleValueData, p2: SingleValueData):
         init_args = {"p1": p1, "p2": p2}
         super().__init__(parent, init_args)
+
+    def clear(self):
+        pass
 
     @dataclass
     class Options:
