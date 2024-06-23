@@ -1,5 +1,6 @@
 """ Classes and functions that handle implementation of chart indicators """
 
+from weakref import ReferenceType, ref
 from logging import getLogger
 from dataclasses import dataclass
 from abc import ABCMeta, abstractmethod
@@ -34,10 +35,6 @@ from .orm.series import (
 # pylint: disable=protected-access
 # pylint: disable=arguments-differ
 logger = getLogger("lightweight-pycharts")
-
-
-class Null:
-    "Null Object Class"
 
 
 def output_property[T: Callable](func: T) -> T:
@@ -126,11 +123,8 @@ class Watcher:
         if notification == "update" and notifier is not None:
             if notifier not in self.update_notifiers:
                 return  # This Notifier not involved in updating data (Probably just sets data)
-
             if not self._set:
-                raise Warning(
-                    f"'{notifier.name}' tried to update {self} before Watcher got 'Set' command"
-                )
+                return  # Indicator not Ready to receive an Update. (Ext. src probably called Update)
 
             self.update_notifiers[notifier] = True
             if all(self.update_args.values()):
@@ -172,13 +166,13 @@ class IndicatorMeta(ABCMeta):
 
         # Place the Signatures of these functions into Class Attributes. These Attributes
         # will be used by the Watcher and others for indicator on indicator integration.
-        set_sig = signature(getattr(cls, "set_data", Null))
+        set_sig = signature(getattr(cls, "set_data", lambda: None))
         if len(set_sig.parameters) <= 1:
             raise TypeError("{name}.set_data() must take at least 1 argument")
         set_args = mcs.parse_input_args(set_sig)
         setattr(cls, "__set_args__", set_args)
 
-        update_sig = signature(getattr(cls, "update_data", Null))
+        update_sig = signature(getattr(cls, "update_data", lambda: None))
         if len(update_sig.parameters) <= 1:
             raise TypeError("{name}.update_data() must take at least 1 argument")
         update_args = mcs.parse_input_args(update_sig)
@@ -219,9 +213,7 @@ class IndicatorMeta(ABCMeta):
                     "Indicator Abstract Methods Cannot Use Position Only Args."
                 )  # Look, i'm not gonna code the Watcher to dance around that shit.
 
-            param_default = (
-                Null() if isinstance(param.default, _empty) else param.default
-            )
+            param_default = param.default
             param_type = (
                 object if isinstance(param.annotation, _empty) else param.annotation
             )
@@ -297,7 +289,6 @@ class Indicator(metaclass=IndicatorMeta):
         js_id: Optional[str] = None,
         display_pane_id: Optional[str] = None,
     ) -> None:
-
         if isinstance(parent, win.Frame):
             self.parent_frame = parent
         else:
@@ -335,7 +326,7 @@ class Indicator(metaclass=IndicatorMeta):
 
         # Setup Indicator Observer Structures
         self._watcher = Watcher(self)
-        self._observers: list[Watcher] = []
+        self._observers: list[ReferenceType[Watcher]] = []
 
         # Name is used as an identifier when linking args from the screen.
         self.name = self.__class__.__name__
@@ -364,12 +355,11 @@ class Indicator(metaclass=IndicatorMeta):
 
     def delete(self):
         "Remove the indicator and all of it's instance objects"
+        self.unlink_all_args()
         for series in self._series.copy().values():
             series.delete()
-        # for primitive in self._primitives_.copy().values():
-        #     primitive.delete()
-        self.unlink_all_args()
-
+        for primative in self._primitives.copy().values():
+            primative.delete()
         self.parent_frame.indicators.pop(self._js_id)
         self._fwd_queue.put((JS_CMD.REMOVE_INDICATOR, *self._ids))
 
@@ -411,7 +401,7 @@ class Indicator(metaclass=IndicatorMeta):
 
     def clear_data(self):
         "Clear Data from the indicator, resetting it the post __init__ state"
-        for _, series in self._series.items():
+        for series in self._series.values():
             series.clear_data()
         # for _, primative in self._primitives_.items():
         #     primative.delete()?
@@ -427,7 +417,8 @@ class Indicator(metaclass=IndicatorMeta):
     def notify_observers(self, notif_type: Notification):
         "Loop through observers notifying them there is an update to be made"
         for watcher in self._observers:
-            watcher.notify(self, notif_type)
+            if (watcher := watcher()) is not None:
+                watcher.notify(self, notif_type)
 
     def link_args(self, args: dict[str, Callable]):
         """
@@ -469,10 +460,11 @@ class Indicator(metaclass=IndicatorMeta):
 
             # Give this Indicator's watcher to the function's bound instance
             bound_cls_inst = args[name].__self__
-            if self._watcher not in bound_cls_inst._observers:
-                bound_cls_inst._observers.append(self._watcher)
+            if ref(self._watcher) not in bound_cls_inst._observers:
+                # Append a weakref of this indicator's observer
+                bound_cls_inst._observers.append(ref(self._watcher))
 
-            if bound_cls_inst in self._observers:
+            if ref(bound_cls_inst) in self._observers:
                 raise Warning(
                     f"Circular Indicator dependency between {bound_cls_inst.name} & {self.name}"
                 )
@@ -495,7 +487,7 @@ class Indicator(metaclass=IndicatorMeta):
         # Remove self from all of the '_observers' lists that it's appended to
         bound_arg_funcs = self._watcher.observables.values()
         for bound_func_cls in set([func.__self__ for func in bound_arg_funcs]):
-            bound_func_cls._observers.remove(self._watcher)
+            bound_func_cls._observers.remove(ref(self._watcher))
 
         # Clear Watcher
         self._watcher.set_args = {}
@@ -726,6 +718,7 @@ class Series(Indicator):
         Clears the data in memory and on the screen and, if not none,
         updates the desired timeframe and symbol for the Frame
         """
+        self.main_data = None
         self._bar_state = None
 
         if self.__frame_primary_src__:

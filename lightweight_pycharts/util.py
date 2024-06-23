@@ -41,7 +41,7 @@ class ID_List(list[str]):
 # @pylint: disable=undefined-variable # Pylint thinks T is undefined
 class ID_Dict[T](dict[str, T]):
     """
-    A Dict that can store objects of a pre-defined or randomly generated key.
+    A Dict that can store objects with a pre-defined or randomly generated key.
     """
 
     def __init__(self, prefix: str):
@@ -51,9 +51,8 @@ class ID_Dict[T](dict[str, T]):
     def __getitem__(self, key: str | int) -> T:
         "Accessor overload so the Dict can be accessed like a list"
         if isinstance(key, int):
-            # Recall this function with the nth Key.
             try:
-                return self[next(islice(iter(self), key, key + 1))]
+                return super().__getitem__(next(islice(iter(self), key, key + 1)))
             except StopIteration as exc:  # re-raise a more informative error msg.
                 raise IndexError(f"'{key}' not a valid index of '{self}'") from exc
 

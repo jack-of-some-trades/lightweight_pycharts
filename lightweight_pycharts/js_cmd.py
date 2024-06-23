@@ -22,7 +22,7 @@ from .orm.series import (
 )
 
 
-# @pylint: disable=invalid-name
+# @pylint: disable=invalid-name, line-too-long
 class ORM_JSONEncoder(JSONEncoder):
     "Enhanced JSON Encoder that encodes various pycharts/pandas objects in JSON"
 
@@ -99,10 +99,12 @@ class JS_CMD(IntEnum):
     SET_FRAME_SERIES_TYPE = auto()
 
     # Pane Commands
-    ADD_INDICATOR = auto()
-    REMOVE_INDICATOR = auto()
     ADD_PRIMITIVE = auto()
     REMOVE_PRIMITIVE = auto()
+    ADD_INDICATOR = auto()
+    REMOVE_INDICATOR = auto()
+    ADD_IND_PRIMITIVE = auto()
+    REMOVE_IND_PRIMITIVE = auto()
 
     # Indicator Commands
     ADD_SERIES = auto()
@@ -217,7 +219,7 @@ def update_whitespace_data(
 
 # endregion
 
-# region ------------------------ Indicators ------------------------ #
+# region ------------------------ Pane ------------------------ #
 
 
 def add_indicator(pane_id: str, indicator_id: str, indicator_type: str) -> str:
@@ -226,6 +228,16 @@ def add_indicator(pane_id: str, indicator_id: str, indicator_type: str) -> str:
 
 def remove_indicator(pane_id: str, indicator_id: str) -> str:
     return f"{pane_id}.remove_indicator('{indicator_id}')"
+
+
+def add_primitive(
+    pane_id: str, primitive_id: str, primitive_type: str, args: dict[str, Any]
+) -> str:
+    return f"{pane_id}.add_primitive('{primitive_id}','{primitive_type}', {dump(args)})"
+
+
+def remove_primitive(pane_id: str, primitive_id: str) -> str:
+    return f"{pane_id}.remove_primitive('{primitive_id}')"
 
 
 # Retreives an indicator object from a pane to manipulate
@@ -325,7 +337,7 @@ def update_scale_opts(
 # region ------------------------ Indicator Primitives ------------------------ #
 
 
-def add_primitive(
+def add_ind_primitive(
     pane_id: str,
     indicator_id: str,
     primitive_id: str,
@@ -335,6 +347,17 @@ def add_primitive(
     return (
         indicator_preamble(pane_id, indicator_id)
         + f"indicator.add_primitive('{primitive_id}','{primitive_type}', {dump(args)})"
+    )
+
+
+def remove_ind_primitive(
+    pane_id: str,
+    indicator_id: str,
+    primitive_id: str,
+) -> str:
+    return (
+        indicator_preamble(pane_id, indicator_id)
+        + f"indicator.remove_primitive('{primitive_id}')"
     )
 
 
@@ -374,7 +397,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.ADD_INDICATOR: add_indicator,
     JS_CMD.REMOVE_INDICATOR: remove_indicator,
     JS_CMD.ADD_PRIMITIVE: add_primitive,
-    # JS_CMD.REMOVE_PRIMITIVE: None,
+    JS_CMD.REMOVE_PRIMITIVE: remove_primitive,
     # ---- Indicator Commands ----
     JS_CMD.ADD_SERIES: add_series,
     JS_CMD.REMOVE_SERIES: remove_series,
@@ -384,6 +407,8 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.CHANGE_SERIES_TYPE: change_series_type,
     JS_CMD.UPDATE_SERIES_OPTS: update_series_opts,
     JS_CMD.UPDATE_PRICE_SCALE_OPTS: update_scale_opts,
+    JS_CMD.ADD_IND_PRIMITIVE: add_ind_primitive,
+    JS_CMD.REMOVE_IND_PRIMITIVE: remove_ind_primitive,
     # ---- PyWebView Commands ----
     JS_CMD.SHOW: return_blank,
     JS_CMD.HIDE: return_blank,

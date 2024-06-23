@@ -134,7 +134,7 @@ export class indicator {
         series.priceScale().applyOptions(opts)
     }
 
-    add_primitive(_id: string, _type: string, params:any) {
+    protected add_primitive(_id: string, _type: string, params:any) {
         let primitive_type = primitives.get(_type)
         if (primitive_type === undefined) return
         let new_obj = new primitive_type(params)
@@ -143,5 +143,11 @@ export class indicator {
         this.pane.primitive_right.attachPrimitive(new_obj)
     }
 
-    remove_primitive() { }
+    protected remove_primitive(_id: string) {
+        let _obj = this.primitives_right.get(_id)
+        if (_obj === undefined) return
+
+        this.pane.primitive_right.detachPrimitive(_obj) 
+        this.primitives_right.delete(_id)
+    }
 }

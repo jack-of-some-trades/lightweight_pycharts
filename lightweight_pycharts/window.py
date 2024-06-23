@@ -415,7 +415,7 @@ class Frame:
         ind.Series(self, js_id=ind.Series.__special_id__)
 
     def __del__(self):
-        for _, indicator in self.indicators.copy().items():
+        for indicator in self.indicators.copy().values():
             indicator.delete()
         logger.debug("Deleteing Frame: %s", self._js_id)
 

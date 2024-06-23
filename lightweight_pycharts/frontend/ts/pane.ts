@@ -1,6 +1,8 @@
 import { indicator } from "./indicator.js";
 import { Legend } from "./legend.js";
 import { DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, LineSeries, SingleValueData, TimeChartOptions, WhitespaceData, createChart } from "./lib/pkg.js";
+import { PrimitiveBase } from "./lwpc-plugins/primitive-base.js";
+import { primitives } from "./lwpc-plugins/primitives.js";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 
@@ -17,6 +19,9 @@ export class Pane {
 
     chart: IChartApi
     indicators = new Map<string, indicator>()
+    private primitives_left = new Map<string, PrimitiveBase>()
+    private primitives_right = new Map<string, PrimitiveBase>()
+    private primitives_overlay = new Map<string, PrimitiveBase>()
 
     primitive_left: LineSeries
     primitive_right: LineSeries
@@ -109,6 +114,23 @@ export class Pane {
 
         indicator.delete()
         this.indicators.delete(_id)
+    }
+
+    protected add_primitive(_id: string, _type: string, params:any) {
+        let primitive_type = primitives.get(_type)
+        if (primitive_type === undefined) return
+        let new_obj = new primitive_type(params)
+
+        this.primitives_right.set(_id, new_obj)
+        this.primitive_right.attachPrimitive(new_obj)
+    }
+
+    protected remove_primitive(_id: string) {
+        let _obj = this.primitives_right.get(_id)
+        if (_obj === undefined) return
+
+        this.primitive_right.detachPrimitive(_obj) 
+        this.primitives_right.delete(_id)
     }
 
     /**

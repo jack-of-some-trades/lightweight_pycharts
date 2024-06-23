@@ -1,11 +1,15 @@
 import { indicator } from "./indicator.js";
 import { createChart } from "./lib/pkg.js";
+import { primitives } from "./lwpc-plugins/primitives.js";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line.js";
 import * as u from "./util.js";
 export class Pane {
     constructor(id, div, flex_width = 1, flex_height = 1, chart_opts = u.DEFAULT_PYCHART_OPTS) {
         this.id = '';
         this.indicators = new Map();
+        this.primitives_left = new Map();
+        this.primitives_right = new Map();
+        this.primitives_overlay = new Map();
         this.id = id;
         this.div = div;
         this.flex_width = flex_width;
@@ -69,6 +73,21 @@ export class Pane {
             return;
         indicator.delete();
         this.indicators.delete(_id);
+    }
+    add_primitive(_id, _type, params) {
+        let primitive_type = primitives.get(_type);
+        if (primitive_type === undefined)
+            return;
+        let new_obj = new primitive_type(params);
+        this.primitives_right.set(_id, new_obj);
+        this.primitive_right.attachPrimitive(new_obj);
+    }
+    remove_primitive(_id) {
+        let _obj = this.primitives_right.get(_id);
+        if (_obj === undefined)
+            return;
+        this.primitive_right.detachPrimitive(_obj);
+        this.primitives_right.delete(_id);
     }
     resize(width, height) {
         let this_width = width * this.flex_width;

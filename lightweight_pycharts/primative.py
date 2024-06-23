@@ -1,8 +1,10 @@
 "Python Object Representations of Primitive HTML Canvas drawing objects"
 
-from typing import Any, Optional, TYPE_CHECKING
-from dataclasses import dataclass
+from weakref import ref
 from abc import ABCMeta
+from logging import getLogger
+from dataclasses import dataclass
+from typing import Any, Optional, TYPE_CHECKING
 
 
 from .js_cmd import JS_CMD
@@ -14,6 +16,7 @@ if TYPE_CHECKING:
     from .indicator import Indicator
 
 # pylint: disable=invalid-name
+logger = getLogger("lightweight-pycharts")
 
 
 class Primitive(metaclass=ABCMeta):
@@ -25,6 +28,9 @@ class Primitive(metaclass=ABCMeta):
         js_id: Optional[str] = None,
         display_pane_id: Optional[str] = None,
     ) -> None:
+
+        # Make _primitives a Weakref since this is a child obj.
+        self._parent_primitives = ref(parent._primitives)
 
         if display_pane_id is None:
             display_pane_id = parent._ids[0]
@@ -38,8 +44,17 @@ class Primitive(metaclass=ABCMeta):
         self._fwd_queue = parent._fwd_queue
 
         self._fwd_queue.put(
-            (JS_CMD.ADD_PRIMITIVE, *self._ids, self.__class__.__name__, args)
+            (JS_CMD.ADD_IND_PRIMITIVE, *self._ids, self.__class__.__name__, args)
         )
+
+    def __del__(self):
+        logger.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
+
+    def delete(self):
+        "Remove the Object from the screen"
+        if (parent_dict := self._parent_primitives()) is not None:
+            parent_dict.pop(self._js_id)  # Ensure all references are gone
+        self._fwd_queue.put((JS_CMD.REMOVE_IND_PRIMITIVE, *self._ids))
 
 
 class TrendLine(Primitive):

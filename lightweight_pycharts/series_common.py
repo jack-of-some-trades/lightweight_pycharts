@@ -6,6 +6,7 @@ Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeri
 """
 
 import logging
+from weakref import ref
 from typing import Optional, TYPE_CHECKING
 
 import pandas as pd
@@ -69,17 +70,20 @@ class SeriesCommon:
             if "close" not in v_map:
                 self._value_map["close"] = "value"
 
-        self._parent = indicator
+        # Make _series reference a Weakref since this is a child obj.
+        self._parent_series = ref(indicator._series)
         self._fwd_queue = indicator._fwd_queue
 
         self._fwd_queue.put((JS_CMD.ADD_SERIES, *self._ids, self._series_type))
         self.apply_options(self._options)
 
-    def delete(self) -> None:
-        "Remove the Series Object from the Chart and the Parent Indicator"
-        # pylint: disable=protected-access # Ensure all references are removed
-        self._parent._series.pop(self._js_id)
-        # pylint: enable=protected-access
+    def __del__(self):
+        logger.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
+
+    def delete(self):
+        "Remove the Object from the screen"
+        if (parent_dict := self._parent_series()) is not None:
+            parent_dict.pop(self._js_id)  # Ensure all references are gone
         self._fwd_queue.put((JS_CMD.REMOVE_SERIES, *self._ids))
 
     @property
