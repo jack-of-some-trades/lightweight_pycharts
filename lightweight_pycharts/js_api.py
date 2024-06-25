@@ -14,7 +14,7 @@ from webview.errors import JavascriptException
 
 from . import orm
 from . import js_cmd as cmds
-from .orm.series import Series_DF, WhitespaceData, SeriesType
+from .orm.series import SeriesType
 from .js_cmd import JS_CMD, PY_CMD
 
 file_dir = dirname(abspath(__file__))

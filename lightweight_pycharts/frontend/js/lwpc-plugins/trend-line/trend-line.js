@@ -20,15 +20,14 @@ export class TrendLine extends PrimitiveBase {
         const timescale = this.chart.timeScale();
         return timescale.coordinateToLogical((_a = timescale.timeToCoordinate(p.time)) !== null && _a !== void 0 ? _a : -1);
     }
-    _updateData(p1, p2) {
-        if (p1 !== null)
-            this._p1 = p1;
-        if (p2 !== null)
-            this._p2 = p2;
+    updateData(params) {
+        if (params.p1 !== null)
+            this._p1 = params.p1;
+        if (params.p2 !== null)
+            this._p2 = params.p2;
+        if (params.options !== undefined)
+            this._options = Object.assign(Object.assign({}, this._options), params.options);
         this.requestUpdate();
-    }
-    _updateOptions(options) {
-        this._options = Object.assign(Object.assign({}, this._options), options);
     }
     paneViews() { return [this._paneView]; }
     updateAllViews() { this._paneView.update(); }
@@ -77,7 +76,7 @@ export class TrendLine extends PrimitiveBase {
                 let p2 = this.movePoint(this._p2, dx, dy);
                 if (!p1 || !p2)
                     return;
-                this._updateData(p1, p2);
+                this.updateData({ p1: p1, p2: p2 });
                 x = param.logical;
                 y = param.sourceEvent.clientY;
             };
@@ -90,9 +89,9 @@ export class TrendLine extends PrimitiveBase {
                 let p = series.coordinateToPrice(param.sourceEvent.clientY - chart_rect.top);
                 if (t && p)
                     if (id === "line_p1")
-                        this._updateData({ time: t, value: p }, null);
+                        this.updateData({ p1: { time: t, value: p }, p2: null });
                     else if (id === "line_p2")
-                        this._updateData(null, { time: t, value: p });
+                        this.updateData({ p1: null, p2: { time: t, value: p } });
             };
         }
         else

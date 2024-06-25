@@ -101,10 +101,12 @@ class JS_CMD(IntEnum):
     # Pane Commands
     ADD_PRIMITIVE = auto()
     REMOVE_PRIMITIVE = auto()
+    UPDATE_PRIMITIVE = auto()
     ADD_INDICATOR = auto()
     REMOVE_INDICATOR = auto()
     ADD_IND_PRIMITIVE = auto()
     REMOVE_IND_PRIMITIVE = auto()
+    UPDATE_IND_PRIMITIVE = auto()
 
     # Indicator Commands
     ADD_SERIES = auto()
@@ -240,6 +242,10 @@ def remove_primitive(pane_id: str, primitive_id: str) -> str:
     return f"{pane_id}.remove_primitive('{primitive_id}')"
 
 
+def update_primitive(pane_id: str, primitive_id: str, args: dict[str, Any]) -> str:
+    return f"{pane_id}.update_primitive('{primitive_id}', {dump(args)})"
+
+
 # Retreives an indicator object from a pane to manipulate
 def indicator_preamble(pane_id: str, indicator_id: str) -> str:
     return f"""
@@ -361,6 +367,18 @@ def remove_ind_primitive(
     )
 
 
+def update_ind_primitive(
+    pane_id: str,
+    indicator_id: str,
+    primitive_id: str,
+    args: dict[str, Any],
+) -> str:
+    return (
+        indicator_preamble(pane_id, indicator_id)
+        + f"indicator.update_primitive('{primitive_id}', {dump(args)})"
+    )
+
+
 # endregion
 
 # endregion
@@ -398,6 +416,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.REMOVE_INDICATOR: remove_indicator,
     JS_CMD.ADD_PRIMITIVE: add_primitive,
     JS_CMD.REMOVE_PRIMITIVE: remove_primitive,
+    JS_CMD.UPDATE_PRIMITIVE: update_primitive,
     # ---- Indicator Commands ----
     JS_CMD.ADD_SERIES: add_series,
     JS_CMD.REMOVE_SERIES: remove_series,
@@ -409,6 +428,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.UPDATE_PRICE_SCALE_OPTS: update_scale_opts,
     JS_CMD.ADD_IND_PRIMITIVE: add_ind_primitive,
     JS_CMD.REMOVE_IND_PRIMITIVE: remove_ind_primitive,
+    JS_CMD.UPDATE_IND_PRIMITIVE: update_ind_primitive,
     # ---- PyWebView Commands ----
     JS_CMD.SHOW: return_blank,
     JS_CMD.HIDE: return_blank,

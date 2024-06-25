@@ -1,10 +1,11 @@
 "Python Object Representations of Primitive HTML Canvas drawing objects"
 
+from __future__ import annotations
 from weakref import ref
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from dataclasses import dataclass
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, Self
 
 
 from .js_cmd import JS_CMD
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 logger = getLogger("lightweight-pycharts")
 
 
+@dataclass(slots=True)
 class Primitive(metaclass=ABCMeta):
 
     def __init__(
@@ -57,24 +59,38 @@ class Primitive(metaclass=ABCMeta):
         self._fwd_queue.put((JS_CMD.REMOVE_IND_PRIMITIVE, *self._ids))
 
     @abstractmethod
+    def update(self):
+        "Clear the state of the Primitive so the object is not visible, though it still exists"
+
+    @abstractmethod
     def clear(self):
         "Clear the state of the Primitive so the object is not visible, though it still exists"
+
+    @dataclass
+    class Options:
+        "Inner Data-class Defining the Display Options of the Primitive"
+        visible: Optional[bool] = None
+        editable: Optional[bool] = False
 
 
 class TrendLine(Primitive):
 
-    p1: SingleValueData
-    p2: SingleValueData
+    p1: Optional[SingleValueData]
+    p2: Optional[SingleValueData]
+    options: Optional[TrendLine.Options]
 
     def __init__(self, parent: "Indicator", p1: SingleValueData, p2: SingleValueData):
         init_args = {"p1": p1, "p2": p2}
         super().__init__(parent, init_args)
 
+    def update(self):
+        pass
+
     def clear(self):
         pass
 
     @dataclass
-    class Options:
+    class Options(Primitive.Options):
         width: Optional[int] = None
         autocale: Optional[bool] = None
         show_labels: Optional[bool] = None

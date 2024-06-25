@@ -150,4 +150,10 @@ export class indicator {
         this.pane.primitive_right.detachPrimitive(_obj) 
         this.primitives_right.delete(_id)
     }
+    
+    protected update_primitive(_id: string, params:any) {
+        let _obj = this.primitives_right.get(_id)
+        if (_obj === undefined) return
+        _obj.updateData(params)
+    }
 }

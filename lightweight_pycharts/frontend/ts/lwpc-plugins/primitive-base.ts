@@ -49,6 +49,8 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
         this._autoscale = _autoscale
     }
 
+    public abstract updateData(params: any): void
+
     public attached({ chart, series, requestUpdate }: SeriesAttachedParameter<Time>) {
         this._chart = chart;
         this._series = series;

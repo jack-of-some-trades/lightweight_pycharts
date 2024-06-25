@@ -89,6 +89,12 @@ export class Pane {
         this.primitive_right.detachPrimitive(_obj);
         this.primitives_right.delete(_id);
     }
+    update_primitive(_id, params) {
+        let _obj = this.primitives_right.get(_id);
+        if (_obj === undefined)
+            return;
+        _obj.updateData(params);
+    }
     resize(width, height) {
         let this_width = width * this.flex_width;
         let this_height = height * this.flex_height;

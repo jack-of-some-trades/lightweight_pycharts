@@ -1,6 +1,5 @@
 """ Classes and functions that handle implementation of chart indicators """
 
-from weakref import ReferenceType, ref
 from logging import getLogger
 from dataclasses import dataclass
 from abc import ABCMeta, abstractmethod
@@ -326,7 +325,7 @@ class Indicator(metaclass=IndicatorMeta):
 
         # Setup Indicator Observer Structures
         self._watcher = Watcher(self)
-        self._observers: list[ReferenceType[Watcher]] = []
+        self._observers: list[Watcher] = []
 
         # Name is used as an identifier when linking args from the screen.
         self.name = self.__class__.__name__
@@ -353,10 +352,14 @@ class Indicator(metaclass=IndicatorMeta):
     def __del__(self):
         logger.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
 
+    def __getitem__(self, index: int):
+        "Syntactic sugar for accessing the time of a bar index"
+        return self.bar_time(index)
+
     def _notify_observers(self, notif_type: Notification):
         "Loop through observers notifying them there is an update to be made"
         for watcher in self._observers:
-            if (watcher := watcher()) is not None:
+            if watcher is not None:
                 watcher.notify(self, notif_type)
 
     def delete(self):
@@ -437,8 +440,8 @@ class Indicator(metaclass=IndicatorMeta):
             args["bar_state"] = self.parent_frame.main_series.bar_state
         if "time" in cls.__input_args__ and "time" not in args:
             args["time"] = self.parent_frame.main_series.last_bar_time
-        if "bar_index" in cls.__input_args__ and "bar_index" not in args:
-            args["bar_index"] = self.parent_frame.main_series.last_bar_index
+        if "index" in cls.__input_args__ and "index" not in args:
+            args["index"] = self.parent_frame.main_series.last_bar_index
 
         # Check all required argument links are present
         if not set(cls.__input_args__.keys()).issubset(args.keys()):
@@ -463,11 +466,11 @@ class Indicator(metaclass=IndicatorMeta):
 
             # Give this Indicator's watcher to the function's bound instance
             bound_cls_inst = args[name].__self__
-            if ref(self._watcher) not in bound_cls_inst._observers:
+            if self._watcher not in bound_cls_inst._observers:
                 # Append a weakref of this indicator's observer
-                bound_cls_inst._observers.append(ref(self._watcher))
+                bound_cls_inst._observers.append(self._watcher)
 
-            if ref(bound_cls_inst) in self._observers:
+            if bound_cls_inst in self._observers:
                 raise Warning(
                     f"Circular Indicator dependency between {bound_cls_inst.name} & {self.name}"
                 )
@@ -490,7 +493,7 @@ class Indicator(metaclass=IndicatorMeta):
         # Remove self from all of the '_observers' lists that it's appended to
         bound_arg_funcs = self._watcher.observables.values()
         for bound_func_cls in set([func.__self__ for func in bound_arg_funcs]):
-            bound_func_cls._observers.remove(ref(self._watcher))
+            bound_func_cls._observers.remove(self._watcher)
 
         # Clear Watcher
         self._watcher.set_args = {}
@@ -848,7 +851,10 @@ class Series(Indicator):
                 if index < len(self.main_data.df):
                     return self.main_data.df.index[index]
                 else:
-                    return self.whitespace_data.df.index[index - len(self.main_data.df)]
+                    # Whitespace df grows as data is added hence funky iloc index.
+                    return self.whitespace_data.df["time"].iloc[
+                        (index - len(self.main_data.df)) - 500
+                    ]
         else:
             # Series has no Whitespace projection
             if index > len(self.main_data.df) - 1:
@@ -997,19 +1003,19 @@ class SMA(Indicator):
 
         self.link_args({"data": src})
 
-    def set_data(self, data: pd.Series, *_, **__):
+    def set_data(self, data: pd.Series, index: int, *_, **__):
         self._data = data.rolling(window=self.period).mean()
         self.line_series.set_data(self._data)
-        # p1 = SingleValueData(self.bar_time(-5), self._data.iloc[-5] * 0.9)
-        # p2 = SingleValueData(self.bar_time(-30), self._data.iloc[-30] * 1.1)
+        # p1 = SingleValueData(self[index + 5], self._data.iloc[-5] * 0.9)
+        # p2 = SingleValueData(self[index + 30], self._data.iloc[-30] * 1.1)
         # self.trend_line = pr.TrendLine(self, p1, p2)
 
-    def update_data(self, time: pd.Timestamp, data: pd.Series, *_, **__):
+    def update_data(self, time: pd.Timestamp, index: int, data: pd.Series, *_, **__):
         self._data[time] = data.tail(self.period).mean()
         self.line_series.update_data(SingleValueData(time, self._data.iloc[-1]))
         # self.trend_line.delete()
-        # p1 = SingleValueData(self.bar_time(-5), self._data.iloc[-5] * 0.9)
-        # p2 = SingleValueData(self.bar_time(-30), self._data.iloc[-30] * 1.1)
+        # p1 = SingleValueData(self[index + 5], self._data.iloc[-5] * 0.9)
+        # p2 = SingleValueData(self[index + 30], self._data.iloc[-30] * 1.1)
         # self.trend_line = pr.TrendLine(self, p1, p2)
 
     @default_output_property
