@@ -7,10 +7,11 @@
     "example": "examples"
   },
   "scripts": {
-    "start": "vite",
-    "dev": "vite",
-    "build": "vite build --watch",
-    "serve": "vite preview"
+    "start": "vite --config frontend_src/vite.config.ts",
+    "dev": "vite --config frontend_src/vite.config.ts",
+    "build": "vite build --config frontend_src/vite.config.ts",
+    "watch": "vite build --config frontend_src/vite.config.ts --watch",
+    "serve": "vite preview --config frontend_src/vite.config.ts"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "solid-devtools": "^0.30.1",
     "typescript": "^5.5.2",
     "vite": "^5.3.1",
+    "vite-plugin-require": "^1.2.14",
     "vite-plugin-solid": "^2.10.2",
     "watch": "^0.13.0"
   },

@@ -1,4 +1,4 @@
-import { Draggabilly } from 'draggabilly';
+const Draggabilly = require('draggabilly')
 import { icon_manager, icons } from "./icons";
 import { LAYOUT_DIM_TITLE, Wrapper_Divs } from "./util_lwc";
 import { Wrapper } from "./wrapper";
@@ -195,18 +195,19 @@ const defaultTabProperties: TabProperties = {
     title: 'LWPC',
     favicon: null
 }
-
+// console.log('Hello World')
 /**
  * Class to create and manage the Tabs bar.
  * Class handles Tab movement, Addition, and removal. 
  */
+
 class Tabs {
     static instances = 0
     instanceId: number
     el: HTMLDivElement
     styleEl: HTMLStyleElement
-    isDragging: boolean
-    draggabillies: Draggabilly[]
+    isDragging: boolean                 //@ts-ignore
+    draggabillies: Draggabilly[]        //@ts-ignore
     draggabillyDragging: Draggabilly | null = null
 
     constructor(el: HTMLDivElement) {
