@@ -123,15 +123,15 @@ async def main():
         ],
     )
 
-    main_frame = window.containers[0].frames[0]
-    df = pd.read_csv("examples/data/ohlcv.csv")
+    # main_frame = window.containers[0].frames[0]
+    # df = pd.read_csv("examples/data/ohlcv.csv")
 
-    main_frame.main_series.set_data(
-        df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
-    )
+    # main_frame.main_series.set_data(
+    #     df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
+    # )
 
-    lwc.indicator.Volume(main_frame)
-    lwc.indicator.SMA(main_frame, 20)
+    # lwc.indicator.Volume(main_frame)
+    # lwc.indicator.SMA(main_frame, 20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 
