@@ -1,5 +1,5 @@
 const Draggabilly = require('draggabilly')
-import { icon_manager, icons } from "./icons";
+import { get_svg, icons } from "./icons";
 import { LAYOUT_DIM_TITLE, Wrapper_Divs } from "./util_lwc";
 import { Wrapper } from "./wrapper";
 
@@ -67,7 +67,7 @@ export class TitleBar {
                 wrap_div = Wrapper_Divs.DRAW_TOOLS
         }
 
-        let svg = icon_manager.get_svg(icon)
+        let svg = get_svg(icon)
         if (active_start) {
             svg.setAttribute('active', '')
             parent.show_section(wrap_div)
@@ -96,7 +96,7 @@ export class TitleBar {
      */
     button(icon: icons): HTMLDivElement {
         let btn = document.createElement('div')
-        btn.appendChild(icon_manager.get_svg(icon))
+        btn.appendChild(get_svg(icon))
         btn.classList.add('titlebar_menu_button')
         btn.style.margin = '4px'
         switch (icon) {

@@ -1,4 +1,6 @@
-import { icon_manager, icons } from "./icons"
+import { render } from 'solid-js/web'
+import { indicator } from "../components/indicator"
+import { get_svg, icons } from "./icons"
 import { menu_location, switcher_item } from "./overlay"
 import { Container_Layouts, LAYOUT_DIM_TOP, Series_Type, Wrapper_Divs, interval, layout_icon_map, series_icon_map, series_label_map, tf } from "./util_lwc"
 import { Wrapper } from "./wrapper"
@@ -52,7 +54,7 @@ export class topbar {
     static menu_selector(): HTMLDivElement {
         let menu_sel = document.createElement('div')
         menu_sel.classList.add('topbar_menu_button', 'icon_hover', 'icon_v_margin')
-        menu_sel.appendChild(icon_manager.get_svg(icons.menu_arrow_ns))
+        menu_sel.appendChild(get_svg(icons.menu_arrow_ns))
 
         return menu_sel
     }
@@ -73,13 +75,13 @@ export class topbar {
         search_text.id = 'search_text'
         search_text.innerHTML = 'LWPC'
 
-        search_button.appendChild(icon_manager.get_svg(icons.menu_search, ['icon_v_margin', 'icon_h_margin']))
+        search_button.appendChild(get_svg(icons.menu_search, ['icon_v_margin', 'icon_h_margin']))
         search_button.appendChild(search_text)
         search_div.appendChild(search_button)
 
         let add_compare_btn = document.createElement('div')
         add_compare_btn.classList.add("topbar")
-        add_compare_btn.appendChild(icon_manager.get_svg(icons.menu_add, ['icon_hover']))
+        add_compare_btn.appendChild(get_svg(icons.menu_add, ['icon_hover']))
         search_div.appendChild(add_compare_btn)
 
         let search_overlay_menu = window.overlay_manager.symbol_search()
@@ -136,11 +138,17 @@ export class topbar {
         search_text.innerHTML = 'Indicators'
         search_text.style.margin = '0px'
 
-        template_btn.appendChild(icon_manager.get_svg(icons.indicator, ['icon_v_margin', 'icon_r_margin']))
+        template_btn.appendChild(get_svg(icons.indicator, ['icon_v_margin', 'icon_r_margin']))
         template_btn.appendChild(search_text)
 
         indicator_div.appendChild(template_btn)
-        indicator_div.appendChild(icon_manager.get_svg(icons.indicator_template, ['icon_hover']))
+        indicator_div.appendChild(get_svg(icons.indicator_template, ['icon_hover']))
+
+        let overlay_div = document.getElementById('overlay_manager')
+        if (overlay_div !== null)
+            indicator_div.addEventListener('click', () => {
+                render(indicator,overlay_div)
+            })
 
         return indicator_div
     }
@@ -595,7 +603,7 @@ export class layout_selector {
         if (data === null) return wrapper
 
         wrapper.setAttribute('data-layout-value', data.valueOf().toString() ?? '-1')
-        wrapper.appendChild(icon_manager.get_svg(layout_icon_map[data]))
+        wrapper.appendChild(get_svg(layout_icon_map[data]))
 
         if (pressable) {
             wrapper.addEventListener('click', () => this.select(data))
@@ -838,7 +846,7 @@ export class series_selector {
         if (data === null) return wrapper
 
         wrapper.setAttribute('data-series-value', data.valueOf().toString() ?? '-1')
-        wrapper.appendChild(icon_manager.get_svg(series_icon_map[data]))
+        wrapper.appendChild(get_svg(series_icon_map[data]))
 
         if (pressable) {
             wrapper.addEventListener('click', () => this.select(data))

@@ -1,12 +1,14 @@
 // Class and Enum defining all the available icons uhh... "borrowed"... from Tradingview
 
 /**
- * Singleton Class to manage loading of the svg icons
+ * Singleton Class to manage loading of the svg icons from a sing SVG file.
  */
 export class icon_manager {
-    static loaded: boolean = false
     private static instance: icon_manager
-    private static svg_doc: Document | null
+
+    static loaded: boolean = false
+    static svg_doc: Document | null
+    static replace_list: SVGSVGElement[] = []
 
     constructor() {
         if (icon_manager.instance) {
@@ -36,13 +38,11 @@ export class icon_manager {
     }
 
     /**
-     * Pulls all the SVGS with a 'replace' tag from the document and updates them with the true SVG file
+     * Replaces all the empty SVGs the got requested before the SVG_Doc was able to load
      */
     static update_svgs() {
-        let svgs = document.querySelectorAll("svg.replace")
-        svgs.forEach(svg => {
-            let new_svg = icon_manager.get_svg(svg.id as icons)
-            svg.classList.remove('replace')
+        icon_manager.replace_list.forEach(svg => {
+            let new_svg = get_svg(svg.id as icons)
 
             let attrs = svg.attributes
             for (let i = 0; i < attrs.length; i++)
@@ -50,31 +50,34 @@ export class icon_manager {
 
             svg.replaceWith(new_svg)
         });
+        icon_manager.replace_list = []
         icon_manager.loaded = true
     }
+}
 
-    /**
-     * Get's an SVG from the loaded SVG reference document. If the document isn't loaded, a temporary icon is returned instead
-     * @param icon The icon to be loaded
-     * @param css_classes a list of classes that should be applied to the SVG Element
-     * @returns SVGSVGElement
-     */
-    static get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
-        if (icon_manager.svg_doc) {
-            let icon_svg = icon_manager.svg_doc.querySelector(`#${icon}`) as SVGSVGElement
-            //Ensure a clone of the element is edited and returned, not a reference
-            icon_svg = icon_svg.cloneNode(true) as SVGSVGElement
+/**
+ * Get's an SVG from the loaded SVG reference document. If the document isn't loaded, a temporary icon is returned instead
+ * @param icon The icon to be loaded
+ * @param css_classes a list of classes that should be applied to the SVG Element
+ * @returns SVGSVGElement
+ */
+export function get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
+    if (icon_manager.svg_doc) {
+        let icon_svg = icon_manager.svg_doc.querySelector(`#${icon}`) as SVGSVGElement
+        //Ensure a clone of the element is edited and returned, not a reference
+        icon_svg = icon_svg.cloneNode(true) as SVGSVGElement
 
-            icon_svg.classList.add('icon')
-            css_classes.forEach(class_name => { icon_svg.classList.add(class_name) });
-            return icon_svg
-        } else {
-            let tmp_icon_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-            tmp_icon_svg.id = icon
-            tmp_icon_svg.classList.add('replace', 'icon') //Flag that SVG_doc not loaded, and this needs to be updated later
-            css_classes.forEach(class_name => { tmp_icon_svg.classList.add(class_name) });
-            return tmp_icon_svg
-        }
+        icon_svg.classList.add('icon')
+        css_classes.forEach(class_name => { icon_svg.classList.add(class_name) });
+        return icon_svg
+    } else {
+        let tmp_icon_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        tmp_icon_svg.id = icon
+        icon_manager.replace_list.push(tmp_icon_svg) //SVG_doc not loaded, store reference so this can be updated later
+
+        tmp_icon_svg.classList.add('icon') 
+        css_classes.forEach(class_name => { tmp_icon_svg.classList.add(class_name) });
+        return tmp_icon_svg
     }
 }
 

@@ -1,4 +1,4 @@
-import { icon_manager, icons } from "./icons"
+import { get_svg, icons } from "./icons"
 import { menu_location } from "./overlay"
 import { LAYOUT_DIM_LEFT, Wrapper_Divs } from "./util_lwc"
 import { Wrapper } from "./wrapper"
@@ -47,7 +47,7 @@ export class toolbox {
         let menu_sel = document.createElement('div')
         menu_sel.classList.add('toolbar_menu_button', 'icon_hover', 'icon_v_margin')
         menu_sel.style.display = 'none'
-        menu_sel.appendChild(icon_manager.get_svg(icons.menu_arrow_ew))
+        menu_sel.appendChild(get_svg(icons.menu_arrow_ew))
 
         //Menu Visibility Listeners
         parent.addEventListener('mouseenter', () => {
@@ -75,7 +75,7 @@ export class toolbox {
             { label: 'Arrow', icon: icons.cursor_arrow },
         ]
 
-        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
         let menu_div = this.menu_selector(selector_div)
         selector_div.appendChild(menu_div)
 
@@ -104,7 +104,7 @@ export class toolbox {
             { label: 'Disjoint Channel', icon: icons.channel_disjoint },
         ]
 
-        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
         let menu_div = this.menu_selector(selector_div)
         selector_div.appendChild(menu_div)
 
@@ -128,7 +128,7 @@ export class toolbox {
             { label: 'Fibinachi Extend', icon: icons.fib_extend },
         ]
 
-        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
         let menu_div = this.menu_selector(selector_div)
         selector_div.appendChild(menu_div)
 
@@ -155,7 +155,7 @@ export class toolbox {
             { label: 'Bar Ghost Feed', icon: icons.bar_ghost_feed },
         ]
 
-        selector_div.appendChild(icon_manager.get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(get_svg(items[0].icon, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
         let menu_div = this.menu_selector(selector_div)
         selector_div.appendChild(menu_div)
 
@@ -173,7 +173,7 @@ export class toolbox {
         let selector_div = document.createElement('div')
         selector_div.id = 'measuretools_selector'
         selector_div.classList.add('toolbar', 'toolbar_item')
-        selector_div.appendChild(icon_manager.get_svg(icons.ruler, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(get_svg(icons.ruler, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
 
         //selector_div.addEventListener('click', RangeTool())
 
@@ -187,7 +187,7 @@ export class toolbox {
         let selector_div = document.createElement('div')
         selector_div.id = 'measuretools_selector'
         selector_div.classList.add('toolbar', 'toolbar_item')
-        selector_div.appendChild(icon_manager.get_svg(icons.magnet, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
+        selector_div.appendChild(get_svg(icons.magnet, ['icon_v_margin', 'icon_l_margin', 'icon_hover']))
 
         //selector_div.addEventListener('click', RangeTool())
 

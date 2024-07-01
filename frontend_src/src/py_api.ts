@@ -12,16 +12,19 @@ export class py_api {
     minimize!: () => void;
     restore!: () => void;
 
-    add_container!: () => void;
-    remove_container!: (id: string) => void;
-    reorder_containers!: (from: number, to: number) => null
+    // The Following Functions have default commands so functionality is maintained when launched on a dev local server.
+    // These are over written (re-routed) at start-up by the Python View Class so they execute their respective python functions
+                                                                                    // @ts-ignore
+    add_container = () => window.wrapper.add_container('');                         // @ts-ignore
+    remove_container = (id: string) => window.wrapper.remove_container(id);
+    reorder_containers = (from: number, to: number) => {console.log(`reorder containers from: ${from} to: ${to} `)}
 
     layout_change!: (container_id: string, layout: Container_Layouts) => void;
     series_change!: (container_id: string, frame_id: string, series_type: Series_Type) => void
     data_request!: (container_id: string, frame_id: string, symbol: symbol_item, mult: number, period: string) => void;
     symbol_search!: (symbol: string, types: string[], brokers: string[], exchanges: string[], confirmed: boolean) => void;
 
-    callback!: (msg: string) => void;
+    callback = (msg: string) => {console.log(msg)}
     constructor() { this._loaded_check = this._loaded_check.bind(this) }
 
     //The Python "View" Subclasses Kick starts this recursive check 

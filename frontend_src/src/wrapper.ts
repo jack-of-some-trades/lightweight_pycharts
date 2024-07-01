@@ -34,8 +34,6 @@ export class Wrapper {
     div_center: HTMLDivElement
     div_title: HTMLDivElement
 
-    private resizeTimeoutID: number | null = null;
-
     constructor() {
         //Create Main container
         this.div = document.createElement('div')
@@ -287,20 +285,4 @@ export class Wrapper {
             }
         }
     }
-
-    /**
-     * Ran into an issue where the chart wasn't repainting correctly. Issue was elsewhere, so this is
-     * deprecated. Leaving it just in case
-     */
-    resize_debounce() {
-        if (this.resizeTimeoutID !== null) {
-            clearTimeout(this.resizeTimeoutID)
-            this.resizeTimeoutID = null
-            this.resize()
-        }
-        else {
-            this.resizeTimeoutID = setTimeout(this.resize_debounce, 20);
-        }
-    }
-
 }

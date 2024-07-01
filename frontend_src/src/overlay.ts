@@ -1,4 +1,4 @@
-import { icon_manager, icons } from "./icons"
+import { get_svg, icons } from "./icons"
 import { symbol_item } from "./util_lwc"
 
 /**
@@ -133,10 +133,10 @@ export class overlay_manager {
         //set inital state
         if (item.separator_vis ?? true) {
             sub_menu.style.display = 'flex'
-            title_bar.appendChild(icon_manager.get_svg(icons.menu_arrow_ns))
+            title_bar.appendChild(get_svg(icons.menu_arrow_ns))
         } else {
             sub_menu.style.display = 'none'
-            title_bar.appendChild(icon_manager.get_svg(icons.menu_arrow_sn))
+            title_bar.appendChild(get_svg(icons.menu_arrow_sn))
         }
 
         //Toggle visibility & icon on click
@@ -144,10 +144,10 @@ export class overlay_manager {
             let svg = title_bar.getElementsByTagName('svg')[0] as SVGSVGElement
             if (sub_menu.style.display === 'flex') {
                 sub_menu.style.display = 'none'
-                svg.replaceWith(icon_manager.get_svg(icons.menu_arrow_sn))
+                svg.replaceWith(get_svg(icons.menu_arrow_sn))
             } else {
                 sub_menu.style.display = 'flex'
-                svg.replaceWith(icon_manager.get_svg(icons.menu_arrow_ns))
+                svg.replaceWith(get_svg(icons.menu_arrow_ns))
             }
         })
 
@@ -169,7 +169,7 @@ export class overlay_manager {
             sel_wrap.classList.add('menu_selectable_expand')
 
         //Set icon if needed
-        if (item.icon) sel_wrap.appendChild(icon_manager.get_svg(item.icon))
+        if (item.icon) sel_wrap.appendChild(get_svg(item.icon))
 
         //Set Label
         if (item.label !== "") {
@@ -233,10 +233,10 @@ export class overlay_manager {
         wrapper.classList.add('menu_item_star')
         let icon: SVGSVGElement
         if (item.star) {
-            icon = icon_manager.get_svg(icons.star_filled, ["icon_hover"])
+            icon = get_svg(icons.star_filled, ["icon_hover"])
             icon.setAttribute('active-star', '')
         } else {
-            icon = icon_manager.get_svg(icons.star, ["icon_hover"])
+            icon = get_svg(icons.star, ["icon_hover"])
             icon.style.visibility = 'hidden'
         }
         wrapper.appendChild(icon)
@@ -255,13 +255,13 @@ export class overlay_manager {
         wrapper.addEventListener('click', () => {
             let icon = wrapper.firstChild as SVGSVGElement
             if (icon.hasAttribute('active-star')) {
-                icon.replaceWith(icon_manager.get_svg(icons.star, ["icon_hover"]))
+                icon.replaceWith(get_svg(icons.star, ["icon_hover"]))
                 icon = wrapper.firstChild as SVGSVGElement
                 icon.style.visibility = 'hidden'
 
                 if (item.star_deact) item.star_deact()
             } else {
-                let new_icon = icon_manager.get_svg(icons.star_filled, ["icon_hover"])
+                let new_icon = get_svg(icons.star_filled, ["icon_hover"])
                 new_icon.setAttribute('active-star', '')
                 icon.replaceWith(new_icon)
                 icon = wrapper.firstChild as SVGSVGElement
@@ -286,14 +286,14 @@ export class overlay_manager {
 
         //Append Search Icon to the title bar
         let search_icon = search_div.querySelector('#search_icon') as HTMLDivElement
-        let search_svg = icon_manager.get_svg(icons.menu_search)
+        let search_svg = get_svg(icons.menu_search)
         search_svg.setAttribute('width', '28')
         search_svg.setAttribute('height', '28')
         search_icon.appendChild(search_svg)
 
         //Append Close Button to the title bar
         let close_icon = search_div.querySelector('#close_icon') as HTMLDivElement
-        let close_svg = icon_manager.get_svg(icons.close, ['icon_hover'])
+        let close_svg = get_svg(icons.close, ['icon_hover'])
         search_svg.setAttribute('width', '28')
         search_svg.setAttribute('height', '28')
         close_icon.appendChild(close_svg)

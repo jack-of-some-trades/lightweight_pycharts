@@ -276,8 +276,8 @@ class Window:
 
                 # Be sure to allow indicators to clear themselves
                 # This ensures web-sockets and other assets are closed.
-                for _, frame in container.frames.items():
-                    for _, indicator in frame.indicators.items():
+                for frame in container.frames.values():
+                    for indicator in frame.indicators.copy().values():
                         indicator.delete()
                 return
 
