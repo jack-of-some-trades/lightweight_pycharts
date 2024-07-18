@@ -8,7 +8,7 @@ import * as u from "./util_lwc";
 
 
 //The portion of a chart where things are actually drawn
-export class Pane {
+export class pane {
     static _special_id_ = 'main' // Must match Python Pane Special ID
 
     id: string = ''

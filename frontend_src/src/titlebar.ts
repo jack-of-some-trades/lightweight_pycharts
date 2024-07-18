@@ -5,7 +5,6 @@ import { Wrapper } from "./wrapper";
 
 export class TitleBar {
     private div: HTMLDivElement
-
     private left_div: HTMLDivElement
     private right_div: HTMLDivElement
 
@@ -74,6 +73,7 @@ export class TitleBar {
         } else {
             parent.hide_section(wrap_div)
         }
+
         toggle_btn.appendChild(svg)
 
         toggle_btn.addEventListener('click', () => {

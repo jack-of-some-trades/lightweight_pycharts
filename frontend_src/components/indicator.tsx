@@ -1,7 +1,7 @@
 import { Show, createEffect, createSignal, onMount } from 'solid-js'
 import { get_svg, icons } from '../src/icons'
 
-export function indicator(){
+export function Indicator(){
     const [state, setState] = createSignal(true)
 
     createEffect(()=>console.log(state()))
@@ -9,7 +9,6 @@ export function indicator(){
     const icon_el = get_svg(icons.menu)
 
     onMount(()=>{
-
         setTimeout(() => {
             icon_el.setAttribute('active','')
         }, 1000)
@@ -19,7 +18,6 @@ export function indicator(){
         setTimeout(() => {
             setState(true)
         }, 3000)
-        
     })
 
     return (

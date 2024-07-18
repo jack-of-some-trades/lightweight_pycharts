@@ -1,27 +1,28 @@
 import { SingleValueData, WhitespaceData } from "lightweight-charts";
-import { Pane } from "./pane";
+import { update_tab_func } from "./container";
+import { pane } from "./pane";
 import { Series_Type, symbol_item, tf } from "./util_lwc";
 
 /**
  * @member Div: Div That Contains Pane's and pane seprators.
  */
-export class Frame {
+export class frame {
     //The class that contains all the data to be displayed
     id: string
     div: HTMLDivElement
-    tab_div: HTMLDivElement
 
     timeframe: tf
     symbol: symbol_item
     series_type: Series_Type
 
-    private panes: Pane[] = []
-    private main_pane: Pane | undefined = undefined
+    private panes: pane[] = []
+    private main_pane: pane | undefined = undefined
+    private update_tab: update_tab_func
 
-    constructor(id: string, div: HTMLDivElement, tab_div: HTMLDivElement) {
+    constructor(id: string, div: HTMLDivElement, tab_update_func: update_tab_func) {
         this.id = id
         this.div = div
-        this.tab_div = tab_div
+        this.update_tab = tab_update_func
 
         // The following 3 variables are actually properties of a frame's primary Series(Indicator) obj.
         // While these really should be owned by an indicator and not a frame, this is how the 
@@ -48,10 +49,10 @@ export class Frame {
             this.panes[0].assign_active_pane()
 
         //Update Window Elements
+        this.update_tab(this.symbol.ticker)
         window.topbar.series_select.update_icon(this.series_type)
         window.topbar.tf_select.update_icon(this.timeframe)
         window.topbar.set_symbol_search_text(this.symbol.ticker)
-        window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker })
     }
 
     /**
@@ -85,7 +86,7 @@ export class Frame {
 
     protected set_symbol(new_symbol: symbol_item) {
         this.symbol = new_symbol
-        window.titlebar.tab_manager.updateTab(this.tab_div, { title: this.symbol.ticker })
+        this.update_tab(this.symbol.ticker)
         if (this == window.active_frame)
             window.topbar.set_symbol_search_text(this.symbol.ticker)
     }
@@ -114,12 +115,12 @@ export class Frame {
             window.topbar.series_select.update_icon(this.series_type)
     }
 
-    protected add_pane(id: string): Pane {
+    protected add_pane(id: string): pane {
         let child_div = document.createElement('div')
         child_div.classList.add('chart_pane')
         this.div.appendChild(child_div)
 
-        let new_pane = new Pane(id, child_div)
+        let new_pane = new pane(id, child_div)
 
         if (this.main_pane === undefined)
             //This should be the pane w/ ID '*_p_main'

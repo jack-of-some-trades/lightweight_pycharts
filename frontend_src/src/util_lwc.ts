@@ -7,15 +7,6 @@ import { RoundedCandleSeriesOptions } from "./plugins/rounded-candles-series/rou
 /**
  * Enum that corresponds to the different static divs of the window wrapper
 */
-export enum Wrapper_Divs {
-    TITLE_BAR = 'div_title',
-    TOP_BAR = 'div_top',
-    DRAW_TOOLS = 'div_left',
-    NAV_BAR = 'div_right',
-    UTIL_BAR = 'div_bottom',
-    CHART = 'div_center'
-}
-
 export enum Orientation {
     Horizontal,
     Vertical,
@@ -297,7 +288,7 @@ export const MIN_FRAME_HEIGHT = 0.1
 
 // #region ---------------- Misc Util Functions ---------------- //
 
-const ID_LEN = 6
+const ID_LEN = 4
 /**
  * Generate a unique ID of Random characters that is not present in the given list.
  * @param prefix Optional prefix to affix at the start of the id
