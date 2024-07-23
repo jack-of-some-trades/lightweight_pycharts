@@ -1,0 +1,46 @@
+
+.layout_btn {
+    border-radius: 5px;
+    align-items: center;
+    margin: 0px 1px;
+}
+
+.window_btn:hover,
+.layout_button:hover {
+    background-color: var(--hover-color-light);
+}
+
+.window_btn {
+    border-radius: 5px;
+    align-items: center;
+    margin: 0px 1px;
+}
+
+.titlebar {
+    display: flex;
+    overflow: hidden;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    border-radius: 5px;
+}
+
+.titlebar_grab {
+    flex: 1 0 10px;
+    justify-content: flex-start;
+}
+
+.titlebar_btns {
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    padding-left: 40px;
+    padding-right: 2px
+}
+
+.titlebar_separator {
+    width: 2px;
+    height: 75%;
+    margin: 2px 6px;
+    background-color: var(--layout-main-fill);
+    flex-shrink: 0;
+}

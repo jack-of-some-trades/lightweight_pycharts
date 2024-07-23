@@ -179,6 +179,9 @@ body {
 .icon[active] {
     background-color: var(--icon-active-color);
 }
+.icon:hover {
+    background-color: var(--icon-hover-color);
+}
 
 .icon[active-star] {
     color: var(--star-active-color);
@@ -317,80 +320,6 @@ body {
     width: 40px;
     height: 30px;
 }
-
-/* #endregion */
-
-
-/* #region --------------- Topbar Params --------------- */
-
-
-.titlebar {
-    display: flex;
-    overflow: hidden;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    border-radius: 5px;
-}
-
-.titlebar_left {
-    flex: 0 1 auto;
-    overflow-x: hidden;
-    justify-content: flex-start;
-}
-
-.titlebar_grab {
-    flex: 1 0 10px;
-    overflow-x: hidden;
-    justify-content: flex-start;
-}
-
-.titlebar_right {
-    flex: 0 1 auto;
-    overflow-x: hidden;
-    justify-content: flex-end;
-    padding-left: 40px
-}
-
-.titlebar_separator {
-    width: 2px;
-    background-color: var(--layout-main-fill);
-    flex-shrink: 0;
-}
-
-/* .titlebar_tab {
-    max-width: 200px;
-    min-width: 50px;
-    width: -webkit-fill-available;
-    height: -webkit-fill-available;
-    overflow: hidden;
-    flex-direction: row;
-    justify-content: flex-start;
-    background-color: var(--layout-main-fill);
-    border-radius: 30% 30% 0 0;
-}
-
-.titlebar_container {
-    width: auto;
-    height: -webkit-fill-available;
-    flex-direction: row;
-    justify-content: flex-start;
-    background-color: var(--toolbar-icon-background-color);
-} */
-
-.titlebar_menu_button {
-    display: flex;
-    width: auto;
-    height: 80%;
-    border-radius: 5px;
-    align-items: center;
-    margin: 0px 2px;
-}
-
-.titlebar_menu_button:hover {
-    background-color: var(--hover-color-light);
-}
-
 
 /* #endregion */
 

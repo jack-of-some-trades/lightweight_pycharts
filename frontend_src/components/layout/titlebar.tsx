@@ -1,8 +1,11 @@
-import { onMount } from "solid-js"
+import { createSignal, onMount, Show } from "solid-js"
 import { container_manager } from "../../src/container_manager"
-import { icons } from "../../src/icons"
-import { Button } from "../button"
+import { Btn, ToggleBtn } from "../button"
+import { icons } from '../icon'
 import { LAYOUT_SECTIONS } from "./wrapper"
+
+import "../../css/_tabs.css"
+import "../../css/titlebar.css"
 
 interface title_bar_props {
     container_el: HTMLDivElement | undefined,
@@ -12,6 +15,10 @@ interface title_bar_props {
 
 export function TitleBar(props:title_bar_props) {  
     let tab_div:HTMLDivElement|undefined
+    const [frameless, setFrameless] = createSignal(true)
+    const [fullscreen, setFullscreen] = createSignal(false)
+    //Expose set function to global window so Python can access it.
+    if (!window.setFrameless) window.setFrameless = setFrameless
 
     onMount(()=>{
         if (tab_div && props.container_el){
@@ -23,14 +30,43 @@ export function TitleBar(props:title_bar_props) {
     })
     
     return <>
+        {/**** Tabs Bar ****/}
         <div ref={tab_div} class="titlebar titlebar_grab tabs drag-region">
             <div class="tabs-content"/>
         </div>
-        <div class="titlebar titlebar_right drag-region">
-            <Button {...{icon:icons.panel_left}}/>
-            <Button icon={icons.panel_right}/>
-            <Button icon={icons.panel_top}/>
-            <Button icon={icons.panel_bottom}/>
+
+        {/**** Window Controls ****/}
+        <div class="titlebar titlebar_btns drag-region">
+
+            {/**** New Tab and Window Panel Controls ****/}
+            <Btn icon={icons.window_add} onClick={() => { window.api.add_container() }}/>
+            <div class="titlebar_separator"/>
+            <ToggleBtn icon={icons.panel_left} classList={{layout_btn:true}} activated={true} 
+                onAct={()=>{props.show_section(LAYOUT_SECTIONS.TOOL_BAR)}} 
+                onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.TOOL_BAR)}}/>
+            <ToggleBtn icon={icons.panel_right} classList={{layout_btn:true}} 
+                onAct={()=>{props.show_section(LAYOUT_SECTIONS.NAV_BAR)}} 
+                onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.NAV_BAR)}}/>
+            <ToggleBtn icon={icons.panel_top} classList={{layout_btn:true}} activated={true} 
+                onAct={()=>{props.show_section(LAYOUT_SECTIONS.TOP_BAR)}} 
+                onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.TOP_BAR)}}/>
+            <ToggleBtn icon={icons.panel_bottom} classList={{layout_btn:true}} 
+                onAct={()=>{props.show_section(LAYOUT_SECTIONS.UTIL_BAR)}} 
+                onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.UTIL_BAR)}}/>
+
+
+            {/**** Frameless Window Controls ****/}
+            <Show when={frameless()}>
+                <div class="titlebar_separator"/>
+                <Btn icon={icons.minimize} classList={{window_btn:true}} style={{padding:'2px'}} width={16} height={16}
+                    onClick={() => { window.api.minimize() }}/>
+                <Show when={fullscreen()}><Btn icon={icons.restore} classList={{window_btn:true}}
+                    onClick={() => { setFullscreen(false); window.api.restore()  }}/> </Show>
+                <Show when={!fullscreen()}> <Btn icon={icons.maximize} classList={{window_btn:true}} style={{padding:'2px'}}
+                    onClick={() => { setFullscreen(true); window.api.maximize()  }}/> </Show>
+                <Btn icon={icons.close} classList={{window_btn:true}} style={{padding:'2px'}} width={16} height={16}
+                    onClick={() => { window.api.close() }}/>
+            </Show>
         </div>
     </>
 }

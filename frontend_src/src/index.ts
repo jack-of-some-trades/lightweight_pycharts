@@ -7,7 +7,6 @@ import { icon_manager } from "./icons";
 import { overlay_manager } from "./overlay";
 import { pane } from "./pane.js";
 import { py_api } from "./py_api";
-import { TitleBar } from "./titlebar";
 import { toolbox } from "./toolbox";
 import { layout_selector, series_selector, timeframe_selector, topbar } from "./topbar";
 import { Container_Layouts as c_layouts } from "./util_lwc";
@@ -20,7 +19,6 @@ declare global {
     var overlay_manager: overlay_manager
     var container_manager: container_manager
 
-    var titlebar: TitleBar
     var topbar: topbar
     var toolbox: toolbox
     var series_selector: series_selector
@@ -35,6 +33,8 @@ declare global {
     // Beyond delaying some garbage collection, I don't think the dead references are 
     // an issue so the behavior will stay for now.
     var Container_Layouts: typeof c_layouts
+
+    var setFrameless: (arg:boolean)=>void
 }
 
 // Define The global Python <--> Js api interface.
