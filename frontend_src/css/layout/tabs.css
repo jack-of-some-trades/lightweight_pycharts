@@ -1,3 +1,17 @@
+.tabs .tab .tab-title,
+.tabs .tab[active] .tab-title,
+.tabs .tab .tab-price,
+.tabs .tab[active] .tab-price {
+    height: -webkit-fill-available;
+    color: var(--text-color);
+    text-align: left;
+    text-wrap: nowrap;
+    font-family: var(--font);
+    font-weight: bold;
+    font-size: larger;
+}
+
+
 .tabs {
     box-sizing: border-box;
     position: relative;

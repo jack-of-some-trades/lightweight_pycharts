@@ -1,6 +1,8 @@
-import { Show, createEffect, onMount } from 'solid-js'
+import { JSX, Show, createEffect, onMount } from 'solid-js'
 import { SetStoreFunction, createStore } from 'solid-js/store'
+import { OverlayContextProvider } from '../overlay/overlay_manager'
 import { TitleBar } from './titlebar'
+import { TopBar } from './topbar/topbar'
 
 const MARGIN = 5
 const TOP_HEIGHT = 38
@@ -55,16 +57,31 @@ export function Wrapper(){
         hide_section:hide_section_unbound.bind(undefined, set_layout),
     }
 
-    return (
-        <div id='layout_wrapper' class='wrapper'>
-            <div ref={container_el} id='layout_center' class='layout_main' style={layout.center}/>
-            <div id='layout_title' class='layout_title layout_flex' style={layout.titlebar}><TitleBar container_el={container_el} {...title_bar_props}/></div>
-            <Show when={layout.topbar.visible}><div id='layout_top' class='layout_main layout_flex' style={layout.topbar}/></Show>
-            <Show when={layout.toolbar.visible}><div id='layout_left' class='layout_main layout_flex' style={layout.toolbar}/></Show>
-            <Show when={layout.navbar.visible}><div id='layout_right' class='layout_main layout_flex' style={layout.navbar}/></Show>
-            <Show when={layout.utilbar.visible}><div id='layout_bottom' class='layout_main' style={layout.utilbar}/></Show>
-        </div>
-    )
+    return <>
+        <GlobalContexts>
+            <div id='layout_wrapper' class='wrapper'>
+                <div ref={container_el} id='layout_center' class='layout_main' style={layout.center}/>
+                <div id='layout_title' class='layout_title layout_flex' style={layout.titlebar}>
+                    <TitleBar container_el={container_el} {...title_bar_props}/>
+                </div>
+                <Show when={layout.topbar.visible}> <TopBar style={layout.topbar}/> </Show>
+                <Show when={layout.toolbar.visible}><div id='layout_left' class='layout_main layout_flex' style={layout.toolbar}/>
+                </Show>
+                <Show when={layout.navbar.visible}><div id='layout_right' class='layout_main layout_flex' style={layout.navbar}/>
+                </Show>
+                <Show when={layout.utilbar.visible}><div id='layout_bottom' class='layout_main' style={layout.utilbar}/>
+                </Show>
+            </div>
+        </GlobalContexts>
+    </>
+}
+
+function GlobalContexts(props:JSX.HTMLAttributes<HTMLElement>){
+    return <>
+        <OverlayContextProvider>
+            {props.children}
+        </OverlayContextProvider>
+    </>
 }
 
 function resize(width:number, height:number, layout:layout_struct, set_layout:SetStoreFunction<layout_struct>){

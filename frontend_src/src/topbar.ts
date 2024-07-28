@@ -1,9 +1,8 @@
 import { render } from 'solid-js/web'
-import { indicator } from "../components/indicator"
+import { LAYOUT_SECTIONS } from '../components/layout/wrapper'
 import { get_svg, icons } from "./icons"
 import { menu_location, switcher_item } from "./overlay"
-import { Container_Layouts, LAYOUT_DIM_TOP, Series_Type, Wrapper_Divs, interval, layout_icon_map, series_icon_map, series_label_map, tf } from "./util_lwc"
-import { Wrapper } from "./wrapper"
+import { Container_Layouts, LAYOUT_DIM_TOP, Series_Type, interval, layout_icon_map, series_icon_map, series_label_map, tf } from "./util_lwc"
 
 /**
  * Class to create and manage the TopBar of the application
@@ -18,7 +17,7 @@ export class topbar {
     series_select: series_selector
 
     constructor(parent: Wrapper, tf: timeframe_selector, layout: layout_selector, series: series_selector) {
-        this.div = parent.get_div(Wrapper_Divs.TOP_BAR)
+        this.div = parent.get_div(LAYOUT_SECTIONS.TOP_BAR)
 
         this.tf_select = tf
         this.layout_select = layout
@@ -995,14 +994,14 @@ const default_layout_select_opts: layout_json = {
 }
 
 const default_timeframe_select_opts: timeframe_json = {
-    "menu_listings": {
+    menu_listings: {
         "s": [1, 2, 5, 15, 30],
         "m": [1, 2, 5, 15, 30],
         "h": [1, 2, 4],
         "D": [1],
         "W": [1]
     },
-    "favorites": [
+    favorites: [
         "1D"
     ]
 }

@@ -3,7 +3,6 @@ import { Wrapper } from "../components/layout/wrapper";
 import { container } from "./container";
 import { container_manager } from './container_manager';
 import { frame } from "./frame";
-import { icon_manager } from "./icons";
 import { overlay_manager } from "./overlay";
 import { pane } from "./pane.js";
 import { py_api } from "./py_api";
@@ -15,7 +14,6 @@ import { Container_Layouts as c_layouts } from "./util_lwc";
 declare global {
     var api: py_api
     var loaded: boolean
-    var svgs: icon_manager
     var overlay_manager: overlay_manager
     var container_manager: container_manager
 
@@ -39,8 +37,6 @@ declare global {
 
 // Define The global Python <--> Js api interface.
 window.api = new py_api();
-//Construct Icon Manager
-window.svgs = new icon_manager();
 
 render(Wrapper, document.body)
 

@@ -8,6 +8,8 @@
 
 /* --------------- Color Variables --------------- */
 :root {
+    --font: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+
     --background-fill: #2a2e39;
     --layout-main-fill: #131722;
     --hover-color: #2a2e39;
@@ -18,6 +20,7 @@
     --text-dark-color: #707277;
     --text-near-black-color: #131722;
     --accent-color: #2962ff;
+    --second-accent-color: #f9a825;
     --separator-color: #222631;
 
     --chart-border: var(--background-fill);
@@ -45,7 +48,6 @@
     --icon-hover-color: #2a2e39;
     --icon-active-color: var(--accent-color);
     --icon-background-color: #0000;
-    --star-active-color: #f9a825;
 
     --topbar-icon-hover-color: var(--icon-hover-color);
     --topbar-icon-active-color: var(--icon-active-color);
@@ -150,24 +152,6 @@ body {
     background-color: var(--icon-background-color);
 }
 
-.icon_l_margin {
-    margin-left: 5px;
-}
-
-.icon_r_margin {
-    margin-right: 5px;
-}
-
-.icon_h_margin {
-    margin-left: 5px;
-    margin-right: 5px;
-}
-
-.icon_v_margin {
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
 .icon_hidden {
     visibility: hidden;
 }
@@ -213,10 +197,6 @@ body {
     padding: 3px;
 }
 
-.icon_text {
-    font-weight: bold;
-}
-
 .selected {
     color: var(--accent-color);
 }
@@ -226,14 +206,6 @@ body {
     margin: 0px 10px;
 }
 
-.tabs .tab .tab-price,
-.tabs .tab[active] .tab-price,
-.tabs .tab .tab-title,
-.tabs .tab[active] .tab-title {
-    text-align: left;
-    font-weight: bold;
-    font-size: larger;
-}
 
 /* #endregion */
 
@@ -296,103 +268,6 @@ body {
 
 /* #endregion */
 
-/* #region --------------- Legend Params --------------- */
-
-.legend {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow: hidden;
-
-    z-index: 40;
-    left: 10px;
-    top: 10px;
-    flex-direction: column;
-    background-color: #0000;
-}
-
-.legend_source {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow: hidden;
-}
-
-.legend_toggler {
-    width: 40px;
-    height: 30px;
-}
-
-/* #endregion */
-
-/* #region --------------- Topbar Params --------------- */
-
-
-.topbar {
-    display: flex;
-    overflow: hidden;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    border-radius: 5px;
-}
-
-.topbar_left {
-    flex: 1 1 100px;
-    overflow-x: hidden;
-    justify-content: flex-start;
-}
-
-.topbar_right {
-    flex: 1 1 10px;
-    overflow-x: hidden;
-    justify-content: flex-end;
-}
-
-.topbar_separator {
-    width: 2px;
-    background-color: var(--topbar-separator-color);
-    flex-shrink: 0;
-}
-
-.topbar_item {
-    margin: 5px;
-    border-radius: 5px;
-    width: auto;
-    height: -webkit-fill-available;
-    flex-direction: row;
-    justify-content: flex-start;
-    background-color: var(--toolbar-icon-background-color);
-}
-
-
-.topbar_container {
-    width: auto;
-    height: -webkit-fill-available;
-    flex-direction: row;
-    justify-content: flex-start;
-    background-color: var(--toolbar-icon-background-color);
-}
-
-.topbar_menu_button {
-    display: flex;
-    width: auto;
-    height: 80%;
-    border-radius: 5px;
-    align-items: center;
-    margin: 0px 2px;
-}
-
-.topbar_menu_button:hover {
-    background-color: var(--icon-hover-color);
-}
-
-#search_text {
-    margin-right: 4px;
-    width: 60px;
-}
-
-
-/* #endregion */
-
 /* #region --------------- Toolbar Params --------------- */
 
 .toolbar {
@@ -445,98 +320,6 @@ body {
 
 .toolbar_menu_button:hover {
     background-color: var(--icon-hover-color);
-}
-
-
-/* #endregion */
-
-/* #region --------------- Overlay Menu Params --------------- */
-
-
-.overlay_manager {
-    position: absolute;
-    inset: 0px;
-    width: 100vw;
-    height: 100vh;
-    background-color: #0000;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 50;
-}
-
-.overlay_menu {
-    display: none;
-    pointer-events: none;
-
-    z-index: inherit;
-    position: fixed;
-    width: auto;
-    height: auto;
-    /* border: solid var(--chart-border) 2px; */
-    border-radius: 5px;
-    background-color: var(--overlay-fill);
-    box-shadow: 1px 1px 1px 1px var(--overlay-shadow);
-
-    align-items: flex-start;
-    flex-direction: column;
-}
-
-.overlay_sub_menu {
-    width: -webkit-fill-available;
-    display: flex;
-    flex-direction: column;
-}
-
-.overlay_sub_menu_text {
-    width: -webkit-fill-available;
-    font-weight: bold;
-    font-size: smaller;
-    text-align: left;
-    margin: 2px 24px 2px 8px;
-}
-
-.overlay_menu_separator {
-    width: -webkit-fill-available;
-    border-top: 1px solid var(--overlay-menu-separator);
-}
-
-.overlay_menu[active] {
-    display: flex;
-    pointer-events: all;
-}
-
-.menu_item {
-    width: -webkit-fill-available;
-    margin: 4px 2px;
-    align-items: center;
-    display: flex;
-}
-
-.menu_selectable,
-.menu_selectable_expand {
-    display: flex;
-    align-items: center;
-    justify-items: flex-start;
-    border-radius: 5px;
-    margin: 2px;
-    justify-self: flex-start;
-    align-items: center;
-}
-
-.menu_selectable_expand {
-    width: -webkit-fill-available;
-}
-
-.menu_selectable:hover,
-.menu_selectable_expand:hover,
-.overlay_menu_separator:hover {
-    background-color: var(--icon-hover-color);
-}
-
-.menu_item_star {
-    border-radius: 5px;
-    width: 18px;
-    height: 18px;
 }
 
 

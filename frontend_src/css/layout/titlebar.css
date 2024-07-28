@@ -5,15 +5,15 @@
     margin: 0px 1px;
 }
 
-.window_btn:hover,
-.layout_button:hover {
-    background-color: var(--hover-color-light);
-}
-
 .window_btn {
     border-radius: 5px;
     align-items: center;
     margin: 0px 1px;
+}
+
+.window_btn:hover,
+.layout_btn:hover {
+    background-color: var(--hover-color-light);
 }
 
 .titlebar {
@@ -39,7 +39,7 @@
 
 .titlebar_separator {
     width: 2px;
-    height: 75%;
+    height: 70%;
     margin: 2px 6px;
     background-color: var(--layout-main-fill);
     flex-shrink: 0;

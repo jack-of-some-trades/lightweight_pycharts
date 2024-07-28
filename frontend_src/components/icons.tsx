@@ -1,86 +1,83 @@
-// Class and Enum defining all the available icons uhh... "borrowed"... from Tradingview
+import { createEffect, createResource, JSX, mergeProps, splitProps } from "solid-js";
+import "../css/icon.css";
 
-/**
- * Singleton Class to manage loading of the svg icons from a sing SVG file.
- */
-export class icon_manager {
-    private static instance: icon_manager
+//This method of loading in an entirely new doc of just SVGs and query selecting works pretty well
+//There's a small delay that requires <Icon/> to be loaded on an effect, but it allows the attrs 
+//(viewport, width, height, etc) to be hardcoded into the loaded doc and not in this file.
 
-    static loaded: boolean = false
-    static svg_doc: Document | null
-    static replace_list: SVGSVGElement[] = []
-
-    constructor() {
-        if (icon_manager.instance) {
-            //Instance already created
-            return icon_manager.instance
-        }
-
-        //This method of loading SVGs works pretty well, but it is a little slow
-        //Something about fetch() causes a small delay. You could use the <svg><use href=></svg>
-        //method, but that has it's own, far more cubursome, issue of needing to hardcode
-        //the viewport, width, and height sizing of the <svg> tag.
-        fetch('./svg-defs.svg').then((resp) => resp.text().then(
-            (svg_file_text) => {
-                //After loading, parse the .svg into a document object
-                let parser = new DOMParser()
-                icon_manager.svg_doc = parser.parseFromString(svg_file_text, "text/html")
-            })).then(() => setTimeout(
-                //Once the Document is loaded, update all svgs. Delay is added to avoid race conditions
-                //between updating svgs and a get_svg() function call placing a 'replace' SVG tag in the document.
-                icon_manager.update_svgs,
-                20
-            ))
-
-        icon_manager.svg_doc = null
-        icon_manager.instance = this
-        return this
+const [SVG_DOC] = createResource(async () => await fetch('./svg-defs.svg').then(
+    (resp) => resp.text().then((svg_file_text) => {
+        //After loading, parse the .svg into a document object that is stored.
+        let parser = new DOMParser()
+        return parser.parseFromString(svg_file_text, "text/html")
     }
+)))
 
-    /**
-     * Replaces all the empty SVGs the got requested before the SVG_Doc was able to load
-     */
-    static update_svgs() {
-        icon_manager.replace_list.forEach(svg => {
-            let new_svg = get_svg(svg.id as icons) //Get the icon w/ SVG path info
-
-            //Transfer all Attributes
-            let attrs = svg.attributes
-            for (let i = 0; i < attrs.length; i++)
-                new_svg.setAttribute(attrs[i].name, attrs[i].value)
-
-            //Replace the placeholder w/ the updated SVG Tag
-            svg.replaceWith(new_svg)
-        });
-        icon_manager.replace_list = []
-        icon_manager.loaded = true
-    }
+export interface icon_props extends JSX.SvgSVGAttributes<SVGSVGElement> {
+    icon: string,
+    activated?: boolean
 }
 
-/**
- * Get's an SVG from the loaded SVG reference document. If the document isn't loaded, a temporary icon is returned instead
- * @param icon The icon to be loaded
- * @param css_classes a list of classes that should be applied to the SVG Element
- * @returns SVGSVGElement
- */
-export function get_svg(icon: icons, css_classes: string[] = []): SVGSVGElement {
-    if (icon_manager.svg_doc) {
-        let icon_svg = icon_manager.svg_doc.querySelector(`#${icon}`) as SVGSVGElement
-        //Ensure a clone of the element is edited and returned, not a reference
-        icon_svg = icon_svg.cloneNode(true) as SVGSVGElement
+const DEFAULT_PROPS:icon_props = {
+    icon:'',
+    activated: undefined
+}
 
-        icon_svg.classList.add('icon')
-        css_classes.forEach(class_name => { icon_svg.classList.add(class_name) });
-        return icon_svg
-    } else {
-        let tmp_icon_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        tmp_icon_svg.id = icon
-        icon_manager.replace_list.push(tmp_icon_svg) //SVG_doc not loaded, store reference so this can be updated later
+export function Icon(props:icon_props){
+    let icon_el:SVGSVGElement|undefined;
+    props.classList = {icon:true, ...props.classList}
+    //If a "Cannot set property of classList" Error has lead you here it is because there is a 
+    //reactive Signal in a classList that feeds props.classList. tl:dw Don't use Signals in classlist,
+    //use reactive attributes instead. Reactive classList signals cannot be merged.
 
-        tmp_icon_svg.classList.add('icon') 
-        css_classes.forEach(class_name => { tmp_icon_svg.classList.add(class_name) });
-        return tmp_icon_svg
-    }
+    const merged = mergeProps(DEFAULT_PROPS, props)
+    const [iconProps, svgProps] = splitProps(merged, ["icon", 'activated']);
+    let propKeys = (Object.keys({...svgProps, "class":'', "active":''}))
+
+    //When SVG_DOC is loaded or icon is changed, Copy reference SVG into Window
+    createEffect(() =>{
+        let svg_ref = SVG_DOC()?.querySelector(`#${iconProps.icon}`)
+        if (icon_el && svg_ref){
+            //Append a Copy of the children (Paths / groups / etc.)
+            svg_ref = svg_ref.cloneNode(true) as Element
+            icon_el.replaceChildren(...Array.from(svg_ref.children))
+            
+            //Remove all old Attrs that were not defined by a parent node
+            let static_keys = 0
+            while(icon_el.attributes.length > static_keys)
+                if (propKeys.includes(icon_el.attributes[static_keys].name))
+                    static_keys += 1
+                else
+                    icon_el.removeAttribute(icon_el.attributes[static_keys].name)
+
+            //Add Attrs from Reference SVG that dont conflict with parent node props
+            let attrs = svg_ref.attributes
+            for (let i = 0; i < attrs.length; i++)
+                if (!propKeys.includes(attrs[i].name))
+                    icon_el.setAttribute(attrs[i].name, attrs[i].value)
+        }
+    })
+
+    return <svg ref={icon_el} {...svgProps} attr:active={iconProps.activated? '': undefined} />
+}
+
+export interface text_icon_props extends JSX.HTMLAttributes<HTMLDivElement> {
+    text: string,
+    activated?: boolean
+}
+const DEFAULT_TEXT_PROPS:text_icon_props = {
+    text:'',
+    activated: undefined
+}
+
+export function TextIcon(props:text_icon_props){
+    const merged = mergeProps(DEFAULT_TEXT_PROPS, props)
+    merged.classList = mergeProps({icon_text:true}, props.classList)
+    const [iconProps, divProps] = splitProps(merged, ["text", 'activated']);
+
+    return <div {...divProps} attr:active={iconProps.activated? '': undefined}>
+        {iconProps.text} 
+    </div>
 }
 
 export enum icons {

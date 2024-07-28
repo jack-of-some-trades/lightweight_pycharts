@@ -251,10 +251,8 @@ export class container_manager {
             //must set the next active tab if the active tab is deleted
             if (tabEl === this.activeTabEl) {
                 if (tabEl.nextElementSibling) {
-                    console.log(tabEl.nextElementSibling.getAttribute('data-id'))
                     window.container_manager.set_active_container(tabEl.nextElementSibling.getAttribute('data-id')!)
                 } else if (tabEl.previousElementSibling) {
-                    console.log(tabEl.previousElementSibling.getAttribute('data-id'))
                     window.container_manager.set_active_container(tabEl.previousElementSibling.getAttribute('data-id')!)
                 }
             }

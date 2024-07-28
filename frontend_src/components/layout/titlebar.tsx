@@ -1,11 +1,11 @@
 import { createSignal, onMount, Show } from "solid-js"
 import { container_manager } from "../../src/container_manager"
-import { Btn, ToggleBtn } from "../button"
-import { icons } from '../icon'
+import { Btn, ToggleBtn } from "../buttons"
+import { icons } from '../icons'
 import { LAYOUT_SECTIONS } from "./wrapper"
 
-import "../../css/_tabs.css"
-import "../../css/titlebar.css"
+import "../../css/layout/tabs.css"
+import "../../css/layout/titlebar.css"
 
 interface title_bar_props {
     container_el: HTMLDivElement | undefined,
@@ -15,18 +15,17 @@ interface title_bar_props {
 
 export function TitleBar(props:title_bar_props) {  
     let tab_div:HTMLDivElement|undefined
-    const [frameless, setFrameless] = createSignal(true)
+    const [frameless, setFrameless] = createSignal(false)
     const [fullscreen, setFullscreen] = createSignal(false)
     //Expose set function to global window so Python can access it.
     if (!window.setFrameless) window.setFrameless = setFrameless
 
     onMount(()=>{
-        if (tab_div && props.container_el){
+        if (tab_div && props.container_el)
             window.container_manager = new container_manager(
                 props.container_el, 
                 tab_div
             )
-        }
     })
     
     return <>
@@ -39,7 +38,9 @@ export function TitleBar(props:title_bar_props) {
         <div class="titlebar titlebar_btns drag-region">
 
             {/**** New Tab and Window Panel Controls ****/}
-            <Btn icon={icons.window_add} onClick={() => { window.api.add_container() }}/>
+            <Btn icon={icons.window_add} classList={{window_btn:true}}
+                style={{padding:'1px 3px'}}
+                onClick={() => { window.api.add_container() }}/>
             <div class="titlebar_separator"/>
             <ToggleBtn icon={icons.panel_left} classList={{layout_btn:true}} activated={true} 
                 onAct={()=>{props.show_section(LAYOUT_SECTIONS.TOOL_BAR)}} 
@@ -58,13 +59,13 @@ export function TitleBar(props:title_bar_props) {
             {/**** Frameless Window Controls ****/}
             <Show when={frameless()}>
                 <div class="titlebar_separator"/>
-                <Btn icon={icons.minimize} classList={{window_btn:true}} style={{padding:'2px'}} width={16} height={16}
+                <Btn icon={icons.minimize} classList={{window_btn:true}} style={{padding:'3px'}} width={16} height={16}
                     onClick={() => { window.api.minimize() }}/>
                 <Show when={fullscreen()}><Btn icon={icons.restore} classList={{window_btn:true}}
                     onClick={() => { setFullscreen(false); window.api.restore()  }}/> </Show>
                 <Show when={!fullscreen()}> <Btn icon={icons.maximize} classList={{window_btn:true}} style={{padding:'2px'}}
                     onClick={() => { setFullscreen(true); window.api.maximize()  }}/> </Show>
-                <Btn icon={icons.close} classList={{window_btn:true}} style={{padding:'2px'}} width={16} height={16}
+                <Btn icon={icons.close} classList={{window_btn:true}} style={{padding:'3px'}} width={16} height={16}
                     onClick={() => { window.api.close() }}/>
             </Show>
         </div>

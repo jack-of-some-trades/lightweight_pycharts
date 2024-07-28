@@ -1,6 +1,6 @@
 import * as lwc from "lightweight-charts";
 import { DeepPartial as DP, Time } from "lightweight-charts";
-import { icons } from "./icons";
+import { icons } from "../components/icons";
 import { RoundedCandleSeriesOptions } from "./plugins/rounded-candles-series/rounded-candles-series";
 
 // #region ---------------- Enums ---------------- //
@@ -223,9 +223,11 @@ export class tf {
         return new tf(-1, 'E') //Signal an error
     }
 
-    toSectionLabel(): string { return interval_map[this.period] }
-    toString(): string { return `${this.multiplier}${this.period}` }
-    toLabel(): string { return `${this.multiplier} ${interval_map[this.period]}${(this.multiplier !== 1) ? 's' : ''}` }
+    static is_equal(a:tf, b:tf):boolean { return a.toValue() === b.toValue()}
+
+    //Trim_unit can be set to True when displaying the timeframe. Should be set to false when transmitting the TF as a string.
+    toString(trim_unit:boolean = false): string { return `${(trim_unit && this.multiplier === 1)? '' : this.multiplier}${this.period}` }
+    toLabel(): string { return `${this.multiplier} ${interval_map[this.period]}${(this.multiplier > 1) ? 's' : ''}` }
     toValue(): number { return this.multiplier * interval_val_map[this.period] }
 }
 
