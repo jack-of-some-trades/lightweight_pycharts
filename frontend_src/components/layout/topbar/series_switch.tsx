@@ -73,7 +73,7 @@ export function SeriesSwitcher(){
             <Show when={!SeriesOpts.favorites.includes(selectedSeries())}>
                 <Icon 
                     icon={series_icon_map[selectedSeries()]}
-                    classList={{series_btn:true}}
+                    classList={{topbar_icon_btn:true}}
                     activated={true}
                 />
             </Show>
@@ -82,7 +82,7 @@ export function SeriesSwitcher(){
             <For each={ordered_favorites()}>{ (fav) => 
                 <Icon 
                     icon={series_icon_map[fav]}
-                    classList={{series_btn:true}}
+                    classList={{topbar_icon_btn:true}}
                     activated={selectedSeries() === fav}
                     onClick={() => setSelectedSeries(fav)}
                 />

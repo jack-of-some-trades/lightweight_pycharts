@@ -51,26 +51,8 @@
     font-size: smaller;
 }
 
-
-.series_btn {
+.topbar_icon_btn {
     display:flex;
     align-items: center;
-    border-radius: 5px;
-}
-
-/****** Symbol Search Classes  ******/
-
-#symbol_search {
-    margin-left: 6px;
-    display: flex;
-    align-items: center;
-    border-radius: 5px;
-}
-
-#search_text {
-    height: 100%;
-    text-align: left;
-    font-weight: bold;
-    width: 4em;
     border-radius: 5px;
 }

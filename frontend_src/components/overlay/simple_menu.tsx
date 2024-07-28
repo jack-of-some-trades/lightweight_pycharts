@@ -44,7 +44,7 @@ export function MenuSection(props:menu_section_props){
             <Icon icon={display() ? icons.menu_arrow_sn : icons.menu_arrow_ns} />
         </div>
         <Show when={display()}>
-            <div class='menu_section'>{props.children}</div>
+            <div class='menu_section' style={props.style}>{props.children}</div>
         </Show>
     </>
 }
@@ -75,28 +75,26 @@ export function MenuItem(props:menu_item_props){
     if (props.expand === undefined) props.expand = false
     const [menuProps, divProps] = splitProps(props, menuItemPropNames)
 
-    return (
-        <div {...divProps} onmouseenter={()=>setShowStar(true)} onMouseLeave={()=>setShowStar(false)}>
-            {/* Selectable Portion of Menu Item, Allow it to expand if desired */}
-            <span 
-                class="menu_selectable" 
-                style={{width:menuProps.expand?'-webkit-fill-available':undefined}}
-                onclick={props.onSel}
-                >
-                <Show when={menuProps.icon}><Icon icon={menuProps.icon??''}/></Show>
-                <Show when={menuProps.label}><span class='menu_text'>{menuProps.label}</span></Show>
-            </span>
-            
-            {/* Star/'Favoritable' Portion of Menu Item */}
-            <Show when={menuProps.star !== undefined}>
-                <MenuItemStar 
-                    visible={showStar()}
-                    selected={menuProps.star??false} 
-                    starAct={menuProps.starAct} 
-                    starDeact={menuProps.starDeact}/>
-            </Show>
-        </div>
-    )
+    return <div {...divProps} onmouseenter={()=>setShowStar(true)} onMouseLeave={()=>setShowStar(false)}>
+        {/* Selectable Portion of Menu Item, Allow it to expand if desired */}
+        <span 
+            class="menu_selectable" 
+            style={{width:menuProps.expand?'-webkit-fill-available':undefined}}
+            onclick={props.onSel}
+            >
+            <Show when={menuProps.icon}><Icon icon={menuProps.icon??''}/></Show>
+            <Show when={menuProps.label}><span class='menu_text'>{menuProps.label}</span></Show>
+        </span>
+        
+        {/* Star/'Favoritable' Portion of Menu Item */}
+        <Show when={menuProps.star !== undefined}>
+            <MenuItemStar 
+                visible={showStar()}
+                selected={menuProps.star??false} 
+                starAct={menuProps.starAct} 
+                starDeact={menuProps.starDeact}/>
+        </Show>
+    </div>
 }
 
 //  ***************  Menu Item Star  *************** //
