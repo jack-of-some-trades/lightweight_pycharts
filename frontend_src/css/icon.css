@@ -12,7 +12,7 @@
 }
 
 .icon[active] {
-    background-color: var(--icon-active-color);
+    color: var(--icon-active-color);
 }
 
 .icon_text[active]{

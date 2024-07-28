@@ -5,6 +5,8 @@ import { icons, TextIcon } from "../../icons";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager";
 import { MenuItem, MenuSection, ShowMenuButton } from "../../overlay/simple_menu";
 
+// CSS in topbar.css
+
 interface timeframe_json {
     menu_listings: {
         "s"?: number[]

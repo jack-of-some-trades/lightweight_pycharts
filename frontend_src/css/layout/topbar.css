@@ -52,6 +52,12 @@
 }
 
 
+.series_btn {
+    display:flex;
+    align-items: center;
+    border-radius: 5px;
+}
+
 /****** Symbol Search Classes  ******/
 
 #symbol_search {

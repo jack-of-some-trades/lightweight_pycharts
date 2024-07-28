@@ -4,6 +4,11 @@
     align-items: center;
     margin: 0px 1px;
 }
+/* Overwrite Icon Standard Coloring */
+.layout_btn[active]{
+    color: var(--icon-color);
+    background-color: var(--icon-active-color);
+}
 
 .window_btn {
     border-radius: 5px;

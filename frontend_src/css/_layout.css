@@ -160,9 +160,9 @@ body {
     background-color: var(--icon-hover-color);
 }
 
-.icon[active] {
+/* .icon[active] {
     background-color: var(--icon-active-color);
-}
+} */
 .icon:hover {
     background-color: var(--icon-hover-color);
 }

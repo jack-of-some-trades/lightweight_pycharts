@@ -2,6 +2,7 @@
 import { JSX } from "solid-js"
 import "../../../css/layout/topbar.css"
 import { Icon, icons } from "../../icons"
+import { SeriesSwitcher } from "./series_switch"
 import { TimeframeSwitcher } from "./timeframe_switch"
 
 
@@ -41,10 +42,6 @@ function SymbolSearchBox(){
         </div>
         <Icon icon={icons.menu_add} onMouseDown={()=>onClk(false)}/>
     </div>
-}
-
-function SeriesSwitcher(){
-    return <div class="topbar_container" id='series_switch'/>
 }
 
 function Indicators(){
