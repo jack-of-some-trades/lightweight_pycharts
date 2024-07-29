@@ -11,9 +11,11 @@ export class py_api {
     minimize!: () => void;
     restore!: () => void;
 
-    // The Following Functions have default commands so functionality is maintained when launched on a dev local server.
+    /* ---------------- Javascript >>> Python ---------------- */
+    // The following functions are called by JS and hook to functions implemented in python.
+    // These functions have default commands so functionality is maintained when launched on a local dev server.
     // These are over written (re-routed) at start-up by the Python View Class so they execute their respective python functions
-                                                                                    // @ts-ignore
+    // @ts-ignore                                    
     add_container = () => window.container_manager.add_container(makeid(Array.from(container_manager.containers.keys()), 'c_'), 'chart');                         // @ts-ignore
     remove_container = (id: string) => window.container_manager.remove_container(id);
     reorder_containers = (from: number, to: number) => {
@@ -34,4 +36,17 @@ export class py_api {
     };
 
     callback = (msg: string) => {console.log(msg)}
+    
+    /* ---------------- Python >>> Javascript ---------------- */
+    // The following functions are called by Python. They are set by JS as the window is initialized
+
+    setFrameless = (arg:boolean) => {}
+
+    populate_search_symbols = (items:symbol_item[]) => {}
+    set_search_filters = (category:string, opts:string[]) => {}
+
+    update_series_opts = () => {}
+    update_layout_opts = () => {}
+    update_timeframe_opts = () => {}
+
 }

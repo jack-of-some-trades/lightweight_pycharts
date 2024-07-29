@@ -1,6 +1,5 @@
 import * as lwc from "lightweight-charts";
 import { DeepPartial as DP, Time } from "lightweight-charts";
-import { icons } from "../components/icons";
 import { RoundedCandleSeriesOptions } from "./plugins/rounded-candles-series/rounded-candles-series";
 
 // #region ---------------- Enums ---------------- //
@@ -56,77 +55,21 @@ export function num_frames(layout: Container_Layouts | null): number {
     }
 }
 
-export const layout_icon_map: { [key: number]: icons; } = {
-    0: icons.layout_single,
-    1: icons.layout_double_vert,
-    2: icons.layout_double_horiz,
-    3: icons.layout_triple_vert,
-    4: icons.layout_triple_left,
-    5: icons.layout_triple_right,
-    6: icons.layout_triple_horiz,
-    7: icons.layout_triple_top,
-    8: icons.layout_triple_bottom,
-    9: icons.layout_quad_sq_v,
-    10: icons.layout_quad_sq_h,
-    11: icons.layout_quad_vert,
-    12: icons.layout_quad_horiz,
-    13: icons.layout_quad_left,
-    14: icons.layout_quad_right,
-    15: icons.layout_quad_top,
-    16: icons.layout_quad_bottom
-}
-
 //This must match the orm.enum.SeriesType.
 export enum Series_Type {
     WhitespaceData,
-
     SingleValueData,
     LINE,
     AREA,
     BASELINE,
     HISTOGRAM,
-
     OHLC,
     BAR,
     CANDLESTICK,
-
     // HLC_AREA,
     ROUNDED_CANDLE
 }
 
-export const series_icon_map: { [key: number]: icons; } = {
-    0: icons.close_small,   //Whitespace Data -> No Icon
-
-    1: icons.close_small,   //Single Value Data -> No Icon
-    2: icons.series_line,
-    3: icons.series_area,
-    4: icons.series_baseline,
-    5: icons.series_histogram,
-
-    6: icons.close_small,   //OHLC Data -> No Icon
-    7: icons.candle_bar,
-    8: icons.candle_regular,
-
-    // 9: icons.series_step_line,
-    9: icons.candle_rounded,
-}
-
-export const series_label_map: { [key: number]: string; } = {
-    0: "Whitespace Data",
-
-    1: "Single Value Data",
-    2: "Line",
-    3: "Area",
-    4: "Baseline",
-    5: "Histogram",
-
-    6: "OHLC Data",
-    7: "Bar",
-    8: "Candlestick",
-
-    // 9: "HLC Area",
-    9: "Rounded Candlestick",
-}
 // #endregion
 
 // #region ---------------- Super Object Interfaces ---------------- //
@@ -238,48 +181,6 @@ export class tf {
 export const LAYOUT_MARGIN = 5
 export const LAYOUT_CHART_MARGIN = 4
 export const LAYOUT_CHART_SEP_BORDER = 2
-export const LAYOUT_DIM_TITLE = {
-    WIDTH: `100vw`,
-    HEIGHT: 38,
-    LEFT: 0,
-    TOP: 0,
-    V_BUFFER: 8,
-    H_BUFFER: 4,
-}
-export const LAYOUT_DIM_TOP = {
-    WIDTH: `100vw`,
-    HEIGHT: 38,
-    LEFT: 0,
-    TOP: LAYOUT_DIM_TITLE.HEIGHT,
-    V_BUFFER: 8,
-    H_BUFFER: 2,
-}
-export const LAYOUT_DIM_LEFT = {
-    WIDTH: 46,
-    HEIGHT: -1, //Dynamically set
-    TOP: LAYOUT_DIM_TOP.TOP + LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
-    LEFT: 0,
-    V_BUFFER: 3,
-    H_BUFFER: 6,
-}
-export const LAYOUT_DIM_RIGHT = {
-    WIDTH: 52,
-    HEIGHT: -1, //Dynamically set
-    TOP: LAYOUT_DIM_TOP.TOP + LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
-    RIGHT: 0
-}
-export const LAYOUT_DIM_BOTTOM = {
-    WIDTH: -1, //Dynamically set
-    HEIGHT: 38,
-    BOTTOM: 0,
-    LEFT: LAYOUT_DIM_LEFT.WIDTH + LAYOUT_MARGIN
-}
-export const LAYOUT_DIM_CENTER = {
-    WIDTH: -1, //Dynamically set
-    HEIGHT: -1, //Dynamically set 
-    TOP: LAYOUT_DIM_TOP.TOP + LAYOUT_DIM_TOP.HEIGHT + LAYOUT_MARGIN,
-    LEFT: LAYOUT_DIM_LEFT.WIDTH + LAYOUT_MARGIN
-}
 
 //Minimum flex Widths/Heights of each frame
 export const MIN_FRAME_WIDTH = 0.15

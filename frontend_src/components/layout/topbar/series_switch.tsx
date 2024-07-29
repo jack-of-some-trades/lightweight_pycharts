@@ -1,6 +1,6 @@
 import { createEffect, createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { interval, series_icon_map, series_label_map, Series_Type } from "../../../src/util_lwc";
+import { interval, Series_Type } from "../../../src/util_lwc";
 import { Icon, icons } from "../../icons";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager";
 import { MenuItem, ShowMenuButton } from "../../overlay/simple_menu";
@@ -100,6 +100,34 @@ export function SeriesSwitcher(){
 
 
 //#region --------------------- Overlay Menu --------------------- //
+
+const series_icon_map: { [key: number]: icons; } = {
+    0: icons.close_small,   //Whitespace Data -> No Icon
+    1: icons.close_small,   //Single Value Data -> No Icon
+    2: icons.series_line,
+    3: icons.series_area,
+    4: icons.series_baseline,
+    5: icons.series_histogram,
+    6: icons.close_small,   //OHLC Data -> No Icon
+    7: icons.candle_bar,
+    8: icons.candle_regular,
+    // 9: icons.series_step_line,
+    9: icons.candle_rounded,
+}
+
+const series_label_map: { [key: number]: string; } = {
+    0: "Whitespace Data",
+    1: "Single Value Data",
+    2: "Line",
+    3: "Area",
+    4: "Baseline",
+    5: "Histogram",
+    6: "OHLC Data",
+    7: "Bar",
+    8: "Candlestick",
+    // 9: "HLC Area",
+    9: "Rounded Candlestick",
+}
 
 interface SeriesMenu_Props extends Omit<overlay_div_props,"location_ref"> {
     opts:series_json,

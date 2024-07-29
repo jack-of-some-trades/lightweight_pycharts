@@ -18,7 +18,7 @@ export function TitleBar(props:title_bar_props) {
     const [frameless, setFrameless] = createSignal(false)
     const [fullscreen, setFullscreen] = createSignal(false)
     //Expose set function to global window so Python can access it.
-    if (!window.setFrameless) window.setFrameless = setFrameless
+    if (!window.api.setFrameless) window.api.setFrameless = setFrameless
 
     onMount(()=>{
         if (tab_div && props.container_el)

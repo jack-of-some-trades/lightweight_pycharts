@@ -19,7 +19,8 @@ export function ShowMenuButton(props:menu_btn_props){
     const display = OverlayCTX().getDisplayAccessor(props.id)
     const setDisplay = OverlayCTX().getDisplaySetter(props.id)
 
-    //Manually adding event makes stopPropagation work correctly
+    //Manually adding event makes stopPropagation work correctly, stopPropogation prevents
+    //OverlayManager from Immediately turing around and closing the menu
     onMount(() => { el.addEventListener('mousedown', (e) => {setDisplay(!display()); e.stopPropagation();}) })
 
     return (

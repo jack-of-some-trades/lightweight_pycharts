@@ -22,7 +22,7 @@ const default_ctx_args:OverlayContextProps = {
     getDisplayAccessor: () => () => false,
 }
 
-const OverlayContext = createContext<OverlayContextProps>(default_ctx_args);
+let OverlayContext = createContext<OverlayContextProps>(default_ctx_args);
 export function OverlayCTX():OverlayContextProps { 
     return useContext<OverlayContextProps>(OverlayContext) 
 }
@@ -72,6 +72,7 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
         getDisplayAccessor:getDisplayAccessor
     }
 
+
     //This Listener checks all Overlay Elements and removes visibility if a mouse event occurs 
     //outside of a menu 
     document.body.addEventListener('mousedown', (e) => 
@@ -83,6 +84,11 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
             }
         )
     )
+    document.body.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape') 
+            Array.from(overlays).forEach(({id}) => getDisplaySetter(id)(false))
+    })  
+
 
     return (
         <OverlayContext.Provider value={OverlayCTX}>
@@ -112,11 +118,10 @@ export enum location_reference {
 
 /**
  * @param id : String ID of the Overlay Component. Can be used to retrieve the Visibility State
- * @param ref :
  * @param location : {x,y} Coordinate to draw the point at. Can be a reactive Signal
  * @param updateLocation : [Optional] function that can be called to update the location parameter above,
  *        Useful when the location is referencing a Signal that cannot be reactive such as a Div's ClientBoundingBox
- * @param display_ref : Reference Corner to position the Div, e.g. TOP_RIGHT will mean the top right corner of 
+ * @param location_ref : Reference Corner to position the Div, e.g. TOP_RIGHT will mean the top right corner of 
  *        the div will be drawn at location:{x,y}
  */
 export interface overlay_div_props extends JSX.HTMLAttributes<HTMLDivElement> {
@@ -149,10 +154,8 @@ export function OverlayDiv(props:overlay_div_props){
         //Next effect only really needs to fire once. It gets a reference to the Div once it is
         //attached to the document. Sadly, its the easiest way to get this reference
         createEffect(on(display, () => {
-            if(!divRef) {
-                divRef = document.querySelector(`#${props.id}`) as HTMLDivElement?? undefined
-                OverlayCTX().setDivReference(props.id, divRef)
-            }
+            divRef = document.querySelector(`#${props.id}`) as HTMLDivElement?? undefined
+            OverlayCTX().setDivReference(props.id, divRef)
         }))
 
         //Update Div Location when Location Changes (Preserve Reactivity of props.location)
@@ -234,14 +237,14 @@ function getBoundedPositionFunc(display_ref:location_reference):(pt:point, rect:
             return (pt:point, overlay_rect:DOMRect|undefined) => {
                 const window_rect = document.querySelector('#overlay_manager')?.getBoundingClientRect()
                 if (!window_rect || !overlay_rect) return {x:-1, y:-1}
-                const left_bound = overlay_rect.width/2
-                const top_bound = overlay_rect.height/2
-                const right_bound = window_rect.width - left_bound
-                const bottom_bound = window_rect.height - top_bound
+                const left_offset = overlay_rect.width/2
+                const top_offset = overlay_rect.height/2
+                const right_bound = window_rect.width - overlay_rect.width
+                const bottom_bound = window_rect.height - overlay_rect.height
 
                 return {
-                    top:`${Math.round(Math.min(Math.max(pt.y, top_bound), bottom_bound))}px`,
-                    left:`${Math.round(Math.min(Math.max(pt.x, left_bound), right_bound))}px`
+                    top:`${Math.round(Math.min(Math.max(pt.y - top_offset, 0), bottom_bound))}px`,
+                    left:`${Math.round(Math.min(Math.max(pt.x - left_offset, 0), right_bound))}px`
                 }
             }
     }

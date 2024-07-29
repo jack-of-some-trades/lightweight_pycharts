@@ -1,6 +1,6 @@
 import { createEffect, createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { Container_Layouts, interval, layout_icon_map, series_icon_map } from "../../../src/util_lwc";
+import { Container_Layouts, interval } from "../../../src/util_lwc";
 import { Icon, icons } from "../../icons";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager";
 import { MenuItem, MenuSection, ShowMenuButton } from "../../overlay/simple_menu";
@@ -66,7 +66,7 @@ export function LayoutSwitcher(){
         window.active_container?.id ?? '',
         selectedLayout()
     )})
-
+    
     OverlayCTX().attachOverlay(
         id,
         <LayoutMenu 
@@ -77,15 +77,14 @@ export function LayoutSwitcher(){
             location={menuLocation()}
             updateLocation={updateLocation}
         />, 
-
     )
 
     return (
-        <div class='topbar_container' ref={el}>
+        <div class='topbar_container' ref={el} style={{"margin-right":'4px'}}>
             {/* Additional Icon to show selected TF when it's not in the favorites list*/}
             <Show when={!LayoutOpts.favorites.includes(selectedLayout())}>
                 <Icon 
-                    icon={series_icon_map[selectedLayout()]}
+                    icon={layout_icon_map[selectedLayout()]}
                     classList={{topbar_icon_btn:true}}
                     activated={true}
                 />
@@ -114,6 +113,26 @@ export function LayoutSwitcher(){
 
 //#region --------------------- Overlay Menu --------------------- //
 
+const layout_icon_map: { [key: number]: icons; } = {
+    0: icons.layout_single,
+    1: icons.layout_double_vert,
+    2: icons.layout_double_horiz,
+    3: icons.layout_triple_vert,
+    4: icons.layout_triple_left,
+    5: icons.layout_triple_right,
+    6: icons.layout_triple_horiz,
+    7: icons.layout_triple_top,
+    8: icons.layout_triple_bottom,
+    9: icons.layout_quad_sq_v,
+    10: icons.layout_quad_sq_h,
+    11: icons.layout_quad_vert,
+    12: icons.layout_quad_horiz,
+    13: icons.layout_quad_left,
+    14: icons.layout_quad_right,
+    15: icons.layout_quad_top,
+    16: icons.layout_quad_bottom
+}
+
 const default_display: Map<string,boolean> = new Map([
     ["simple", true],
     ["triple", false],
@@ -141,23 +160,23 @@ export function LayoutMenu(props:LayoutMenu_Props){
 
     return <OverlayDiv {...overlayDivProps} location_ref={location_reference.TOP_RIGHT}>
         <For each={Object.keys(props.opts.menu_listings) as interval[]}>{(section) =>
-                <MenuSection
-                    label={section.toLocaleUpperCase()} 
-                    showByDefault={default_display.get(section)??false}
-                    style={{display:"flex", "flex-direction":"row"}}
-                    >
-                    <For each={accessor(section)}>{(type)=>
-                        <MenuItem 
-                            expand={false}
-                            icon={layout_icon_map[type]}
-                            onSel={() => props.onSel(type)}
+            <MenuSection
+                label={section.toLocaleUpperCase()} 
+                showByDefault={default_display.get(section)??false}
+                style={{display:"flex", "flex-direction":"row"}}
+                >
+                <For each={accessor(section)}>{(type)=>
+                    <MenuItem 
+                        expand={false}
+                        icon={layout_icon_map[type]}
+                        onSel={() => props.onSel(type)}
 
-                            star={props.opts.favorites.includes(type)}
-                            starAct={() => addFavorite(type)}
-                            starDeact={() => removeFavorite(type)}
-                        />
-                    }</For>
-                </MenuSection>
+                        star={props.opts.favorites.includes(type)}
+                        starAct={() => addFavorite(type)}
+                        starDeact={() => removeFavorite(type)}
+                    />
+                }</For>
+            </MenuSection>
         }</For>
     </OverlayDiv>
 }

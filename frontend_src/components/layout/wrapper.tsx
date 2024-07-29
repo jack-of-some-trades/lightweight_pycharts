@@ -1,4 +1,4 @@
-import { JSX, Show, createEffect, onMount } from 'solid-js'
+import { JSX, createEffect, onMount } from 'solid-js'
 import { SetStoreFunction, createStore } from 'solid-js/store'
 import { OverlayContextProvider } from '../overlay/overlay_manager'
 import { TitleBar } from './titlebar'
@@ -14,20 +14,20 @@ const UTILBAR_WIDTH = 38
 interface layout_struct {
     center:{width:string, height:string, top:string, left:string},
     titlebar:{width:string, height:string, top:string, left:string},
-    topbar:{visible:boolean, width:string, height:string, top:string, left:string},
-    toolbar:{visible:boolean, width:string, height:string, top:string, left:string},
-    navbar:{visible:boolean, width:string, height:string, top:string, right:string},
-    utilbar:{visible:boolean, width:string, height:string, bottom:string, left:string},
+    topbar:{display:string, width:string, height:string, top:string, left:string},
+    toolbar:{display:string, width:string, height:string, top:string, left:string},
+    navbar:{display:string, width:string, height:string, top:string, right:string},
+    utilbar:{display:string, width:string, height:string, bottom:string, left:string},
 }
 
 //Any value of -1px is dynamically set upon resize event
 const layout_default:layout_struct = {
     center:{width:'-1px', height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, left:`${TOOLBAR_WIDTH + MARGIN}px`},
     titlebar:{width:'100vw', height:'38px', top:'0px', left:'0px'},
-    topbar:{visible:true, width:'100vw', height:'38px', top:`${TITLE_HEIGHT}px`, left:'0px'},
-    toolbar:{visible:true, width:`${TOOLBAR_WIDTH}px`, height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, left:'0px'},
-    navbar:{visible:true, width:`${NAVBAR_WIDTH}px`, height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, right:'0px'},
-    utilbar:{visible:true, width:'-1px', height:`${UTILBAR_WIDTH}px`, bottom:'0px', left:`${TOOLBAR_WIDTH + MARGIN}px`},
+    topbar:{display:'flex', width:'100vw', height:'38px', top:`${TITLE_HEIGHT}px`, left:'0px'},
+    toolbar:{display:'flex', width:`${TOOLBAR_WIDTH}px`, height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, left:'0px'},
+    navbar:{display:'flex', width:`${NAVBAR_WIDTH}px`, height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, right:'0px'},
+    utilbar:{display:'flex', width:'-1px', height:`${UTILBAR_WIDTH}px`, bottom:'0px', left:`${TOOLBAR_WIDTH + MARGIN}px`},
 }
 
 export enum LAYOUT_SECTIONS {
@@ -57,6 +57,9 @@ export function Wrapper(){
         hide_section:hide_section_unbound.bind(undefined, set_layout),
     }
 
+    //Important Note: You cannot use <Show/> to control visibility here. <Show/> completely recreates
+    //The element in question which removes the state information held by sub elements. To use <Show/>
+    //you'd have to create a context for each of those states and that's just not worth it right now. 
     return <>
         <GlobalContexts>
             <div id='layout_wrapper' class='wrapper'>
@@ -64,13 +67,10 @@ export function Wrapper(){
                 <div id='layout_title' class='layout_title layout_flex' style={layout.titlebar}>
                     <TitleBar container_el={container_el} {...title_bar_props}/>
                 </div>
-                <Show when={layout.topbar.visible}> <TopBar style={layout.topbar}/> </Show>
-                <Show when={layout.toolbar.visible}><div id='layout_left' class='layout_main layout_flex' style={layout.toolbar}/>
-                </Show>
-                <Show when={layout.navbar.visible}><div id='layout_right' class='layout_main layout_flex' style={layout.navbar}/>
-                </Show>
-                <Show when={layout.utilbar.visible}><div id='layout_bottom' class='layout_main' style={layout.utilbar}/>
-                </Show>
+                <TopBar style={layout.topbar}/>
+                <div id='layout_left' class='layout_main layout_flex' style={layout.toolbar}/>
+                <div id='layout_right' class='layout_main layout_flex' style={layout.navbar}/>
+                <div id='layout_bottom' class='layout_main' style={layout.utilbar}/>
             </div>
         </GlobalContexts>
     </>
@@ -89,15 +89,15 @@ function resize(width:number, height:number, layout:layout_struct, set_layout:Se
     let center_height = height - TITLE_HEIGHT
     let center_width = width
 
-    if (layout.topbar.visible){
+    if (layout.topbar.display === 'flex'){
         side_bar_height -= (TOP_HEIGHT + MARGIN)
         center_height -= (TOP_HEIGHT + MARGIN)
     }
-    if (layout.toolbar.visible)
+    if (layout.toolbar.display === 'flex')
         center_width -= (TOOLBAR_WIDTH + MARGIN)
-    if (layout.navbar.visible)
+    if (layout.navbar.display === 'flex')
         center_width -= (NAVBAR_WIDTH + MARGIN)
-    if (layout.utilbar.visible)
+    if (layout.utilbar.display === 'flex')
         center_height -= (UTILBAR_WIDTH + MARGIN)
 
     //Top Bar automatically resizes, no adjustment needed
@@ -118,19 +118,19 @@ function show_section_unbound(set_layout:SetStoreFunction<layout_struct>, sectio
         case (LAYOUT_SECTIONS.TOOL_BAR):
             set_layout('center', 'left', `${TOOLBAR_WIDTH + MARGIN}px`)
             set_layout('utilbar', 'left', `${TOOLBAR_WIDTH + MARGIN}px`)
-            set_layout('toolbar', 'visible', true)
+            set_layout('toolbar', 'display', 'flex')
             break;
         case (LAYOUT_SECTIONS.NAV_BAR):
-            set_layout('navbar', 'visible', true)
+            set_layout('navbar', 'display', 'flex')
             break;
         case (LAYOUT_SECTIONS.TOP_BAR):
             set_layout('toolbar', 'top', `${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`)
             set_layout('navbar', 'top', `${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`)
             set_layout('center', 'top', `${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`)
-            set_layout('topbar', 'visible', true)
+            set_layout('topbar', 'display', 'flex')
             break;
         case (LAYOUT_SECTIONS.UTIL_BAR):
-            set_layout('utilbar', 'visible', true)
+            set_layout('utilbar', 'display', 'flex')
     }
 }
 
@@ -139,18 +139,18 @@ function hide_section_unbound(set_layout:SetStoreFunction<layout_struct>, sectio
         case (LAYOUT_SECTIONS.TOOL_BAR):
             set_layout('center', 'left', `0px`)
             set_layout('utilbar', 'left', `0px`)
-            set_layout('toolbar', 'visible', false)
+            set_layout('toolbar', 'display', 'none')
             break;
         case (LAYOUT_SECTIONS.NAV_BAR):
-            set_layout('navbar', 'visible', false)
+            set_layout('navbar', 'display', 'none')
             break;
         case (LAYOUT_SECTIONS.TOP_BAR):
             set_layout('toolbar', 'top', `${TITLE_HEIGHT}px`)
             set_layout('navbar', 'top', `${TITLE_HEIGHT}px`)
             set_layout('center', 'top', `${TITLE_HEIGHT}px`)
-            set_layout('topbar', 'visible', false)
+            set_layout('topbar', 'display', 'none')
             break;
         case (LAYOUT_SECTIONS.UTIL_BAR):
-            set_layout('utilbar', 'visible', false)
+            set_layout('utilbar', 'display', 'none')
     }
 }

@@ -127,7 +127,7 @@ export class container_manager {
             //Add Tab on Double Click
             this.el.addEventListener('dblclick', event => {
                 if (event.target === this.el || event.target === this.tabContentEl)
-                    //Sends the command back to python so the two stay synced
+                    //Sends the command back to python for python to create the container so the two stay synced
                     window.api.add_container()
             })
     

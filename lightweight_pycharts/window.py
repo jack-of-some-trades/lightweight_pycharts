@@ -292,11 +292,11 @@ class Window:
                 return self.containers[_id]
 
     def set_search_filters(
-        self, category: Literal["type", "broker", "exchange"], items: list[str]
+        self,
+        category: Literal["security_type", "data_broker", "exchange"],
+        items: list[str],
     ):
-        """Set the search filters available when searching for a Symbol.
-        'type'==Security Types, 'broker'==Data Brokers, 'exchange' == Security's Exchange
-        """
+        "Set the available search filters in the symbol search menu."
         self._fwd_queue.put((JS_CMD.SET_SYMBOL_SEARCH_OPTS, category, items))
 
     def set_layout_favs(self, favs: list[orm.layouts]):

@@ -61,7 +61,7 @@ export class pane {
 
         this.assign_active_pane = this.assign_active_pane.bind(this)
 
-        // Without these listeners, chart cannot be moved in a replay like mode
+        // These listeners allow smooth chart dragging in a replay like mode
         this.chart_div.addEventListener('mousedown', () => {
             this.assign_active_pane()
             this.chart.timeScale().applyOptions({
@@ -158,7 +158,6 @@ export class pane {
         this.primitive_right.attachPrimitive(trend);
     }
 
-
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
     update_timescale_opts(newOpts: DeepPartial<HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
@@ -169,7 +168,7 @@ export class pane {
  * 
  * These are blank series that only contain Primitives as the name would imply. For them to display anything
  * they need at least 1 data-point with a value and a time that is either on screen or in the future. 
- * If they is only whitespace then they are not rendered. Similarly, if their only data is off screen *in the 
+ * If they are only whitespace then they are not rendered. Similarly, if their only data is off screen *in the 
  * past* then they are not rendered. Because of this they each carry 1 data-point the is {time: ****, value:0}
  * where the time is always the Current bar time of the main series. Any further in the past and things may
  * de-render. Any further in the Future and it will mess up auto-scroll on new data.
