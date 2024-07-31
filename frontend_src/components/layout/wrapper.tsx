@@ -2,6 +2,7 @@ import { JSX, createEffect, onMount } from 'solid-js'
 import { SetStoreFunction, createStore } from 'solid-js/store'
 import { OverlayContextProvider } from '../overlay/overlay_manager'
 import { TitleBar } from './titlebar'
+import { ToolBar, ToolBoxContext } from './toolbar/toolbar'
 import { TopBar } from './topbar/topbar'
 
 const MARGIN = 5
@@ -64,11 +65,9 @@ export function Wrapper(){
         <GlobalContexts>
             <div id='layout_wrapper' class='wrapper'>
                 <div ref={container_el} id='layout_center' class='layout_main' style={layout.center}/>
-                <div id='layout_title' class='layout_title layout_flex' style={layout.titlebar}>
-                    <TitleBar container_el={container_el} {...title_bar_props}/>
-                </div>
+                <TitleBar style={layout.titlebar} container_el={container_el} {...title_bar_props}/>
                 <TopBar style={layout.topbar}/>
-                <div id='layout_left' class='layout_main layout_flex' style={layout.toolbar}/>
+                <ToolBar style={layout.toolbar}/>
                 <div id='layout_right' class='layout_main layout_flex' style={layout.navbar}/>
                 <div id='layout_bottom' class='layout_main' style={layout.utilbar}/>
             </div>
@@ -78,14 +77,16 @@ export function Wrapper(){
 
 function GlobalContexts(props:JSX.HTMLAttributes<HTMLElement>){
     return <>
+        <ToolBoxContext>
         <OverlayContextProvider>
             {props.children}
         </OverlayContextProvider>
+        </ToolBoxContext>
     </>
 }
 
 function resize(width:number, height:number, layout:layout_struct, set_layout:SetStoreFunction<layout_struct>){
-    let side_bar_height = height
+    let side_bar_height = height - TITLE_HEIGHT
     let center_height = height - TITLE_HEIGHT
     let center_width = width
 

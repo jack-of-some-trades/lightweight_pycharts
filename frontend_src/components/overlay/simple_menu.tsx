@@ -14,18 +14,25 @@ interface menu_btn_props extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export function ShowMenuButton(props:menu_btn_props){
     let el = document.createElement('div')
-    const [, divProps] = splitProps(props, ['id'])
+    const [, divProps] = splitProps(props, ['id', "style", "icon_act", "icon_deact"])
 
     const display = OverlayCTX().getDisplayAccessor(props.id)
     const setDisplay = OverlayCTX().getDisplaySetter(props.id)
 
     //Manually adding event makes stopPropagation work correctly, stopPropogation prevents
     //OverlayManager from Immediately turing around and closing the menu
-    onMount(() => { el.addEventListener('mousedown', (e) => {setDisplay(!display()); e.stopPropagation();}) })
+    onMount(() => { el.addEventListener('mousedown', (e) => {
+        if (e.button === 0) {
+            setDisplay(!display()); 
+            e.stopPropagation();
+        }
+    })})
 
     return (
         <div {...divProps} ref={el}>
-            <Icon icon={display() ? props.icon_act : props.icon_deact} />
+            <Icon 
+                icon={display() ? props.icon_act : props.icon_deact} 
+            />
         </div>
     )
 }
@@ -66,9 +73,13 @@ interface menu_item_props extends JSX.HTMLAttributes<HTMLDivElement> {
     star?: boolean | undefined,
     starAct?: CallableFunction,
     starDeact?: CallableFunction,
+    starStyle?: JSX.CSSProperties,
 }
 
-const menuItemPropNames:menu_item_keys[] = ["label", "icon", "data", "onSel", 'expand', "star", "starAct", "starDeact"] 
+const menuItemPropNames:menu_item_keys[] = [
+    "label", "icon", "data",  "onSel", 'expand', 
+    "star", "starAct", "starDeact", "starStyle"
+] 
 
 export function MenuItem(props:menu_item_props){
     const [showStar, setShowStar] = createSignal(false)
@@ -81,7 +92,7 @@ export function MenuItem(props:menu_item_props){
         <span 
             class="menu_selectable" 
             style={{width:menuProps.expand?'-webkit-fill-available':undefined}}
-            onclick={props.onSel}
+            onclick={(e) => {if (e.button === 0 && props.onSel) props.onSel()}}
             >
             <Show when={menuProps.icon}><Icon icon={menuProps.icon??''}/></Show>
             <Show when={menuProps.label}><span class='menu_text'>{menuProps.label}</span></Show>
@@ -93,16 +104,19 @@ export function MenuItem(props:menu_item_props){
                 visible={showStar()}
                 selected={menuProps.star??false} 
                 starAct={menuProps.starAct} 
-                starDeact={menuProps.starDeact}/>
+                starDeact={menuProps.starDeact}
+                style={props.starStyle??{}}
+            />
         </Show>
     </div>
 }
 
 //  ***************  Menu Item Star  *************** //
 
-interface star_props {
-    visible: boolean
-    selected: boolean
+interface star_props extends JSX.HTMLAttributes<SVGSVGElement>{
+    visible: boolean,
+    selected: boolean,
+    style: JSX.CSSProperties,
     starAct?: CallableFunction,
     starDeact?: CallableFunction,
 }
@@ -118,9 +132,9 @@ function MenuItemStar(props:star_props){
 
     return <Icon 
         class='menu_item_star'
-        onClick={toggleState}
+        onClick={(e) => {if (e.button === 0) toggleState()}}
         icon={selected()? icons.star_filled : icons.star}
-        style={{color:selected()? 'var(--second-accent-color)': (props.visible)? undefined : '#0000'}}
+        style={{color:selected()? 'var(--second-accent-color)': (props.visible)? undefined : '#0000', ...props.style}}
     />
 
 }

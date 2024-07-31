@@ -26,6 +26,7 @@ export default defineConfig({
   },
   root:__dirname,
   build: {
+    minify: true,
     target: 'esnext',
     outDir: '../lightweight_pycharts/frontend'
   },

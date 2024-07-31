@@ -38,7 +38,7 @@ export class py_api {
     callback = (msg: string) => {console.log(msg)}
     
     /* ---------------- Python >>> Javascript ---------------- */
-    // The following functions are called by Python. They are set by JS as the window is initialized
+    // The following functions are called by Python. They are set by JS as the window is rendered
 
     setFrameless = (arg:boolean) => {}
 

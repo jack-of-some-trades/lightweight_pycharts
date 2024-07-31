@@ -15,23 +15,26 @@ const [SVG_DOC] = createResource(async () => await fetch('./svg-defs.svg').then(
 
 export interface icon_props extends JSX.SvgSVGAttributes<SVGSVGElement> {
     icon: string,
+    hover?:boolean,
     activated?: boolean
 }
 
 const DEFAULT_PROPS:icon_props = {
-    icon:'',
-    activated: undefined
+    icon: "close_small",
+    hover:true,
+    activated: undefined,
 }
 
 export function Icon(props:icon_props){
     let icon_el:SVGSVGElement|undefined;
-    props.classList = {icon:true, ...props.classList}
+    const merged = mergeProps(DEFAULT_PROPS, props)
+    merged.classList = {icon:merged.hover, icon_no_hover:!merged.hover, ...merged.classList}
     //If a "Cannot set property of classList" Error has lead you here it is because there is a 
     //reactive Signal in a classList that feeds props.classList. tl:dw Don't use Signals in classlist,
     //use reactive attributes instead. Reactive classList signals cannot be merged.
 
-    const merged = mergeProps(DEFAULT_PROPS, props)
-    const [iconProps, svgProps] = splitProps(merged, ["icon", 'activated']);
+    const [iconProps, svgProps] = splitProps(merged, ["icon", 'hover', 'activated']);
+    //propKeys is the list of keys set by the user (and this function).
     let propKeys = (Object.keys({...svgProps, "class":'', "active":''}))
 
     //When SVG_DOC is loaded or icon is changed, Copy reference SVG into Window
@@ -46,7 +49,7 @@ export function Icon(props:icon_props){
             let static_keys = 0
             while(icon_el.attributes.length > static_keys)
                 if (propKeys.includes(icon_el.attributes[static_keys].name))
-                    static_keys += 1
+                    static_keys += 1 //Skip removing this attribute
                 else
                     icon_el.removeAttribute(icon_el.attributes[static_keys].name)
 
@@ -81,12 +84,15 @@ export function TextIcon(props:text_icon_props){
 }
 
 export enum icons {
+    blank = 'blank',
+    
     menu = 'menu',
     menu_add = 'menu_add',
     menu_ext = "menu_ext",
     menu_ext_small = "menu_ext_small",
     menu_search = 'menu_search',
     menu_search_quick = "menu_search_quick",
+    menu_arrow_we = 'menu_arrow_we',
     menu_arrow_ew = 'menu_arrow_ew',
     menu_arrow_ns = 'menu_arrow_ns',
     menu_arrow_sn = 'menu_arrow_sn',

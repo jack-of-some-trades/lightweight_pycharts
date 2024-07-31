@@ -43,6 +43,8 @@
 
     --icon-color: #d1d4dc;
     --icon-hover-color: #2a2e39;
+    --icon-gray-color: #454c5e;
+    --icon-dark-color: var(--layout-main-fill);
     --icon-active-color: var(--accent-color);
     --icon-background-color: #0000;
 
@@ -105,6 +107,10 @@ body {
     display: flex;
     justify-content: flex-start;
     align-content: center;
+}
+
+#layout_left {
+    flex-direction: column;
 }
 
 .layout_container_row {
@@ -198,58 +204,5 @@ body {
 /* #endregion */
 
 /* #region --------------- Toolbar Params --------------- */
-
-.toolbar {
-    display: flex;
-    overflow: hidden;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: center;
-}
-
-.toolbar_top {
-    flex: 1 1 100px;
-    overflow-y: hidden;
-    justify-content: flex-start;
-}
-
-.toolbar_bottom {
-    flex: 1 1 10px;
-    overflow-y: hidden;
-    justify-content: flex-end;
-}
-
-.toolbar_separator {
-    height: 2px;
-    background-color: var(--toolbar-separator-color);
-    flex-shrink: 0;
-}
-
-.toolbar_item {
-    width: -webkit-fill-available;
-    height: 34px;
-    padding-left: 4px;
-    flex-direction: row;
-    justify-content: flex-start;
-    background-color: var(--toolbar-icon-background-color);
-}
-
-.toolbar_toggler {
-    width: 38px;
-    height: 38px;
-    background-color: var(--toolbar-icon-background-color);
-}
-
-.toolbar_menu_button {
-    width: 8px;
-    height: 28px;
-    border-radius: 5px;
-    align-items: center;
-}
-
-.toolbar_menu_button:hover {
-    background-color: var(--icon-hover-color);
-}
-
 
 /* #endregion */

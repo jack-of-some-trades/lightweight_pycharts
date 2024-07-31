@@ -1,7 +1,8 @@
 
 /*        Icon Classes        */
 
-.icon {
+.icon,
+.icon_no_hover {
     border-radius: 5px;
     color: var(--icon-color);
     background-color: var(--icon-background-color);
