@@ -27,11 +27,14 @@ export function SymbolSearchBox(){
     let box_el = document.createElement('div')
     let replace_el = document.createElement('div')
 
+    const [ticker, setTicker] = createSignal<string>("LWPC")
     const [replace, setReplace] = createSignal<boolean>(true)
     const [menuLocation, setMenuLocation] = createSignal<point>({x:0, y:0})
 
     let display = OverlayCTX().getDisplayAccessor(id)
     let setDisplay = OverlayCTX().getDisplaySetter(id)
+
+    window.topbar.setTicker = setTicker
 
     function onClk(e:MouseEvent, replace_symbol:boolean){
         setReplace(replace_symbol);
@@ -73,7 +76,7 @@ export function SymbolSearchBox(){
     return <div class='topbar_container'>
         <div id='symbol_box' class='sel_highlight' ref={box_el}>
             <Icon icon={icons.menu_search} style={{margin:'5px'}} width={20} height={20}/>
-            <div id="search_text" class='topbar_containers text'>LWPC</div>
+            <div id="search_text" class='topbar_containers text'>{ticker()}</div>
         </div>
         <div ref={replace_el} style={{display:"flex", "align-items":"center"}}>
             <Icon icon={icons.menu_add}/>
@@ -107,12 +110,13 @@ export function SymbolSearchMenu(props:search_menu_props){
     onMount(() => {setDisplay = OverlayCTX().getDisplaySetter(props.id)})
 
     function fetch(symbol:symbol_item){
-        window.api.data_request(
-            window.active_container?.id,
-            window.active_frame?.id,
-            symbol,
-            window.active_frame?.timeframe.toString()
-        )
+        if (window.active_frame?.timeframe)
+            window.api.data_request(
+                window.active_container?.id,
+                window.active_frame?.id,
+                symbol,
+                window.active_frame?.timeframe.toString()
+            )
         setDisplay(false)
     }
 

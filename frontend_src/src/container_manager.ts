@@ -1,5 +1,4 @@
-import { chart_container } from "./chart_container"
-import { container, container_args } from "./container"
+import { container } from "./container"
 
 const Draggabilly = require('draggabilly')
 
@@ -13,11 +12,6 @@ const defaultTabProperties: TabProperties = {
     favicon: null
 }
 
-export type container_type = 'chart' | undefined
-export const container_type_map: 
-    Map<container_type, new(super_args:container_args, args:any) => container> = new Map([
-        ['chart', chart_container]
-    ])
 
 /**
  * This Class creates and manages the Tabs bar and the containers those tabs represent
@@ -40,17 +34,14 @@ export class container_manager {
      * Generate a new container and makes it the window's active container 
      * Protected to indicate it should only be called from Python
      */
-    protected add_container(id: string, type:container_type , args: any = undefined): container | undefined {
-        let container_type = container_type_map.get(type)
-        if (container_type === undefined) return
+    protected add_container(id: string): container | undefined {
 
         const new_tab_el = this.tab_manager.addTab(id)
-        const container_abc_args = {
-            id:id, 
-            parent_div:this.container_el, 
-            update_tab_func:this.tab_manager.updateTab.bind(undefined, new_tab_el, id)
-        }
-        const tmp_ref = new container_type(container_abc_args, args)
+        const tmp_ref = new container(
+            id, 
+            this.container_el, 
+            this.tab_manager.updateTab.bind(undefined, new_tab_el)
+        )
         this.tab_els.set(id, new_tab_el)
         this.containers.set(id, tmp_ref)
 
@@ -87,12 +78,12 @@ export class container_manager {
 
         if (window.active_container){
             window.active_container.div.removeAttribute('active')
-            window.active_container.on_deactivation()   // Allow Sub-classes to inject behavior
+            window.active_container.onDeactivation()   // Allow Sub-classes to inject behavior
         }
 
         window.active_container = container_obj
         container_obj.div.setAttribute('active', '')
-        container_obj.on_activation()                   // Allow Sub-classes to inject behavior
+        container_obj.onActivation()                   // Allow Sub-classes to inject behavior
         container_obj.resize()                          // Non-Active Containers aren't resized
     }
 

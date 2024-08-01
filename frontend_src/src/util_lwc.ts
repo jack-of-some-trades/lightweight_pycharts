@@ -12,49 +12,6 @@ export enum Orientation {
     null
 }
 
-export enum Container_Layouts {
-    SINGLE,
-    DOUBLE_VERT,
-    DOUBLE_HORIZ,
-    TRIPLE_VERT,
-    TRIPLE_VERT_LEFT,
-    TRIPLE_VERT_RIGHT,
-    TRIPLE_HORIZ,
-    TRIPLE_HORIZ_TOP,
-    TRIPLE_HORIZ_BOTTOM,
-    QUAD_SQ_V,
-    QUAD_SQ_H,
-    QUAD_VERT,
-    QUAD_HORIZ,
-    QUAD_LEFT,
-    QUAD_RIGHT,
-    QUAD_TOP,
-    QUAD_BOTTOM
-}
-
-export function num_frames(layout: Container_Layouts | null): number {
-    switch (layout) {
-        case (Container_Layouts.SINGLE): return 1
-        case (Container_Layouts.DOUBLE_VERT): return 2
-        case (Container_Layouts.DOUBLE_HORIZ): return 2
-        case (Container_Layouts.TRIPLE_VERT): return 3
-        case (Container_Layouts.TRIPLE_VERT_LEFT): return 3
-        case (Container_Layouts.TRIPLE_VERT_RIGHT): return 3
-        case (Container_Layouts.TRIPLE_HORIZ): return 3
-        case (Container_Layouts.TRIPLE_HORIZ_TOP): return 3
-        case (Container_Layouts.TRIPLE_HORIZ_BOTTOM): return 3
-        case (Container_Layouts.QUAD_SQ_V): return 4
-        case (Container_Layouts.QUAD_SQ_H): return 4
-        case (Container_Layouts.QUAD_VERT): return 4
-        case (Container_Layouts.QUAD_HORIZ): return 4
-        case (Container_Layouts.QUAD_LEFT): return 4
-        case (Container_Layouts.QUAD_RIGHT): return 4
-        case (Container_Layouts.QUAD_TOP): return 4
-        case (Container_Layouts.QUAD_BOTTOM): return 4
-        default: return 0
-    }
-}
-
 //This must match the orm.enum.SeriesType.
 export enum Series_Type {
     WhitespaceData,
@@ -178,13 +135,6 @@ export class tf {
 
 // #region ---------------- Base Layout Dimensions ---------------- //
 
-export const LAYOUT_MARGIN = 5
-export const LAYOUT_CHART_MARGIN = 4
-export const LAYOUT_CHART_SEP_BORDER = 2
-
-//Minimum flex Widths/Heights of each frame
-export const MIN_FRAME_WIDTH = 0.15
-export const MIN_FRAME_HEIGHT = 0.1
 
 // #endregion
 

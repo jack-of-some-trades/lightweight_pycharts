@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, Show, splitProps } from "solid-js";
+import { createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import { interval, interval_map, tf } from "../../../src/util_lwc";
 import { icons, TextIcon } from "../../icons";
@@ -50,20 +50,25 @@ export function TimeframeSwitcher(){
             y: el.getBoundingClientRect().bottom
         })
     }
+    
+    window.topbar.setTimeframe = setSelectedTF
 
     // Tell Python when the timeframe changes
-    createEffect(() => { window.api.data_request( 
-        window.active_container?.id ?? '',
-        window.active_frame?.id ?? '',
-        window.active_frame?.symbol ?? '',
-        selectedTF().toString()
-    )})
+    function onSel(timeframe:tf){
+        if (window.active_frame?.symbol !== undefined)
+            window.api.data_request( 
+                window.active_container?.id ?? '',
+                window.active_frame?.id ?? '',
+                window.active_frame?.symbol ?? '',
+                timeframe.toString()
+            ) 
+    }
 
     OverlayCTX().attachOverlay(
         id,
         <TimeframeMenu 
             id={id}
-            onSel={setSelectedTF}
+            onSel={onSel}
             opts={TimeframeOpts} 
             setOpts={SetTimeframeOpts}
             location={menuLocation()}
@@ -89,7 +94,7 @@ export function TimeframeSwitcher(){
                     text={fav.toString(fav.toValue() >= 86400)}
                     classList={{timeframe_btn:true}}
                     activated={tf.is_equal(selectedTF(), fav)}
-                    onClick={() => setSelectedTF(fav)}
+                    onClick={() => onSel(fav)}
                 />
             }</For>
             {/* Button to Display Full Menu */}

@@ -1,6 +1,7 @@
 //Typescript API that interfaces with python.
 
-import { Container_Layouts, makeid, Series_Type, symbol_item } from "./util_lwc";
+import { Container_Layouts } from "./container";
+import { makeid, Series_Type, symbol_item } from "./util_lwc";
 
 
 //Each Function Maps directly to a function within the js_api class in js_api.py
@@ -15,8 +16,10 @@ export class py_api {
     // The following functions are called by JS and hook to functions implemented in python.
     // These functions have default commands so functionality is maintained when launched on a local dev server.
     // These are over written (re-routed) at start-up by the Python View Class so they execute their respective python functions
+    
     // @ts-ignore                                    
-    add_container = () => window.container_manager.add_container(makeid(Array.from(container_manager.containers.keys()), 'c_'), 'chart');                         // @ts-ignore
+    add_container = () => window.container_manager.add_container(makeid(Array.from(container_manager.containers.keys()), 'c_'));
+    // @ts-ignore
     remove_container = (id: string) => window.container_manager.remove_container(id);
     reorder_containers = (from: number, to: number) => {
         console.log(`reorder containers from: ${from} to: ${to} `)
@@ -24,6 +27,8 @@ export class py_api {
 
     layout_change = (container_id: string, layout: Container_Layouts) => {
         console.log(`Layout Change: ${container_id},${layout}`)
+        //@ts-ignore
+        window.container_manager.containers.get(container_id)?.set_layout(layout)
     };
     series_change = (container_id: string, frame_id: string, series_type: Series_Type) => {
         console.log(`Series Change: ${container_id},${frame_id},${series_type}`)

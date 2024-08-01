@@ -41,7 +41,7 @@ export enum LAYOUT_SECTIONS {
 }
 
 export function Wrapper(){
-    let container_el: HTMLDivElement | undefined
+    let container_el = document.createElement('div')
     const [layout, set_layout] = createStore(layout_default)
 
     onMount(() => { 
@@ -64,7 +64,7 @@ export function Wrapper(){
     return <>
         <GlobalContexts>
             <div id='layout_wrapper' class='wrapper'>
-                <div ref={container_el} id='layout_center' class='layout_main' style={layout.center}/>
+                <div ref={container_el} id='layout_center' class='layout_main layout_flex' style={layout.center}/>
                 <TitleBar style={layout.titlebar} container_el={container_el} {...title_bar_props}/>
                 <TopBar style={layout.topbar}/>
                 <ToolBar style={layout.toolbar}/>
@@ -133,6 +133,7 @@ function show_section_unbound(set_layout:SetStoreFunction<layout_struct>, sectio
         case (LAYOUT_SECTIONS.UTIL_BAR):
             set_layout('utilbar', 'display', 'flex')
     }
+    if (window.active_container) { window.active_container.resize() }
 }
 
 function hide_section_unbound(set_layout:SetStoreFunction<layout_struct>, section: LAYOUT_SECTIONS) {
@@ -154,4 +155,5 @@ function hide_section_unbound(set_layout:SetStoreFunction<layout_struct>, sectio
         case (LAYOUT_SECTIONS.UTIL_BAR):
             set_layout('utilbar', 'display', 'none')
     }
+    if (window.active_container) { window.active_container.resize() }
 }

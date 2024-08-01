@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, Show, splitProps } from "solid-js";
+import { createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import { interval, Series_Type } from "../../../src/util_lwc";
 import { Icon, icons } from "../../icons";
@@ -47,18 +47,22 @@ export function SeriesSwitcher(){
         })
     }
 
+    window.topbar.setSeries = setSelectedSeries
+
     // Tell Python when the Series Type changes
-    createEffect(() => { window.api.series_change(
-        window.active_container?.id ?? '',
-        window.active_frame?.id ?? '',
-        selectedSeries()
-    )})
+    function onSel(series:Series_Type){
+        window.api.series_change(
+            window.active_container?.id ?? '',
+            window.active_frame?.id ?? '',
+            series
+        )
+    }
 
     OverlayCTX().attachOverlay(
         id,
         <SeriesMenu 
             id={id}
-            onSel={setSelectedSeries}
+            onSel={onSel}
             opts={SeriesOpts} 
             setOpts={setSeriesOpts}
             location={menuLocation()}
@@ -84,7 +88,7 @@ export function SeriesSwitcher(){
                     icon={series_icon_map[fav]}
                     classList={{topbar_icon_btn:true}}
                     activated={selectedSeries() === fav}
-                    onClick={() => setSelectedSeries(fav)}
+                    onClick={() => onSel(fav)}
                 />
             }</For>
             {/* Button to Display Full Menu */}

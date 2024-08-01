@@ -2,14 +2,6 @@
 import { createSignal, mergeProps, splitProps } from "solid-js";
 import { Icon, icon_props } from "./icons";
 
-declare module "solid-js" {
-    namespace JSX {
-        interface ExplicitAttributes{
-            active: string
-        }
-    }
-}
-
 interface togglebtn_props extends icon_props{
     onAct?:()=>void,
     onDeact?:()=>void,

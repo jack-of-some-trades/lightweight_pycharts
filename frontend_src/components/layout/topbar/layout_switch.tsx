@@ -1,6 +1,7 @@
-import { createEffect, createSignal, For, Show, splitProps } from "solid-js";
+import { createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { Container_Layouts, interval } from "../../../src/util_lwc";
+import { Container_Layouts } from "../../../src/container";
+import { interval } from "../../../src/util_lwc";
 import { Icon, icons } from "../../icons";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager";
 import { MenuItem, MenuSection, ShowMenuButton } from "../../overlay/simple_menu";
@@ -61,17 +62,21 @@ export function LayoutSwitcher(){
         })
     }
 
+    window.topbar.setLayout = setSelectedLayout
+
     // Tell Python when the Layout changes
-    createEffect(() => { window.api.layout_change(
-        window.active_container?.id ?? '',
-        selectedLayout()
-    )})
-    
+    function onSel(layout:Container_Layouts){
+        window.api.layout_change(
+            window.active_container?.id ?? '',
+            layout
+        )
+    }
+
     OverlayCTX().attachOverlay(
         id,
         <LayoutMenu 
             id={id}
-            onSel={setSelectedLayout}
+            onSel={onSel}
             opts={LayoutOpts} 
             setOpts={setLayoutOpts}
             location={menuLocation()}
@@ -96,7 +101,7 @@ export function LayoutSwitcher(){
                     icon={layout_icon_map[fav]}
                     classList={{topbar_icon_btn:true}}
                     activated={selectedLayout() === fav}
-                    onClick={() => setSelectedLayout(fav)}
+                    onClick={() => onSel(fav)}
                 />
             }</For>
             {/* Button to Display Full Menu */}
