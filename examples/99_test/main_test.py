@@ -91,13 +91,13 @@ async def main():
     from the window. The spawning of a child process is what necessitates
     the use of a [ if __name__ == "__main__": ] block.
     """
-    window = lwc.Window(daemon=True, log_level="INFO", debug=True)
+    window = lwc.Window(daemon=True, log_level="INFO", debug=True, frameless=True)
     window.events.data_request += data_request_handler
     window.events.symbol_search += symbol_search_handler
     window.events.socket_switch += socket_request_handler
 
-    window.set_search_filters("type", ["Crypto", "Equity"])
-    window.set_search_filters("broker", ["Local", "Alpaca"])
+    window.set_search_filters("security_type", ["Crypto", "Equity"])
+    window.set_search_filters("data_broker", ["Local", "Alpaca"])
     window.set_search_filters("exchange", [])
     window.set_layout_favs(
         [

@@ -41,7 +41,7 @@ export function SymbolSearchBox(){
         setDisplay(!display());
         e.stopPropagation();
     }
-    const position_menu = () => {setMenuLocation({x:window.innerWidth/2, y:window.innerHeight*0.4})}
+    const position_menu = () => {setMenuLocation({x:window.innerWidth/2, y:window.innerHeight*0.45})}
 
     //Once Mounted the OverlayDiv visibility Accessor and Setter become valid.
     //Adding event manually makes it function as expected (it executes before prop events)
@@ -57,6 +57,9 @@ export function SymbolSearchBox(){
     //These signals and stores are initlilized here so that their state isn't reset when the search menu disappears
     const [symbols, setSymbols] = createSignal<symbol_item[]>([])
     const [filters, setFilters] = createStore<select_filters>(default_sel_filters)
+
+    window.api.set_search_filters = setFilters
+
     OverlayCTX().attachOverlay(
         id,
         <SymbolSearchMenu

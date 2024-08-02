@@ -31,7 +31,7 @@ class ORM_JSONEncoder(JSONEncoder):
             return floor(o.timestamp())
         if is_dataclass(o):
             return asdict(  # Drop Nones
-                o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
+                o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}  # type: ignore
             )
         if isinstance(o, DataFrame):
             return [  # Drop NaNs & Nones (.to_json() leaves NaNs & Nones)

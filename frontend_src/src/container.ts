@@ -168,8 +168,9 @@ export class container{
             }
         })
         
-        // ------------ Set Display, Active, and Target Signals ------------
+        // ------------ Apply the new Display to the <Container/> ------------
         this.setDisplay(layout_displays)
+        this.layout = layout
 
         //Delay on executing this is to make it so the Frame has time to create it's Pane
         //So that too can be made active
@@ -179,7 +180,6 @@ export class container{
         this.resize()
 
         //If succsessful, update container variable and UI
-        this.layout = layout
         window.topbar.setLayout(layout)
     }
 

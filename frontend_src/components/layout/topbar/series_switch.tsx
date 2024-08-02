@@ -48,6 +48,7 @@ export function SeriesSwitcher(){
     }
 
     window.topbar.setSeries = setSelectedSeries
+    window.api.update_series_opts = setSeriesOpts
 
     // Tell Python when the Series Type changes
     function onSel(series:Series_Type){

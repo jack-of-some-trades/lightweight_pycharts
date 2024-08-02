@@ -6,7 +6,6 @@ import { makeid, Series_Type, symbol_item } from "./types";
 
 //Each Function Maps directly to a function within the js_api class in js_api.py
 export class py_api {
-    loaded!: () => void;
     close!: () => void;
     maximize!: () => void;
     minimize!: () => void;
@@ -50,7 +49,7 @@ export class py_api {
     populate_search_symbols = (items:symbol_item[]) => {}
     set_search_filters = (category:string, opts:string[]) => {}
 
-    update_series_opts = () => {}
-    update_layout_opts = () => {}
-    update_timeframe_opts = () => {}
+    update_series_opts = (opts:any) => console.log(opts)
+    update_layout_opts = (opts:any) => console.log(opts)
+    update_timeframe_opts = (opts:any) => console.log(opts, window.topbar)
 }

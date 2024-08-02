@@ -10,13 +10,13 @@
     height: 100%;
     text-align: left;
     font-weight: bold;
-    width: 4em;
+    min-width: 4em;
     border-radius: 5px;
 }
 
 .symbol_menu {
     width:75%;
-    height:60%
+    height:70%
 }
 
 /* **** Title Bar **** */

@@ -5,6 +5,8 @@ import { TitleBar } from './titlebar'
 import { ToolBar, ToolBoxContext } from './toolbar/toolbar'
 import { TopBar } from './topbar/topbar'
 
+import "../../css/_layout.css"
+
 const MARGIN = 5
 const TOP_HEIGHT = 38
 const TITLE_HEIGHT = 38

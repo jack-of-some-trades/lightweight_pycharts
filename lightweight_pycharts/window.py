@@ -35,7 +35,7 @@ class Window:
         - Interval Switcher     *TBI
         - Watchlist, etc.       *TBI
 
-    Window contains a 'Container' object for every tab. ... To be implented
+    Window contains a 'Container' object for every tab.
     """
 
     def __init__(
@@ -54,6 +54,7 @@ class Window:
 
         if log_level is not None:
             logger.setLevel(log_level)
+            kwargs["log_level"] = log_level
         elif "debug" in kwargs.keys() and kwargs["debug"]:
             logger.setLevel(logging.DEBUG)
 

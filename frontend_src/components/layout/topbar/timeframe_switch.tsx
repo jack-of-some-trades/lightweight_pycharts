@@ -39,7 +39,7 @@ export function TimeframeSwitcher(){
     let el = document.createElement('div')
     const [selectedTF, setSelectedTF] = createSignal<tf>(new tf(1,'E'))
     const [menuLocation, setMenuLocation] = createSignal<point>({x:0, y:0})
-    const [TimeframeOpts, SetTimeframeOpts] = createStore(default_timeframe_select_opts)
+    const [TimeframeOpts, setTimeframeOpts] = createStore(default_timeframe_select_opts)
 
     const ordered_favorites = () => {
         return Array.from(TimeframeOpts.favorites, (tf_str)=>tf.from_str(tf_str)).sort((a,b) => a.toValue() - b.toValue())
@@ -52,6 +52,7 @@ export function TimeframeSwitcher(){
     }
     
     window.topbar.setTimeframe = setSelectedTF
+    window.api.update_timeframe_opts = setTimeframeOpts
 
     // Tell Python when the timeframe changes
     function onSel(timeframe:tf){
@@ -70,7 +71,7 @@ export function TimeframeSwitcher(){
             id={id}
             onSel={onSel}
             opts={TimeframeOpts} 
-            setOpts={SetTimeframeOpts}
+            setOpts={setTimeframeOpts}
             location={menuLocation()}
             updateLocation={updateLocation}
         />, 
