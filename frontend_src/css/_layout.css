@@ -112,29 +112,3 @@ body {
 #layout_left {
     flex-direction: column;
 }
-
-/*
-.chart_watermark_white,
-.chart_watermark_black {
-    z-index: 1;
-    opacity: 0.3;
-    position: absolute;
-    inset: 0px;
-    background-size: calc(80%) calc(80%);
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-.chart_watermark_black {
-    background-image: url(watermark_black.svg);
-}
-
-.chart_watermark_white {
-    background-image: url(watermark_white.svg);
-} */
-
-/* #endregion */
-
-/* #region --------------- Toolbar Params --------------- */
-
-/* #endregion */

@@ -7,7 +7,7 @@ import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } 
 
 import { createStore, SetStoreFunction } from "solid-js/store"
 import "../../css/overlay/symbol_search.css"
-import { symbol_item } from "../../src/util_lwc"
+import { symbol_item } from "../../src/types"
 
 
 interface select_filters {

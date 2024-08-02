@@ -2,17 +2,9 @@ import * as lwc from "lightweight-charts";
 import { DeepPartial as DP, Time } from "lightweight-charts";
 import { RoundedCandleSeriesOptions } from "./plugins/rounded-candles-series/rounded-candles-series";
 
-// #region ---------------- Enums ---------------- //
-/**
- * Enum that corresponds to the different static divs of the window wrapper
-*/
-export enum Orientation {
-    Horizontal,
-    Vertical,
-    null
-}
+// #region ---------------- Enums & Interfaces ---------------- //
 
-//This must match the orm.enum.SeriesType.
+/* This must match the orm.enum.SeriesType. */
 export enum Series_Type {
     WhitespaceData,
     SingleValueData,
@@ -27,37 +19,7 @@ export enum Series_Type {
     ROUNDED_CANDLE
 }
 
-// #endregion
-
-// #region ---------------- Super Object Interfaces ---------------- //
-
-/**
- * interface that represents a portion of a Frame's Layout. Could be either a Frame or a Frame Separator
- */
-export interface flex_div {
-    div: HTMLDivElement,
-    isFrame: boolean,
-    flex_width: number,
-    flex_height: number,
-    orientation: Orientation,
-    resize_pos: flex_div[],
-    resize_neg: flex_div[],
-}
-
-/**
- * interface describing a source of data, be it a single series of OHLC data, or an indicator
- * that has mutiple sub-series or drawing primitives
- */
-export interface source {
-    id: string
-    title: string
-    expose: boolean
-    series: series_id[]
-}
-
-/**
- * Represents information about a specific symbol
- */
+/* Represents information about a specific symbol */
 export interface symbol_item {
     ticker: string
     name?: string
@@ -65,15 +27,9 @@ export interface symbol_item {
     sec_type?: Series_Type
     exchange?: string
 }
+// #endregion
 
-/**
- * interface to wrap around a Series Data type with additional information
- */
-export interface series_id {
-    id: string
-    expose: boolean
-    series_obj: AnySeries
-}
+// #region ---------------- Timeframe Object ---------------- //
 
 const interval_list: interval[] = ["s", "m", "h", "D", "W", "M", "Y"]
 const interval_val_map = { "s": 1, "m": 60, "h": 3600, "D": 86400, "W": 604800, "M": 18396000, "Y": 220752000, "E": 1 }
@@ -133,13 +89,8 @@ export class tf {
 
 //#endregion
 
-// #region ---------------- Base Layout Dimensions ---------------- //
 
-
-// #endregion
-
-
-// #region ---------------- Misc Util Functions ---------------- //
+// #region ---------------- Util Functions ---------------- //
 
 const ID_LEN = 4
 /**
@@ -167,49 +118,9 @@ export function makeid(id_list: string[], prefix: string = ''): string {
 
 //#endregion
 
-// #region ---------------- TimeChart Options ---------------- //
 
-/**
- * Default TimeChart Options For Lightweight PyCharts.
- */
-export const DEFAULT_PYCHART_OPTS: DP<lwc.TimeChartOptions> = {
-    layout: {                   // ---- Layout Options ----
-        background: {
-            type: lwc.ColorType.VerticalGradient,
-            topColor: '#171c27',
-            bottomColor: '#131722'
-        },
-        textColor: '#b2b5be',
-    },
-    grid: {
-        vertLines: {
-            color: '#222631'
-        },
-        horzLines: {
-            color: '#222631'
-        }
-    },
-    rightPriceScale: {          // ---- VisiblePriceScaleOptions ---- 
-        mode: lwc.PriceScaleMode.Logarithmic,
-        // borderColor: '#161a25',
-    },
-    crosshair: {                // ---- Crosshair Options ---- 
-        mode: lwc.CrosshairMode.Normal,
-    },
-    kineticScroll: {            // ---- Kinetic Scroll ---- 
-        touch: true
-    },
-    timeScale: {
-        shiftVisibleRangeOnNewBar: true,
-        allowShiftVisibleRangeOnWhitespaceReplacement: true,
-        rightBarStaysOnScroll: true,
-        rightOffset: 20
-    }
-}
+// #region --------------------- Additional Lightweight Chart Types ----------------------- */
 
-
-
-/* --------------------- ----------------------- Additional Types ----------------------- ----------------------- */
 //The main functions of this library, like createCandlestick Series, return some complicated types.
 //Those types are defined below so even though the functions return a type of any, the assigned variable and be typed.
 
@@ -315,3 +226,6 @@ export interface SeriesPartialOptionsMap extends lwc.SeriesPartialOptionsMap {
      */
     Rounded_Candle: lwc.CandlestickSeriesPartialOptions;
 }
+
+
+//#endregion

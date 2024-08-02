@@ -1,6 +1,6 @@
 import { createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { interval, interval_map, tf } from "../../../src/util_lwc";
+import { interval, interval_map, tf } from "../../../src/types";
 import { icons, TextIcon } from "../../icons";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager";
 import { MenuItem, MenuSection, ShowMenuButton } from "../../overlay/simple_menu";

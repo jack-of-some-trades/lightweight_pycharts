@@ -1,10 +1,10 @@
+import * as lwc from "lightweight-charts";
 import { DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, SingleValueData, TimeChartOptions, WhitespaceData, createChart } from "lightweight-charts";
 import { indicator } from "./indicator";
-import { Legend } from "./legend";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line";
-import * as u from "./util_lwc";
+import * as u from "./types";
 
 
 //The portion of a chart where things are actually drawn
@@ -15,7 +15,6 @@ export class pane {
     div: HTMLDivElement
     flex_width: number
     flex_height: number
-    legend?: Legend
 
     chart: IChartApi
     indicators = new Map<string, indicator>()
@@ -34,7 +33,7 @@ export class pane {
         div: HTMLDivElement,
         flex_width: number = 1,
         flex_height: number = 1,
-        chart_opts: DP<TimeChartOptions> = u.DEFAULT_PYCHART_OPTS
+        chart_opts: DP<TimeChartOptions> = DEFAULT_PYCHART_OPTS
     ) {
         this.id = id
         this.div = div
@@ -173,3 +172,40 @@ export class pane {
  * where the time is always the Current bar time of the main series. Any further in the past and things may
  * de-render. Any further in the Future and it will mess up auto-scroll on new data.
  */
+
+
+/* Default TimeChart Options. */
+const DEFAULT_PYCHART_OPTS: DP<lwc.TimeChartOptions> = {
+    layout: {                   // ---- Layout Options ----
+        background: {
+            type: lwc.ColorType.VerticalGradient,
+            topColor: '#171c27',
+            bottomColor: '#131722'
+        },
+        textColor: '#b2b5be',
+    },
+    grid: {
+        vertLines: {
+            color: '#222631'
+        },
+        horzLines: {
+            color: '#222631'
+        }
+    },
+    rightPriceScale: {          // ---- VisiblePriceScaleOptions ---- 
+        mode: lwc.PriceScaleMode.Logarithmic,
+        // borderColor: '#161a25',
+    },
+    crosshair: {                // ---- Crosshair Options ---- 
+        mode: lwc.CrosshairMode.Normal,
+    },
+    kineticScroll: {            // ---- Kinetic Scroll ---- 
+        touch: true
+    },
+    timeScale: {
+        shiftVisibleRangeOnNewBar: true,
+        allowShiftVisibleRangeOnWhitespaceReplacement: true,
+        rightBarStaysOnScroll: true,
+        rightOffset: 20
+    }
+}

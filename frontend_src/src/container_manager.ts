@@ -12,7 +12,6 @@ const defaultTabProperties: TabProperties = {
     favicon: null
 }
 
-
 /**
  * This Class creates and manages the Tabs bar and the containers those tabs represent
  * Class handles Tab movement, Addition, and removal. 
@@ -78,12 +77,12 @@ export class container_manager {
 
         if (window.active_container){
             window.active_container.div.removeAttribute('active')
-            window.active_container.onDeactivation()   // Allow Sub-classes to inject behavior
+            window.active_container.onHide()   // Allow Sub-classes to inject behavior
         }
 
         window.active_container = container_obj
         container_obj.div.setAttribute('active', '')
-        container_obj.onActivation()                   // Allow Sub-classes to inject behavior
+        container_obj.onShow()                   // Allow Sub-classes to inject behavior
         container_obj.resize()                          // Non-Active Containers aren't resized
     }
 

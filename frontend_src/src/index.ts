@@ -1,11 +1,12 @@
 import { render } from 'solid-js/web';
 import { Wrapper } from "../components/layout/wrapper";
-import { Container_Layouts as c_layouts, container, Container_Layouts } from "./container";
+import { container } from "./container";
 import { container_manager } from './container_manager';
 import { frame } from "./frame";
+import { Container_Layouts } from './layouts';
 import { pane } from "./pane.js";
 import { py_api } from "./py_api";
-import { Series_Type, tf } from './util_lwc';
+import { Series_Type, tf } from './types';
 
 //Declare Global interface. All Following declarations will be accessable to the python run_script() function
 declare global {
@@ -28,7 +29,7 @@ declare global {
     // if they have been removed, but where the active element at the time of deletion.
     // Beyond delaying some garbage collection, I don't think the dead references are 
     // an issue so the behavior will stay for now.
-    var Container_Layouts: typeof c_layouts
+    var Container_Layouts: any
 }
 
 //declare global Attributes for JSX objects
@@ -44,7 +45,7 @@ declare module "solid-js" {
 // Define The global Python <--> Js api interface.
 window.api = new py_api();
 //Enums that will be used by Python need to be placed into the Global Scope
-window.Container_Layouts = c_layouts
+window.Container_Layouts = Container_Layouts
 //Allow Global Control over the Topbar Display. Functions will be overwritten as window is rendered
 window.topbar = {
     setSeries : (_:Series_Type) => {},

@@ -42,15 +42,14 @@
     box-sizing: border-box;
     z-index: 1;
     border-radius: 10px;
-    opacity: 50%;
-    background-color: var(--accent-color);
+    background-color: #0000;
 }
 
 .frame_separator_v:hover,
 .frame_separator_h:hover{
-    opacity: 100%;
-    border-color: var(--chart-separator-hover);
-    background-color: var(--chart-separator-hover);
+    opacity: 25%;
+    border-color: var(--accent-color);
+    background-color: var(--accent-color);
 }
 
 .frame_separator_v { cursor: ew-resize; }
@@ -60,6 +59,11 @@
 
 /* #region --------------- Panes --------------- */
 
+
+.chart_frame {
+    width:100%;
+    height:100%;
+}
 
 .chart_pane {
     border: solid var(--chart-border) 1px;

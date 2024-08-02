@@ -1,7 +1,7 @@
 //Typescript API that interfaces with python.
 
-import { Container_Layouts } from "./container";
-import { makeid, Series_Type, symbol_item } from "./util_lwc";
+import { Container_Layouts } from "./layouts";
+import { makeid, Series_Type, symbol_item } from "./types";
 
 
 //Each Function Maps directly to a function within the js_api class in js_api.py
@@ -53,5 +53,4 @@ export class py_api {
     update_series_opts = () => {}
     update_layout_opts = () => {}
     update_timeframe_opts = () => {}
-
 }

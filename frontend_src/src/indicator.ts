@@ -1,21 +1,21 @@
 import { PriceScaleOptions } from "lightweight-charts";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
-import { Pane } from "./pane";
+import { pane } from "./pane";
 import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series";
-import * as u from "./util_lwc";
+import * as u from "./types";
 
 export class indicator {
     id: string
     type: string
-    private pane: Pane
+    private pane: pane
 
     private series = new Map<string, u.AnySeries>()
     private primitives_left = new Map<string, PrimitiveBase>()
     private primitives_right = new Map<string, PrimitiveBase>()
     private primitives_overlay = new Map<string, PrimitiveBase>()
 
-    constructor(id: string, type: string, pane: Pane) {
+    constructor(id: string, type: string, pane: pane) {
         this.id = id
         this.pane = pane
         this.type = type

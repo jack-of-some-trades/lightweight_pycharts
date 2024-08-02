@@ -2,7 +2,7 @@ import { SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createSignal, JSX, Setter } from "solid-js";
 import { update_tab_func } from "./container";
 import { pane } from "./pane";
-import { Series_Type, symbol_item, tf } from "./util_lwc";
+import { Series_Type, symbol_item, tf } from "./types";
 
 export abstract class frame {
     id: string
@@ -29,11 +29,10 @@ export abstract class frame {
     }
 
     resize(){}
-    onShow(){}
-    onHide(){}
-
-    onActivation(){}
-    onDeactivation(){}
+    onShow(){}//{console.log(`Show ${this.id}`)}
+    onHide(){}//{console.log(`Hide ${this.id}`)}
+    onActivation(){}//{console.log(`Activate ${this.id}`)}
+    onDeactivation(){}//{console.log(`Deactivate ${this.id}`)}
 
     /**
      * Update Global 'active_frame' reference to this instance. 
@@ -54,7 +53,6 @@ export abstract class frame {
 }
 
 
-import { Frame } from "../components/layout/frame_widgets/frame";
 export class chart_frame extends frame {
     element: HTMLDivElement
 
@@ -67,9 +65,8 @@ export class chart_frame extends frame {
 
     constructor(id: string, tab_update_func: update_tab_func) {
         super(id, tab_update_func)
-        this.element = Frame()
-        // this.element = document.createElement('div')
-        // this.element.classList.add("chart_frame")
+        this.element = document.createElement('div')
+        this.element.classList.add("chart_frame")
 
         // The following 3 variables are actually properties of a frame's primary Series(Indicator) obj.
         // While these really should be owned by an indicator and not a frame, this is how the 

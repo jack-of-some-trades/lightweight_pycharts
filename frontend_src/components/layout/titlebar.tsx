@@ -42,13 +42,13 @@ export function TitleBar(props:title_bar_props) {
             <ToggleBtn icon={icons.panel_left} classList={{layout_btn:true}} activated={true} 
                 onAct={()=>{props.show_section(LAYOUT_SECTIONS.TOOL_BAR)}} 
                 onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.TOOL_BAR)}}/>
-            <ToggleBtn icon={icons.panel_right} classList={{layout_btn:true}} activated={true} 
+            <ToggleBtn icon={icons.panel_right} classList={{layout_btn:true}}
                 onAct={()=>{props.show_section(LAYOUT_SECTIONS.NAV_BAR)}} 
                 onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.NAV_BAR)}}/>
             <ToggleBtn icon={icons.panel_top} classList={{layout_btn:true}} activated={true} 
                 onAct={()=>{props.show_section(LAYOUT_SECTIONS.TOP_BAR)}} 
                 onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.TOP_BAR)}}/>
-            <ToggleBtn icon={icons.panel_bottom} classList={{layout_btn:true}} activated={true} 
+            <ToggleBtn icon={icons.panel_bottom} classList={{layout_btn:true}}
                 onAct={()=>{props.show_section(LAYOUT_SECTIONS.UTIL_BAR)}} 
                 onDeact={()=>{props.hide_section(LAYOUT_SECTIONS.UTIL_BAR)}}/>
 
