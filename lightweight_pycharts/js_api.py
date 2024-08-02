@@ -49,10 +49,6 @@ class js_api:
         logger.debug("Recieved Message from JS: %s", msg)
         self.rtn_queue.put((PY_CMD.PY_EXEC, msg))
 
-    def loaded(self) -> None:
-        "Called on start-up. Indicates that all javascript assets, not just the JS api, have loaded"
-        self.view_window.show()  # api.loaded_check() in py_api.ts is what calls this
-
     def close(self) -> None:
         self.view_window.close()
 
@@ -95,12 +91,7 @@ class js_api:
             )
 
     def data_request(
-        self,
-        container_id: str,
-        frame_id: str,
-        symbol: dict[str, str],
-        mult: int,
-        period: orm.types.Period,
+        self, container_id: str, frame_id: str, symbol: dict[str, str], tf_str: str
     ):
         try:
             self.rtn_queue.put(
@@ -109,7 +100,7 @@ class js_api:
                     container_id,
                     frame_id,
                     orm.Symbol(**symbol),
-                    orm.TF(mult, period),
+                    orm.TF.fromString(tf_str),
                 )
             )
         except ValueError as e:
@@ -261,14 +252,17 @@ class PyWv(View):
         mp_hooks: MpHooks,
         title: str = "",
         debug: bool = False,
+        log_level: Optional[str | int] = None,
         api: Optional[js_api] = None,
         **kwargs,
     ) -> None:
         # Pass Hooks and run_script to super
         super().__init__(mp_hooks, run_script=self._handle_eval_js)
 
-        # if debug:
-        #     logger.setLevel(logging.DEBUG)
+        if log_level is not None:
+            logger.setLevel(log_level)
+        elif debug:
+            logger.setLevel(logging.DEBUG)
         # webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
 
         # assign default js_api if it was not provided
@@ -337,9 +331,9 @@ class PyWv(View):
 
         # Signal to both python and javascript listeners that inital setup is complete
         self.js_loaded_event.set()
-        self.run_script("window.api._loaded_check()")
+        self.show()
         if self.frameless:
-            self.run_script("window.titlebar.create_window_btns()")
+            self.run_script("window.api.setFrameless(true)")
 
     def assign_callback(self, func_name: str):
         self.run_script(f"window.api.{func_name} = pywebview.api.{func_name}")

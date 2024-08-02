@@ -1,0 +1,42 @@
+{
+  "name": "lightweight-pycharts-frontend",
+  "version": "1.0.0",
+  "description": "Frontend Web-app deployable from Python that implements Lightweight Charts by TradingView",
+  "main": "lightweight_pycharts/frontend/dist/index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "start": "vite --config frontend_src/vite.config.ts",
+    "dev": "vite --config frontend_src/vite.config.ts",
+    "build": "vite build --config frontend_src/vite.config.ts",
+    "watch": "vite build --config frontend_src/vite.config.ts --watch",
+    "serve": "vite preview --config frontend_src/vite.config.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jack-of-some-trades/lightweight-pycharts"
+  },
+  "keywords": [
+    "lightweight-charts",
+    "fancy-canvas",
+    "pywebview",
+    "pandas",
+    "SolidJS"
+  ],
+  "author": "Bryce Hawk",
+  "license": "MIT",
+  "devDependencies": {
+    "solid-devtools": "^0.30.1",
+    "typescript": "^5.5.2",
+    "vite": "^5.3.1",
+    "vite-plugin-require": "^1.2.14",
+    "vite-plugin-solid": "^2.10.2",
+    "watch": "^0.13.0"
+  },
+  "dependencies": {
+    "draggabilly": "^3.0.0",
+    "lightweight-charts": "^4.1.6",
+    "solid-js": "^1.8.17"
+  }
+}

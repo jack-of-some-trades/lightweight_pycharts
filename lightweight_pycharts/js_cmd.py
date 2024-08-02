@@ -31,7 +31,7 @@ class ORM_JSONEncoder(JSONEncoder):
             return floor(o.timestamp())
         if is_dataclass(o):
             return asdict(  # Drop Nones
-                o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
+                o, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}  # type: ignore
             )
         if isinstance(o, DataFrame):
             return [  # Drop NaNs & Nones (.to_json() leaves NaNs & Nones)
@@ -139,11 +139,11 @@ def js_code(*scripts: str) -> str:
 
 
 def add_container(_id: str) -> str:
-    return f"var {_id} = wrapper.add_container('{_id}')"
+    return f"var {_id} = container_manager.add_container('{_id}')"
 
 
 def remove_container(_id: str) -> str:
-    return f"var {_id} = wrapper.remove_container('{_id}');"
+    return f"var {_id} = container_manager.remove_container('{_id}');"
 
 
 # ** Crucial Step ** Without this there would be a massive memory leak
@@ -157,23 +157,23 @@ def remove_reference(*_ids: str) -> str:
 
 
 def set_window_layouts(favs: dict) -> str:
-    return f"window.layout_selector.update_settings({dump(favs)})"
+    return f"api.update_layout_opts({dump(favs)})"
 
 
 def set_window_series_types(favs: dict) -> str:
-    return f"window.series_selector.update_settings({dump(favs)})"
+    return f"api.update_series_opts({dump(favs)})"
 
 
 def set_window_timeframes(opts: dict) -> str:
-    return f"window.timeframe_selector.update_settings({dump(opts)})"
+    return f"api.update_timeframe_opts({dump(opts)})"
 
 
 def update_symbol_search(symbols: list[types.Symbol]) -> str:
-    return f"overlay_manager.populate_symbol_list({dump(symbols)})"
+    return f"api.populate_search_symbols({dump(symbols)})"
 
 
 def update_symbol_search_bubbles(category: str, opts: list[str]) -> str:
-    return f"overlay_manager.populate_bubbles('{category}', {dump(opts)})"
+    return f"api.set_search_filters('{category}', {dump(opts)})"
 
 
 # endregion

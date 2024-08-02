@@ -35,7 +35,7 @@ class Window:
         - Interval Switcher     *TBI
         - Watchlist, etc.       *TBI
 
-    Window contains a 'Container' object for every tab. ... To be implented
+    Window contains a 'Container' object for every tab.
     """
 
     def __init__(
@@ -54,6 +54,7 @@ class Window:
 
         if log_level is not None:
             logger.setLevel(log_level)
+            kwargs["log_level"] = log_level
         elif "debug" in kwargs.keys() and kwargs["debug"]:
             logger.setLevel(logging.DEBUG)
 
@@ -276,8 +277,8 @@ class Window:
 
                 # Be sure to allow indicators to clear themselves
                 # This ensures web-sockets and other assets are closed.
-                for _, frame in container.frames.items():
-                    for _, indicator in frame.indicators.items():
+                for frame in container.frames.values():
+                    for indicator in frame.indicators.copy().values():
                         indicator.delete()
                 return
 
@@ -292,11 +293,11 @@ class Window:
                 return self.containers[_id]
 
     def set_search_filters(
-        self, category: Literal["type", "broker", "exchange"], items: list[str]
+        self,
+        category: Literal["security_type", "data_broker", "exchange"],
+        items: list[str],
     ):
-        """Set the search filters available when searching for a Symbol.
-        'type'==Security Types, 'broker'==Data Brokers, 'exchange' == Security's Exchange
-        """
+        "Set the available search filters in the symbol search menu."
         self._fwd_queue.put((JS_CMD.SET_SYMBOL_SEARCH_OPTS, category, items))
 
     def set_layout_favs(self, favs: list[orm.layouts]):

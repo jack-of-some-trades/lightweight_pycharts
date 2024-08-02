@@ -1,0 +1,21 @@
+
+#overlay_manager {
+    position: absolute;
+    inset: 0px;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0000;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 50;
+}
+
+.overlay {
+    pointer-events: all;
+    z-index: inherit;
+    position: fixed;
+
+    border-radius: 5px;
+    background-color: var(--overlay-fill);
+    box-shadow: 1px 1px 1px 1px var(--overlay-shadow);
+}

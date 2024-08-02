@@ -1,0 +1,114 @@
+*::before {
+    box-sizing: border-box;
+    z-index: 0;
+}
+
+/* --------------- Color Variables --------------- */
+:root {
+    --font: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+
+    --background-fill: #2a2e39;
+    --layout-main-fill: #131722;
+    --hover-color: #2a2e39;
+    --hover-color-light: #454c5e;
+
+    --text-color: #b2b5be;
+    --text-light-color: #f3f0f0;
+    --text-dark-color: #707277;
+    --text-near-black-color: #131722;
+    --accent-color: #2962ff;
+    --second-accent-color: #f9a825;
+    --separator-color: #222631;
+
+    --chart-border: var(--background-fill);
+    --chart-border-hover: #434d66;
+    --chart-background: var(--background-fill);
+    --chart-separator-fill: var(--background-fill);
+    --chart-separator-hover: #434d66;
+
+    --tab-text-color: var(--text-color);
+    --tab-text-inactive-color: var(--text-dark-color);
+    --tab-close-color: var(--text-color);
+    --tab-close-hover: var(--text-light-color);
+    --tab-close-active: var(--text-color);
+
+    --tab-divider-color: var(--layout-main-fill);
+    --tab-hover-color: var(--hover-color-light);
+    --tab-active-color: var(--layout-main-fill);
+    --tab-background-color: var(--background-fill);
+
+    --overlay-fill: #1e222d;
+    --overlay-shadow: #2e63f52a;
+    --overlay-menu-separator: var(--accent-color);
+
+    --icon-color: #d1d4dc;
+    --icon-hover-color: #2a2e39;
+    --icon-gray-color: #454c5e;
+    --icon-dark-color: var(--layout-main-fill);
+    --icon-active-color: var(--accent-color);
+    --icon-background-color: #0000;
+
+    --topbar-icon-hover-color: var(--icon-hover-color);
+    --topbar-icon-active-color: var(--icon-active-color);
+    --topbar-icon-background-color: var(--icon-background-color);
+    --topbar-separator-color: var(--separator-color);
+
+    --toolbar-icon-hover-color: var(--icon-hover-color);
+    --toolbar-icon-active-color: var(--icon-active-color);
+    --toolbar-icon-background-color: var(--icon-background-color);
+    --toolbar-separator-color: var(--separator-color);
+}
+
+/* #region --------------- Base Classes --------------- */
+
+body {
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    min-width: 300px;
+    min-height: 200px;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--background-fill);
+    font-family: -apple-system, BlinkMacSystemFont, "Trebuchet_MS", "Segoe UI", Roboto, Oxygen, Ubuntu,
+        Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.wrapper {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    inset: 0px;
+    overflow: hidden;
+    background-color: var(--background-fill);
+    border-radius: 5px;
+}
+
+/* #endregion */
+
+/* #region --------------- Main Container Layout --------------- */
+
+.layout_title {
+    overflow: hidden;
+    position: absolute;
+    background-color: var(--background-fill);
+    border-radius: 5px;
+}
+
+.layout_main {
+    overflow: hidden;
+    position: absolute;
+    background-color: var(--layout-main-fill);
+    border-radius: 5px;
+}
+
+.layout_flex {
+    display: flex;
+    justify-content: flex-start;
+    align-content: center;
+}
+
+#layout_left {
+    flex-direction: column;
+}

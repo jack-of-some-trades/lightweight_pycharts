@@ -20,6 +20,7 @@ LineWidth: TypeAlias = Literal[1, 2, 3, 4]
 Coordinate: TypeAlias = int
 UTCTimestamp: TypeAlias = int
 
+PERIOD_CODES = ["s", "m", "h", "D", "W", "M", "Y", "E"]
 Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y", "E"]
 
 Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
@@ -187,6 +188,16 @@ class TF:
 
     def __str__(self) -> str:
         return self.toString
+
+    @classmethod
+    def fromString(cls, tf_str: str) -> Self:
+        "Create a TF Object from a formatted string"
+        period = tf_str[-1]
+        mult = int(tf_str[0:-1])
+        if period in PERIOD_CODES:
+            return TF(mult, period)  # type: ignore
+        else:
+            raise TypeError(f"'{period}' not a valid Timeframe Period Code.")
 
     # region ---- TF Setters and Getters ----
 
