@@ -188,14 +188,15 @@ class TF:
 
     def __str__(self) -> str:
         return self.toString
-    
+
     @classmethod
-    def fromString(cls, tf_str:str):
+    def fromString(cls, tf_str: str) -> Self:
+        "Create a TF Object from a formatted string"
         period = tf_str[-1]
         mult = int(tf_str[0:-1])
-        if ( period in PERIOD_CODES ):
-           return TF(mult, period) # type: ignore
-        else: 
+        if period in PERIOD_CODES:
+            return TF(mult, period)  # type: ignore
+        else:
             raise TypeError(f"'{period}' not a valid Timeframe Period Code.")
 
     # region ---- TF Setters and Getters ----

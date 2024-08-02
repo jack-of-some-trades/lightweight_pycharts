@@ -12,7 +12,7 @@ These may or may not remain in the library as it is developed.
 The './css' Folder Contains all the Base .css files referenced by the typescript code.
 
 './components' Holds all* of the .JSX/.TSX elements that can be displayed by the GUI. It's not a complete list however. 
-*The Frontend was initially developed using vanilla typescript, thus creating of a handful of elements were coded directly into the ./src files. 
+*The Frontend was initially developed using vanilla typescript, thus a handful of elements were coded directly into the ./src files. 
 
 # Compilation:
 
