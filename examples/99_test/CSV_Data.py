@@ -36,8 +36,8 @@ async def main():
     window.events.symbol_search += symbol_search_handler
     window.events.data_request += data_request_handler
 
-    window.set_search_filters("type", ["Equity"])
-    window.set_search_filters("broker", ["Local"])
+    window.set_search_filters("security_type", ["Equity"])
+    window.set_search_filters("data_broker", ["Local"])
     window.set_search_filters("exchange", [])
     window.set_timeframes(
         favs=[

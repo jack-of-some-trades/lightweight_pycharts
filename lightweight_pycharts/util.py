@@ -83,3 +83,18 @@ class ID_Dict[T](dict[str, T]):
             return _id_prefixed
         else:  # In case of a collision.
             return self.generate_id(item)
+
+
+def is_sunder_or_dunder(key: str) -> bool:
+    "Returns true if key is Single or Double Underscore"
+    return is_dunder(key) or is_sunder(key)
+
+
+def is_sunder(key: str) -> bool:
+    "Returns true if key is Single Underscore"
+    return key.startswith("_") or key.endswith("_")
+
+
+def is_dunder(key: str) -> bool:
+    "Returns true if key is Double Underscore"
+    return key.startswith("__") or key.endswith("__")

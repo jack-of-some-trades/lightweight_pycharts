@@ -12,6 +12,8 @@ from abc import ABC, abstractmethod
 import webview
 from webview.errors import JavascriptException
 
+from lightweight_pycharts.util import is_dunder
+
 from . import orm
 from . import js_cmd as cmds
 from .orm.series import SeriesType
@@ -325,8 +327,7 @@ class PyWv(View):
         "Read all the functions that exist in the api and expose non-dunder methods to javascript"
         member_functions = getmembers(self.api, predicate=ismethod)
         for name, _ in member_functions:
-            # filter out dunder methods
-            if not (name.startswith("__") or name.endswith("__")):
+            if not is_dunder(name):  # filter out dunder methods
                 self.assign_callback(name)
 
         # Signal to both python and javascript listeners that inital setup is complete

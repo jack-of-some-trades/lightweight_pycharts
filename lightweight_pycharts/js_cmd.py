@@ -1,7 +1,7 @@
 "Function definitions that return formatted Javascript scripts as literal strings"
 
 from math import floor
-from enum import IntEnum, auto
+from enum import Enum, IntEnum, auto
 from typing import Callable, Any
 from json import JSONEncoder, dumps
 from dataclasses import is_dataclass, asdict
@@ -45,6 +45,8 @@ class ORM_JSONEncoder(JSONEncoder):
         if isinstance(o, j_func):
             print("j_func call")
             return str(o)
+        if isinstance(o, Enum):
+            return o.value
         return super().default(o)
 
 

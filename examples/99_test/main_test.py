@@ -131,7 +131,9 @@ async def main():
     )
 
     lwc.indicator.Volume(main_frame)
-    lwc.indicator.SMA(main_frame, 20)
+    # opts = lwc.indicators.SMA.__options__(period=20)
+    sma20 = lwc.indicators.SMA(main_frame)
+    lwc.indicators.SMA(sma20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 
