@@ -255,7 +255,6 @@ class OptionsMeta(type):
             arg_key if arg_params["title"] is None else arg_params["title"]
         )
 
-        # I wish I knew of a more elegant way to handle all these various cases
         if arg_type == "source":  # ------------------------------------------------
             rtn_struct["src_type"] = src_arg
 
@@ -326,7 +325,6 @@ class OptionsMeta(type):
 
     @staticmethod
     def _process_type(arg: Any, arg_type: type) -> Tuple[str, str]:
-
         origin = get_origin(arg_type)
         if origin is list:
             raise TypeError("Indicator Option Type Cannot be a List")
@@ -349,10 +347,8 @@ class OptionsMeta(type):
 
         # Bit nasty of an if statement, but it standardizes the names.
         # Differentiating between classes and callables is annoying
-        if arg_type == int:
-            type_str = "int"
-        elif arg_type == float:
-            type_str = "float"
+        if arg_type == int or arg_type == float:
+            type_str = "number"
         elif arg_type == str:
             type_str = "string"
         elif arg_type == bool:

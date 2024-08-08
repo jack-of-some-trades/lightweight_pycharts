@@ -77,7 +77,7 @@ export class container{
         let style = ""
         this.flex_frames.forEach((frame, i)=>{
             style += `
-            div[c-id=${this.id}] div:nth-child(${i+2})
+            div[c-id=${this.id}] div.frame:nth-child(${i+2})
             ${frame.style}`
         })
         this.style.innerHTML = style

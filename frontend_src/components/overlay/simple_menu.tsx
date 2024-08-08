@@ -16,6 +16,7 @@ export function ShowMenuButton(props:menu_btn_props){
     let el = document.createElement('div')
     const [, divProps] = splitProps(props, ['id', "style", "icon_act", "icon_deact"])
 
+    //Fetch the visibility Accessor and Setter
     const display = OverlayCTX().getDisplayAccessor(props.id)
     const setDisplay = OverlayCTX().getDisplaySetter(props.id)
 

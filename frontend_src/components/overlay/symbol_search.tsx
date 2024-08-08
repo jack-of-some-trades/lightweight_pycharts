@@ -27,12 +27,13 @@ export function SymbolSearchBox(){
     let box_el = document.createElement('div')
     let replace_el = document.createElement('div')
 
+    const displaySignal = createSignal<boolean>(false)
+    const display = displaySignal[0]
+    const setDisplay = displaySignal[1]
+
     const [ticker, setTicker] = createSignal<string>("LWPC")
     const [replace, setReplace] = createSignal<boolean>(true)
     const [menuLocation, setMenuLocation] = createSignal<point>({x:0, y:0})
-
-    let display = OverlayCTX().getDisplayAccessor(id)
-    let setDisplay = OverlayCTX().getDisplaySetter(id)
 
     window.topbar.setTicker = setTicker
 
@@ -43,11 +44,8 @@ export function SymbolSearchBox(){
     }
     const position_menu = () => {setMenuLocation({x:window.innerWidth/2, y:window.innerHeight*0.45})}
 
-    //Once Mounted the OverlayDiv visibility Accessor and Setter become valid.
-    //Adding event manually makes it function as expected (it executes before prop events)
-    onMount(() => { 
-        display = OverlayCTX().getDisplayAccessor(id)
-        setDisplay = OverlayCTX().getDisplaySetter(id)
+    //Adding events manually makes it function as expected (it executes before prop events)
+    onMount(() => {
         box_el.addEventListener('mousedown', (e) => onClk(e,true))
         replace_el.addEventListener('mousedown', (e) => onClk(e,false))
         window.addEventListener('resize', position_menu)
@@ -65,13 +63,15 @@ export function SymbolSearchBox(){
         <SymbolSearchMenu
             id={id}
             symbols={symbols()}
+            setDisplay={setDisplay}
             filters={filters}
             setFilters={setFilters}
             replace={replace()}
             setReplace={setReplace}
             location={menuLocation()}
             updateLocation={position_menu}
-        />
+        />,
+        displaySignal,
     )
     window.api.set_search_filters = setFilters
     window.api.populate_search_symbols = setSymbols
@@ -94,6 +94,7 @@ export function SymbolSearchBox(){
 
 interface search_menu_props extends Omit<overlay_div_props, "location_ref">{
     symbols:symbol_item[]
+    setDisplay:Setter<boolean>,
     replace:boolean,
     setReplace:Setter<boolean>,
     filters:select_filters,
@@ -107,10 +108,7 @@ const label_map = new Map<prop_key, string>([
 ])
 
 export function SymbolSearchMenu(props:search_menu_props){
-    let setDisplay = OverlayCTX().getDisplaySetter(props.id)
     const [,overlayDivProps] = splitProps(props, ["replace", "setReplace", "symbols", "filters", "setFilters"])
-
-    onMount(() => {setDisplay = OverlayCTX().getDisplaySetter(props.id)})
 
     function fetch(symbol:symbol_item){
         if (window.active_frame?.timeframe)
@@ -120,7 +118,7 @@ export function SymbolSearchMenu(props:search_menu_props){
                 symbol,
                 window.active_frame?.timeframe.toString()
             )
-        setDisplay(false)
+        props.setDisplay(false)
     }
 
     function search(confirmed:boolean){
@@ -192,7 +190,7 @@ export function SymbolSearchMenu(props:search_menu_props){
                 <Icon 
                     icon={icons.close} 
                     style={{"margin-right":"15px", padding:"5px"}}
-                    onClick={()=>setDisplay(false)}//Close Menu on Click
+                    onClick={()=>props.setDisplay(false)}//Close Menu on Click
                 />
             </div>
 

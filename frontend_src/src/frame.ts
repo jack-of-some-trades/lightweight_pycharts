@@ -155,13 +155,14 @@ export class chart_frame extends frame {
         // -2 accounts for... uhh... the chart border? idk man.
         // Without it the 'active_frame' grey chart border is hidden behind the chart
         // and the 'active_pane' accent color border
-        let this_width = this.element.clientWidth - 2
-        let this_height = this.element.clientHeight - 2
+        let width = this.element.clientWidth - 2
+        let height = this.element.clientHeight - 2
 
-        this.main_pane?.resize(this_width, this_height)
-        this.panes.forEach(pane => {
-            pane.resize(this_width, this_height)
-        });
+        if (this.main_pane){
+            this.main_pane.div.style.width = `${width}px`
+            this.main_pane.div.style.height = `${height}px`
+            this.main_pane.resize()
+        }
     }
 
     fitcontent() {

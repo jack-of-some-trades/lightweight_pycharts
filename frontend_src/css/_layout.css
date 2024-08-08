@@ -41,6 +41,11 @@
     --overlay-shadow: #2e63f52a;
     --overlay-menu-separator: var(--accent-color);
 
+    --legend-bg-color: #0003;
+    --legend-bg-color-hover: #0005;
+    --legend-border-color: #0000;
+    --legend-border-color-hover: #7774;
+
     --icon-color: #d1d4dc;
     --icon-hover-color: #2a2e39;
     --icon-gray-color: #454c5e;

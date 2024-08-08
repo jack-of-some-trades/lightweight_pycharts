@@ -1,4 +1,8 @@
 import { PriceScaleOptions } from "lightweight-charts";
+import { Accessor, createEffect, createSignal, Setter, Signal } from "solid-js";
+import { createStore, SetStoreFunction } from "solid-js/store";
+import { IndicatorOpts } from "../components/frame_widgets/chart_frames/indicator_options";
+import { OverlayCTX } from "../components/overlay/overlay_manager";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
 import { pane } from "./pane";
@@ -10,15 +14,66 @@ export class indicator {
     type: string
     private pane: pane
 
+    objVisibility: Signal<boolean>
+    labelHtml: Accessor<string | undefined>
+    setLabelHtml: Setter<string | undefined>
+
+    menu_id: string | undefined
+    menu_struct: object | undefined
+    setOptions: SetStoreFunction<object> | undefined
+
+    menuVisibility: Accessor<boolean> | undefined
+    setMenuVisibility: Setter<boolean> | undefined
+
     private series = new Map<string, u.AnySeries>()
     private primitives_left = new Map<string, PrimitiveBase>()
     private primitives_right = new Map<string, PrimitiveBase>()
     private primitives_overlay = new Map<string, PrimitiveBase>()
 
-    constructor(id: string, type: string, pane: pane) {
+    constructor(id: string, type: string, pane: pane, menu_struct={}, options_in={}) {
         this.id = id
         this.pane = pane
         this.type = type
+
+        const objVisibility = createSignal<boolean>(true)
+        this.objVisibility = objVisibility
+        this.setVisibility.bind(this)
+        
+        const labelHtml = createSignal<string | undefined>(undefined)
+        this.labelHtml = labelHtml[0]
+        this.setLabelHtml = labelHtml[1]
+
+        createEffect(() => this.menuVisibility)
+
+        //Only create the options menu if there is something to display
+        if (Object.keys(menu_struct).length === 0 || Object.keys(options_in).length === 0)
+            return
+        
+        const menuVisibility = createSignal<boolean>(false)
+        this.menuVisibility = menuVisibility[0]
+        this.setMenuVisibility = menuVisibility[1]
+
+        const [options, setOptions] = createStore<object>(options_in)
+        this.setOptions = setOptions
+        this.menu_struct = menu_struct
+        this.menu_id = `${pane.id}_${this.id}_options`
+
+        OverlayCTX().attachOverlay(
+            this.menu_id,
+            IndicatorOpts({
+                id: this.menu_id,
+                parent_ind: this,
+                menu_struct: this.menu_struct,
+                setOptions: setOptions
+            }),
+            menuVisibility
+        )
+
+        // When Options update, send the list back to Python
+        createEffect(() => {
+            console.log(this.pane.id, this.id, options)
+            // window.api.setIndOptions(this.pane.id, this.id, options)-
+        })
     }
 
     //Clear All Sub-objects
@@ -35,6 +90,15 @@ export class indicator {
         this.primitives_overlay.forEach((prim, key) => {
             this.pane.whitespace_series.detachPrimitive(prim)
         })
+    }
+
+    setVisibility(arg:boolean){
+        this.objVisibility[1](arg)
+        if (arg) {
+            console.log(`${this.id} - Make indicator Visible`)
+        } else {
+            console.log(`${this.id} - Make indicator Invisible`)
+        }
     }
 
     private _create_series_(series_type: u.Series_Type): u.AnySeries {
@@ -63,6 +127,8 @@ export class indicator {
     set_legend() { }
 
     edit_legend() { }
+
+    set_visibility(show:boolean){/* Loop through add series/primitives and set obj visibility */}
 
     protected add_series(_id: string, series_type: u.Series_Type) {
         this.series.set(_id, this._create_series_(series_type))

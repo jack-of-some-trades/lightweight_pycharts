@@ -1,5 +1,5 @@
 
-import { Accessor, createContext, createSignal, For, JSX, onMount, Setter, useContext } from "solid-js"
+import { Accessor, createContext, createSignal, For, JSX, Setter, useContext } from "solid-js"
 import { Icon, icons } from "../../icons"
 import { location_reference, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager"
 import { toolbar_menu_props, ToolBarMenuButton } from "./toolbar_menu"
@@ -28,18 +28,15 @@ export function ToolBar(props:JSX.HTMLAttributes<HTMLDivElement>){
 
 function ToolBoxToggle(){
     const id = "toolbox"
-    let visibility = OverlayCTX().getDisplayAccessor(id)
-    let setVisibility = OverlayCTX().getDisplaySetter(id)
-
-    onMount(()=> {
-        visibility = OverlayCTX().getDisplayAccessor(id)
-        setVisibility = OverlayCTX().getDisplaySetter(id)
-    })
+    const visibilitySignal = createSignal<boolean>(false)
+    const visibility = visibilitySignal[0]
+    const setVisibility = visibilitySignal[1]
 
     OverlayCTX().attachOverlay(
         id,
         <ToolBoxOverlay id={id} />,
-        false // Don't Auto Hide. Only Toggle Btn Should change visibility
+        visibilitySignal,
+        false, // Don't Auto Hide. Only Toggle Btn Should change visibility
     )
 
     return <div class="toolbox_btn_wrap" onMouseDown={()=>setVisibility(!visibility())} >    
@@ -126,6 +123,7 @@ function ToolBoxOverlay( props:toolbox_props ){
             id={props.id}
             location={location()}
             location_ref={location_reference.TOP_LEFT}
+            bounding_client_id={`#${props.id}>#menu_dragable`}
         >
             {/* Drag Handle */}
             <Icon 

@@ -1,5 +1,9 @@
 import * as lwc from "lightweight-charts";
 import { DeepPartial as DP, DeepPartial, HorzScaleOptions, IChartApi, SingleValueData, TimeChartOptions, WhitespaceData, createChart } from "lightweight-charts";
+import { createSignal } from "solid-js";
+import { SetStoreFunction } from "solid-js/store";
+import { render } from "solid-js/web";
+import { PaneLegend } from "../components/frame_widgets/chart_frames/pane_legend";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
@@ -13,8 +17,6 @@ export class pane {
 
     id: string = ''
     div: HTMLDivElement
-    flex_width: number
-    flex_height: number
 
     chart: IChartApi
     indicators = new Map<string, indicator>()
@@ -28,20 +30,30 @@ export class pane {
     whitespace_series: u.LineSeries
     private chart_div: HTMLDivElement
 
+    // TSX Element vars
+    private setIndicatorIds: SetStoreFunction<string[]>
+    private derender_legend: () => void
+
     constructor(
         id: string,
         div: HTMLDivElement,
-        flex_width: number = 1,
-        flex_height: number = 1,
         chart_opts: DP<TimeChartOptions> = DEFAULT_PYCHART_OPTS
     ) {
         this.id = id
         this.div = div
-        this.flex_width = flex_width
-        this.flex_height = flex_height
+
         //Only One Chart per pane, so this is the only definition needed
         this.chart = createChart(this.div, chart_opts);
         this.chart_div = this.chart.chartElement()
+
+        const [indicatorIds, setIndicatorIds] = createSignal<string[]>([])
+        this.setIndicatorIds = setIndicatorIds
+        //Add Legend
+        const legend_props = {
+            parent_pane:this,
+            indicators_list:indicatorIds
+        }
+        this.derender_legend = render(() => PaneLegend(legend_props), this.div)
 
         this.whitespace_series = this.chart.addLineSeries()
         //Add Blank Series that primtives can be attached to
@@ -103,8 +115,9 @@ export class pane {
         this.primitive_overlay.setData([primitive_data])
     }
 
-    protected add_indicator(_id: string, type: string) {
-        this.indicators.set(_id, new indicator(_id, type, this))
+    protected add_indicator(_id: string, type: string, menu_struct={}, options={}) {
+        this.indicators.set(_id, new indicator(_id, type, this, menu_struct, options))
+        this.setIndicatorIds([...this.indicators.keys()])
     }
 
     protected remove_indicator(_id: string) {
@@ -113,9 +126,10 @@ export class pane {
 
         indicator.delete()
         this.indicators.delete(_id)
+        this.setIndicatorIds([...this.indicators.keys()])
     }
 
-    protected add_primitive(_id: string, _type: string, params:any) {
+    protected add_primitive(_id: string, _type: string, params:object) {
         let primitive_type = primitives.get(_type)
         if (primitive_type === undefined) return
         let new_obj = new primitive_type(params)
@@ -132,24 +146,14 @@ export class pane {
         this.primitives_right.delete(_id)
     }
 
-    protected update_primitive(_id: string, params:any) {
+    protected update_primitive(_id: string, params:object) {
         let _obj = this.primitives_right.get(_id)
         if (_obj === undefined) return
         _obj.updateData(params)
     }
 
-    /**
-     * Resize the Pane given the Pane's flex size
-     * @param width Total Frame Width in px
-     * @param height Total Frame Height in px
-     */
-    resize(width: number, height: number) {
-        let this_width = width * this.flex_width
-        let this_height = height * this.flex_height
-
-        this.div.style.width = `${this_width}px`
-        this.div.style.height = `${this_height}px`
-        this.chart.resize(this_width, this_height, false)
+    resize() {
+        this.chart.resize(this.div.clientWidth, this.div.clientHeight, false)
     }
 
     create_line(point1: SingleValueData, point2: SingleValueData) {

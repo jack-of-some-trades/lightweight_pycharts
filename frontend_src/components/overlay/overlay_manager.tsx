@@ -1,4 +1,4 @@
-import { Accessor, createContext, createEffect, createSignal, For, JSX, on, onCleanup, onMount, Setter, Show, splitProps, useContext } from "solid-js";
+import { Accessor, createContext, createEffect, createSignal, For, JSX, on, onCleanup, onMount, Setter, Show, Signal, splitProps, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import "../../css/overlay/overlay.css";
 
@@ -6,7 +6,7 @@ import "../../css/overlay/overlay.css";
 //#region --------------------- Context Manager --------------------- //
 
 type OverlayContextProps = {
-    attachOverlay: (id:string, el:JSX.Element, autohide?:boolean) => void,
+    attachOverlay: (id:string, el:JSX.Element, ShowDisplay?:Signal<boolean>, autohide?:boolean) => void,
     detachOverlay: (id:string) => void,
     getDivReference:(id:string) => undefined | HTMLDivElement,
     setDivReference:(id:string, el:HTMLDivElement) => void,
@@ -39,12 +39,24 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
 
     /** Place a menu in the overlay manager
      * @param menu : JSX.Element, This should, at the topmost level, be an <OverlayDiv/>
+     * @param ShowDisplay : Optional Signal<bool>. Allows the Mounting object to make and thus
+     *          have control over the display's Visibility.
+     * @param autohide : bool, if true the menu will be automatically hidden when a click outside
+     *          of the overlay's bounds are detected.
      */
-    function attachOverlay(id:string, el:JSX.Element, autohide:boolean=true){
+    function attachOverlay(
+        id:string, 
+        el:JSX.Element, 
+        ShowDisplay: Signal<boolean> | undefined = undefined,
+        autohide:boolean=true, 
+    ){
         setOverlays([...overlays, {id:id, el:el, hide:autohide}])
-        displayMap.set(id, createSignal(false))
+        if (ShowDisplay === undefined)
+            ShowDisplay = createSignal(false)
+        displayMap.set(id, ShowDisplay)
     }
     function detachOverlay(id:string){
+        divMap.delete(id)
         displayMap.delete(id)
         setOverlays(overlays.filter((overlay) => overlay.id !== id))
     }
@@ -127,12 +139,15 @@ export enum location_reference {
  *        Useful when the location is referencing a Signal that cannot be reactive such as a Div's ClientBoundingBox
  * @param location_ref : Reference Corner to position the Div, e.g. TOP_RIGHT will mean the top right corner of 
  *        the div will be drawn at location:{x,y}
+ * @param bounding_client_id : QuerySelector String for an Element that will be used as a bounding client reference. 
+ *        Movement of the overlay div will be limited such that the DOMRect of this reference client cannot go offscreen
  */
 export interface overlay_div_props extends JSX.HTMLAttributes<HTMLDivElement> {
     id:string
     location: point
     location_ref: location_reference
     updateLocation?: () => void
+    bounding_client_id?:string
 }
 
 
@@ -142,10 +157,11 @@ export interface overlay_div_props extends JSX.HTMLAttributes<HTMLDivElement> {
  */
 export function OverlayDiv(props:overlay_div_props){
     let divRef : HTMLDivElement|undefined = undefined
+    let clientRef : HTMLElement|undefined = undefined
     props.classList = {...props.classList, overlay:true}
     const [style, setStyle] = createSignal<JSX.CSSProperties>(initPosition(props.location_ref, props.location))
-    const [,divProps] = splitProps(props, ["id", "location", "location_ref", "updateLocation"])
-    
+    const [, divProps] = splitProps(props, ["id", "location", "location_ref", "updateLocation", "bounding_client_id"])
+
     //#region ------------------- Position Update Listeners ------------------- //
 
     //Set Position Function and preserve the Reactivity of Display_Ref
@@ -159,12 +175,15 @@ export function OverlayDiv(props:overlay_div_props){
         //attached to the document. Sadly, its the easiest way to get this reference
         createEffect(on(display, () => {
             divRef = document.querySelector(`#${props.id}`) as HTMLDivElement?? undefined
+            if (props.bounding_client_id)
+                clientRef = document.querySelector(props.bounding_client_id) as HTMLElement?? undefined
             OverlayCTX().setDivReference(props.id, divRef)
         }))
 
         //Update Div Location when Location Changes (Preserve Reactivity of props.location)
         createEffect(() => { 
-            let pos = getBoundedPosition(props.location, divRef?.getBoundingClientRect()) 
+            let ref = clientRef ?? divRef
+            let pos = getBoundedPosition(props.location, ref?.getBoundingClientRect()) 
             if (pos) setStyle(pos)
         })
 

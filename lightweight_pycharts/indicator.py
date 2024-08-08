@@ -167,8 +167,8 @@ class Indicator(metaclass=IndicatorMeta):
 
     Subclasses need to define an __init__(), Set_Data(), and Update_Data() function to be complete.
     __init__ must link callables (That fetch a set of timeseries data) to the function arguments of
-    Set_data and Update_data (See Docstrings of those functions). Set_Data should define a historical
-    data calculation based on a full dataset. Update_Data Should update the historical calculation
+    Set_data and Update_data (See function Docstrings). Set_Data should define a historical data
+    calculation based on a full dataset. Update_Data Should update the historical calculation
     given an update to the source dataset.
 
     Indicators apply themselves to the screen by appending themselves to their parent frame's

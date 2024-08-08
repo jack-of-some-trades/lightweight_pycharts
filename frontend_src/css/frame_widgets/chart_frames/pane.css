@@ -1,0 +1,56 @@
+
+
+.pane_legend {
+    position: absolute;
+    z-index: 3;
+    top: 0px;
+    left: 0px;
+    margin-top: 4px;
+    margin-left: 4px;
+}
+
+.ind_tag {
+    display: flex;
+    padding: 0px 8px;
+    margin: 2px 0px;
+    width:fit-content;
+    height: 18px;
+    box-sizing: border-box;
+
+    align-items: center;
+    font-size: small;
+
+    border-radius: 3px;
+    background-color: var(--legend-bg-color);
+    border: 1px solid var(--legend-border-color);
+}
+
+.ind_tag:first-child {
+    font-size: larger;
+    height: 24px;
+}
+
+.ind_tag .icon{
+    margin-left: 2px;
+}
+
+.legend_toggle_btn {
+    display:flex;
+    width:fit-content;
+    height: 14px;
+    margin: 2px 0px;
+    padding: 4px 8px;
+    box-sizing: border-box;
+
+    align-items: center;
+
+    border-radius: 3px;
+    background-color: var(--legend-bg-color);
+    border: 1px solid var(--legend-border-color);
+}
+
+.ind_tag:hover,
+.legend_toggle_btn:hover {
+    border: 1px solid var(--legend-border-color-hover);
+    background-color: var(--legend-bg-color-hover);
+}
