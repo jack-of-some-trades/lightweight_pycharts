@@ -19,9 +19,9 @@ export function Container(props : container_props){
             return (
                 <div
                     classList={{
-                        frame: display.orientation === Orientation.null? true : false, 
-                        frame_separator_v: display.orientation === Orientation.Vertical? true : false,
-                        frame_separator_h: display.orientation === Orientation.Horizontal? true : false 
+                        frame: true, 
+                        separator_v: display.orientation === Orientation.Vertical? true : false,
+                        separator_h: display.orientation === Orientation.Horizontal? true : false 
                     }}
                     attr:active={display.el_active() ? "" : undefined}
                     attr:target={display.el_target() ? "" : undefined}

@@ -36,24 +36,23 @@
     border-color: var(--second-accent-color);
 }
 
-.frame_separator_v,
-.frame_separator_h {
-    position: absolute;
-    box-sizing: border-box;
+.separator_v,
+.separator_h {
+    border: 0px;
     z-index: 1;
     border-radius: 10px;
     background-color: #0000;
 }
 
-.frame_separator_v:hover,
-.frame_separator_h:hover{
+.separator_v:hover,
+.separator_h:hover{
     opacity: 25%;
     border-color: var(--accent-color);
     background-color: var(--accent-color);
 }
 
-.frame_separator_v { cursor: ew-resize; }
-.frame_separator_h { cursor: ns-resize; }
+.separator_v { cursor: ew-resize; }
+.separator_h { cursor: ns-resize; }
 
 /* #endregion */
 
