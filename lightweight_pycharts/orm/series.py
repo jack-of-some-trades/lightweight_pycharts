@@ -485,8 +485,8 @@ class Whitespace_DF:
             force_close=False,  # It's 4 Methods wearing a trench-coat that says "C̷l̷a̷s̷s̷  *Function*"
         )
 
-        if self.only_days:
-            dt_index = dt_index.normalize()
+        if self.only_days:  # False alarm Type Error? Its a DT_Index, not an Index[int]?
+            dt_index = dt_index.normalize()  # type: ignore
 
         start_index = dt_index.get_indexer_for([start_date])[0]
         if start_index == -1:

@@ -5,8 +5,8 @@ from typing import Optional
 import pandas as pd
 
 from lightweight_pycharts.indicator import (
+    Options,
     Indicator,
-    IndicatorOptions,
     ParentType,
     SeriesData,
     default_output_property,
@@ -24,15 +24,15 @@ class Method(Enum):
 
 
 @dataclass
-class SMAOptions(IndicatorOptions):
+class SMAOptions(Options):
     "Dataclass of Options for the SMA Indicator"
-    per = "string"
+    per: ... = "string"
     src: Optional[SeriesData] = None
     period: int = param(9, options=[10, 11, 12], group="Test", inline="sub-group")
     period2: int = param(7, "Another_param", "Test", min_val=5, max_val=10, step=1)
-    arg = param(Method.SMA, options=[Method.EMA])
-    arg2 = Method.RMA
-    # method: Method = param(Method.SMA, group="Test")
+    arg: ... = param(Method.SMA, options=[Method.EMA])
+    arg2: ... = Method.RMA
+    method: Method = param(Method.SMA, group="Test")
 
 
 # pylint: disable=arguments-differ
@@ -56,6 +56,7 @@ class SMA(Indicator):
         self._data = pd.Series()
         self.line_series = sc.LineSeries(self)
 
+        self.init_menu(opts)
         self.link_args({"data": opts.src})
 
     def set_data(self, data: pd.Series, *_, **__):

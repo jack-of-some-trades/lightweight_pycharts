@@ -34,7 +34,6 @@
 
 .text, .icon_text,
 .menu_text, .overlay_sub_menu_text {
-    height: -webkit-fill-available;
     color: var(--text-color);
     font-family: var(--font);
     text-align: center;

@@ -57,6 +57,8 @@ interface tag_props {
 
 function IndicatorTag(props:tag_props){
     const [hover, setHover] = createSignal<boolean>(false)
+
+    console.log(props.setMenuVisibility)
     
     return (
         <div 
@@ -64,7 +66,7 @@ function IndicatorTag(props:tag_props){
             onmouseenter={()=>setHover(true)} 
             onmouseleave={()=>setHover(false)}
         >
-            <div class="text" innerHTML={props.name + (props.innerHtml() !== undefined? " - " + props.innerHtml(): "")}/>
+            <div class="text" innerHTML={props.name + (props.innerHtml() !== undefined? " • " + props.innerHtml(): "")}/>
             <Show when={hover()}>
                 <Icon {...eyeProps}
                     icon={props.objVisibility()? icons.eye_normal : icons.eye_crossed} 

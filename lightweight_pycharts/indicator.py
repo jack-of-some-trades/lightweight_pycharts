@@ -1,7 +1,7 @@
 """ Classes and functions that handle implementation of chart indicators """
 
 from logging import getLogger
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields
 from abc import abstractmethod
 from inspect import signature, _empty, currentframe
 from typing import (
@@ -148,13 +148,25 @@ class Watcher:
 # region --------------------------- Indicator Classes --------------------------- #
 
 
-class IndicatorOptions(metaclass=OptionsMeta):
+class Options(metaclass=OptionsMeta):
     "Inheritable OptionsMeta Class"
+    __args__: ClassVar[set] = set()
+    __src_args__: ClassVar[dict] = {}
     __menu_struct__: ClassVar[dict] = {}
 
 
-class IsIndicatorOptions(Protocol):
+class IndicatorOptions(Protocol):
     "Protocol Class to type check for an Indicator Options Dataclass"
+    __args__: ClassVar[set]
+    __src_args__: ClassVar[dict]
+    __menu_struct__: ClassVar[dict]
+    __dataclass_fields__: ClassVar[Dict[str, Any]]
+
+
+class IndicatorOptionsCls(Protocol):
+    "Protocol Class to type check for an Indicator Options Dataclass"
+    __args__: set
+    __src_args__: dict
     __menu_struct__: dict
     __dataclass_fields__: Dict[str, Any]
 
@@ -188,7 +200,7 @@ class Indicator(metaclass=IndicatorMeta):
     # isn't the one actually creating the object.
 
     # Dunder Cls Params specific to each Sub-Class; set by MetaClass
-    __options__: IsIndicatorOptions
+    __options__: IndicatorOptionsCls
     __set_args__: dict[str, tuple[type, Any]]
     __input_args__: dict[str, tuple[type, Any]]
     __update_args__: dict[str, tuple[type, Any]]
@@ -247,7 +259,9 @@ class Indicator(metaclass=IndicatorMeta):
         self.name = self.__class__.__name__
         self.events = self.parent_frame._window.events
 
-        self.opts = None
+        # Used as tmp storeage for an __options__ instance w/ sources replaced by strings
+        # since functions cannot be pickled and sent to the JS Display
+        self._opts = {}
 
         self._fwd_queue.put((JS_CMD.ADD_INDICATOR, *self._ids, self.name))
 
@@ -352,11 +366,6 @@ class Indicator(metaclass=IndicatorMeta):
         for primative in self._primitives.values():
             primative.clear()
 
-    def set_options(self, opts: IsIndicatorOptions):
-        "Called by Javascript when the user updates the Indicator's Options on Screen"
-        self.opts = opts
-        self.recalculate()
-
     def recalculate(self):
         "Manually force a full recalculation of this indicator and all dependent indicators"
         self._watcher.notify_set(None)
@@ -437,10 +446,50 @@ class Indicator(metaclass=IndicatorMeta):
         self._watcher.update_notifiers = []
         self._watcher.observables = {}
 
+    def init_menu(self, opts: IndicatorOptions):
+        "Transfer"
+        if getattr(self, "__options__", None) is None:
+            logger.error(
+                "Cannot set Indicator Menu, %s needs a self.__options__ Class instance",
+                self.name,
+            )
+            return
+
+        # Would use asdict() but it tries to make a deep copy and it can't copy bound functions
+        _opts = {}
+
+        for k in self.__options__.__args__:
+            v = getattr(opts, k, None)
+            if k in self.__options__.__src_args__:
+                # Replace all source args with Tuple[str] representations of the functions
+                # boundCls.Func_name() -> out_args === "(boundCls.id, Func_name)"
+                _opts[k] = (
+                    getattr(getattr(v, "__self__", None), "_js_id", "None"),
+                    getattr(v, "__name__", "None"),
+                )
+            else:
+                _opts[k] = v
+
+        logger.info(f"{_opts = }")
+
+        self._fwd_queue.put(
+            (
+                JS_CMD.SET_INDICATOR_MENU,
+                *self._ids,
+                self.__options__.__menu_struct__,
+                _opts,
+            )
+        )
+
+    def set_options(self, opts: IndicatorOptions):
+        "Called by Javascript when the user updates the Indicator's Options on Screen"
+        self.opts = opts
+        self.recalculate()
+
     def get_primitives_of_type[T: pr.Primitive](self, _type: type[T]) -> dict[str, T]:
         "Returns a Dictionary of Primitives owned by this indicator of the Given Type"
         if _type == pr.Primitive:
-            return self._primitives.copy()  # type: ignore ... I know what I'm doing? wtf?
+            return self._primitives.copy()  # type: ignore (ID_Dict is still a dict.)
         rtn_dict = {}
         for _key, _primitive in self._primitives.items():
             if isinstance(_primitive, _type):

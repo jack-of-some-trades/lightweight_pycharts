@@ -78,6 +78,7 @@ class JS_CMD(IntEnum):
     "Enumeration of the various commands that Python can send to Javascript"
     # Window Commands
     JS_CODE = auto()
+    LOAD_CSS = auto()
     ADD_CONTAINER = auto()
     REMOVE_CONTAINER = auto()
     REMOVE_REFERENCE = auto()
@@ -118,6 +119,8 @@ class JS_CMD(IntEnum):
     UPDATE_SERIES_DATA = auto()
     CHANGE_SERIES_TYPE = auto()
     UPDATE_SERIES_OPTS = auto()
+    SET_INDICATOR_MENU = auto()
+    SET_INDICATOR_OPTIONS = auto()
     UPDATE_PRICE_SCALE_OPTS = auto()
 
     # PyWebView Commands
@@ -255,6 +258,20 @@ def indicator_preamble(pane_id: str, indicator_id: str) -> str:
         """
 
 
+def indicator_set_menu(pane_id: str, indicator_id: str, menu_struct, options) -> str:
+    return (
+        indicator_preamble(pane_id, indicator_id)
+        + f"indicator.set_menu_struct({dump(menu_struct)}, {dump(options)});"
+    )
+
+
+def indicator_set_options(pane_id: str, indicator_id: str, options) -> str:
+    return (
+        indicator_preamble(pane_id, indicator_id)
+        + f"if (indicator.setOptions !== undefined) indicator.set_options({dump(options)});"
+    )
+
+
 # region ------------------------ Indicator Series ------------------------ #
 # all functions should take Pane_id, Indicator_Id, and Series_id in that order.
 
@@ -386,7 +403,7 @@ def update_ind_primitive(
 # endregion
 
 
-def return_blank() -> str:
+def return_blank(*_) -> str:
     "Return a blank string, The Queue Manager will interpret this to mean a PyWv command was given."
     return ""
 
@@ -431,6 +448,8 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.ADD_IND_PRIMITIVE: add_ind_primitive,
     JS_CMD.REMOVE_IND_PRIMITIVE: remove_ind_primitive,
     JS_CMD.UPDATE_IND_PRIMITIVE: update_ind_primitive,
+    JS_CMD.SET_INDICATOR_MENU: indicator_set_menu,
+    JS_CMD.SET_INDICATOR_OPTIONS: indicator_set_options,
     # ---- PyWebView Commands ----
     JS_CMD.SHOW: return_blank,
     JS_CMD.HIDE: return_blank,
@@ -438,4 +457,5 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.RESTORE: return_blank,
     JS_CMD.MAXIMIZE: return_blank,
     JS_CMD.MINIMIZE: return_blank,
+    JS_CMD.LOAD_CSS: return_blank,
 }

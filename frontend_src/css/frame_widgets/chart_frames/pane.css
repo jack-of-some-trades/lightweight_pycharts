@@ -14,7 +14,7 @@
     padding: 0px 8px;
     margin: 2px 0px;
     width:fit-content;
-    height: 18px;
+    height: 19px;
     box-sizing: border-box;
 
     align-items: center;
@@ -54,3 +54,19 @@
     border: 1px solid var(--legend-border-color-hover);
     background-color: var(--legend-bg-color-hover);
 }
+
+.scale_toggle_right {
+    pointer-events: none;
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    color: var(--chart-text-color);
+    margin: 3px 20px;
+}
+
+/* .scale_toggle_right[active] {
+    background-color: var(--accent-color);
+} */

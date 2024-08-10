@@ -184,6 +184,8 @@ class View(ABC):
     @abstractmethod
     def restore(self): ...
     @abstractmethod
+    def load_css(self, filepath: str): ...
+    @abstractmethod
     def assign_callback(self, func_name: str): ...
 
     def _manage_queue(self):
@@ -225,6 +227,8 @@ class View(ABC):
                             self.minimize()
                         case JS_CMD.RESTORE:
                             self.restore()
+                        case JS_CMD.LOAD_CSS:
+                            self.load_css(args[0])
             except TypeError as e:
                 logger.error(
                     "Command:%s: Given %s \n\tError msg: %s",
@@ -286,7 +290,7 @@ class PyWv(View):
             kwargs["height"] = 800
         if "frameless" not in kwargs.keys():
             kwargs["frameless"] = False
-        kwargs["easy_drag"] = False  # REALLY Don't want this behavior
+        kwargs["easy_drag"] = False  # REALLY Don't want easy_drag behavior
 
         self.frameless = kwargs["frameless"]
         if self.frameless:
@@ -359,6 +363,15 @@ class PyWv(View):
 
     def hide(self):
         self.pyweb_window.hide()
+
+    def load_css(self, filepath: str):
+        try:
+            file_handle = open(filepath, encoding="UTF-8")
+            self.pyweb_window.load_css(file_handle.read())
+        except FileNotFoundError:
+            logger.error("Cannot find/load .css file. Ensure filepath is absolute.")
+        finally:
+            file_handle.close()
 
     def _on_maximized(self):
         # For Some reason maximized doesn't auto update?

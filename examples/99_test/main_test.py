@@ -35,7 +35,7 @@ def symbol_search_handler(ticker: str, **kwargs) -> Optional[list[Symbol]]:
 
 
 def data_request_handler(symbol: lwc.Symbol, tf: lwc.TF) -> Optional[pd.DataFrame]:
-    "Request Handler for REST Bulk Data Fetches."
+    "Request Handler for Bulk REST Data Fetches."
     if tf.period == "m" and (tf.mult in [1, 5, 30]):
         match symbol.ticker:
             case "AAPL":
@@ -123,6 +123,7 @@ async def main():
         ],
     )
 
+    window.new_tab()
     main_frame = window.containers[0].frames[0]
     df = pd.read_csv("examples/data/ohlcv.csv")
 

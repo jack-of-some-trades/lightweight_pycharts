@@ -30,7 +30,7 @@ export class indicator {
     private primitives_right = new Map<string, PrimitiveBase>()
     private primitives_overlay = new Map<string, PrimitiveBase>()
 
-    constructor(id: string, type: string, pane: pane, menu_struct={}, options_in={}) {
+    constructor(id: string, type: string, pane: pane) {
         this.id = id
         this.pane = pane
         this.type = type
@@ -42,42 +42,10 @@ export class indicator {
         const labelHtml = createSignal<string | undefined>(undefined)
         this.labelHtml = labelHtml[0]
         this.setLabelHtml = labelHtml[1]
-
-        createEffect(() => this.menuVisibility)
-
-        //Only create the options menu if there is something to display
-        if (Object.keys(menu_struct).length === 0 || Object.keys(options_in).length === 0)
-            return
-        
-        const menuVisibility = createSignal<boolean>(false)
-        this.menuVisibility = menuVisibility[0]
-        this.setMenuVisibility = menuVisibility[1]
-
-        const [options, setOptions] = createStore<object>(options_in)
-        this.setOptions = setOptions
-        this.menu_struct = menu_struct
-        this.menu_id = `${pane.id}_${this.id}_options`
-
-        OverlayCTX().attachOverlay(
-            this.menu_id,
-            IndicatorOpts({
-                id: this.menu_id,
-                parent_ind: this,
-                menu_struct: this.menu_struct,
-                setOptions: setOptions
-            }),
-            menuVisibility
-        )
-
-        // When Options update, send the list back to Python
-        createEffect(() => {
-            console.log(this.pane.id, this.id, options)
-            // window.api.setIndOptions(this.pane.id, this.id, options)-
-        })
     }
 
-    //Clear All Sub-objects
     delete() {
+        //Clear All Sub-objects
         this.series.forEach((ser, key) => {
             this.pane.chart.removeSeries(ser)
         })
@@ -116,19 +84,18 @@ export class indicator {
             case (u.Series_Type.CANDLESTICK):
                 return this.pane.chart.addCandlestickSeries()
             case (u.Series_Type.ROUNDED_CANDLE):
+                //Ideally custom series objects will get baked directly into the TS Code
+                //So accomodations don't need to be made on the Python side
                 return this.pane.chart.addCustomSeries(new RoundedCandleSeries())
-            default: //Whitespace
+            default: //Catch-all, primarily reached by WhitespaceSeries'
                 return this.pane.chart.addLineSeries()
         }
     }
 
-    get_legend() { }
+    //#region ------------------------ Python Interface ------------------------ //
 
-    set_legend() { }
-
-    edit_legend() { }
-
-    set_visibility(show:boolean){/* Loop through add series/primitives and set obj visibility */}
+    //Functions marked as protected are done so it indicate the original intent
+    //only encompassed being called from python, not from within JS.
 
     protected add_series(_id: string, series_type: u.Series_Type) {
         this.series.set(_id, this._create_series_(series_type))
@@ -200,7 +167,7 @@ export class indicator {
         series.priceScale().applyOptions(opts)
     }
 
-    protected add_primitive(_id: string, _type: string, params:any) {
+    protected add_primitive(_id: string, _type: string, params:object) {
         let primitive_type = primitives.get(_type)
         if (primitive_type === undefined) return
         let new_obj = new primitive_type(params)
@@ -217,9 +184,47 @@ export class indicator {
         this.primitives_right.delete(_id)
     }
     
-    protected update_primitive(_id: string, params:any) {
+    protected update_primitive(_id: string, params:object) {
         let _obj = this.primitives_right.get(_id)
         if (_obj === undefined) return
         _obj.updateData(params)
     }
+
+    protected set_menu_struct(menu_struct:object, options_in:object){
+        if (this.menu_id !== undefined) {
+            if (this.setOptions) this.setOptions(options_in)
+            return //Menu has already been created.
+        }
+
+        const menuVisibility = createSignal<boolean>(false)
+        this.menuVisibility = menuVisibility[0]
+        this.setMenuVisibility = menuVisibility[1]
+
+        const [options, setOptions] = createStore<object>(options_in)
+        this.setOptions = setOptions
+        this.menu_struct = menu_struct
+        this.menu_id = `${this.pane.id}_${this.id}_options`
+
+        OverlayCTX().attachOverlay(
+            this.menu_id,
+            IndicatorOpts({
+                id: this.menu_id,
+                parent_ind: this,
+                menu_struct: this.menu_struct,
+                setOptions: setOptions
+            }),
+            menuVisibility
+        )
+
+        // When Options update, send the list back to Python
+        createEffect(() => {
+            console.log(this.pane.id, this.id, options)
+            // window.api.setIndOptions(this.pane.id, this.id, options)-
+        })
+        this.pane.rebuild_legend()
+    }
+
+    //#endregion
+
+
 }

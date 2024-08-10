@@ -129,14 +129,17 @@ class IndicatorMeta(ABCMeta):
 
 class OptionsMeta(type):
     """
-    Metaclass to create a __menu_struct__ Dict that defines the UI Menu Layout.
-    Used in conjunction with param() to define Groups, inlines, tooltips, and behavior.
+    Metaclass to parse the dataclass and create a __menu_struct__ and __src_args__ Dict.
+    __src_args__ store the argument type for source functions to aide in the transfer of
+    this information to the screen and back (Since functions aren't pickleable)
+
+    Used in conjunction with param() this Meta class creates a __menu_struct__ dict that
+    can define Groups, inlines, and tooltips for the UI Menu.
     """
 
     def __new__(mcs, name, bases, namespace, /, **kwargs):
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
-
-        if name == "IndicatorOptions":
+        if name == "Options":
             return cls
 
         arg_params = namespace.get("__arg_params__")
@@ -160,26 +163,36 @@ class OptionsMeta(type):
 
         if not set(args).issuperset(set(__annotations__)):
             raise AttributeError(
-                "All Indicator Option Parameters must have a default value"
+                f"Cannot init '{name}' All Parameters must have a default value."
+            )
+        if not set(args).issubset(set(__annotations__)):
+            raise AttributeError(
+                f"""
+                Cannot init '{name}' Parameters must have a type annotation
+                **Dataclass will not create an init input arg without one**
+                An Ellipsis (...) can be used as an Any Type.
+                """
             )
 
-        # ------ Create __menu_struct__ to be used by JS Menu generator ------ #
+        # ------ Populate __menu_struct__ and __src_args__ ------ #
+        __src_args__ = {}
         __menu_struct__ = {}
-        # __menu_struct__ === {  Name: (type, *args*) }
+        # __menu_struct__ === {  Name: (type, *args*) } ** used to generate JS menu
         # Where type can be [bool, int, float, str, Timestamp, enum, source, group, inline]
         # if type is an inline or group then *args* is another Dict of { Name: (type, *args*) }
         # Groups can Nest Inlines, but not other groups, inlines cannot nest other inlines
 
+        # __src_args__ = { arg_name : arg_type } ** used to denote arguments that are functions
+        # Used to help make packaging the arguments for Queue transfer easier
+        # Since you can't directly send the functions through the queue
+
         for i, arg_key in enumerate(args):
-            # Process the type annotation or default argument
-            if arg_key in __annotations__:
-                arg_type, src_type = mcs._process_type(
-                    namespace[arg_key], __annotations__[arg_key]
-                )
-            else:
-                arg_type, src_type = mcs._process_type(
-                    namespace[arg_key], type(namespace[arg_key])
-                )
+            arg_type, src_type = mcs._process_type(
+                namespace[arg_key], __annotations__[arg_key]
+            )
+
+            if arg_type == "source":
+                __src_args__[arg_key] = src_type
 
             # Place var in the global space if there was no param() call.
             if (alt_arg_name := f"@arg{i}") not in arg_params:
@@ -235,6 +248,8 @@ class OptionsMeta(type):
 
             # endregion
 
+        setattr(cls, "__args__", set(args))
+        setattr(cls, "__src_args__", __src_args__)
         setattr(cls, "__menu_struct__", __menu_struct__)
         return cls
 
@@ -246,6 +261,7 @@ class OptionsMeta(type):
         src_arg: str,
         arg_params: Any,
     ) -> dict:
+        "Create __menu_struct__ args from a parameter that has param() arguments"
         rtn_struct = {
             "default": arg,
             "tooltip": arg_params["tooltip"],
@@ -309,6 +325,7 @@ class OptionsMeta(type):
 
     @staticmethod
     def _parse_arg(arg_key: str, arg: Any, arg_type: str, src_arg: str) -> dict:
+        "Create __menu_struct__ args from a parameter that had no param() call"
 
         rtn_struct = {"title": arg_key, "default": arg}
 
@@ -325,6 +342,9 @@ class OptionsMeta(type):
 
     @staticmethod
     def _process_type(arg: Any, arg_type: type) -> Tuple[str, str]:
+        if arg_type == Ellipsis or arg_type == Any:
+            arg_type = type(arg)
+
         origin = get_origin(arg_type)
         if origin is list:
             raise TypeError("Indicator Option Type Cannot be a List")

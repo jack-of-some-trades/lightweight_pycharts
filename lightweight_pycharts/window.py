@@ -92,10 +92,8 @@ class Window:
             self._data_request_rsp, socket_switch=self.events.socket_switch
         )
 
-        self._js_id = "wrapper"
         self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
-        self.new_tab()
 
     # region ------------------------ Private Window Methods  ------------------------ #
 
@@ -225,11 +223,6 @@ class Window:
 
     # region ------------------------ Public Window Methods  ------------------------ #
 
-    @property
-    def js_id(self) -> str:
-        "Immutable Copy of the Object's Javascript_ID"
-        return self._js_id
-
     def show(self):
         "Show the PyWebView Window"
         self._fwd_queue.put(JS_CMD.SHOW)
@@ -253,6 +246,9 @@ class Window:
     def close(self):
         "Hide the PyWebView Window"
         self._fwd_queue.put(JS_CMD.CLOSE)
+
+    def load_css(self, filepath: str):
+        self._fwd_queue.put((JS_CMD.LOAD_CSS, filepath))
 
     def new_tab(self) -> Container:
         """

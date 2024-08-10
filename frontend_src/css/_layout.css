@@ -41,11 +41,6 @@
     --overlay-shadow: #2e63f52a;
     --overlay-menu-separator: var(--accent-color);
 
-    --legend-bg-color: #0003;
-    --legend-bg-color-hover: #0005;
-    --legend-border-color: #0000;
-    --legend-border-color-hover: #7774;
-
     --icon-color: #d1d4dc;
     --icon-hover-color: #2a2e39;
     --icon-gray-color: #454c5e;
@@ -62,6 +57,25 @@
     --toolbar-icon-active-color: var(--icon-active-color);
     --toolbar-icon-background-color: var(--icon-background-color);
     --toolbar-separator-color: var(--separator-color);
+
+    --legend-bg-color: #0003;
+    --legend-bg-color-hover: #0005;
+    --legend-border-color: #0000;
+    --legend-border-color-hover: #7774;
+
+    --chart-text-color: #b2b5be;
+    --chart-bg-color-top: #171c27;
+    --chart-bg-color-bottom: #131722;
+    --chart-grid: #222631;
+    --chart-grid-vert: var(--chart-grid);
+    --chart-grid-horiz: var(--chart-grid);
+    --chart-axis-border: #161a25;
+
+    --chart-xhair-mode: 0;
+    --chart-right-offset: 20;
+    --chart-scale-mode: 1;
+    --chart-scale-mode-left: var(--chart-scale-mode);
+    --chart-scale-mode-right: var(--chart-scale-mode);
 }
 
 /* #region --------------- Base Classes --------------- */
