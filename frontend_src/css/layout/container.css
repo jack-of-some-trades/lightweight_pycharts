@@ -1,19 +1,8 @@
-
-/* #region --------------- Containers --------------- */
-
 .container {
-    display: none;
     width: 100%;
     height: 100%;
-    flex-wrap: wrap;
     background-color: var(--background-fill);
 }
-
-.container[active] {
-    display:block;
-}
-
-/* #endregion */
 
 /* #region --------------- Frames --------------- */
 

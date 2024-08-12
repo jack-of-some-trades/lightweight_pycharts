@@ -106,6 +106,8 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
         getDisplayAccessor:getDisplayAccessor
     }
 
+    //Overwrite External, Globally Accessable, Context so anything can use this at any time.
+    OverlayContext = createContext<OverlayContextProps>(OverlayCTX);
     return (
         <OverlayContext.Provider value={OverlayCTX}>
             {props.children}
@@ -171,10 +173,11 @@ export function OverlayDiv(props:overlay_div_props){
     onMount(() => {
         const display = OverlayCTX().getDisplayAccessor(props.id)
 
-        //Next effect only really needs to fire once. It gets a reference to the Div once it is
-        //attached to the document. Sadly, its the easiest way to get this reference
+        //Next effect gets a reference to the Div once it is attached to the document.
+        //Sadly, its the easiest way to get this reference given how these are created.
         createEffect(on(display, () => {
             divRef = document.querySelector(`#${props.id}`) as HTMLDivElement?? undefined
+            console.log('render:', props.id)
             if (props.bounding_client_id)
                 clientRef = document.querySelector(props.bounding_client_id) as HTMLElement?? undefined
             OverlayCTX().setDivReference(props.id, divRef)

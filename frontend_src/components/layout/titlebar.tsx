@@ -8,7 +8,6 @@ import "../../css/layout/tabs.css"
 import "../../css/layout/titlebar.css"
 
 interface title_bar_props extends JSX.HTMLAttributes<HTMLDivElement>{
-    container_el:HTMLDivElement
     show_section:(section:LAYOUT_SECTIONS) => void,
     hide_section:(section:LAYOUT_SECTIONS) => void,
 }
@@ -22,7 +21,7 @@ export function TitleBar(props:title_bar_props) {
     window.api.setFrameless = setFrameless
 
     onMount(()=>{
-        if (tab_div) window.container_manager = new container_manager(props.container_el, tab_div)
+        if (tab_div) window.container_manager = new container_manager(tab_div)
     })
     
     return <div id='layout_title' class='layout_title layout_flex' style={props.style}>

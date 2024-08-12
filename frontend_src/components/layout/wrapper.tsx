@@ -6,6 +6,7 @@ import { ToolBar, ToolBoxContext } from './toolbar/toolbar'
 import { TopBar } from './topbar/topbar'
 
 import "../../css/_layout.css"
+import { Container } from './container'
 
 const MARGIN = 5
 const TOP_HEIGHT = 38
@@ -43,7 +44,6 @@ export enum LAYOUT_SECTIONS {
 }
 
 export function Wrapper(){
-    let container_el = document.createElement('div')
     const [layout, set_layout] = createStore(layout_default)
 
     onMount(() => { 
@@ -66,8 +66,8 @@ export function Wrapper(){
     return <>
         <GlobalContexts>
             <div id='layout_wrapper' class='wrapper'>
-                <div ref={container_el} id='layout_center' class='layout_main layout_flex' style={layout.center}/>
-                <TitleBar style={layout.titlebar} container_el={container_el} {...title_bar_props}/>
+                <Container style={layout.center}/>
+                <TitleBar style={layout.titlebar} {...title_bar_props}/>
                 <TopBar style={layout.topbar}/>
                 <ToolBar style={layout.toolbar}/>
                 <div id='layout_right' class='layout_main layout_flex' style={layout.navbar}/>

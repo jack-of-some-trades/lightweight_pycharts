@@ -9,6 +9,8 @@
  * respective div.
  */
 
+import { Accessor } from "solid-js"
+
 const RESIZE_HANDLE_WIDTH = 6
 const HALF_WIDTH = 3
 
@@ -110,7 +112,7 @@ function frame_section(flex_width: number, flex_height: number): flex_frame {
 /**
  * Creates a flex_frame for use as a separator between frame elements
  */
-function separator_section(type: Orientation, size: number, ref_div:HTMLDivElement, resize: ()=>void): flex_frame {
+function separator_section(type: Orientation, size: number, divRect:Accessor<DOMRect>, resize: ()=>void): flex_frame {
     let new_section:flex_frame = {
         rect:{top:0, left:0, width:0, height:0},
         style:'',
@@ -126,9 +128,9 @@ function separator_section(type: Orientation, size: number, ref_div:HTMLDivEleme
     let resize_partial_func;
     if (type === Orientation.Vertical)
         //A vertically oriented separator resizes in the horizontal direction and vise-vera
-        resize_partial_func = resize_flex_horizontal.bind(undefined, ref_div, resize, new_section)
+        resize_partial_func = resize_flex_horizontal.bind(undefined, divRect, resize, new_section)
     else
-        resize_partial_func = resize_flex_vertical.bind(undefined, ref_div, resize, new_section)
+        resize_partial_func = resize_flex_vertical.bind(undefined, divRect, resize, new_section)
 
     const mouseup = () => {
         document.removeEventListener('mousemove', resize_partial_func)
@@ -148,7 +150,7 @@ function separator_section(type: Orientation, size: number, ref_div:HTMLDivEleme
  * Resize the Flex Width %s of all neighboring frames & separators 
  * This only changes the %. The call to resize it what resizes everything
  */
-function resize_flex_horizontal(ref_div:HTMLDivElement, resize: ()=>void, separator: flex_frame, e: MouseEvent) {
+function resize_flex_horizontal(divRect:Accessor<DOMRect>, resize: ()=>void, separator: flex_frame, e: MouseEvent) {
     //flex total is the total percentage of the screen that the left & Right frames occupy
     //e.g a Triple_vertical will have an initial flex_total of 0.33 + 0.33 = 0.66
     let flex_total = separator.resize_pos[0].flex_width + separator.resize_neg[0].flex_width
@@ -156,7 +158,7 @@ function resize_flex_horizontal(ref_div:HTMLDivElement, resize: ()=>void, separa
     //By definition resize_pos[0] and resize_neg[0] will always be valid
 
     //x position relative to the left most fixed boundary (fixed compared to the elements being resized)
-    let relative_x = e.clientX - (ref_div.getBoundingClientRect().left + (separator.resize_pos[0]?.rect.left ?? 0))
+    let relative_x = e.clientX - (divRect().left + (separator.resize_pos[0]?.rect.left ?? 0))
     let flex_size_left = (relative_x / width_total) * flex_total
     let flex_size_right = flex_total - flex_size_left
 
@@ -183,11 +185,11 @@ function resize_flex_horizontal(ref_div:HTMLDivElement, resize: ()=>void, separa
  * Resize the Flex Height %s of all neighboring frames & separators 
  * This only changes the %. The call to resize it what resizes everything
  */
-function resize_flex_vertical(ref_div:HTMLDivElement, resize: ()=>void, separator: flex_frame, e: MouseEvent) {
+function resize_flex_vertical(divRect:Accessor<DOMRect>, resize: ()=>void, separator: flex_frame, e: MouseEvent) {
     let flex_total = separator.resize_pos[0].flex_height + separator.resize_neg[0].flex_height
     let height_total = separator.resize_pos[0].rect.height + separator.resize_neg[0].rect.height
 
-    let container_y = e.clientY - (ref_div.getBoundingClientRect().top + (separator.resize_pos[0]?.rect.top ?? 0))
+    let container_y = e.clientY - (divRect().top + (separator.resize_pos[0]?.rect.top ?? 0))
     let flex_size_top = (container_y / height_total) * flex_total
     let flex_size_bottom = flex_total - flex_size_top
 
@@ -214,7 +216,9 @@ function resize_flex_vertical(ref_div:HTMLDivElement, resize: ()=>void, separato
  * Resize all the flex_frame sections based on the given total container dimensions
  * 
  */
-export function resize_frames(width:number, height:number, frames:flex_frame[]) {
+export function resize_frames(divRect:Accessor<DOMRect>, frames:flex_frame[]) {
+    let width = divRect().width
+    let height = divRect().height
     if (width <= 0 || height <= 0) return
 
     //Resize Frame & Separator sections Based soley on flex size
@@ -276,16 +280,16 @@ export function resize_frames(width:number, height:number, frames:flex_frame[]) 
  * connections made define the behavior of the layout. I've left comments in the first
  * case to try and explain how things are connected so additional layouts can be derived
  * 
- * @param ref_div: The Div that will contain the entire layout. It's bounding DOMRect is used to
+ * @param divRect: The Div that will contain the entire layout. It's bounding DOMRect is used to
  *        ensure seamless resizing of individual frames
  * @param resize: Bound resize function. After an individual frame is resized this function is invoked
  *        so the new calculated Frame sizes can be used to style their respective elements  
  */
-export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement, resize: ()=>void): flex_frame[] {
+export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRect>, resize: ()=>void): flex_frame[] {
     switch (layout) {
         case Container_Layouts.DOUBLE_VERT: {
             let f1 = frame_section(0.5, 1)
-            let s1 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f2 = frame_section(0.5, 1)
 
             // For Separators, resize_pos/neg hold frames. 
@@ -309,7 +313,7 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.DOUBLE_HORIZ: {
             let f1 = frame_section(1, 0.5)
-            let s1 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f2 = frame_section(1, 0.5)
 
             s1.resize_pos.push(f1)
@@ -322,9 +326,9 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.TRIPLE_VERT: {
             let f1 = frame_section(0.333, 1)
-            let s1 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f2 = frame_section(0.333, 1)
-            let s2 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f3 = frame_section(0.333, 1)
 
             s1.resize_pos.push(f1)
@@ -341,9 +345,9 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.TRIPLE_VERT_LEFT: {
             let f1 = frame_section(0.5, 1)
-            let s1 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f2 = frame_section(0.5, 0.5)
-            let s2 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s2 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f3 = frame_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
@@ -359,9 +363,9 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.TRIPLE_VERT_RIGHT: {
             let f1 = frame_section(0.5, 0.5)
-            let s1 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f2 = frame_section(0.5, 0.5)
-            let s2 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f3 = frame_section(0.5, 1)
 
             s1.resize_pos.push(f1)
@@ -377,9 +381,9 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.TRIPLE_HORIZ: {
             let f1 = frame_section(1, 0.333)
-            let s1 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f2 = frame_section(1, 0.333)
-            let s2 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f3 = frame_section(1, 0.333)
 
             s1.resize_pos.push(f1)
@@ -395,9 +399,9 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.TRIPLE_HORIZ_TOP: {
             let f1 = frame_section(1, 0.5)
-            let s1 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f2 = frame_section(0.5, 0.5)
-            let s2 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s2 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f3 = frame_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
@@ -413,9 +417,9 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.TRIPLE_HORIZ_BOTTOM: {
             let f1 = frame_section(0.5, 0.5)
-            let s1 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f2 = frame_section(0.5, 0.5)
-            let s2 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f3 = frame_section(1, 0.5)
 
             s1.resize_pos.push(f1)
@@ -431,11 +435,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_SQ_H: {
             let f1 = frame_section(0.5, 0.5)
-            let s1 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f2 = frame_section(0.5, 0.5)
-            let s2 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f3 = frame_section(0.5, 0.5)
-            let s3 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s3 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f4 = frame_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
@@ -454,11 +458,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_SQ_V: {
             let f1 = frame_section(0.5, 0.5)
-            let s1 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f2 = frame_section(0.5, 0.5)
-            let s2 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f3 = frame_section(0.5, 0.5)
-            let s3 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s3 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f4 = frame_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
@@ -477,11 +481,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_VERT: {
             let f1 = frame_section(0.25, 1)
-            let s1 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f2 = frame_section(0.25, 1)
-            let s2 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f3 = frame_section(0.25, 1)
-            let s3 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s3 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f4 = frame_section(0.25, 1)
 
             s1.resize_pos.push(f1)
@@ -500,11 +504,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_HORIZ: {
             let f1 = frame_section(1, 0.25)
-            let s1 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f2 = frame_section(1, 0.25)
-            let s2 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f3 = frame_section(1, 0.25)
-            let s3 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s3 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f4 = frame_section(1, 0.25)
 
             s1.resize_pos.push(f1)
@@ -523,11 +527,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_LEFT: {
             let f1 = frame_section(0.5, 1)
-            let s1 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f2 = frame_section(0.5, 0.333)
-            let s2 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s2 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f3 = frame_section(0.5, 0.333)
-            let s3 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s3 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f4 = frame_section(0.5, 0.333)
 
             s1.resize_pos.push(f1)
@@ -546,11 +550,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_RIGHT: {
             let f1 = frame_section(0.5, 0.333)
-            let s1 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f2 = frame_section(0.5, 0.333)
-            let s2 = separator_section(Orientation.Horizontal, 0.5, ref_div, resize)
+            let s2 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
             let f3 = frame_section(0.5, 0.333)
-            let s3 = separator_section(Orientation.Vertical, 1, ref_div, resize)
+            let s3 = separator_section(Orientation.Vertical, 1, divRect, resize)
             let f4 = frame_section(0.5, 1)
 
             s1.resize_pos.push(f1)
@@ -569,11 +573,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_TOP: {
             let f1 = frame_section(1, 0.5)
-            let s1 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f2 = frame_section(0.333, 0.5)
-            let s2 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s2 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f3 = frame_section(0.333, 0.5)
-            let s3 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s3 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f4 = frame_section(0.333, 0.5)
 
             s1.resize_pos.push(f1)
@@ -592,11 +596,11 @@ export function layout_switch(layout: Container_Layouts, ref_div:HTMLDivElement,
 
         case Container_Layouts.QUAD_BOTTOM: {
             let f1 = frame_section(0.333, 0.5)
-            let s1 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s1 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f2 = frame_section(0.333, 0.5)
-            let s2 = separator_section(Orientation.Vertical, 0.5, ref_div, resize)
+            let s2 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
             let f3 = frame_section(0.333, 0.5)
-            let s3 = separator_section(Orientation.Horizontal, 1, ref_div, resize)
+            let s3 = separator_section(Orientation.Horizontal, 1, divRect, resize)
             let f4 = frame_section(1, 0.5)
 
             s1.resize_pos.push(f1)

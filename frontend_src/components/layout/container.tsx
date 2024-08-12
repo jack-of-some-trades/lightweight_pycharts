@@ -1,6 +1,5 @@
-import { Accessor, For, JSX } from "solid-js"
+import { Accessor, createContext, createSignal, For, JSX, Setter, useContext } from "solid-js"
 import { Orientation } from "../../src/layouts"
-
 
 export interface layout_display {
     orientation: Orientation
@@ -10,26 +9,56 @@ export interface layout_display {
     el_target: Accessor<boolean>
 }
 
-interface container_props { displays: layout_display[] }
+type ContainerContextProps = {
+    getSize:Accessor<DOMRect>,
+    setStyle: Setter<string>,
+    setDisplay: Setter<layout_display[]>,
+}
+const default_ctx_args:ContainerContextProps = {
+    getSize:() => {return new DOMRect(0,0,-1,-1)},
+    setStyle: () => {},
+    setDisplay: () => {},
+}
 
-export function Container(props : container_props){
-    return <>
-        <For each={props.displays}>{(display) => {
-            
-            return (
-                <div
-                    classList={{
-                        frame: true, 
-                        separator_v: display.orientation === Orientation.Vertical? true : false,
-                        separator_h: display.orientation === Orientation.Horizontal? true : false 
-                    }}
-                    attr:active={display.el_active() ? "" : undefined}
-                    attr:target={display.el_target() ? "" : undefined}
-                    onMouseDown={display.mouseDown}
-                >
-                    {display.element}
-                </div>
-            )}}
-        </For>
-    </>
+let ContainerContext = createContext<ContainerContextProps>(default_ctx_args);
+export function ContainerCTX():ContainerContextProps { return useContext<ContainerContextProps>(ContainerContext) }
+
+export function Container(props : {style: JSX.CSSProperties}){
+    let divRef = document.createElement('div')
+
+    const [style, setStyle] = createSignal<string>('')
+    const [displays, setDisplays] = createSignal<layout_display[]>([])
+    const getSize = () => {return divRef.getBoundingClientRect()}
+
+    const ctx_args:ContainerContextProps = {
+        getSize: getSize,
+        setStyle: setStyle,
+        setDisplay: setDisplays,
+    }
+    ContainerContext = createContext<ContainerContextProps>(ctx_args);
+    return <ContainerContext.Provider value={ctx_args}>
+        <div id='layout_center' class='layout_main layout_flex' style={props.style}>
+            <div ref={divRef} class="container">
+                <style innerHTML={style()}/>
+                <For each={displays()}>{(display) => {
+                    
+                    return (
+                        <div
+                            classList={{
+                                frame: true, 
+                                separator_v: display.orientation === Orientation.Vertical? true : false,
+                                separator_h: display.orientation === Orientation.Horizontal? true : false 
+                            }}
+                            attr:active={display.el_active() ? "" : undefined}
+                            attr:target={display.el_target() ? "" : undefined}
+                            onMouseDown={display.mouseDown}
+                        >
+                            {display.element}
+                        </div>
+                    )}}
+                </For>
+            </div>
+        </div>
+    </ContainerContext.Provider>
+
 }

@@ -17,16 +17,13 @@ const defaultTabProperties: TabProperties = {
  * Class handles Tab movement, Addition, and removal. 
  */
 export class container_manager {
-    private container_el: HTMLDivElement
     private containers: Map<string, container> = new Map()
     private tab_els: Map<string, HTMLDivElement> = new Map()
 
     constructor(
-        container_el: HTMLDivElement, 
         tabs_el: HTMLDivElement
     ){
         this.tab_manager.init(tabs_el)
-        this.container_el = container_el
     }
 
     /**
@@ -37,8 +34,7 @@ export class container_manager {
 
         const new_tab_el = this.tab_manager.addTab(id)
         const tmp_ref = new container(
-            id, 
-            this.container_el, 
+            id,
             this.tab_manager.updateTab.bind(undefined, new_tab_el)
         )
         this.tab_els.set(id, new_tab_el)
@@ -58,7 +54,6 @@ export class container_manager {
 
         if (container_obj) {
             container_obj.remove()
-            container_obj.div.remove()
         }
         if (tab_el) this.tab_manager.removeTab(tab_el)
 
@@ -76,12 +71,10 @@ export class container_manager {
         if (tab_el) this.tab_manager.setCurrentTab(tab_el)
 
         if (window.active_container){
-            window.active_container.div.removeAttribute('active')
-            window.active_container.onHide()   // Allow Sub-classes to inject behavior
+            window.active_container.onHide()     // Allow Sub-classes to inject behavior
         }
 
         window.active_container = container_obj
-        container_obj.div.setAttribute('active', '')
         container_obj.onShow()                   // Allow Sub-classes to inject behavior
         container_obj.resize()                          // Non-Active Containers aren't resized
     }
