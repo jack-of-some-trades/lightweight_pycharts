@@ -1,0 +1,58 @@
+*::before {
+    box-sizing: border-box;
+    z-index: 0;
+}
+
+/* #region --------------- Base Classes --------------- */
+
+body {
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    min-width: 300px;
+    min-height: 200px;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--background-fill);
+    font-family: -apple-system, BlinkMacSystemFont, "Trebuchet_MS", "Segoe UI", Roboto, Oxygen, Ubuntu,
+        Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.wrapper {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    inset: 0px;
+    overflow: hidden;
+    background-color: var(--background-fill);
+    border-radius: 5px;
+}
+
+/* #endregion */
+
+/* #region --------------- Main Container Layout --------------- */
+
+.layout_title {
+    overflow: hidden;
+    position: absolute;
+    background-color: var(--background-fill);
+    border-radius: 5px;
+}
+
+.layout_main {
+    overflow: hidden;
+    position: absolute;
+    background-color: var(--layout-main-fill);
+    border-radius: 5px;
+}
+
+.layout_flex {
+    display: flex;
+    justify-content: flex-start;
+    align-content: center;
+}
+
+.flex_col {
+    flex-direction: column;
+}

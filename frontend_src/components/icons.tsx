@@ -17,30 +17,32 @@ export interface icon_props extends JSX.SvgSVGAttributes<SVGSVGElement> {
     icon: string,
     hover?:boolean,
     activated?: boolean
+    force_reload?: boolean
 }
 
 const DEFAULT_PROPS:icon_props = {
     icon: "close_small",
     hover:true,
     activated: undefined,
+    force_reload: false
 }
 
 export function Icon(props:icon_props){
-    let icon_el:SVGSVGElement|undefined;
+    let icon_el:SVGSVGElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
     const merged = mergeProps(DEFAULT_PROPS, props)
     merged.classList = {icon:merged.hover, icon_no_hover:!merged.hover, ...merged.classList}
     //If a "Cannot set property of classList" Error has lead you here it is because there is a 
     //reactive Signal in a classList that feeds props.classList. tl:dw Don't use Signals in classlist,
     //use reactive attributes instead. Reactive classList signals cannot be merged.
 
-    const [iconProps, svgProps] = splitProps(merged, ["icon", 'hover', 'activated']);
+    const [iconProps, svgProps] = splitProps(merged, ["icon", 'hover', 'activated', "force_reload"]);
     //propKeys is the list of keys set by the user (and this function).
     let propKeys = (Object.keys({...svgProps, "class":'', "active":''}))
 
     //When SVG_DOC is loaded or icon is changed, Copy reference SVG into Window
-    createEffect(() =>{
+    function update(){
         let svg_ref = SVG_DOC()?.querySelector(`#${iconProps.icon}`)
-        if (icon_el && svg_ref){
+        if (svg_ref){
             //Append a Copy of the children (Paths / groups / etc.)
             svg_ref = svg_ref.cloneNode(true) as Element
             icon_el.replaceChildren(...Array.from(svg_ref.children))
@@ -59,7 +61,11 @@ export function Icon(props:icon_props){
                 if (!propKeys.includes(attrs[i].name))
                     icon_el.setAttribute(attrs[i].name, attrs[i].value)
         }
-    })
+    }
+    createEffect(update)
+
+    //Useful when you need to force a repaint on an SVG that won't load correctly
+    if(props.force_reload) setTimeout(update, 50);
 
     return <svg ref={icon_el} {...svgProps} attr:active={iconProps.activated? '': undefined} />
 }

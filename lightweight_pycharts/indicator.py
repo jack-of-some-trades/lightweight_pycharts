@@ -447,7 +447,7 @@ class Indicator(metaclass=IndicatorMeta):
         self._watcher.observables = {}
 
     def init_menu(self, opts: IndicatorOptions):
-        "Transfer"
+        "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"
         if getattr(self, "__options__", None) is None:
             logger.error(
                 "Cannot set Indicator Menu, %s needs a self.__options__ Class instance",
@@ -457,7 +457,6 @@ class Indicator(metaclass=IndicatorMeta):
 
         # Would use asdict() but it tries to make a deep copy and it can't copy bound functions
         _opts = {}
-
         for k in self.__options__.__args__:
             v = getattr(opts, k, None)
             if k in self.__options__.__src_args__:
@@ -469,8 +468,6 @@ class Indicator(metaclass=IndicatorMeta):
                 )
             else:
                 _opts[k] = v
-
-        logger.info(f"{_opts = }")
 
         self._fwd_queue.put(
             (

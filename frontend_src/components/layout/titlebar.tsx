@@ -24,7 +24,7 @@ export function TitleBar(props:title_bar_props) {
         if (tab_div) window.container_manager = new container_manager(tab_div)
     })
     
-    return <div id='layout_title' class='layout_title layout_flex' style={props.style}>
+    return <div class='layout_title layout_flex' style={props.style}>
         {/**** Tabs Bar ****/}
         <div ref={tab_div} class="titlebar titlebar_grab tabs drag-region">
             <div class="tabs-content"/>

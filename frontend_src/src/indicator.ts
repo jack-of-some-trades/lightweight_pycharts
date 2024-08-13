@@ -205,6 +205,8 @@ export class indicator {
         this.menu_struct = menu_struct
         this.menu_id = `${this.pane.id}_${this.id}_options`
 
+        //See EoF for Explanation of this second AttachOverlay Call.
+        OverlayCTX().attachOverlay(this.menu_id, undefined, menuVisibility, false)
         OverlayCTX().attachOverlay(
             this.menu_id,
             IndicatorOpts({
@@ -213,7 +215,8 @@ export class indicator {
                 menu_struct: this.menu_struct,
                 setOptions: setOptions
             }),
-            menuVisibility
+            menuVisibility,
+            false
         )
 
         // When Options update, send the list back to Python
@@ -225,6 +228,21 @@ export class indicator {
     }
 
     //#endregion
-
-
 }
+
+
+/**Ok, so this is stupid. im not a huge fan, but it somewhat cleanly fixes a bug.
+ * 
+ * Essentially the crux of the problem is IndicatiorOpts' OverlayDiv has an onMount function.
+ * As written, this only works if the onMount() is called at some point after the AttachOverlay()
+ * call is completed. 
+ * 
+ * This works for all other Overlays since they are created with the full tree and are not mounted
+ * until later. In the case of IndicatorOpts, this element is created after the full tree and thus can be
+ * mounted immediately causing a bug where the overlay can never be displayed. The extra bogus call
+ * to AttachOverlay() puts the menuVisibility signal where it needs to be before IndicatorOpts is
+ * ever created.
+ * 
+ * Kinda a problem baked into the OverlayDiv... but this fixes it without repercussions so this is likely
+ * how the implementation will stay.... yikes...
+ */

@@ -1,6 +1,9 @@
 import { SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createSignal, JSX, Setter } from "solid-js";
+import { ChartFrame } from "../components/frame_widgets/chart_frames/ChartingEls";
+import { layout_display } from "../components/layout/layouts";
 import { update_tab_func } from "./container";
+import { Container_Layouts, flex_frame, layout_switch, num_frames, Orientation, resize_sections } from "./layouts";
 import { pane } from "./pane";
 import { Series_Type, symbol_item, tf } from "./types";
 
@@ -8,6 +11,8 @@ export abstract class frame {
     id: string
     update_tab: update_tab_func
     element: HTMLDivElement | JSX.Element | undefined
+    // While you can use a Vanilla JS Div Element, you probably don't want to.
+    // Reactivity w/ Signals and Effects defined in the original render tree will break.
 
     active: Accessor<boolean>
     setActive: Setter<boolean>
@@ -54,19 +59,38 @@ export abstract class frame {
 
 
 export class chart_frame extends frame {
-    element: HTMLDivElement
+    div: Accessor<HTMLDivElement>
+    element: JSX.Element
 
     timeframe: tf
     symbol: symbol_item
     series_type: Series_Type
 
+    layout: Container_Layouts | undefined
+    
+    //Multi-Pane Layout Controls
+    setStyle: Setter<string>
+    setDisplays: Setter<layout_display[]>
+
     private panes: pane[] = []
-    private main_pane: pane | undefined = undefined
+    private flex_panes: flex_frame[] = []
 
     constructor(id: string, tab_update_func: update_tab_func) {
         super(id, tab_update_func)
-        this.element = document.createElement('div')
-        this.element.classList.add("chart_frame")
+        
+        const [style, setStyle] = createSignal<string>('')
+        const [displays, setDisplays] = createSignal<layout_display[]>([])
+        const [div, setDiv] = createSignal<HTMLDivElement>(document.createElement('div'))
+
+        this.div = div
+        this.setStyle = setStyle
+        this.setDisplays = setDisplays
+
+        this.element = ChartFrame({
+            ref:setDiv,
+            innerStyle: style,
+            displays: displays,
+        })
 
         // The following 3 variables are actually properties of a frame's primary Series(Indicator) obj.
         // While these really should be owned by an indicator and not a frame, this is how the 
@@ -91,12 +115,10 @@ export class chart_frame extends frame {
 
     protected set_whitespace_data(data: WhitespaceData[], Primitive_data:SingleValueData) {
         if (Primitive_data === undefined) Primitive_data = {time:'1970-01-01', value:0}
-        this.main_pane?.set_whitespace_data(data, Primitive_data)
         this.panes.forEach(pane => { pane.set_whitespace_data(data, Primitive_data) })
     }
 
     protected update_whitespace_data(data: WhitespaceData, Primitive_data:SingleValueData) {
-        this.main_pane?.update_whitespace_data(data, Primitive_data)
         this.panes.forEach(pane => { pane.update_whitespace_data(data, Primitive_data) })
     }
 
@@ -121,7 +143,6 @@ export class chart_frame extends frame {
             newOpts.timeVisible = true
         }
 
-        this.main_pane?.update_timescale_opts(newOpts)
         this.panes.forEach(pane => { pane.update_timescale_opts(newOpts) });
     }
 
@@ -132,48 +153,83 @@ export class chart_frame extends frame {
     }
 
     protected add_pane(id: string): pane {
-        let child_div = document.createElement('div')
-        child_div.classList.add('chart_pane')
-        this.element.appendChild(child_div)
-
-        let new_pane = new pane(id, child_div)
-
-        if (this.main_pane === undefined)
-            //This should be the pane w/ ID '*_p_main'
-            //Assuming this.main_pane is never overwritten or deleted, it will be.
-            this.main_pane = new_pane
-        else
-            this.panes.push(new_pane)
-
-        this.resize()
+        let new_pane = new pane(id)
+        this.panes.push(new_pane)
+        if (this.layout === undefined) this.set_layout(Container_Layouts.SINGLE)
         return new_pane
     }
 
     // #endregion
 
-    resize() {
-        // -2 accounts for... uhh... the chart border? idk man.
-        // Without it the 'active_frame' grey chart border is hidden behind the chart
-        // and the 'active_pane' accent color border
-        let width = this.element.clientWidth - 2
-        let height = this.element.clientHeight - 2
 
-        if (this.main_pane){
-            this.main_pane.div.style.width = `${width}px`
-            this.main_pane.div.style.height = `${height}px`
-            this.main_pane.resize()
-        }
+    // #region -------------- Layout Control and Resize Functions ------------------ //
+
+    protected set_layout(layout: Container_Layouts) {
+        this.flex_panes = layout_switch(layout, ()=>this.div().getBoundingClientRect(), this.resize.bind(this))
+        let layout_displays:layout_display[] = []
+        let pane_ind = 0
+
+        this.flex_panes.forEach((flex_pane) => {
+            if (flex_pane.orientation === Orientation.null) { // Frame Object
+                if (pane_ind < this.panes.length) {
+                    layout_displays.push({
+                        orientation:flex_pane.orientation, 
+                        mouseDown:()=>{},
+                        element:this.panes[pane_ind].element,
+                        el_active:()=>false, 
+                        el_target:()=>false
+                    })
+                } else throw new Error("Not Enough Panes to change to the desired layout")
+                pane_ind += 1
+                //frame_ind tracks the equivelent frames[] index based on
+                //how many chart frames have be observed in the flex_frames[] loop
+            } else {                                            // Separator Object
+                layout_displays.push({
+                    orientation:flex_pane.orientation,
+                    mouseDown:flex_pane.mouseDown,
+                    element:undefined,
+                    el_active:()=>false, 
+                    el_target:()=>false
+                })
+            }
+        })
+
+        this.layout = layout
+        this.setDisplays(layout_displays)
+
+        //Calculate the flex_frame rect sizes, and set them to the Display Signal
+        this.resize()
     }
 
+    resize() {
+        // Calculate the new sizes of all the frames
+        resize_sections(()=>this.div().getBoundingClientRect(), this.flex_panes)
+
+        // Put all the resizing info into a style tag. Long-story short, putting this info into
+        // a reactive 'style' tag for each JSX.Element div is a damn pain.
+        let style = ""
+        this.flex_panes.forEach((pane, i)=>{
+            style += `
+            div.pane:nth-child(${i+2})${pane.style}`
+        })
+        this.setStyle(style)
+
+        // Resize all contents of each *visible* Frames
+        for (let i = 0; i < num_frames(this.layout); i++)
+            this.panes[i].resize()
+    }
+
+    // #endregion
+
     fitcontent() {
-        this.main_pane?.fitcontent()
+        this.panes[0]?.fitcontent()
         this.panes.forEach(pane => {
             pane.fitcontent()
         });
     }
 
     autoscale_content() {
-        this.main_pane?.autoscale_time_axis()
+        this.panes[0]?.autoscale_time_axis()
         this.panes.forEach(pane => {
             pane.autoscale_time_axis()
         });

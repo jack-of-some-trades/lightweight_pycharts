@@ -1,8 +1,8 @@
 import { Accessor, Setter } from "solid-js"
-import { ContainerCTX, layout_display } from "../components/layout/container"
-import "../css/layout/container.css"
+import { ContainerCTX } from "../components/layout/container"
+import { layout_display } from "../components/layout/layouts"
 import { chart_frame, frame } from "./frame"
-import { Container_Layouts, flex_frame, layout_switch, num_frames, Orientation, resize_frames } from "./layouts"
+import { Container_Layouts, flex_frame, layout_switch, num_frames, Orientation, resize_sections } from "./layouts"
 
 export type update_tab_func = (
     title?: string,
@@ -11,12 +11,13 @@ export type update_tab_func = (
 ) => void
 
 /**
- * Abstract base class to define basic requirements and functionality of anything displayed in
- * the center of the app.
+ * Class to hold information on a single layout and a set of Frames. Multiple instances
+ * can be created, though, all instances share the same Container.tsx Element. TSX Element
+ * is controlled through the Context Functions
  */
 export class container{
     id: string
-    layout: Container_Layouts
+    layout: Container_Layouts | undefined
 
     frames: frame[] = []
     display: layout_display[] = []
@@ -33,19 +34,16 @@ export class container{
         update_tab_func:update_tab_func
     ) {
         this.id = id
-        this.layout = Container_Layouts.SINGLE
         this.update_tab = update_tab_func
 
         this.divRect = ContainerCTX().getSize
         this.setStyle = ContainerCTX().setStyle
         this.setDisplay = ContainerCTX().setDisplay
-
-        this.set_layout(Container_Layouts.SINGLE)
     }
 
     onShow(){
         this.setDisplay(this.display)
-        window.topbar.setLayout(this.layout)
+        if (this.layout !== undefined) window.topbar.setLayout(this.layout)
         for(let i = 0; i < num_frames(this.layout);i++) this.frames[i].onShow() 
     }
     onHide(){ for(let i = 0; i < num_frames(this.layout);i++) this.frames[i].onHide() }
@@ -56,15 +54,14 @@ export class container{
      */
     resize() {
         // Calculate the new sizes of all the frames
-        resize_frames(this.divRect, this.flex_frames)
+        resize_sections(this.divRect, this.flex_frames)
 
         // Put all the resizing info into a style tag. Long-story short, putting this info into
         // a reactive 'style' tag for each JSX.Element div is a damn pain.
         let style = ""
         this.flex_frames.forEach((frame, i)=>{
             style += `
-            div.container div.frame:nth-child(${i+2})
-            ${frame.style}`
+            div.frame:nth-child(${i+2})${frame.style}`
         })
         this.setStyle(style)
 
@@ -74,24 +71,12 @@ export class container{
     }
 
     /**
-     * Called by Python when creating a Frame. Returns either a new or an anonymous Frame.
-     * 
-     * *Anonymous Frames are those created by a layout change, (to fill the frame count)
-     *  but have yet to be assigned a proper ID. 
+     * Called by Python when creating a Frame. Returns the new Frame
      */
     protected add_frame(new_id: string): frame {
-        let rtn_frame = undefined
-        this.frames.some(frame => {
-            if (frame.id == '') { //If Anonymous
-                frame.id = new_id
-                rtn_frame = frame
-                return true //breaks execution of a 'some' loop
-            }
-        });
-        if (rtn_frame !== undefined)
-            return rtn_frame
-        else
-            return this._create_frame(new_id)
+        let new_frame = new chart_frame(new_id, this.update_tab)
+        this.frames.push(new_frame)
+        return new_frame
     }
 
     /** 
@@ -114,7 +99,6 @@ export class container{
         this.flex_frames.forEach((flex_frame) => {
             if (flex_frame.orientation === Orientation.null) { // Frame Object
                 if (frame_ind < this.frames.length) {
-                    //Use Existing Frame Object
                     let frame = this.frames[frame_ind]
                     flex_frame.mouseDown = frame.assign_active_frame.bind(frame)
 
@@ -125,25 +109,12 @@ export class container{
                         el_active:frame.active, 
                         el_target:frame.target
                     })
-                } else {
-                    //Not Enough Frames to fill the current layout, Create Anonymous Frame
-                    //Python will come in and rename the ID of this later.
-                    let new_frame = this._create_frame("")
-                    flex_frame.mouseDown = new_frame.assign_active_frame.bind(new_frame)
+                } else throw new Error("Not Enough Frames to change to the desired layout")
 
-                    layout_displays.push({
-                        orientation:flex_frame.orientation, 
-                        mouseDown:flex_frame.mouseDown,
-                        element:new_frame.element,
-                        el_active:new_frame.active, 
-                        el_target:new_frame.target
-                    })
-                }
                 frame_ind += 1
                 //frame_ind tracks the equivelent frames[] index based on
                 //how many chart frames have be observed in the flex_frames[] loop
             } else {                                            // Separator Object
-
                 layout_displays.push({
                     orientation:flex_frame.orientation,
                     mouseDown:flex_frame.mouseDown,

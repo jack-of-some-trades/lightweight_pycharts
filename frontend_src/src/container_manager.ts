@@ -31,7 +31,6 @@ export class container_manager {
      * Protected to indicate it should only be called from Python
      */
     protected add_container(id: string): container | undefined {
-
         const new_tab_el = this.tab_manager.addTab(id)
         const tmp_ref = new container(
             id,
@@ -73,10 +72,10 @@ export class container_manager {
         if (window.active_container){
             window.active_container.onHide()     // Allow Sub-classes to inject behavior
         }
-
+        
         window.active_container = container_obj
         container_obj.onShow()                   // Allow Sub-classes to inject behavior
-        container_obj.resize()                          // Non-Active Containers aren't resized
+        container_obj.resize()                   // Non-Active Containers aren't resized
     }
 
     /**

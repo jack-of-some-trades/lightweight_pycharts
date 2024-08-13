@@ -1,10 +1,8 @@
 import * as lwc from "lightweight-charts";
-import { DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData, createChart } from "lightweight-charts";
-import { createEffect, createSignal } from "solid-js";
+import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
+import { Accessor, createSignal, JSX, Setter } from "solid-js";
 import { SetStoreFunction } from "solid-js/store";
-import { render } from "solid-js/web";
-import { PaneLegend } from "../components/frame_widgets/chart_frames/pane_legend";
-import { scale_toggle } from "../components/frame_widgets/chart_frames/scale_toggle";
+import { ChartPane } from "../components/frame_widgets/chart_frames/ChartingEls";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
@@ -17,7 +15,11 @@ export class pane {
     static _special_id_ = 'main' // Must match Python Pane Special ID
 
     id: string = ''
-    div: HTMLDivElement
+    element: JSX.Element
+    div: Accessor<HTMLDivElement>
+
+    active: Accessor<boolean>
+    setActive: Setter<boolean>
 
     chart: IChartApi
     indicators = new Map<string, indicator>()
@@ -33,37 +35,20 @@ export class pane {
 
     // TSX Element vars
     private setIndicatorIds: SetStoreFunction<string[]>
-    private derender_legend: () => void
-    private derender_logButton: (() => void) | undefined
 
     constructor(
         id: string,
-        div: HTMLDivElement,
     ) {
         this.id = id
+        const [div, setDiv] = createSignal<HTMLDivElement>(document.createElement('div'))
         this.div = div
 
+        let tmp_div = document.createElement('div')
         //Only One Chart per pane, so this is the only definition needed
         const OPTS = DEFAULT_PYCHART_OPTS()
-        this.chart = createChart(this.div, OPTS);
+        this.chart = createChart(tmp_div, OPTS);
         this.chart_div = this.chart.chartElement()
 
-        //Create Logscale Toggle Button
-        const Box = this.chart_div.querySelector("table > tr:nth-child(2) > td:nth-child(3) > div") as HTMLDivElement
-        if (this.chart.options().rightPriceScale.visible){
-            const showLogBtn = createSignal<boolean>(false)
-            const logScale = createSignal<number>(OPTS.rightPriceScale?.mode ?? 0)
-            createEffect(() => {this.update_opts({rightPriceScale:{mode:logScale[0]()}})})
-
-            this.derender_logButton = render(() => scale_toggle({
-                class:"scale_toggle_right", show:showLogBtn[0], scale:logScale
-            }), this.div)
-            Box.addEventListener('mouseenter', ()=>showLogBtn[1](true))
-            Box.addEventListener('mouseleave', ()=>showLogBtn[1](false))
-            Box.addEventListener('click', (e) => {if(e.button === 0) logScale[1](logScale[0]() == 1? 0 : 1)})
-        }
-
-        //Add Legend
         //A List of Ids is redundant, but it genereates a reactive update to be used by the pane Legend
         const [indicatorIds, setIndicatorIds] = createSignal<string[]>([])
         this.setIndicatorIds = setIndicatorIds
@@ -71,7 +56,31 @@ export class pane {
             parent_pane:this,
             indicators_list:indicatorIds
         }
-        this.derender_legend = render(() => PaneLegend(legend_props), this.div)
+
+        this.element = ChartPane({
+            ref:setDiv,
+            class:"chart_pane",
+            chart_el:this.chart_div,
+            legend_props:legend_props
+        })
+
+        const [active, setActive] = createSignal<boolean>(false)
+        this.active = active; this.setActive = setActive
+
+        //Create Logscale Toggle Button
+        // const Box = this.chart_div.querySelector("table > tr:nth-child(2) > td:nth-child(3) > div") as HTMLDivElement
+        // if (this.chart.options().rightPriceScale.visible){
+        //     const showLogBtn = createSignal<boolean>(false)
+        //     const logScale = createSignal<number>(OPTS.rightPriceScale?.mode ?? 0)
+        //     createEffect(() => {this.update_opts({rightPriceScale:{mode:logScale[0]()}})})
+
+        //     this.derender_logButton = render(() => scale_toggle({
+        //         class:"scale_toggle_right", show:showLogBtn[0], scale:logScale
+        //     }), this.div)
+        //     Box.addEventListener('mouseenter', ()=>showLogBtn[1](true))
+        //     Box.addEventListener('mouseleave', ()=>showLogBtn[1](false))
+        //     Box.addEventListener('click', (e) => {if(e.button === 0) logScale[1](logScale[0]() == 1? 0 : 1)})
+        // }
 
         this.whitespace_series = this.chart.addLineSeries()
         //Add Blank Series that primtives can be attached to
@@ -112,11 +121,12 @@ export class pane {
      * Update Global 'active_pane' reference to this instance. 
      */
     assign_active_pane() {
+        console.log('assign active')
         if (window.active_pane)
-            window.active_pane.div.removeAttribute('active')
+            window.active_pane.div().removeAttribute('active')
 
         window.active_pane = this
-        window.active_pane.div.setAttribute('active', '')
+        this.div().setAttribute('active', "")
     }
 
     set_whitespace_data(data: WhitespaceData[], primitive_data:SingleValueData) {
@@ -132,8 +142,6 @@ export class pane {
         this.primitive_right.setData([primitive_data])
         this.primitive_overlay.setData([primitive_data])
     }
-
-    rebuild_legend(){this.setIndicatorIds([...this.indicators.keys()])}
 
     protected add_indicator(_id: string, type: string, menu_struct:any, options:any) {
         if (menu_struct === null) menu_struct = {}
@@ -174,7 +182,7 @@ export class pane {
         _obj.updateData(params)
     }
 
-    resize() { this.chart.resize(this.div.clientWidth, this.div.clientHeight, false) }
+    resize(){this.chart.resize(Math.max(this.div().clientWidth-2, 0), Math.max(this.div().clientHeight-2, 0), false)}
 
     create_line(point1: SingleValueData, point2: SingleValueData) {
         const trend = new TrendLine({p1:point1, p2:point2});
@@ -183,6 +191,7 @@ export class pane {
 
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
+    rebuild_legend(){this.setIndicatorIds([...this.indicators.keys()])}
     update_opts(newOpts: DP<lwc.TimeChartOptions>) { this.chart.applyOptions(newOpts) }
     update_timescale_opts(newOpts: DP<lwc.HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
 }

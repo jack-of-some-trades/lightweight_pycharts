@@ -8,7 +8,7 @@ import "../../../css/layout/toolbar.css"
 import { TOOL_FUNC_MAP } from "../../../src/tools"
 
 export function ToolBar(props:JSX.HTMLAttributes<HTMLDivElement>){
-    return <div id='layout_left' class='layout_main layout_flex' {...props}>
+    return <div class='layout_main layout_flex flex_col' {...props}>
         {/**** Top Aligned ****/}
         <div class='toolbar' style={{"justify-content":"flex-start"}}>
             <ToolBarMenuButton {...crosshair_menu_props}/>
@@ -36,7 +36,7 @@ function ToolBoxToggle(){
         id,
         <ToolBoxOverlay id={id} />,
         visibilitySignal,
-        false, // Don't Auto Hide. Only Toggle Btn Should change visibility
+        null, // Don't Auto Hide & don't hide on esc click
     )
 
     return <div class="toolbox_btn_wrap" onMouseDown={()=>setVisibility(!visibility())} >    

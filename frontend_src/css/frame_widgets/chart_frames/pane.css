@@ -1,5 +1,4 @@
-
-
+/* ---------------- Pane Legend ---------------- */
 .pane_legend {
     position: absolute;
     z-index: 3;
@@ -55,6 +54,8 @@
     background-color: var(--legend-bg-color-hover);
 }
 
+/* ---------------- Scale Toggle ---------------- */
+
 .scale_toggle_right {
     pointer-events: none;
     position: absolute;
@@ -70,3 +71,25 @@
 /* .scale_toggle_right[active] {
     background-color: var(--accent-color);
 } */
+
+/* ---------------- Charts / Panes ---------------- */
+
+.tv-lightweight-charts {
+    box-sizing: border-box;
+}
+
+.chart_pane,
+.chart_frame {
+    box-sizing: border-box;
+    width:100%;
+    height:100%;
+}
+
+.chart_pane {
+    border: solid var(--chart-border) 1px;
+    position: absolute;
+}
+
+.chart_pane[active] {
+    border-color: var(--accent-color);
+}

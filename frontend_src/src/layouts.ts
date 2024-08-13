@@ -63,7 +63,7 @@ export enum Container_Layouts {
 }
 
 // Utility Function more than anything else
-export function num_frames(layout: Container_Layouts | null): number {
+export function num_frames(layout: Container_Layouts | undefined): number {
     switch (layout) {
         case (Container_Layouts.SINGLE): return 1
         case (Container_Layouts.DOUBLE_VERT): return 2
@@ -93,9 +93,9 @@ export function num_frames(layout: Container_Layouts | null): number {
 
 
 /**
- * Creates a flex_frame for a Frame Widget. Widget Created Seprately
+ * Creates a flex_frame for a Widget. Widget Created Seprately
  */
-function frame_section(flex_width: number, flex_height: number): flex_frame {
+function widget_section(flex_width: number, flex_height: number): flex_frame {
     let new_section:flex_frame = {
         rect:{top:0, left:0, width:0, height:0},
         style:'',
@@ -216,7 +216,7 @@ function resize_flex_vertical(divRect:Accessor<DOMRect>, resize: ()=>void, separ
  * Resize all the flex_frame sections based on the given total container dimensions
  * 
  */
-export function resize_frames(divRect:Accessor<DOMRect>, frames:flex_frame[]) {
+export function resize_sections(divRect:Accessor<DOMRect>, frames:flex_frame[]) {
     let width = divRect().width
     let height = divRect().height
     if (width <= 0 || height <= 0) return
@@ -288,9 +288,9 @@ export function resize_frames(divRect:Accessor<DOMRect>, frames:flex_frame[]) {
 export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRect>, resize: ()=>void): flex_frame[] {
     switch (layout) {
         case Container_Layouts.DOUBLE_VERT: {
-            let f1 = frame_section(0.5, 1)
+            let f1 = widget_section(0.5, 1)
             let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f2 = frame_section(0.5, 1)
+            let f2 = widget_section(0.5, 1)
 
             // For Separators, resize_pos/neg hold frames. 
             // pos frames move directly correlated with the separator movement, 
@@ -312,9 +312,9 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.DOUBLE_HORIZ: {
-            let f1 = frame_section(1, 0.5)
+            let f1 = widget_section(1, 0.5)
             let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f2 = frame_section(1, 0.5)
+            let f2 = widget_section(1, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -325,11 +325,11 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         } 
 
         case Container_Layouts.TRIPLE_VERT: {
-            let f1 = frame_section(0.333, 1)
+            let f1 = widget_section(0.333, 1)
             let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f2 = frame_section(0.333, 1)
+            let f2 = widget_section(0.333, 1)
             let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f3 = frame_section(0.333, 1)
+            let f3 = widget_section(0.333, 1)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -344,11 +344,11 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.TRIPLE_VERT_LEFT: {
-            let f1 = frame_section(0.5, 1)
+            let f1 = widget_section(0.5, 1)
             let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f2 = frame_section(0.5, 0.5)
+            let f2 = widget_section(0.5, 0.5)
             let s2 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f3 = frame_section(0.5, 0.5)
+            let f3 = widget_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2, f3, s2)
@@ -362,11 +362,11 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         } 
 
         case Container_Layouts.TRIPLE_VERT_RIGHT: {
-            let f1 = frame_section(0.5, 0.5)
+            let f1 = widget_section(0.5, 0.5)
             let s1 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f2 = frame_section(0.5, 0.5)
+            let f2 = widget_section(0.5, 0.5)
             let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f3 = frame_section(0.5, 1)
+            let f3 = widget_section(0.5, 1)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -380,11 +380,11 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.TRIPLE_HORIZ: {
-            let f1 = frame_section(1, 0.333)
+            let f1 = widget_section(1, 0.333)
             let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f2 = frame_section(1, 0.333)
+            let f2 = widget_section(1, 0.333)
             let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f3 = frame_section(1, 0.333)
+            let f3 = widget_section(1, 0.333)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -398,11 +398,11 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.TRIPLE_HORIZ_TOP: {
-            let f1 = frame_section(1, 0.5)
+            let f1 = widget_section(1, 0.5)
             let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f2 = frame_section(0.5, 0.5)
+            let f2 = widget_section(0.5, 0.5)
             let s2 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f3 = frame_section(0.5, 0.5)
+            let f3 = widget_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2, f3, s2)
@@ -416,11 +416,11 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.TRIPLE_HORIZ_BOTTOM: {
-            let f1 = frame_section(0.5, 0.5)
+            let f1 = widget_section(0.5, 0.5)
             let s1 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f2 = frame_section(0.5, 0.5)
+            let f2 = widget_section(0.5, 0.5)
             let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f3 = frame_section(1, 0.5)
+            let f3 = widget_section(1, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -434,13 +434,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_SQ_H: {
-            let f1 = frame_section(0.5, 0.5)
+            let f1 = widget_section(0.5, 0.5)
             let s1 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f2 = frame_section(0.5, 0.5)
+            let f2 = widget_section(0.5, 0.5)
             let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f3 = frame_section(0.5, 0.5)
+            let f3 = widget_section(0.5, 0.5)
             let s3 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f4 = frame_section(0.5, 0.5)
+            let f4 = widget_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -457,13 +457,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_SQ_V: {
-            let f1 = frame_section(0.5, 0.5)
+            let f1 = widget_section(0.5, 0.5)
             let s1 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f2 = frame_section(0.5, 0.5)
+            let f2 = widget_section(0.5, 0.5)
             let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f3 = frame_section(0.5, 0.5)
+            let f3 = widget_section(0.5, 0.5)
             let s3 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f4 = frame_section(0.5, 0.5)
+            let f4 = widget_section(0.5, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -480,13 +480,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_VERT: {
-            let f1 = frame_section(0.25, 1)
+            let f1 = widget_section(0.25, 1)
             let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f2 = frame_section(0.25, 1)
+            let f2 = widget_section(0.25, 1)
             let s2 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f3 = frame_section(0.25, 1)
+            let f3 = widget_section(0.25, 1)
             let s3 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f4 = frame_section(0.25, 1)
+            let f4 = widget_section(0.25, 1)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -503,13 +503,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_HORIZ: {
-            let f1 = frame_section(1, 0.25)
+            let f1 = widget_section(1, 0.25)
             let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f2 = frame_section(1, 0.25)
+            let f2 = widget_section(1, 0.25)
             let s2 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f3 = frame_section(1, 0.25)
+            let f3 = widget_section(1, 0.25)
             let s3 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f4 = frame_section(1, 0.25)
+            let f4 = widget_section(1, 0.25)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -526,13 +526,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_LEFT: {
-            let f1 = frame_section(0.5, 1)
+            let f1 = widget_section(0.5, 1)
             let s1 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f2 = frame_section(0.5, 0.333)
+            let f2 = widget_section(0.5, 0.333)
             let s2 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f3 = frame_section(0.5, 0.333)
+            let f3 = widget_section(0.5, 0.333)
             let s3 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f4 = frame_section(0.5, 0.333)
+            let f4 = widget_section(0.5, 0.333)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2, f3, f4, s2, s3)
@@ -549,13 +549,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_RIGHT: {
-            let f1 = frame_section(0.5, 0.333)
+            let f1 = widget_section(0.5, 0.333)
             let s1 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f2 = frame_section(0.5, 0.333)
+            let f2 = widget_section(0.5, 0.333)
             let s2 = separator_section(Orientation.Horizontal, 0.5, divRect, resize)
-            let f3 = frame_section(0.5, 0.333)
+            let f3 = widget_section(0.5, 0.333)
             let s3 = separator_section(Orientation.Vertical, 1, divRect, resize)
-            let f4 = frame_section(0.5, 1)
+            let f4 = widget_section(0.5, 1)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -572,13 +572,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_TOP: {
-            let f1 = frame_section(1, 0.5)
+            let f1 = widget_section(1, 0.5)
             let s1 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f2 = frame_section(0.333, 0.5)
+            let f2 = widget_section(0.333, 0.5)
             let s2 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f3 = frame_section(0.333, 0.5)
+            let f3 = widget_section(0.333, 0.5)
             let s3 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f4 = frame_section(0.333, 0.5)
+            let f4 = widget_section(0.333, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2, f3, f4, s2, s3)
@@ -595,13 +595,13 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
         }
 
         case Container_Layouts.QUAD_BOTTOM: {
-            let f1 = frame_section(0.333, 0.5)
+            let f1 = widget_section(0.333, 0.5)
             let s1 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f2 = frame_section(0.333, 0.5)
+            let f2 = widget_section(0.333, 0.5)
             let s2 = separator_section(Orientation.Vertical, 0.5, divRect, resize)
-            let f3 = frame_section(0.333, 0.5)
+            let f3 = widget_section(0.333, 0.5)
             let s3 = separator_section(Orientation.Horizontal, 1, divRect, resize)
-            let f4 = frame_section(1, 0.5)
+            let f4 = widget_section(1, 0.5)
 
             s1.resize_pos.push(f1)
             s1.resize_neg.push(f2)
@@ -619,6 +619,6 @@ export function layout_switch(layout: Container_Layouts, divRect:Accessor<DOMRec
 
         default:
             //Default Case is a single chart.
-            return [frame_section(1, 1)]
+            return [widget_section(1, 1)]
     }
 }

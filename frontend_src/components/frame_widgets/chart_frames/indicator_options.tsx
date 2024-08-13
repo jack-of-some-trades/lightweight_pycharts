@@ -31,6 +31,7 @@ export function IndicatorOpts(props:indicator_option_props){
         }
     }
 
+
     return (
         <OverlayDiv
             id={props.id}
@@ -105,11 +106,11 @@ function Input(props: input_switch_props){
     </Switch>
 }
 
-function BoolInput(props: input_props){return <></>}
-function EnumInput(props: input_props){return <></>}
-function TimeInput(props: input_props){return <></>}
-function ColorInput(props: input_props){return <></>}
-function SourceInput(props: input_props){return <></>}
-function NumberInput(props: input_props){return <></>}
-function StringInput(props: input_props){return <></>}
-function SelectInput(props: input_props){return <></>}
+function BoolInput(props: input_props){return <div/>}
+function EnumInput(props: input_props){return <div/>}
+function TimeInput(props: input_props){return <div/>}
+function ColorInput(props: input_props){return <div/>}
+function SourceInput(props: input_props){return <div/>}
+function NumberInput(props: input_props){return <div/>}
+function StringInput(props: input_props){return <div/>}
+function SelectInput(props: input_props){return <div/>}

@@ -361,14 +361,15 @@ class Container:
 
     def set_layout(self, layout: layouts):
         "Set the layout of the Container creating Frames as needed"
-        self._fwd_queue.put((JS_CMD.SET_LAYOUT, self._js_id, layout))
-        self.layout_type = layout
-
         # If there arent enough Frames to support the layout then generate them
-        frame_diff = len(self.frames) - self.layout_type.num_frames
+        frame_diff = len(self.frames) - layout.num_frames
         if frame_diff < 0:
             for _ in range(-frame_diff):
+                logger.info("Add Frame")
                 self.add_frame()
+
+        self._fwd_queue.put((JS_CMD.SET_LAYOUT, self._js_id, layout))
+        self.layout_type = layout
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"

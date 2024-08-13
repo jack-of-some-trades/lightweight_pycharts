@@ -9,7 +9,7 @@ import { TimeframeSwitcher } from "./timeframe_switch"
 
 
 export function TopBar(props:JSX.HTMLAttributes<HTMLDivElement>){
-    return <div id='layout_top' class='layout_main layout_flex' {...props}>
+    return <div class='layout_main layout_flex' {...props}>
         {/**** left Aligned ****/}
         <div class='topbar' style={{"justify-content":"flex-start"}}>
             <SymbolSearchBox/>

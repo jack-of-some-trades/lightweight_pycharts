@@ -1,6 +1,6 @@
 //Typescript API that interfaces with python.
 
-import { Container_Layouts } from "./layouts";
+import { Container_Layouts, num_frames } from "./layouts";
 import { makeid, Series_Type, symbol_item } from "./types";
 
 
@@ -27,7 +27,17 @@ export class py_api {
     layout_change = (container_id: string, layout: Container_Layouts) => {
         console.log(`Layout Change: ${container_id},${layout}`)
         //@ts-ignore
-        window.container_manager.containers.get(container_id)?.set_layout(layout)
+        const container = window.container_manager.containers.get(container_id)
+        if (container === undefined) return
+
+        //Make the neccessary frames
+        for(let i = container.frames.length; i<num_frames(container.layout); i++)
+            //@ts-ignore
+            container.add_frame(makeid(Array.from(container.frames, frame=>frame.id), `${container_id}_f_`))
+
+        //change the layout 
+        //@ts-ignore
+        container.set_layout(layout)
     };
     series_change = (container_id: string, frame_id: string, series_type: Series_Type) => {
         console.log(`Series Change: ${container_id},${frame_id},${series_type}`)

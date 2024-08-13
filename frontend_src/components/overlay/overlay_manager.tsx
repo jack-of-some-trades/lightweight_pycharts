@@ -6,7 +6,7 @@ import "../../css/overlay/overlay.css";
 //#region --------------------- Context Manager --------------------- //
 
 type OverlayContextProps = {
-    attachOverlay: (id:string, el:JSX.Element, ShowDisplay?:Signal<boolean>, autohide?:boolean) => void,
+    attachOverlay: (id:string, el:JSX.Element, ShowDisplay?:Signal<boolean>, autohide?:boolean|null) => void,
     detachOverlay: (id:string) => void,
     getDivReference:(id:string) => undefined | HTMLDivElement,
     setDivReference:(id:string, el:HTMLDivElement) => void,
@@ -28,7 +28,7 @@ export function OverlayCTX():OverlayContextProps { return useContext<OverlayCont
 interface overlay_struct {
     id:string,              // Id of the menu
     el:JSX.Element          // The Menu itself, Should be an <OverlayDiv/>
-    hide:boolean            // Auto Hide the menu on a non-contained click
+    hide:boolean|null  // Auto Hide the menu on a non-contained click
 }
 export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
     const [overlays, setOverlays] = createStore<overlay_struct[]>([])
@@ -48,7 +48,7 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
         id:string, 
         el:JSX.Element, 
         ShowDisplay: Signal<boolean> | undefined = undefined,
-        autohide:boolean=true, 
+        autohide:boolean|null=true,
     ){
         setOverlays([...overlays, {id:id, el:el, hide:autohide}])
         if (ShowDisplay === undefined)
@@ -91,7 +91,7 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
     )
     document.body.addEventListener('keydown', (e) => {
         if(e.key === 'Escape') 
-            Array.from(overlays).forEach(({id, hide}) => { if(hide) getDisplaySetter(id)(false) })
+            Array.from(overlays).forEach(({id, hide}) => { if(hide !== null) getDisplaySetter(id)(false)})
     })  
 
     //#endregion
@@ -177,7 +177,6 @@ export function OverlayDiv(props:overlay_div_props){
         //Sadly, its the easiest way to get this reference given how these are created.
         createEffect(on(display, () => {
             divRef = document.querySelector(`#${props.id}`) as HTMLDivElement?? undefined
-            console.log('render:', props.id)
             if (props.bounding_client_id)
                 clientRef = document.querySelector(props.bounding_client_id) as HTMLElement?? undefined
             OverlayCTX().setDivReference(props.id, divRef)

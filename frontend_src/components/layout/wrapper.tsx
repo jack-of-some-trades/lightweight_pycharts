@@ -5,7 +5,8 @@ import { TitleBar } from './titlebar'
 import { ToolBar, ToolBoxContext } from './toolbar/toolbar'
 import { TopBar } from './topbar/topbar'
 
-import "../../css/_layout.css"
+import "../../css/layout/wrapper.css"
+import "../../css/style_default.css"
 import { Container } from './container'
 
 const MARGIN = 5
@@ -70,8 +71,8 @@ export function Wrapper(){
                 <TitleBar style={layout.titlebar} {...title_bar_props}/>
                 <TopBar style={layout.topbar}/>
                 <ToolBar style={layout.toolbar}/>
-                <div id='layout_right' class='layout_main layout_flex' style={layout.navbar}/>
-                <div id='layout_bottom' class='layout_main' style={layout.utilbar}/>
+                <div class='layout_main layout_flex flex_col' style={layout.navbar}/>
+                <div class='layout_main' style={layout.utilbar}/>
             </div>
         </GlobalContexts>
     </>

@@ -5,7 +5,7 @@ import { pane } from "../../../src/pane"
 import { Icon, icons } from "../../icons"
 
 
-interface legend_props {
+export interface legend_props {
     parent_pane:pane
     indicators_list:Accessor<string[]>
 }
@@ -27,6 +27,7 @@ export function PaneLegend(props:legend_props){
                         objVisibility={indObj.objVisibility[0]}
                         setObjVisibility={indObj.setVisibility.bind(indObj)}
                         setMenuVisibility={indObj.setMenuVisibility}
+                        menuVisibility={indObj.menuVisibility}
                     />
                 )
             }}</For>
@@ -35,6 +36,7 @@ export function PaneLegend(props:legend_props){
             <Icon 
                 classList={{icon:false, icon_no_hover:true}} 
                 icon={display()? icons.menu_arrow_sn : icons.menu_arrow_ns} 
+                force_reload={true}
             />
         </div>  
     </div>
@@ -52,14 +54,12 @@ interface tag_props {
     objVisibility: Accessor<boolean>
     setObjVisibility: (arg:boolean) => void
     setMenuVisibility:Setter<boolean> | undefined
+    menuVisibility:Accessor<boolean> | undefined
     innerHtml: Accessor<string | undefined> 
 }
 
 function IndicatorTag(props:tag_props){
     const [hover, setHover] = createSignal<boolean>(false)
-
-    console.log(props.setMenuVisibility)
-    
     return (
         <div 
             class="ind_tag"
@@ -75,8 +75,8 @@ function IndicatorTag(props:tag_props){
 
                 <Show when={props.setMenuVisibility !== undefined}>
                     <Icon icon={icons.settings_small} {...gearProps}
-                        onClick={(e) => {if (e.button === 0 && props.setMenuVisibility) props.setMenuVisibility(true)}}
-                    /> {/* onClk => Show Settings Menu */}
+                        onclick={(e) => {if (e.button === 0 && props.setMenuVisibility && props.menuVisibility)props.setMenuVisibility(!props.menuVisibility())}}
+                    />
                 </Show>
 
                 <Show when={props.deletable}>
