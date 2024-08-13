@@ -2,7 +2,7 @@ import * as lwc from "lightweight-charts";
 import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createSignal, JSX, Setter } from "solid-js";
 import { SetStoreFunction } from "solid-js/store";
-import { ChartPane } from "../components/frame_widgets/chart_frames/ChartingEls";
+import { ChartPane } from "../components/frame_widgets/chart_frames/chart_elements";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
@@ -40,6 +40,10 @@ export class pane {
         id: string,
     ) {
         this.id = id
+
+        const [active, setActive] = createSignal<boolean>(false)
+        this.active = active; this.setActive = setActive
+
         const [div, setDiv] = createSignal<HTMLDivElement>(document.createElement('div'))
         this.div = div
 
@@ -59,13 +63,10 @@ export class pane {
 
         this.element = ChartPane({
             ref:setDiv,
-            class:"chart_pane",
             chart_el:this.chart_div,
             legend_props:legend_props
         })
 
-        const [active, setActive] = createSignal<boolean>(false)
-        this.active = active; this.setActive = setActive
 
         //Create Logscale Toggle Button
         // const Box = this.chart_div.querySelector("table > tr:nth-child(2) > td:nth-child(3) > div") as HTMLDivElement
@@ -101,7 +102,6 @@ export class pane {
 
         // These listeners allow smooth chart dragging in a replay like mode
         this.chart_div.addEventListener('mousedown', () => {
-            this.assign_active_pane()
             this.chart.timeScale().applyOptions({
                 'shiftVisibleRangeOnNewBar': false,
                 'allowShiftVisibleRangeOnWhitespaceReplacement': false,
@@ -121,12 +121,11 @@ export class pane {
      * Update Global 'active_pane' reference to this instance. 
      */
     assign_active_pane() {
-        console.log('assign active')
         if (window.active_pane)
-            window.active_pane.div().removeAttribute('active')
+            window.active_pane.setActive(false)
 
         window.active_pane = this
-        this.div().setAttribute('active', "")
+        this.setActive(true)
     }
 
     set_whitespace_data(data: WhitespaceData[], primitive_data:SingleValueData) {

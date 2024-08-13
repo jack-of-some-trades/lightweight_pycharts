@@ -22,13 +22,12 @@ export function Container(props : {style: JSX.CSSProperties}){
     //Redefine outer scope context variable (Effectively makes this a singleton.)
     ContainerContext = createContext(ctx_args);
     return <ContainerContext.Provider value={ctx_args}>
-        <Layout ref={divRef} 
-            id='container' 
-            class='layout_main' 
-            style={props.style}
-            select_cls="frame"
-            innerStyle={style}
-            displays={displays}
-        />
+        <div ref={divRef} id='container' class='layout_main' style={props.style}>
+            <Layout
+                select_cls="frame"
+                innerStyle={style}
+                displays={displays}
+            />
+        </div>
     </ContainerContext.Provider>
 }

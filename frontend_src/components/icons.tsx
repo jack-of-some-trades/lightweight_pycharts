@@ -64,7 +64,7 @@ export function Icon(props:icon_props){
     }
     createEffect(update)
 
-    //Useful when you need to force a repaint on an SVG that won't load correctly
+    //Useful when you need to force a repaint on an SVG that's loaded after window creation
     if(props.force_reload) setTimeout(update, 50);
 
     return <svg ref={icon_el} {...svgProps} attr:active={iconProps.activated? '': undefined} />

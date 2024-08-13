@@ -1,6 +1,6 @@
 import { SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createSignal, JSX, Setter } from "solid-js";
-import { ChartFrame } from "../components/frame_widgets/chart_frames/ChartingEls";
+import { ChartFrame } from "../components/frame_widgets/chart_frames/chart_elements";
 import { layout_display } from "../components/layout/layouts";
 import { update_tab_func } from "./container";
 import { Container_Layouts, flex_frame, layout_switch, num_frames, Orientation, resize_sections } from "./layouts";
@@ -66,6 +66,7 @@ export class chart_frame extends frame {
     symbol: symbol_item
     series_type: Series_Type
 
+    style_sel: string
     layout: Container_Layouts | undefined
     
     //Multi-Pane Layout Controls
@@ -86,10 +87,12 @@ export class chart_frame extends frame {
         this.setStyle = setStyle
         this.setDisplays = setDisplays
 
+        this.style_sel = id.substring(7) + "_pane"
         this.element = ChartFrame({
             ref:setDiv,
             innerStyle: style,
             displays: displays,
+            style_sel:this.style_sel,
         })
 
         // The following 3 variables are actually properties of a frame's primary Series(Indicator) obj.
@@ -101,9 +104,6 @@ export class chart_frame extends frame {
     }
 
     onActivation() {
-        if (this.panes[0])
-            this.panes[0].assign_active_pane()
-
         //Update Window Elements
         this.update_tab(this.symbol.ticker)
         window.topbar.setSeries(this.series_type)
@@ -172,11 +172,12 @@ export class chart_frame extends frame {
         this.flex_panes.forEach((flex_pane) => {
             if (flex_pane.orientation === Orientation.null) { // Frame Object
                 if (pane_ind < this.panes.length) {
+                    let pane = this.panes[pane_ind]
                     layout_displays.push({
-                        orientation:flex_pane.orientation, 
-                        mouseDown:()=>{},
-                        element:this.panes[pane_ind].element,
-                        el_active:()=>false, 
+                        orientation: flex_pane.orientation, 
+                        mouseDown: pane.assign_active_pane.bind(pane),
+                        element:pane.element,
+                        el_active:pane.active, 
                         el_target:()=>false
                     })
                 } else throw new Error("Not Enough Panes to change to the desired layout")
@@ -210,7 +211,7 @@ export class chart_frame extends frame {
         let style = ""
         this.flex_panes.forEach((pane, i)=>{
             style += `
-            div.pane:nth-child(${i+2})${pane.style}`
+            div.${this.style_sel}:nth-child(${i+2})${pane.style}`
         })
         this.setStyle(style)
 

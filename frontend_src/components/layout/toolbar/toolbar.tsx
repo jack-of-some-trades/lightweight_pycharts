@@ -1,5 +1,5 @@
 
-import { Accessor, createContext, createSignal, For, JSX, Setter, useContext } from "solid-js"
+import { Accessor, createContext, createEffect, createSignal, For, JSX, on, Setter, useContext } from "solid-js"
 import { Icon, icons } from "../../icons"
 import { location_reference, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager"
 import { toolbar_menu_props, ToolBarMenuButton } from "./toolbar_menu"
@@ -32,12 +32,24 @@ function ToolBoxToggle(){
     const visibility = visibilitySignal[0]
     const setVisibility = visibilitySignal[1]
 
+    const location = ToolBoxCTX().location
+    const setLocation = ToolBoxCTX().setLocation
+
     OverlayCTX().attachOverlay(
         id,
         <ToolBoxOverlay id={id} />,
         visibilitySignal,
         null, // Don't Auto Hide & don't hide on esc click
     )
+
+    createEffect(on(visibility, () => {
+        //Reposition Element the first time it gets shown
+        if (visibility() && location().x === -1 && location().y === -1){
+            let refLoc = document.querySelector(".toolbox_btn_wrap")?.getBoundingClientRect()
+            if (refLoc === undefined) return
+            setLocation({x:refLoc.right + 20,y:refLoc.top + 2})
+        }
+    }))
 
     return <div class="toolbox_btn_wrap" onMouseDown={()=>setVisibility(!visibility())} >    
         <Icon 
@@ -66,14 +78,14 @@ const default_toolbox_props:toolbox_context_props = {
     setLocation: () => {},
 }
 
-const ToolboxContext = createContext<toolbox_context_props>(default_toolbox_props)
+let ToolboxContext = createContext<toolbox_context_props>(default_toolbox_props)
 export function ToolBoxCTX():toolbox_context_props { return useContext(ToolboxContext) }
 
 
 export function ToolBoxContext(props:JSX.HTMLAttributes<HTMLElement>){
 
     const [tools, setTools] = createSignal<icons[]>([])
-    const [location, setLocation] = createSignal<point>({x:60, y:window.innerHeight-50})
+    const [location, setLocation] = createSignal<point>({x:-1, y:-1})
 
     const ToolboxCTX:toolbox_context_props = {
         tools:tools,
@@ -82,6 +94,7 @@ export function ToolBoxContext(props:JSX.HTMLAttributes<HTMLElement>){
         setLocation:setLocation,
     }
 
+    ToolboxContext = createContext<toolbox_context_props>(ToolboxCTX)
     return <ToolboxContext.Provider value={ToolboxCTX}>
         {props.children}
     </ToolboxContext.Provider>

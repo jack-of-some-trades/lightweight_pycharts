@@ -1,35 +1,37 @@
-import { Accessor, JSX, Setter, Signal, splitProps } from "solid-js";
+import { Accessor, JSX, Setter, Signal } from "solid-js";
 import { TextIcon } from "../../icons";
 import { Layout, layout_display } from "../../layout/layouts";
 import { legend_props, PaneLegend } from "./pane_legend";
 
 
 interface chart_frame_props {
+    style_sel:string
     ref:Setter<HTMLDivElement>
     innerStyle: Accessor<string>
     displays: Accessor<layout_display[]>
 }
 export function ChartFrame(props:chart_frame_props){
-    return (
-        <Layout ref={props.ref} 
-            class="chart_frame"
-            select_cls="pane"
+    return <>
+        <Layout 
+            select_cls={props.style_sel}
             innerStyle={props.innerStyle}
             displays={props.displays}
         />
-    )
+        <div ref={props.ref} class="frame_ruler"/>
+    </>
 }
 
-interface chart_pane_props extends JSX.HTMLAttributes<HTMLDivElement> {
+interface chart_pane_props{
+    ref:Setter<HTMLDivElement>
     chart_el:HTMLDivElement
     legend_props:legend_props
 }
 export function ChartPane(props:chart_pane_props){
-    const [, divProps] = splitProps(props, ["chart_el", "legend_props"])
-    return <div {...divProps}>
+    return <>
         {props.chart_el}
         <PaneLegend {...props.legend_props}/>
-    </div>
+        <div ref={props.ref} class="pane_ruler"/>
+    </>
 }
 
 

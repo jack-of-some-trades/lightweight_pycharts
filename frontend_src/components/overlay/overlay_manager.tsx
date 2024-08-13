@@ -26,9 +26,9 @@ let OverlayContext = createContext<OverlayContextProps>(default_ctx_args);
 export function OverlayCTX():OverlayContextProps { return useContext<OverlayContextProps>(OverlayContext) }
 
 interface overlay_struct {
-    id:string,              // Id of the menu
-    el:JSX.Element          // The Menu itself, Should be an <OverlayDiv/>
-    hide:boolean|null  // Auto Hide the menu on a non-contained click
+    id:string,          // Id of the menu
+    el:JSX.Element      // The Menu itself, Should be an <OverlayDiv/>
+    hide:boolean|null   // Auto Hide the menu on a non-contained click, On Null, don't hide on ESC.
 }
 export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
     const [overlays, setOverlays] = createStore<overlay_struct[]>([])
@@ -50,9 +50,13 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
         ShowDisplay: Signal<boolean> | undefined = undefined,
         autohide:boolean|null=true,
     ){
+        if (overlays.find((obj) => obj.id === id))
+            setOverlays(Array.from(overlays.filter((obj)=>obj.id !== id)))
+            //ID Present, Remove First to proc reactivity of object elements
+
         setOverlays([...overlays, {id:id, el:el, hide:autohide}])
-        if (ShowDisplay === undefined)
-            ShowDisplay = createSignal(false)
+
+        if (ShowDisplay === undefined) ShowDisplay = createSignal(false)
         displayMap.set(id, ShowDisplay)
     }
     function detachOverlay(id:string){
@@ -113,8 +117,8 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
             {props.children}
 
             <div id='overlay_manager'>
-                <For each={overlays}>{(overlay)=>
-                    <Show when={getDisplayAccessor(overlay.id)()}>{overlay.el}</Show>
+                <For each={overlays}>{({id, el})=>{
+                    return <Show when={getDisplayAccessor(id)()}>{el}</Show>}
                 }</For>
             </div>
         </OverlayContext.Provider>

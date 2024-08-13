@@ -1,4 +1,4 @@
-import { Accessor, For, JSX, Setter, splitProps } from "solid-js"
+import { Accessor, For, JSX, Setter } from "solid-js"
 import { Orientation } from "../../src/layouts"
 
 import "../../css/layout/layouts.css"
@@ -23,16 +23,14 @@ export const default_layout_ctx_args:LayoutContextProps = {
     setDisplay: () => {},
 }
 
-interface layout_props extends JSX.HTMLAttributes<HTMLDivElement> {
+interface layout_props{
     select_cls:string
     innerStyle: Accessor<string>
     displays: Accessor<layout_display[]>
 }
 
 export function Layout(props: layout_props){
-    const [,divProps] = splitProps(props, ["select_cls", "innerStyle", "displays"])
-
-    return <div {...divProps}>
+    return <>
         <style innerHTML={props.innerStyle()}/>
         <For each={props.displays()}>{(display) =>
             <div
@@ -49,6 +47,6 @@ export function Layout(props: layout_props){
                 {display.element}
             </div>
         }</For>
-    </div>
+    </>
 }
 
