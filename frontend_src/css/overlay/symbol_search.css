@@ -33,6 +33,11 @@
     background-color: var(--icon-background-color);
 }
 
+#symbol_search_drag {
+    flex-grow: 1;
+    height: 45px;
+}
+
 /* **** Text Input **** */
 
 .symbol_input {

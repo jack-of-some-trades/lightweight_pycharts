@@ -19,3 +19,6 @@
     box-shadow: 0 2px 10px #0007;
     background-color: var(--overlay-fill);
 }
+
+.drag_handle{cursor:grab}
+.drag_handle:active{cursor:grabbing}

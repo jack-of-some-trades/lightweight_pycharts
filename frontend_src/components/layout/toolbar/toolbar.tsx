@@ -59,10 +59,9 @@ function ToolBoxToggle(){
             classList={{toolbox_btn:true}}
         />
     </div>
-    
 }
 
-//#region --------------------- Toolbox Context --------------------- //
+//#region --------------------- Toolbox Context and OverlayDiv --------------------- //
 
 interface toolbox_context_props {
     tools:Accessor<icons[]>,
@@ -100,60 +99,24 @@ export function ToolBoxContext(props:JSX.HTMLAttributes<HTMLElement>){
     </ToolboxContext.Provider>
 }
 
-//#endregion
-
-
-//#region --------------------- Toolbox Overlay --------------------- //
-
-
-interface toolbox_props extends JSX.HTMLAttributes<HTMLDivElement> {
-    id:string
-}
-
-
+interface toolbox_props extends JSX.HTMLAttributes<HTMLDivElement> {id:string}
 function ToolBoxOverlay( props:toolbox_props ){
     const tools = ToolBoxCTX().tools
     const location = ToolBoxCTX().location
     const setLocation = ToolBoxCTX().setLocation
-
-    const move = (e:MouseEvent) => {
-        if (e.target !== document.documentElement)
-            setLocation({
-                x:location().x + e.movementX, 
-                y:location().y + e.movementY
-            })
-    }
-
-    const mouseup = (e:MouseEvent) => {
-        if(e.button === 0) {
-            document.removeEventListener('mousemove', move)
-            document.removeEventListener('mouseup', mouseup)
-        }
-    }
     
     return (
         <OverlayDiv 
             id={props.id}
             location={location()}
+            setLocation={setLocation}
             location_ref={location_reference.TOP_LEFT}
+            drag_handle={`#${props.id}>#menu_dragable`}
             bounding_client_id={`#${props.id}>#menu_dragable`}
         >
-            {/* Drag Handle */}
-            <Icon 
-                hover={false} 
-                icon={icons.menu_dragable} 
-                onMouseDown={(e)=>{ if(e.button === 0) {
-                    document.addEventListener('mousemove', move)
-                    document.addEventListener('mouseup', mouseup)
-                }}}
-            />
-
-            {/* Favorite Tools */}
+            <Icon hover={false} icon={icons.menu_dragable}/>
             <For each={tools()}>{(tool)=>
-                <Icon 
-                    icon={tool}
-                    onClick={TOOL_FUNC_MAP.get(tool)}
-                />
+                <Icon icon={tool} onClick={TOOL_FUNC_MAP.get(tool)}/>
             }</For>
         </OverlayDiv>
     )

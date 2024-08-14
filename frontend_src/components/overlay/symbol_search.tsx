@@ -42,7 +42,7 @@ export function SymbolSearchBox(){
         setDisplay(!display());
         e.stopPropagation();
     }
-    const position_menu = () => {setMenuLocation({x:window.innerWidth/2, y:window.innerHeight*0.45})}
+    const position_menu = () => {setMenuLocation({x:window.innerWidth/2, y:window.innerHeight*0.2})}
 
     //Adding events manually makes it function as expected (it executes before prop events)
     onMount(() => {
@@ -69,6 +69,7 @@ export function SymbolSearchBox(){
             replace={replace()}
             setReplace={setReplace}
             location={menuLocation()}
+            setLocation={setMenuLocation}
             updateLocation={position_menu}
         />,
         displaySignal,
@@ -108,7 +109,7 @@ const label_map = new Map<prop_key, string>([
 ])
 
 export function SymbolSearchMenu(props:search_menu_props){
-    const [,overlayDivProps] = splitProps(props, ["replace", "setReplace", "symbols", "filters", "setFilters"])
+    const [,overlayDivProps] = splitProps(props, ["replace", "setReplace", "symbols", "filters", "setFilters", "setDisplay"])
 
     function fetch(symbol:symbol_item){
         if (window.active_frame?.timeframe)
@@ -173,7 +174,10 @@ export function SymbolSearchMenu(props:search_menu_props){
         <OverlayDiv 
             {...overlayDivProps} 
             classList={{symbol_menu:true}} 
-            location_ref={location_reference.CENTER}>
+            location_ref={location_reference.CENTER}
+            drag_handle={"#symbol_search_drag"}
+            bounding_client_id={`#${props.id}>.symbol_title_bar`}
+        >
 
             {/***** Title Bar *****/}
             <div class="symbol_title_bar">
@@ -186,7 +190,7 @@ export function SymbolSearchMenu(props:search_menu_props){
                 {/* <h1 class="text" style={{margin: "8px 0px"}} onClick={()=>props.setReplace(!props.replace)}>
                      - {props.replace? "Replace": "Add"}
                 </h1> */}
-                <div style={{"flex-grow":1}}/>
+                <div id="symbol_search_drag" />
                 <Icon 
                     icon={icons.close} 
                     style={{"margin-right":"15px", padding:"5px"}}

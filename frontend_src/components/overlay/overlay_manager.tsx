@@ -145,6 +145,9 @@ export enum location_reference {
  *        Useful when the location is referencing a Signal that cannot be reactive such as a Div's ClientBoundingBox
  * @param location_ref : Reference Corner to position the Div, e.g. TOP_RIGHT will mean the top right corner of 
  *        the div will be drawn at location:{x,y}
+ * @param drag_handle : Optional QuerySelector String. If given, that element will be made into a drag handle
+ *        capable of moving the menu around. Must be given a setLocation function
+ * @param setLocation : Optional setter<Point> used by the drag handle logic.
  * @param bounding_client_id : QuerySelector String for an Element that will be used as a bounding client reference. 
  *        Movement of the overlay div will be limited such that the DOMRect of this reference client cannot go offscreen
  */
@@ -153,6 +156,8 @@ export interface overlay_div_props extends JSX.HTMLAttributes<HTMLDivElement> {
     location: point
     location_ref: location_reference
     updateLocation?: () => void
+    drag_handle?:string
+    setLocation?: Setter<point>
     bounding_client_id?:string
 }
 
@@ -164,10 +169,29 @@ export interface overlay_div_props extends JSX.HTMLAttributes<HTMLDivElement> {
 export function OverlayDiv(props:overlay_div_props){
     let divRef : HTMLDivElement|undefined = undefined
     let clientRef : HTMLElement|undefined = undefined
+    let dragListenerSet = !(props.drag_handle && props.setLocation)
     props.classList = {...props.classList, overlay:true}
     const [style, setStyle] = createSignal<JSX.CSSProperties>(initPosition(props.location_ref, props.location))
-    const [, divProps] = splitProps(props, ["id", "location", "location_ref", "updateLocation", "bounding_client_id"])
+    const [, divProps] = splitProps(props, ["id", "location", "setLocation", "location_ref", "updateLocation", "bounding_client_id"])
+    
+    //#region ------------------- Drag Handle Listeners ------------------- //
 
+    const move = (e:MouseEvent) => {
+        if (e.target !== document.documentElement)
+            //Only Move the location if the cursor is on the screen
+            if (props.setLocation) props.setLocation({
+                x:props.location.x + e.movementX, 
+                y:props.location.y + e.movementY
+            })
+    }
+    const mouseup = (e:MouseEvent) => {
+        if(e.button === 0) {
+            document.removeEventListener('mousemove', move)
+            document.removeEventListener('mouseup', mouseup)
+        }
+    }
+
+    //#endregion
     //#region ------------------- Position Update Listeners ------------------- //
 
     //Set Position Function and preserve the Reactivity of Display_Ref
@@ -177,13 +201,26 @@ export function OverlayDiv(props:overlay_div_props){
     onMount(() => {
         const display = OverlayCTX().getDisplayAccessor(props.id)
 
-        //Next effect gets a reference to the Div once it is attached to the document.
+        //Next effect gets a reference to the Div once it is attached to the document & Queryable.
         //Sadly, its the easiest way to get this reference given how these are created.
         createEffect(on(display, () => {
-            divRef = document.querySelector(`#${props.id}`) as HTMLDivElement?? undefined
+            divRef = document.querySelector(`#${props.id}`) as HTMLDivElement
             if (props.bounding_client_id)
-                clientRef = document.querySelector(props.bounding_client_id) as HTMLElement?? undefined
+                clientRef = document.querySelector(props.bounding_client_id) as HTMLElement
             OverlayCTX().setDivReference(props.id, divRef)
+
+            //If given, add a mouseDown drag listener
+            if (!dragListenerSet && props.drag_handle){
+                let drag_handle = document.querySelector(props.drag_handle) as HTMLElement
+                if (drag_handle) {
+                    drag_handle.addEventListener('mousedown', (e)=>{ if(e.button === 0) {
+                        document.addEventListener('mousemove', move)
+                        document.addEventListener('mouseup', mouseup)
+                    }})
+                    drag_handle.classList.add("drag_handle")
+                    dragListenerSet = true //Ensure only one listener is added to the drag handle
+                }
+            }
         }))
 
         //Update Div Location when Location Changes (Preserve Reactivity of props.location)
