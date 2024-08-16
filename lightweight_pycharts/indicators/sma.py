@@ -14,6 +14,7 @@ from lightweight_pycharts.indicator import (
 )
 from lightweight_pycharts.orm.series import SingleValueData
 from lightweight_pycharts import series_common as sc
+from lightweight_pycharts.orm.types import Color
 
 
 class Method(Enum):
@@ -26,12 +27,13 @@ class Method(Enum):
 @dataclass
 class SMAOptions(Options):
     "Dataclass of Options for the SMA Indicator"
-    per: ... = "string"
+    per: ... = pd.Timestamp(1e15)
     src: Optional[SeriesData] = None
-    period: int = param(9, options=[10, 11, 12], group="Test", inline="sub-group")
-    period2: int = param(7, "Another_param", "Test", min_val=5, max_val=10, step=1)
-    arg: ... = param(Method.SMA, options=[Method.EMA])
-    arg2: ... = Method.RMA
+    period: int = param(9, group="Test", inline="sub-group")
+    period_box: bool = param(False, group="Test", inline="sub-group")
+    period2: int = param(3, "Another_param", "Test", min_val=5, max_val=10, step=2)
+    arg: ... = Color.from_rgb(200, 50, 100)
+    arg2: ... = param(True, tooltip="Just a checkbox")
     method: Method = param(Method.SMA, group="Test")
 
 

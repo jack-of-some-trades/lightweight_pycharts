@@ -1,7 +1,7 @@
 """ Classes and functions that handle implementation of chart indicators """
 
 from logging import getLogger
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass
 from abc import abstractmethod
 from inspect import signature, _empty, currentframe
 from typing import (
@@ -200,7 +200,7 @@ class Indicator(metaclass=IndicatorMeta):
     # isn't the one actually creating the object.
 
     # Dunder Cls Params specific to each Sub-Class; set by MetaClass
-    __options__: IndicatorOptionsCls
+    __options__: Optional[IndicatorOptionsCls] = None
     __set_args__: dict[str, tuple[type, Any]]
     __input_args__: dict[str, tuple[type, Any]]
     __update_args__: dict[str, tuple[type, Any]]
@@ -259,10 +259,6 @@ class Indicator(metaclass=IndicatorMeta):
         self.name = self.__class__.__name__
         self.events = self.parent_frame._window.events
 
-        # Used as tmp storeage for an __options__ instance w/ sources replaced by strings
-        # since functions cannot be pickled and sent to the JS Display
-        self._opts = {}
-
         self._fwd_queue.put((JS_CMD.ADD_INDICATOR, *self._ids, self.name))
 
     @property
@@ -305,6 +301,33 @@ class Indicator(metaclass=IndicatorMeta):
         for watcher in self._observers:
             if watcher is not None:
                 watcher.notify_clear(self)
+
+    def __parse_options_obj__(self, obj: IndicatorOptions) -> dict:
+        "Parse an IndicatorOptions instance into a pickleable dict"
+        if self.__options__ is None:
+            logger.error(
+                "Cannot set Indicator Menu, %s needs a __options__ Class", self.name
+            )
+            return {}
+
+        _opts = {}
+        for k in self.__options__.__args__:
+            v = getattr(obj, k, None)
+            if k in self.__options__.__src_args__:
+                # Replace all source args with Tuple[str] representations of the functions
+                # boundCls.Func_name() -> out_args === "(boundCls.id, Func_name)"
+                _opts[k] = (
+                    getattr(getattr(v, "__self__", None), "_js_id", "None"),
+                    getattr(v, "__name__", "None"),
+                )
+            else:
+                _opts[k] = v
+        return _opts
+
+    def __parse_options_dict__(self, args: dict) -> Optional[IndicatorOptions]:
+        "Parse a dictionary into an instance of self.__options__"
+        logger.info(args)
+        self.recalculate()
 
     def delete(self):
         "Remove the indicator and all of it's instance objects"
@@ -448,40 +471,20 @@ class Indicator(metaclass=IndicatorMeta):
 
     def init_menu(self, opts: IndicatorOptions):
         "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"
-        if getattr(self, "__options__", None) is None:
+        if self.__options__ is None:
             logger.error(
-                "Cannot set Indicator Menu, %s needs a self.__options__ Class instance",
-                self.name,
+                "Cannot set Indicator Menu, %s needs a __options__ Class", self.name
             )
             return
-
-        # Would use asdict() but it tries to make a deep copy and it can't copy bound functions
-        _opts = {}
-        for k in self.__options__.__args__:
-            v = getattr(opts, k, None)
-            if k in self.__options__.__src_args__:
-                # Replace all source args with Tuple[str] representations of the functions
-                # boundCls.Func_name() -> out_args === "(boundCls.id, Func_name)"
-                _opts[k] = (
-                    getattr(getattr(v, "__self__", None), "_js_id", "None"),
-                    getattr(v, "__name__", "None"),
-                )
-            else:
-                _opts[k] = v
 
         self._fwd_queue.put(
             (
                 JS_CMD.SET_INDICATOR_MENU,
                 *self._ids,
                 self.__options__.__menu_struct__,
-                _opts,
+                self.__parse_options_obj__(opts),
             )
         )
-
-    def set_options(self, opts: IndicatorOptions):
-        "Called by Javascript when the user updates the Indicator's Options on Screen"
-        self.opts = opts
-        self.recalculate()
 
     def get_primitives_of_type[T: pr.Primitive](self, _type: type[T]) -> dict[str, T]:
         "Returns a Dictionary of Primitives owned by this indicator of the Given Type"

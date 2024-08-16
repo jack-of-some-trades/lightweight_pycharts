@@ -46,11 +46,6 @@ class js_api:
         # done after the py_webivew window has loaded
         self.view_window = view_window
 
-    def callback(self, msg: str) -> None:
-        "Generic Callback that passes serialized data as a string"
-        logger.debug("Recieved Message from JS: %s", msg)
-        self.rtn_queue.put((PY_CMD.PY_EXEC, msg))
-
     def close(self) -> None:
         self.view_window.close()
 
@@ -118,6 +113,13 @@ class js_api:
     ):
         self.rtn_queue.put(
             (PY_CMD.SYMBOL_SEARCH, symbol, confirmed, types, brokers, exchanges)
+        )
+
+    def set_indicator_options(
+        self, container_id: str, frame_id: str, indicator_id: str, obj: dict
+    ) -> None:
+        self.rtn_queue.put(
+            (PY_CMD.SET_INDICATOR_OPTS, container_id, frame_id, indicator_id, obj)
         )
 
 

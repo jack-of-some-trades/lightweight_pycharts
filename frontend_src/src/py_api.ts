@@ -49,7 +49,9 @@ export class py_api {
         console.log(`Search Request: ${symbol},${types},${brokers},${exchanges},${confirmed}`)
     };
 
-    callback = (msg: string) => {console.log(msg)}
+    set_indicator_options = (container_id: string, frame_id: string, ind_id:string, obj: Object) => {
+        console.log(`Set Indicator Options: ${container_id},${frame_id},${ind_id}`, obj)
+    }
     
     /* ---------------- Python >>> Javascript ---------------- */
     // The following functions are called by Python. They are set by JS as the window is rendered

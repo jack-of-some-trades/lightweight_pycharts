@@ -57,7 +57,6 @@ def dump(obj: Any) -> str:
 
 class PY_CMD(IntEnum):
     "Enumeration of the various commands that javascript can send to python"
-    PY_EXEC = auto()
     ADD_CONTAINER = auto()
     REMOVE_CONTAINER = auto()
     REORDER_CONTAINERS = auto()
@@ -72,6 +71,7 @@ class PY_CMD(IntEnum):
     SERIES_CHANGE = auto()
     LAYOUT_CHANGE = auto()
     ADD_INDICATOR = auto()
+    SET_INDICATOR_OPTS = auto()
 
 
 class JS_CMD(IntEnum):

@@ -1,5 +1,5 @@
 
-import { Accessor, createSignal, For, Setter, Show } from "solid-js"
+import { Accessor, createSignal, For, onCleanup, onMount, Setter, Show } from "solid-js"
 import "../../../css/frame_widgets/chart_frames/pane.css"
 import { pane } from "../../../src/pane"
 import { Icon, icons } from "../../icons"
@@ -60,8 +60,16 @@ interface tag_props {
 
 function IndicatorTag(props:tag_props){
     const [hover, setHover] = createSignal<boolean>(false)
+
+    //Following events provide expected show/hide click behavior over the overlay menu
+    let div = document.createElement('div')
+    const stopPropagation = (e:MouseEvent) => {e.stopPropagation()}
+    onMount(()=>div.addEventListener('mousedown', stopPropagation))
+    onCleanup(()=>div.removeEventListener('mousedown', stopPropagation))
+
     return (
         <div 
+            ref={div}
             class="ind_tag"
             onmouseenter={()=>setHover(true)} 
             onmouseleave={()=>setHover(false)}
@@ -81,8 +89,9 @@ function IndicatorTag(props:tag_props){
 
                 <Show when={props.deletable}>
                     <Icon icon={icons.close_small} {...closeProps}/> {/* onClk => delete *Through window.api* */}
-                    {/* <Icon icon={icons.menu_ext_small} {...menuProps}/>  onClk => spawn Simple Menu? */}
                 </Show>
+
+                {/* <Icon icon={icons.menu_ext_small} {...menuProps}/>  onClk => spawn Simple Menu? */}
             </Show>
         </div>
     ) 

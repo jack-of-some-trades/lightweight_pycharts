@@ -108,6 +108,7 @@ class Window:
                     brokers=args[3],
                     exchanges=args[4],
                 )
+
             case PY_CMD.DATA_REQUEST, str(), str(), orm.Symbol(), orm.TF():
                 if (container := self.get_container(args[0])) is None:
                     logger.warning(
@@ -126,11 +127,13 @@ class Window:
                     "timeframe": args[3],
                 }
                 self.events.data_request(symbol=args[2], tf=args[3], rsp_kwargs=kwargs)
+
             case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts():
                 if (container := self.get_container(args[0])) is None:
                     logger.warning("Couldn't find Container '%s'", args[0])
                     return
                 container.set_layout(args[1])
+
             case PY_CMD.SERIES_CHANGE, str(), str(), orm.series.SeriesType():
                 if (container := self.get_container(args[0])) is None:
                     logger.warning(
@@ -145,16 +148,37 @@ class Window:
                     )
                     return
                 frame.main_series.change_series_type(args[2])
+
+            case PY_CMD.SET_INDICATOR_OPTS, str(), str(), str(), dict():
+                if (container := self.get_container(args[0])) is None:
+                    logger.warning(
+                        "Failed Indicator Set Options, Couldn't find Conatiner ID %s",
+                        args[0],
+                    )
+                    return
+                if (frame := container.frames[args[1]]) is None:
+                    logger.warning(
+                        "Failed Indicator Set Options, Couldn't find Frame ID %s",
+                        args[1],
+                    )
+                    return
+                if (indicator := frame.indicators[args[2]]) is None:
+                    logger.warning(
+                        "Failed Indicator Set Options, Couldn't find Indicator ID %s",
+                        args[2],
+                    )
+                    return
+                indicator.__parse_options_dict__(args[3])
+
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
+
             case PY_CMD.REMOVE_CONTAINER, str():
                 self.del_tab(args[0])
+
             case PY_CMD.REORDER_CONTAINERS, int(), int():
                 self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
                 self.containers.insert(args[1], self.containers.pop(args[0]))
-            case PY_CMD.PY_EXEC, str():
-                # TODO: Determine if this will stay as part of the code's functionality
-                logger.info("Recieved Message from View: %s", args[0])
 
     async def _manage_queue(self):
         logger.debug("Entered Async Queue Manager")
@@ -176,15 +200,6 @@ class Window:
         "Await closure if using asyncio. Useful if Daemon = True"
         if isinstance(self._queue_manager, asyncio.Task):
             await self._queue_manager
-
-    def _queue_test(self):
-        self._fwd_queue.put(
-            (
-                JS_CMD.JS_CODE,
-                "api.callback(`weeeeeeeee`)",
-                "api.callback(`weeeeeeeeeeeeeeeee`)",
-            )
-        )
 
     # endregion
 
@@ -248,6 +263,7 @@ class Window:
         self._fwd_queue.put(JS_CMD.CLOSE)
 
     def load_css(self, filepath: str):
+        "Pass a .css file's absolute filepath to the window to load it"
         self._fwd_queue.put((JS_CMD.LOAD_CSS, filepath))
 
     def new_tab(self) -> Container:
@@ -266,16 +282,17 @@ class Window:
         """
         for container in self.containers:
             if container.js_id == container_id:
-                self._container_ids.remove(container_id)
-                self.containers.remove(container)
-                self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
-                self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
-
                 # Be sure to allow indicators to clear themselves
                 # This ensures web-sockets and other assets are closed.
                 for frame in container.frames.values():
                     for indicator in frame.indicators.copy().values():
                         indicator.delete()
+
+                # Remove the Objects from local storable and erase their JS global references
+                self._container_ids.remove(container_id)
+                self.containers.remove(container)
+                self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
+                self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
                 return
 
     def get_container(self, _id: int | str) -> Optional[Container]:

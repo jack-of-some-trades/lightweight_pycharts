@@ -206,17 +206,21 @@ export class indicator {
         this.menu_id = `${this.pane.id}_${this.id}_options`
 
         //See EoF for Explanation of this second AttachOverlay Call.
-        OverlayCTX().attachOverlay(this.menu_id, undefined, menuVisibility, false)
+        OverlayCTX().attachOverlay(this.menu_id, undefined, menuVisibility)
         OverlayCTX().attachOverlay(
             this.menu_id,
             IndicatorOpts({
                 id: this.menu_id,
                 parent_ind: this,
+                setOptions: setOptions,
                 menu_struct: this.menu_struct,
-                setOptions: setOptions
+                close_menu: () => menuVisibility[1](false),
+
+                container_id: this.pane.id.substring(0,6),
+                frame_id: this.pane.id.substring(0,13),
+                indicator_id: this.id
             }),
-            menuVisibility,
-            false
+            menuVisibility
         )
 
         // When Options update, send the list back to Python
@@ -237,12 +241,12 @@ export class indicator {
  * As written, this only works if the onMount() is called at some point after the AttachOverlay()
  * call is completed. 
  * 
- * This works for all other Overlays since they are created with the full tree and are not mounted
- * until later. In the case of IndicatorOpts, this element is created after the full tree and thus can be
- * mounted immediately causing a bug where the overlay can never be displayed. The extra bogus call
- * to AttachOverlay() puts the menuVisibility signal where it needs to be before IndicatorOpts is
- * ever created.
+ * This works for all other Overlays since they are created with the full document tree and are not mounted
+ * until after all objects are created. In the case of IndicatorOpts, this element is created after the full 
+ * tree and thus can be mounted immediately causing a bug where the overlay can never be displayed. The extra 
+ * bogus call to AttachOverlay() puts the menuVisibility signal where it needs to be before IndicatorOpts is
+ * ever created & mounted.
  * 
- * Kinda a problem baked into the OverlayDiv... but this fixes it without repercussions so this is likely
- * how the implementation will stay.... yikes...
+ * The problem is kinda baked into the OverlayDiv... but this fixes it without repercussions so this is likely
+ * how the implementation will stay...
  */

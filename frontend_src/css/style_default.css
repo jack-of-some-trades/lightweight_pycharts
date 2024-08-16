@@ -70,4 +70,12 @@
     --chart-scale-mode: 1;
     --chart-scale-mode-left: var(--chart-scale-mode);
     --chart-scale-mode-right: var(--chart-scale-mode);
+
+    --tooltip-text: var(--text-color);
+    --tooltip-color: var(--accent-color);
+    --tooltip-background: var(--hover-color-light);
+
+    --indicator-border-color: #b2b5be;
+    --indicator-group-text-color: var(--accent-color);
+    --indicator-background-fade: #00000027;
 }

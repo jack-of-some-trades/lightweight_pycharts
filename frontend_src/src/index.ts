@@ -38,6 +38,7 @@ declare module "solid-js" {
         interface ExplicitAttributes{
             active: string
             target: string
+            type: string
         }
     }
 }

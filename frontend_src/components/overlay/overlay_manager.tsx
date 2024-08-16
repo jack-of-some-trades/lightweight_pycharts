@@ -172,7 +172,7 @@ export function OverlayDiv(props:overlay_div_props){
     let dragListenerSet = !(props.drag_handle && props.setLocation)
     props.classList = {...props.classList, overlay:true}
     const [style, setStyle] = createSignal<JSX.CSSProperties>(initPosition(props.location_ref, props.location))
-    const [, divProps] = splitProps(props, ["id", "location", "setLocation", "location_ref", "updateLocation", "bounding_client_id"])
+    const [, divProps] = splitProps(props, ["id", "location", "setLocation", "location_ref", "updateLocation", "drag_handle", "bounding_client_id"])
     
     //#region ------------------- Drag Handle Listeners ------------------- //
 

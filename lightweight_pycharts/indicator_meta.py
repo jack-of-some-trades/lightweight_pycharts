@@ -16,6 +16,8 @@ from typing import (
 
 import pandas as pd
 
+from lightweight_pycharts.orm.types import Color
+
 from .util import is_dunder
 
 logger = getLogger("lightweight-pycharts")
@@ -204,10 +206,6 @@ class OptionsMeta(type):
 
             # Param() call on this arg. Fetch the Param() Options
             arg_param = arg_params[alt_arg_name]
-            # An argument with an options list is always a drop down menu
-            if arg_param["options"] is not None and arg_type != "enum":
-                arg_type = "select"
-
             arg_struct = mcs._parse_arg_param(
                 arg_key, namespace[arg_key], arg_type, src_type, arg_param
             )
@@ -265,6 +263,7 @@ class OptionsMeta(type):
         rtn_struct = {
             "default": arg,
             "tooltip": arg_params["tooltip"],
+            "options": arg_params["options"],
         }
 
         rtn_struct["title"] = (
@@ -274,28 +273,7 @@ class OptionsMeta(type):
         if arg_type == "source":  # ------------------------------------------------
             rtn_struct["src_type"] = src_arg
 
-        elif arg_type == "select":  # ----------------------------------------------
-            # Ensure the default is in the options list
-            if arg not in arg_params["options"]:
-                arg_params["options"] = [arg, *arg_params["options"]]
-            rtn_struct["options"] = arg_params["options"]
-
-        elif arg_type == "int" or arg_type == "float":  # --------------------------
-            if arg < arg_params["min"]:
-                raise ValueError(
-                    f"Indicator Option ({arg_key}) default value is less than minimum"
-                )
-            if arg > arg_params["max"]:
-                raise ValueError(
-                    f"Indicator Option ({arg_key}) default value is greater than maximum"
-                )
-            if arg_params["min"] > arg_params["max"]:
-                raise ValueError(
-                    f"Indicator Option ({arg_key}) Minimum Greater than Maximum"
-                )
-            if (arg_params["max"] - arg_params["min"]) < abs(arg_params["step"]):
-                raise ValueError(f"Indicator Option ({arg_key}) Step too large")
-
+        elif arg_type == "number":  # ----------------------------------------------
             rtn_struct["min"] = arg_params["min"]
             rtn_struct["max"] = arg_params["max"]
             rtn_struct["step"] = arg_params["step"]
@@ -378,6 +356,8 @@ class OptionsMeta(type):
         elif len(type_bases) == 0:
             if issubclass(arg_type, Enum):
                 type_str = "enum"
+            elif arg_type == Color:
+                type_str = "color"
             else:
                 raise TypeError("Indicator Option Type Cannot be an Object or NoneType")
         elif len(type_bases) == 1:
