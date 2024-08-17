@@ -1,16 +1,18 @@
-import { createSignal, For, Match, Show, splitProps, Switch } from "solid-js"
-import { SetStoreFunction } from "solid-js/store"
+import { Accessor, createSignal, For, Match, Show, splitProps, Switch } from "solid-js"
 import { indicator } from "../../../src/indicator"
 import { Icon, icons, TextIcon } from "../../icons"
 import { location_reference, overlay_div_props, OverlayDiv, point } from "../../overlay/overlay_manager"
 
 import "../../../css/frame_widgets/chart_frames/indicator_options.css"
+import { data_src } from "../../../src/frame"
 
+type options_obj = {[key:string]: any}
 interface indicator_option_props extends Omit<overlay_div_props, "location_ref" | "location">{
     parent_ind:indicator
     menu_struct: object
-    setOptions: SetStoreFunction<object>
+    options: options_obj
     close_menu: ()=>{}
+    sources: Accessor<data_src[]>
     container_id:string
     frame_id:string
     indicator_id:string
@@ -27,7 +29,6 @@ function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
                 switch(node.getAttribute('type')){
                     case ("checkbox"): return [node.id, node.checked]
                     case ("number"): return [node.id, parseFloat(node.value)]
-                    case ("source"): return [node.id, [node.value, 1]]
                     default: return [node.id, node.value]
                 }
             })
@@ -36,6 +37,7 @@ function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
 }
 
 export function IndicatorOpts(props:indicator_option_props){
+    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id"])
     const [location, setLocation] = createSignal<point>({x:0, y:0})
     const position_menu = () => {setLocation({x:window.innerWidth*0.7, y:window.innerHeight*0.2})}
     let form = document.createElement('form')
@@ -61,7 +63,7 @@ export function IndicatorOpts(props:indicator_option_props){
         >
             {/********* Title Bar *********/}
             <div class="title_box">
-                <h2>Indicator Options</h2>
+                <h2>{props.parent_ind.type + " • " + props.parent_ind.name + "Options"}</h2>
                 <Icon icon={icons.close} force_reload={true} onClick={props.close_menu}/>
             </div>
             
@@ -69,13 +71,13 @@ export function IndicatorOpts(props:indicator_option_props){
             <form ref={form} onSubmit={boundSubmit}>
                 <For each={Object.entries(props.menu_struct)}>{([key, [type, params]]) => 
                     <Switch fallback={<>
-                            <Input key={key} type={type} params={params} setOptions={props.setOptions}/>
+                            <Input key={key} type={type} params={params} {...passDown}/>
                         </>}>
                         <Match when={type === "group"}>
-                            <Group title={key} params={params} setOptions={props.setOptions}/>
+                            <Group title={key} params={params} {...passDown}/>
                         </Match>
                         <Match when={type === "inline"}>
-                            <Inline title={key} params={params} setOptions={props.setOptions}/>
+                            <Inline title={key} params={params} {...passDown}/>
                         </Match>
                     </Switch>
                 }</For>
@@ -91,20 +93,23 @@ export function IndicatorOpts(props:indicator_option_props){
 }
 
 interface section_props {
-    title:string
-    params:object
-    setOptions: SetStoreFunction<object>
+    title: string
+    params: object
+    options: options_obj
+    indicator_id:string,
+    sources: Accessor<data_src[]>
 }
 function Group(props:section_props){
+    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id"])
     return  (
         <div class="group">
             <h3 innerText={props.title}/>
             <For each={Object.entries(props.params)}>{([key, [type, params]]) => 
                 <Switch fallback={<>
-                        <Input key={key} type={type} params={params} setOptions={props.setOptions}/>
+                        <Input key={key} type={type} params={params} {...passDown}/>
                     </>}>
                     <Match when={type === "inline"}>
-                        <Inline title={key} params={params} setOptions={props.setOptions}/>
+                        <Inline title={key} params={params} {...passDown} />
                     </Match>
                 </Switch>
             }</For>
@@ -112,26 +117,31 @@ function Group(props:section_props){
     )
 }
 function Inline(props:section_props){
+    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id"])
     return  (
         <div class="inline">
             <For each={Object.entries(props.params)}>{([key, [type, params]]) => 
-                <Input key={key} type={type} params={params} setOptions={props.setOptions}/>
+                <Input key={key} type={type} params={params} {...passDown}/>
             }</For>
         </div>
     )
 }
 
 interface input_switch_props extends input_props {type:string}
-interface input_props {key:string; params:input_params, setOptions:SetStoreFunction<object>}
+interface input_props {
+    key:string, 
+    indicator_id:string,
+    params:input_params, 
+    options:options_obj,
+    sources: Accessor<data_src[]>
+}
 //The following interface is a catch all for anything the Indicator Options 
 //Metaclass _parse_arg[_param] functions throw into the menu_struct for each argument
 interface input_params {
     title: string
-    default: any
+    default : any   //This has no current use.
     tooltip?: string
     options?: Array<any>
-
-    label_map?: {[key: string]: number};
 
     src_type?: string
 
@@ -171,17 +181,17 @@ function Input(props: input_switch_props){
 }
 
 function BoolInput(props: input_props){
-    return <input id={props.key} type="checkbox" checked={props.params.default ?? false}/>
+    return <input id={props.key} type="checkbox" checked={props.options[props.key] ?? false}/>
 }
 
 function StringInput(props: input_props){
-    return <input id={props.key} type="text" value={props.params.default}/>
+    return <input id={props.key} type="text" value={props.options[props.key]}/>
 }
 
 function NumberInput(props: input_props){
     return (
         <input id={props.key}  type="number"
-            value={props.params.default}
+            value={props.options[props.key]}
             max={props.params.max}
             min={props.params.min}
             step={props.params.step}
@@ -196,8 +206,8 @@ function EnumInput(props: input_props){
             <For each={props.params.options}>{(option) =>
                 <option 
                     value={option}
-                    innerText={props.params.label_map? props.params.label_map[option] : option}
-                    selected={option == props.params.default? true : undefined}
+                    innerText={option}
+                    selected={option == props.options[props.key]? true : undefined}
                 />
             }</For>
         </select>
@@ -218,7 +228,7 @@ const UnixToString = (timestamp: number) => {
     
 }
 function TimeInput(props: input_props){
-    return <input id={props.key} type="datetime-local" value={UnixToString(props.params.default)}/>
+    return <input id={props.key} type="datetime-local" value={UnixToString(props.options[props.key])}/>
 }
 
 const RGBAToHex = (rgba:string) => {
@@ -230,17 +240,26 @@ const RGBAToHex = (rgba:string) => {
       .map(string => string.length === 1 ? "0" + string : string)
       .join("")
   }
-function ColorInput(props: input_props){return <input id={props.key} type="color" value={RGBAToHex(props.params.default)}/>}
+function ColorInput(props: input_props){return <input id={props.key} type="color" value={RGBAToHex(props.options[props.key])}/>}
 
 function SourceInput(props: input_props){
     return <span class="select-span">
         <select id={props.key} attr:type="source">
-            <For each={props.params.options}>{(option) =>
-                <option 
-                    value={option}
-                    innerText={option}
-                    selected={option == props.params.default? true : undefined}
-                />
+            <For each={props.sources()}>{({indicator, function_name, source_type}) => {
+                if (props.indicator_id === indicator.id)
+                    return // Skip Sources from Self
+                else if (source_type !== props.params.src_type)
+                    return // Skip Mismatched Source Data Types
+                else {
+                    let src_string = [indicator.id, function_name].join(":")
+                    return (
+                        <option value={src_string}
+                            innerText={[indicator.type,indicator.name,function_name].join(":")}
+                            selected={src_string == props.options[props.key]? true : undefined}
+                        />
+                    )
+                }
+            }
             }</For>
         </select>
         <Icon icon={icons.menu_arrow_ns}/>

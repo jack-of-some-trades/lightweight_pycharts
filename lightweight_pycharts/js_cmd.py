@@ -100,13 +100,13 @@ class JS_CMD(IntEnum):
     SET_FRAME_SYMBOL = auto()
     SET_FRAME_TIMEFRAME = auto()
     SET_FRAME_SERIES_TYPE = auto()
+    CREATE_INDICATOR = auto()
+    DELETE_INDICATOR = auto()
 
     # Pane Commands
     ADD_PRIMITIVE = auto()
     REMOVE_PRIMITIVE = auto()
     UPDATE_PRIMITIVE = auto()
-    ADD_INDICATOR = auto()
-    REMOVE_INDICATOR = auto()
     ADD_IND_PRIMITIVE = auto()
     REMOVE_IND_PRIMITIVE = auto()
     UPDATE_IND_PRIMITIVE = auto()
@@ -114,6 +114,7 @@ class JS_CMD(IntEnum):
     # Indicator Commands
     ADD_SERIES = auto()
     REMOVE_SERIES = auto()
+    SET_LEGEND_LABEL = auto()
     SET_SERIES_DATA = auto()
     CLEAR_SERIES_DATA = auto()
     UPDATE_SERIES_DATA = auto()
@@ -229,12 +230,19 @@ def update_whitespace_data(
 # region ------------------------ Pane ------------------------ #
 
 
-def add_indicator(pane_id: str, indicator_id: str, indicator_type: str) -> str:
-    return f"{pane_id}.add_indicator('{indicator_id}','{indicator_type}')"
+def create_indicator(
+    frame_id: str,
+    indicator_id: str,
+    pane_id: str,
+    outputs: dict,
+    indicator_type: str,
+    name: str,
+) -> str:
+    return f"{frame_id}.create_indicator('{indicator_id}', {dump(outputs)},'{indicator_type}','{name}',{pane_id})"
 
 
-def remove_indicator(pane_id: str, indicator_id: str) -> str:
-    return f"{pane_id}.remove_indicator('{indicator_id}')"
+def delete_indicator(frame_id: str, indicator_id: str) -> str:
+    return f"{frame_id}.delete_indicator('{indicator_id}')"
 
 
 def add_primitive(
@@ -252,22 +260,22 @@ def update_primitive(pane_id: str, primitive_id: str, args: dict[str, Any]) -> s
 
 
 # Retreives an indicator object from a pane to manipulate
-def indicator_preamble(pane_id: str, indicator_id: str) -> str:
+def indicator_preamble(frame_id: str, indicator_id: str) -> str:
     return f"""
-        let indicator = {pane_id}.indicators.get('{indicator_id}');
+        let indicator = {frame_id}.indicators.get('{indicator_id}');
         """
 
 
-def indicator_set_menu(pane_id: str, indicator_id: str, menu_struct, options) -> str:
+def indicator_set_menu(frame_id: str, indicator_id: str, menu_struct, options) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.set_menu_struct({dump(menu_struct)}, {dump(options)});"
     )
 
 
-def indicator_set_options(pane_id: str, indicator_id: str, options) -> str:
+def indicator_set_options(frame_id: str, indicator_id: str, options) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"if (indicator.setOptions !== undefined) indicator.set_options({dump(options)});"
     )
 
@@ -277,64 +285,70 @@ def indicator_set_options(pane_id: str, indicator_id: str, options) -> str:
 
 
 def add_series(
-    pane_id: str, indicator_id: str, series_id: str, series_type: SeriesType
+    frame_id: str, indicator_id: str, series_id: str, series_type: SeriesType
 ) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.add_series('{series_id}', {series_type});"
     )
 
 
-def remove_series(pane_id: str, indicator_id: str, series_id: str) -> str:
+def remove_series(frame_id: str, indicator_id: str, series_id: str) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.remove_series('{series_id}');"
     )
 
 
 def set_series_data(
-    pane_id: str, indicator_id: str, series_id: str, data: DataFrame
+    frame_id: str, indicator_id: str, series_id: str, data: DataFrame
 ) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.set_series_data('{series_id}', {dump(data)});"
     )
 
 
-def clear_series_data(pane_id: str, indicator_id: str, series_id: str) -> str:
+def set_legend_label(frame_id: str, indicator_id: str, label: str) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id) + f"indicator.setLabel('{label}');"
+    )
+
+
+def clear_series_data(frame_id: str, indicator_id: str, series_id: str) -> str:
+    return (
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.set_series_data('{series_id}', []);"
     )
 
 
 def update_series_data(
-    pane_id: str, indicator_id: str, series_id: str, data: AnySeriesData
+    frame_id: str, indicator_id: str, series_id: str, data: AnySeriesData
 ) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.update_series_data('{series_id}', {dump(data)});"
     )
 
 
 def change_series_type(
-    pane_id: str,
+    frame_id: str,
     indicator_id: str,
     series_id: str,
     series_type: SeriesType,
     data: DataFrame,
 ) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.change_series_type('{series_id}', {series_type}, {dump(data)});"
     )
 
 
 def update_series_opts(
-    pane_id: str, indicator_id: str, series_id: str, opts: AnySeriesOptions
+    frame_id: str, indicator_id: str, series_id: str, opts: AnySeriesOptions
 ) -> str:
     rtn_str = (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.update_series_opts('{series_id}', {dump(opts)});"
     )
 
@@ -349,10 +363,10 @@ def update_series_opts(
 
 
 def update_scale_opts(
-    pane_id: str, indicator_id: str, series_id: str, opts: PriceScaleOptions
+    frame_id: str, indicator_id: str, series_id: str, opts: PriceScaleOptions
 ):
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.update_scale_opts('{series_id}', {dump(opts)});"
     )
 
@@ -363,37 +377,37 @@ def update_scale_opts(
 
 
 def add_ind_primitive(
-    pane_id: str,
+    frame_id: str,
     indicator_id: str,
     primitive_id: str,
     primitive_type: str,
     args: dict[str, Any],
 ) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.add_primitive('{primitive_id}','{primitive_type}', {dump(args)})"
     )
 
 
 def remove_ind_primitive(
-    pane_id: str,
+    frame_id: str,
     indicator_id: str,
     primitive_id: str,
 ) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.remove_primitive('{primitive_id}')"
     )
 
 
 def update_ind_primitive(
-    pane_id: str,
+    frame_id: str,
     indicator_id: str,
     primitive_id: str,
     args: dict[str, Any],
 ) -> str:
     return (
-        indicator_preamble(pane_id, indicator_id)
+        indicator_preamble(frame_id, indicator_id)
         + f"indicator.update_primitive('{primitive_id}', {dump(args)})"
     )
 
@@ -430,9 +444,9 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.SET_FRAME_SYMBOL: set_frame_symbol,
     JS_CMD.SET_FRAME_TIMEFRAME: set_frame_timeframe,
     JS_CMD.SET_FRAME_SERIES_TYPE: set_frame_series_type,
+    JS_CMD.CREATE_INDICATOR: create_indicator,
+    JS_CMD.DELETE_INDICATOR: delete_indicator,
     # ---- Pane Commands ----
-    JS_CMD.ADD_INDICATOR: add_indicator,
-    JS_CMD.REMOVE_INDICATOR: remove_indicator,
     JS_CMD.ADD_PRIMITIVE: add_primitive,
     JS_CMD.REMOVE_PRIMITIVE: remove_primitive,
     JS_CMD.UPDATE_PRIMITIVE: update_primitive,
@@ -440,6 +454,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.ADD_SERIES: add_series,
     JS_CMD.REMOVE_SERIES: remove_series,
     JS_CMD.SET_SERIES_DATA: set_series_data,
+    JS_CMD.SET_LEGEND_LABEL: set_legend_label,
     JS_CMD.CLEAR_SERIES_DATA: clear_series_data,
     JS_CMD.UPDATE_SERIES_DATA: update_series_data,
     JS_CMD.CHANGE_SERIES_TYPE: change_series_type,

@@ -116,7 +116,9 @@ class IndicatorMeta(ABCMeta):
 
             rtn_type = output_func_sig.return_annotation
 
-            outputs[output_name] = object if isinstance(rtn_type, _empty) else rtn_type
+            outputs[output_name] = (
+                "any" if isinstance(rtn_type, _empty) else str(rtn_type)
+            )
 
             if (
                 getattr(output_func, "__default_param__", False)
@@ -176,25 +178,32 @@ class OptionsMeta(type):
                 """
             )
 
-        # ------ Populate __menu_struct__ and __src_args__ ------ #
-        __src_args__ = {}
+        # ------ Populate __menu_struct__ and __args__ ------ #
+        __arg_types__ = {}
+        __src_types__ = {}
         __menu_struct__ = {}
         # __menu_struct__ === {  Name: (type, *args*) } ** used to generate JS menu
         # Where type can be [bool, int, float, str, Timestamp, enum, source, group, inline]
         # if type is an inline or group then *args* is another Dict of { Name: (type, *args*) }
         # Groups can Nest Inlines, but not other groups, inlines cannot nest other inlines
 
-        # __src_args__ = { arg_name : arg_type } ** used to denote arguments that are functions
-        # Used to help make packaging the arguments for Queue transfer easier
-        # Since you can't directly send the functions through the queue
+        # __arg_types__ = { arg_name : arg_type } ** mapped argument types to aid reconstruction of
+        # a dataclass object from a dictionary of values
+
+        # __src_types__ = { arg_name : src_type } ** mapped source type for functions to type
+        # check data linkages
 
         for i, arg_key in enumerate(args):
             arg_type, src_type = mcs._process_type(
                 namespace[arg_key], __annotations__[arg_key]
             )
 
+            __arg_types__[arg_key] = arg_type
             if arg_type == "source":
-                __src_args__[arg_key] = src_type
+                __src_types__[arg_key] = src_type
+            if arg_type == "enum":
+                # Store a reference to the Enum Class for reconstruction
+                __src_types__[arg_key] = type(namespace[arg_key])
 
             # Place var in the global space if there was no param() call.
             if (alt_arg_name := f"@arg{i}") not in arg_params:
@@ -246,8 +255,8 @@ class OptionsMeta(type):
 
             # endregion
 
-        setattr(cls, "__args__", set(args))
-        setattr(cls, "__src_args__", __src_args__)
+        setattr(cls, "__arg_types__", __arg_types__)
+        setattr(cls, "__src_types__", __src_types__)
         setattr(cls, "__menu_struct__", __menu_struct__)
         return cls
 
@@ -279,22 +288,16 @@ class OptionsMeta(type):
             rtn_struct["step"] = arg_params["step"]
 
         elif arg_type == "enum":  # ------------------------------------------------
-            # Remap all of the Enums to be their value
-            rtn_struct["default"] = arg.value
+            # Remap all of the Enums to be their name
+            rtn_struct["default"] = arg.name
             if arg_params["options"] is not None:
                 # Ensure the default is in the options list
                 if arg not in arg_params["options"]:
                     arg_params["options"] = [arg, *arg_params["options"]]
 
-                rtn_struct["options"] = [e.value for e in arg_params["options"]]
-                rtn_struct["label_map"] = dict(
-                    [(e.value, e.name) for e in arg_params["options"]]
-                )
+                rtn_struct["options"] = [e.name for e in arg_params["options"]]
             else:
-                rtn_struct["options"] = [e.value for e in type(arg)]  # type: ignore
-                rtn_struct["label_map"] = dict(
-                    [(e.value, e.name) for e in type(arg)]  # type: ignore
-                )
+                rtn_struct["options"] = [e.name for e in type(arg)]  # type: ignore
 
         # elif arg_type == "bool":
         # elif arg_type == "timestamp":
@@ -312,9 +315,8 @@ class OptionsMeta(type):
 
         # If given an Enum, Auto Populate an Options list
         elif isinstance(arg, Enum):
-            rtn_struct["default"] = arg.value
-            rtn_struct["options"] = [e.value for e in type(arg)]
-            rtn_struct["label_map"] = dict([(e.value, e.name) for e in type(arg)])
+            rtn_struct["default"] = arg.name
+            rtn_struct["options"] = [e.name for e in type(arg)]
 
         return rtn_struct
 

@@ -136,7 +136,7 @@ class Watcher:
         ):
             logger.warning(
                 "'%s' tried to clear '%s', but Watcher doesn't care.",
-                notifier.name,
+                notifier.cls_name,
                 self,
             )
 
@@ -150,25 +150,27 @@ class Watcher:
 
 class Options(metaclass=OptionsMeta):
     "Inheritable OptionsMeta Class"
-    __args__: ClassVar[set] = set()
-    __src_args__: ClassVar[dict] = {}
+    __arg_types__: ClassVar[dict] = {}
+    __src_types__: ClassVar[dict] = {}
     __menu_struct__: ClassVar[dict] = {}
 
 
 class IndicatorOptions(Protocol):
-    "Protocol Class to type check for an Indicator Options Dataclass"
-    __args__: ClassVar[set]
-    __src_args__: ClassVar[dict]
+    "Protocol Class to type check for an Indicator Options Dataclass Instance"
+    __arg_types__: ClassVar[dict]
+    __src_types__: ClassVar[dict]
     __menu_struct__: ClassVar[dict]
     __dataclass_fields__: ClassVar[Dict[str, Any]]
 
 
 class IndicatorOptionsCls(Protocol):
     "Protocol Class to type check for an Indicator Options Dataclass"
-    __args__: set
-    __src_args__: dict
+    __arg_types__: dict
+    __src_types__: dict
     __menu_struct__: dict
     __dataclass_fields__: Dict[str, Any]
+
+    def __call__(self, *_, **__) -> IndicatorOptions: ...
 
 
 class Indicator(metaclass=IndicatorMeta):
@@ -205,7 +207,7 @@ class Indicator(metaclass=IndicatorMeta):
     __input_args__: dict[str, tuple[type, Any]]
     __update_args__: dict[str, tuple[type, Any]]
     __default_output__: Optional[SeriesData]
-    __exposed_outputs__: dict[str, SeriesData | DataframeData]
+    __exposed_outputs__: dict[str, str]
 
     # Dunder Cls Param referenced by all Sub-Classes of Indicator
     __registered_indicators__: dict[str, "Indicator"]
@@ -213,6 +215,8 @@ class Indicator(metaclass=IndicatorMeta):
     def __init__(
         self,
         parent: "win.Frame | Indicator",
+        *,
+        display_name: str = "",
         js_id: Optional[str] = None,
         display_pane_id: Optional[str] = None,
     ) -> None:
@@ -223,6 +227,7 @@ class Indicator(metaclass=IndicatorMeta):
 
         if display_pane_id is None:
             display_pane_id = self.parent_frame.main_pane._js_id
+        self.display_pane_id = display_pane_id
 
         if js_id is None:
             self._js_id = self.parent_frame.indicators.generate_id(self)
@@ -236,8 +241,8 @@ class Indicator(metaclass=IndicatorMeta):
         else:
             self.parent_indicator = parent
 
-        # Tuple of Ids to make addressing through Queue easier: order = (pane, indicator)
-        self._ids = display_pane_id, self._js_id
+        # Tuple of Ids to make addressing through Queue easier: order = (frame, indicator)
+        self._ids = self.parent_frame.js_id, self._js_id
         self._fwd_queue = self.parent_frame._fwd_queue
 
         # Bind the default output function to this instance
@@ -255,11 +260,20 @@ class Indicator(metaclass=IndicatorMeta):
         self._watcher = Watcher(self)
         self._observers: list[Watcher] = []
 
-        # Name is used as an identifier when linking args from the screen.
-        self.name = self.__class__.__name__
         self.events = self.parent_frame._window.events
+        self.cls_name = self.__class__.__name__
+        self.display_name = display_name
 
-        self._fwd_queue.put((JS_CMD.ADD_INDICATOR, *self._ids, self.name))
+        self._fwd_queue.put(
+            (
+                JS_CMD.CREATE_INDICATOR,
+                *self._ids,
+                self.display_pane_id,
+                self.__exposed_outputs__,
+                self.cls_name,
+                display_name,
+            )
+        )
 
     @property
     def js_id(self) -> str:
@@ -303,30 +317,52 @@ class Indicator(metaclass=IndicatorMeta):
                 watcher.notify_clear(self)
 
     def __parse_options_obj__(self, obj: IndicatorOptions) -> dict:
-        "Parse an IndicatorOptions instance into a pickleable dict"
+        "Parse an IndicatorOptions instance into a picklable dict"
         if self.__options__ is None:
-            logger.error(
-                "Cannot set Indicator Menu, %s needs a __options__ Class", self.name
-            )
+            logger.error("Cannot parse obj, %s needs an options Class", self.cls_name)
             return {}
 
         _opts = {}
-        for k in self.__options__.__args__:
+        for k, arg_type in self.__options__.__arg_types__.items():
             v = getattr(obj, k, None)
-            if k in self.__options__.__src_args__:
+            if arg_type == "source":
                 # Replace all source args with Tuple[str] representations of the functions
-                # boundCls.Func_name() -> out_args === "(boundCls.id, Func_name)"
-                _opts[k] = (
-                    getattr(getattr(v, "__self__", None), "_js_id", "None"),
-                    getattr(v, "__name__", "None"),
-                )
+                # boundCls.Func_name() -> out_args === "[boundCls.id]:[Func_name]"
+                _opts[k] = getattr(getattr(v, "__self__", None), "_js_id", "None")
+                _opts[k] += ":" + getattr(v, "__name__", "None")
+            elif arg_type == "enum":
+                # Normally we dump the value, in this case we dump the name since
+                # it's only displayed in JS, not used.
+                _opts[k] = v.name if v is not None else None
             else:
+                # Remaining Objs are picklable and can be json dumped
                 _opts[k] = v
+
         return _opts
 
     def __parse_options_dict__(self, args: dict) -> Optional[IndicatorOptions]:
         "Parse a dictionary into an instance of self.__options__"
-        logger.info(args)
+        if self.__options__ is None:
+            logger.error("Cannot load obj, %s needs an options Class", self.cls_name)
+            return
+
+        # Change all of the dictonary values into their python objects
+        for k, v in args.items():
+            arg_type = self.__options__.__arg_types__[k]
+            if arg_type == "source":
+                ind_id, func_name = v.split(":")
+                args[k] = getattr(self.parent_frame.indicators[ind_id], func_name)
+            elif arg_type == "timestamp":
+                args[k] = pd.Timestamp(v)
+            elif arg_type == "enum":
+                args[k] = self.__options__.__src_types__[k]._member_map_[v]
+            elif arg_type == "color":
+                args[k] = Color.from_hex(v)
+
+        # pylint: disable=not-callable
+        logger.info(self.__options__(**args))  # ...but it is callable?
+        # pylint: enable=not-callable
+
         self.recalculate()
 
     def delete(self):
@@ -338,7 +374,7 @@ class Indicator(metaclass=IndicatorMeta):
             primative.delete()
         self.clear_data()  # Clear data after deleting sub-objects to limit redundant actions
         self.parent_frame.indicators.pop(self._js_id)
-        self._fwd_queue.put((JS_CMD.REMOVE_INDICATOR, *self._ids))
+        self._fwd_queue.put((JS_CMD.DELETE_INDICATOR, *self._ids))
 
     @abstractmethod
     def set_data(self, *_, **__):
@@ -415,7 +451,7 @@ class Indicator(metaclass=IndicatorMeta):
         # Check all required argument links are present
         if not set(cls.__input_args__.keys()).issubset(args.keys()):
             missing_args = set(cls.__input_args__.keys()).difference(args.keys())
-            raise ValueError(f"{self.name} Missing Arg Links for: {missing_args}")
+            raise ValueError(f"{self.cls_name} Missing Arg Links for: {missing_args}")
 
         # In the loops below the '_' param is the default_arg of the function.
         # It's not used because quite frankly i'm not sure how to implement that...
@@ -427,7 +463,7 @@ class Indicator(metaclass=IndicatorMeta):
 
             if not issubclass(arg_type, rtn_type):
                 raise TypeError(
-                    f"{self.name} Given {rtn_type} for parameter {name}. Expected type {arg_type}"
+                    f"{self.cls_name} Given {rtn_type} for parameter {name}. Expected {arg_type}"
                 )
 
             # Observables is the Union of set_args & update_args. Useful to have it's own reference
@@ -441,7 +477,7 @@ class Indicator(metaclass=IndicatorMeta):
 
             if bound_cls_inst in self._observers:
                 raise Warning(
-                    f"Circular Indicator dependency between {bound_cls_inst.name} & {self.name}"
+                    f"Circular Indicator dependency between {bound_cls_inst.name} & {self.cls_name}"
                 )
 
             # Create Dicts of Param_Name:Callable & Host_Indicator: Bool
@@ -472,9 +508,7 @@ class Indicator(metaclass=IndicatorMeta):
     def init_menu(self, opts: IndicatorOptions):
         "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"
         if self.__options__ is None:
-            logger.error(
-                "Cannot set Indicator Menu, %s needs a __options__ Class", self.name
-            )
+            logger.error("Cannot set Menu, %s needs an options Class", self.cls_name)
             return
 
         self._fwd_queue.put(
@@ -485,6 +519,10 @@ class Indicator(metaclass=IndicatorMeta):
                 self.__parse_options_obj__(opts),
             )
         )
+
+    def set_label(self, label: str):
+        "Set the label text for this indicator in the pane's Legend. Raw HTML Accepted"
+        self._fwd_queue.put((JS_CMD.SET_LEGEND_LABEL, *self._ids, label))
 
     def get_primitives_of_type[T: pr.Primitive](self, _type: type[T]) -> dict[str, T]:
         "Returns a Dictionary of Primitives owned by this indicator of the Given Type"
@@ -544,7 +582,7 @@ class Indicator(metaclass=IndicatorMeta):
         return self.parent_frame.main_series.bar_time(index)
 
 
-ParentType: TypeAlias = win.Frame | Indicator
+IndParentType: TypeAlias = win.Frame | Indicator
 # pylint: enable=protected-access
 
 
@@ -590,7 +628,7 @@ def param[
     """
 
     try:
-        # All I have to say is know when to break the rules >:D
+        # Know when to break the rules >:D
         namespace = currentframe().f_back.f_locals  # type: ignore
         struct = namespace.get("__arg_params__")
         if struct is None:
@@ -648,7 +686,7 @@ class Series(Indicator):
         *,
         js_id: Optional[str] = None,
     ) -> None:
-        super().__init__(parent, js_id)
+        super().__init__(parent, js_id=js_id, display_name="Main-Series")
 
         # Dunder to allow specific permissions to the main source of a data for a Frame.
         # Because reasons, the user can never accidentally set the _js_id to be __special_id__.

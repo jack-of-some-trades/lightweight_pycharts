@@ -32,7 +32,7 @@ interface overlay_struct {
 }
 export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
     const [overlays, setOverlays] = createStore<overlay_struct[]>([])
-    const displayMap = new Map<string, [Accessor<boolean>, Setter<boolean>]>()
+    const displayMap = new Map<string, Signal<boolean>>()
     const divMap = new Map<string, HTMLDivElement>()
 
     //#region ------------------- Overlay Context Functions ------------------- //
@@ -80,11 +80,9 @@ export function OverlayContextProvider(props:JSX.HTMLAttributes<HTMLElement>) {
 
     //#region ------------------- Global Event Listeners ------------------- //
 
-    //This Listener checks all Overlay Elements and removes visibility if a mouse event occurs 
-    //outside of a menu 
+    //This Listener checks all Overlay Elements and removes visibility if a mouse event occurs outside of a menu
     document.body.addEventListener('mousedown', (e) => 
-        Array.from(overlays).forEach(
-            ({id, hide}) => {
+        overlays.forEach(({id, hide}) => {
                 if (!hide) return // forEach equivalent to continue
 
                 let el = getDivReference(id)

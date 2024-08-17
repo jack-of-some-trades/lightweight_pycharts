@@ -389,8 +389,7 @@ class QWebView:  # (View):
     """Class to create and manage a Pyside QWebView widget"""
 
     def __init__(self) -> None:
-        # In theory, Even though most things you could want are already fleshed out
-        # in the PYWebView version, You could expand the View Class to work with QWebView.
-        # This would allow someone to place the window into the GUI and have a Custom Side/Bottom
-        # Bar that's implemented in Pyside/Pyqt to display a table/custom menu.. idk. options
+        # In theory, Even though most things you could want are already fleshed out in the PYWebView
+        # version, You could expand the View Class to work with QWebView. In the event that that may
+        # offer some unique advantage like a better window frame or something, idk man... options.
         raise NotImplementedError

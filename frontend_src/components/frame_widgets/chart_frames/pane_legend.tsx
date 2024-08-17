@@ -1,13 +1,14 @@
 
 import { Accessor, createSignal, For, onCleanup, onMount, Setter, Show } from "solid-js"
 import "../../../css/frame_widgets/chart_frames/pane.css"
+import { indicator } from "../../../src/indicator"
 import { pane } from "../../../src/pane"
 import { Icon, icons } from "../../icons"
 
 
 export interface legend_props {
     parent_pane:pane
-    indicators_list:Accessor<string[]>
+    indicators_list:Accessor<indicator[]>
 }
 
 export function PaneLegend(props:legend_props){
@@ -15,13 +16,12 @@ export function PaneLegend(props:legend_props){
 
     return <div class="pane_legend">
         <Show when={display()}>
-            <For each={props.indicators_list()}>{(str_id) => {
-                const indObj = props.parent_pane.indicators.get(str_id)
+            <For each={props.indicators_list()}>{(indObj) => {
                 if (indObj === undefined) return <div class="ind_tag">Undefined Indicator</div>
             
                 return (
                     <IndicatorTag
-                        name={indObj.type} 
+                        name={indObj.name !== ""? indObj.name : indObj.type } 
                         deletable={indObj.id != "i_XyzZy"} //Cannot Delete Main Series
                         innerHtml={indObj.labelHtml}
                         objVisibility={indObj.objVisibility[0]}

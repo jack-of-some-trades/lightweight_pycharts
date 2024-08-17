@@ -1,7 +1,6 @@
 import * as lwc from "lightweight-charts";
 import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createSignal, JSX, Setter } from "solid-js";
-import { SetStoreFunction } from "solid-js/store";
 import { ChartPane } from "../components/frame_widgets/chart_frames/chart_elements";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
@@ -22,7 +21,6 @@ export class pane {
     setActive: Setter<boolean>
 
     chart: IChartApi
-    indicators = new Map<string, indicator>()
     private primitives_left = new Map<string, PrimitiveBase>()
     private primitives_right = new Map<string, PrimitiveBase>()
     private primitives_overlay = new Map<string, PrimitiveBase>()
@@ -33,12 +31,11 @@ export class pane {
     whitespace_series: u.LineSeries
     private chart_div: HTMLDivElement
 
-    // TSX Element vars
-    private setIndicatorIds: SetStoreFunction<string[]>
+    // Reference to Indicators on the Pane used to construct the Pane's Legend
+    private indicators: Accessor<indicator[]>
+    private setIndicators: Setter<indicator[]>
 
-    constructor(
-        id: string,
-    ) {
+    constructor(id: string) {
         this.id = id
 
         const [active, setActive] = createSignal<boolean>(false)
@@ -54,13 +51,14 @@ export class pane {
         this.chart_div = this.chart.chartElement()
 
         //A List of Ids is redundant, but it genereates a reactive update to be used by the pane Legend
-        const [indicatorIds, setIndicatorIds] = createSignal<string[]>([])
-        this.setIndicatorIds = setIndicatorIds
+        const indicatorSignal = createSignal<indicator[]>([])
+        this.indicators = indicatorSignal[0]
+        this.setIndicators = indicatorSignal[1]
+        
         const legend_props = {
             parent_pane:this,
-            indicators_list:indicatorIds
+            indicators_list:this.indicators
         }
-
         this.element = ChartPane({
             ref:setDiv,
             chart_el:this.chart_div,
@@ -142,20 +140,15 @@ export class pane {
         this.primitive_overlay.setData([primitive_data])
     }
 
-    protected add_indicator(_id: string, type: string, menu_struct:any, options:any) {
-        if (menu_struct === null) menu_struct = {}
-        if (options === null) options = {}
-        this.indicators.set(_id, new indicator(_id, type, this))
-        this.setIndicatorIds([...this.indicators.keys()])
+    attach_indicator_to_legend(indicator:indicator) {
+        if (!this.indicators().includes(indicator)) 
+            this.setIndicators([...this.indicators(), indicator])
     }
 
-    protected remove_indicator(_id: string) {
-        let indicator = this.indicators.get(_id)
-        if (indicator === undefined) return
-
-        indicator.delete()
-        this.indicators.delete(_id)
-        this.setIndicatorIds([...this.indicators.keys()])
+    detach_indicator_from_legend(indicator:indicator) {
+        this.setIndicators(
+            this.indicators().filter((a_ind) => a_ind !== indicator)
+        )
     }
 
     protected add_primitive(_id: string, _type: string, params:object) {
@@ -190,7 +183,6 @@ export class pane {
 
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
-    rebuild_legend(){this.setIndicatorIds([...this.indicators.keys()])}
     update_opts(newOpts: DP<lwc.TimeChartOptions>) { this.chart.applyOptions(newOpts) }
     update_timescale_opts(newOpts: DP<lwc.HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
 }

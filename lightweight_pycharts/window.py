@@ -382,7 +382,7 @@ class Container:
         frame_diff = len(self.frames) - layout.num_frames
         if frame_diff < 0:
             for _ in range(-frame_diff):
-                logger.info("Add Frame")
+                logger.debug("Add Frame")
                 self.add_frame()
 
         self._fwd_queue.put((JS_CMD.SET_LAYOUT, self._js_id, layout))
@@ -540,5 +540,5 @@ class Pane:
         return self._js_id
 
     def add_primitive(self):
-        """TBD"""
+        """TBD?"""
         raise NotImplementedError

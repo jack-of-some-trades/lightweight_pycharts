@@ -1,8 +1,9 @@
 import { PriceScaleOptions } from "lightweight-charts";
-import { Accessor, createEffect, createSignal, Setter, Signal } from "solid-js";
+import { Accessor, createSignal, Setter, Signal } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import { IndicatorOpts } from "../components/frame_widgets/chart_frames/indicator_options";
 import { OverlayCTX } from "../components/overlay/overlay_manager";
+import { data_src } from "./frame";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
 import { pane } from "./pane";
@@ -12,6 +13,7 @@ import * as u from "./types";
 export class indicator {
     id: string
     type: string
+    name: string
     private pane: pane
 
     objVisibility: Signal<boolean>
@@ -21,6 +23,7 @@ export class indicator {
     menu_id: string | undefined
     menu_struct: object | undefined
     setOptions: SetStoreFunction<object> | undefined
+    private sources: Accessor<data_src[]>
 
     menuVisibility: Accessor<boolean> | undefined
     setMenuVisibility: Setter<boolean> | undefined
@@ -30,10 +33,12 @@ export class indicator {
     private primitives_right = new Map<string, PrimitiveBase>()
     private primitives_overlay = new Map<string, PrimitiveBase>()
 
-    constructor(id: string, type: string, pane: pane) {
+    constructor(id: string, type: string, name: string, sources: Accessor<data_src[]>, pane: pane) {
         this.id = id
+        this.name = name
         this.pane = pane
         this.type = type
+        this.sources = sources
 
         const objVisibility = createSignal<boolean>(true)
         this.objVisibility = objVisibility
@@ -42,7 +47,14 @@ export class indicator {
         const labelHtml = createSignal<string | undefined>(undefined)
         this.labelHtml = labelHtml[0]
         this.setLabelHtml = labelHtml[1]
+
+        this.pane.attach_indicator_to_legend(this)
     }
+
+    setLabel(label:string){this.setLabelHtml(label !== ""? label : undefined)}
+
+    // TODO: Implement
+    move_to_pane(pane:pane){}
 
     delete() {
         //Clear All Sub-objects
@@ -58,16 +70,20 @@ export class indicator {
         this.primitives_overlay.forEach((prim, key) => {
             this.pane.whitespace_series.detachPrimitive(prim)
         })
+        //Remove from the pane that is currently displaying the indicator
+        this.pane.detach_indicator_from_legend(this)
     }
 
     setVisibility(arg:boolean){
         this.objVisibility[1](arg)
         if (arg) {
+            //TODO: Implement
             console.log(`${this.id} - Make indicator Visible`)
         } else {
             console.log(`${this.id} - Make indicator Invisible`)
         }
     }
+
 
     private _create_series_(series_type: u.Series_Type): u.AnySeries {
         switch (series_type) {
@@ -212,9 +228,10 @@ export class indicator {
             IndicatorOpts({
                 id: this.menu_id,
                 parent_ind: this,
-                setOptions: setOptions,
+                options: options,
                 menu_struct: this.menu_struct,
                 close_menu: () => menuVisibility[1](false),
+                sources: this.sources,
 
                 container_id: this.pane.id.substring(0,6),
                 frame_id: this.pane.id.substring(0,13),
@@ -222,13 +239,6 @@ export class indicator {
             }),
             menuVisibility
         )
-
-        // When Options update, send the list back to Python
-        createEffect(() => {
-            console.log(this.pane.id, this.id, options)
-            // window.api.setIndOptions(this.pane.id, this.id, options)-
-        })
-        this.pane.rebuild_legend()
     }
 
     //#endregion

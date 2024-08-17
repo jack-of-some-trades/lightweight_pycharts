@@ -3,6 +3,7 @@ import { Accessor, createSignal, JSX, Setter } from "solid-js";
 import { ChartFrame } from "../components/frame_widgets/chart_frames/chart_elements";
 import { layout_display } from "../components/layout/layouts";
 import { update_tab_func } from "./container";
+import { indicator } from "./indicator";
 import { Container_Layouts, flex_frame, layout_switch, num_frames, Orientation, resize_sections } from "./layouts";
 import { pane } from "./pane";
 import { Series_Type, symbol_item, tf } from "./types";
@@ -58,6 +59,12 @@ export abstract class frame {
 }
 
 
+export interface data_src {
+    indicator:indicator
+    function_name:string
+    source_type:string
+}
+
 export class chart_frame extends frame {
     div: Accessor<HTMLDivElement>
     element: JSX.Element
@@ -65,6 +72,9 @@ export class chart_frame extends frame {
     timeframe: tf
     symbol: symbol_item
     series_type: Series_Type
+    indicators = new Map<string, indicator>()
+    sources: Accessor<data_src[]>
+    setSources: Setter<data_src[]>
 
     style_sel: string
     layout: Container_Layouts | undefined
@@ -83,6 +93,10 @@ export class chart_frame extends frame {
         const [displays, setDisplays] = createSignal<layout_display[]>([])
         const [div, setDiv] = createSignal<HTMLDivElement>(document.createElement('div'))
 
+        const sourceSignal = createSignal<data_src[]>([])
+        this.sources = sourceSignal[0]
+        this.setSources = sourceSignal[1]
+
         this.div = div
         this.setStyle = setStyle
         this.setDisplays = setDisplays
@@ -96,7 +110,7 @@ export class chart_frame extends frame {
         })
 
         // The following 3 variables are actually properties of a frame's primary Series(Indicator) obj.
-        // While these really should be owned by an indicator and not a frame, this is how the 
+        // While these really should be owned by that Series indicator and not a frame, this is how the 
         // implementation will stay until when/if indicator sub-types have their own classes in typescript.
         this.symbol = { ticker: 'LWPC' }
         this.timeframe = new tf(1, 'D')
@@ -159,11 +173,45 @@ export class chart_frame extends frame {
         return new_pane
     }
 
+    
+    protected create_indicator(
+        _id: string, 
+        outputs:{[key:string]:string}, 
+        type: string, 
+        name: string, 
+        pane:pane
+    ) {
+        let new_indicator = new indicator(_id, type, name, this.sources, pane)
+        this.indicators.set(_id, new_indicator)
+
+        // Push all the sources from this indicator onto the sources list
+        let tmp_array = []
+        for (const [key, value] of Object.entries(outputs))
+            tmp_array.push({
+                indicator:new_indicator,
+                function_name:key,
+                source_type:value
+            })
+        this.setSources([...this.sources(), ...tmp_array])
+    }
+
+    protected delete_indicator(_id: string) {
+        let indicator = this.indicators.get(_id)
+        if (indicator === undefined) return
+
+        indicator.delete()
+        this.indicators.delete(_id)
+        //Remove all the linkable sources from this indicator
+        this.setSources(this.sources().filter((src) => src.indicator !== indicator ))
+    }
+
+
     // #endregion
 
 
     // #region -------------- Layout Control and Resize Functions ------------------ //
 
+    // TODO: Find some way to call this so the layout can actually change
     protected set_layout(layout: Container_Layouts) {
         this.flex_panes = layout_switch(layout, ()=>this.div().getBoundingClientRect(), this.resize.bind(this))
         let layout_displays:layout_display[] = []

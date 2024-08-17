@@ -7,7 +7,7 @@ import pandas as pd
 from lightweight_pycharts.indicator import (
     Options,
     Indicator,
-    ParentType,
+    IndParentType,
     SeriesData,
     default_output_property,
     param,
@@ -45,21 +45,23 @@ class SMA(Indicator):
 
     def __init__(
         self,
-        parent: ParentType,
-        opts: SMAOptions = SMAOptions(),
+        parent: IndParentType,
+        opts: Optional[SMAOptions] = None,
     ):
         super().__init__(parent)
+        if opts is None:
+            self.opts = SMAOptions()
+        else:
+            self.opts = opts
 
-        self.opts = opts
-
-        if opts.src is None:
-            opts.src = self.default_parent_src
+        if self.opts.src is None:
+            self.opts.src = self.default_parent_src
 
         self._data = pd.Series()
         self.line_series = sc.LineSeries(self)
 
-        self.init_menu(opts)
-        self.link_args({"data": opts.src})
+        self.init_menu(self.opts)
+        self.link_args({"data": self.opts.src})
 
     def set_data(self, data: pd.Series, *_, **__):
         self._data = data.rolling(window=self.opts.period).mean()
