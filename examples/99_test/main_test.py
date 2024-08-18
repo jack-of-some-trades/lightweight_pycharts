@@ -50,7 +50,9 @@ def data_request_handler(symbol: lwc.Symbol, tf: lwc.TF) -> Optional[pd.DataFram
                 return pd.read_csv("examples/data/lwpc_ohlc.csv")
 
 
-async def socket_request_handler(state: str, symbol: lwc.Symbol, series: lwc.Series):
+async def socket_request_handler(
+    state: str, symbol: lwc.Symbol, series: lwc.indicators.Series
+):
     """
     Request Handler for Web-Sockets. The requested 'state' is determined by Symbol Changes
     and the frame.socket_open Boolean. The user should keep this Boolean as up-to-date as possible.
@@ -131,7 +133,7 @@ async def main():
         df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
     )
 
-    lwc.indicator.Volume(main_frame)
+    lwc.indicators.Volume(main_frame)
     # opts = lwc.indicators.SMA.__options__(period=20)
     sma20 = lwc.indicators.SMA(main_frame)
     lwc.indicators.SMA(sma20)

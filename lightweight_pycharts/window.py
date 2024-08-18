@@ -14,6 +14,7 @@ from lightweight_pycharts.orm.types import TF
 
 from . import orm
 from . import util
+from . import indicators
 from . import indicator as ind
 from .orm import layouts, Symbol
 from .events import Events, Emitter, Socket_Switch_Protocol
@@ -213,7 +214,7 @@ class Window:
     def _data_request_rsp(
         data: Optional[pd.DataFrame],
         *_,
-        series: ind.Series,
+        series: indicators.Series,
         symbol: orm.Symbol,
         timeframe: orm.TF,
         socket_switch: Emitter[Socket_Switch_Protocol],  # Set by Partial Func
@@ -427,7 +428,7 @@ class Frame:
 
         # Add main pane and Series, should never be deleted
         self.add_pane(Pane.__special_id__)
-        ind.Series(self, js_id=ind.Series.__special_id__)
+        indicators.Series(self, js_id=indicators.Series.__special_id__)
 
     def __del__(self):
         for indicator in self.indicators.copy().values():
@@ -482,12 +483,12 @@ class Frame:
         return self.panes[self.panes.prefix + Pane.__special_id__]
 
     @property
-    def main_series(self) -> ind.Series:
+    def main_series(self) -> indicators.Series:
         "Series Indicator that contain's the Frame's main symbol data"
         main_series = self.indicators[
-            self.indicators.prefix + ind.Series.__special_id__
+            self.indicators.prefix + indicators.Series.__special_id__
         ]
-        if isinstance(main_series, ind.Series):
+        if isinstance(main_series, indicators.Series):
             return main_series
         raise AttributeError(f"Cannot find Main Series for Frame {self._js_id}")
 

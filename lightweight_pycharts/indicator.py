@@ -1,7 +1,6 @@
 """ Classes and functions that handle implementation of chart indicators """
 
 from logging import getLogger
-from dataclasses import dataclass
 from abc import abstractmethod
 from inspect import signature, _empty, currentframe
 from typing import (
@@ -15,64 +14,23 @@ from typing import (
 )
 
 import pandas as pd
-from numpy import nan
 
 from lightweight_pycharts.indicator_meta import IndicatorMeta, OptionsMeta
-from lightweight_pycharts.orm.options import PriceScaleMargins, PriceScaleOptions
-from lightweight_pycharts.orm.types import Color, PriceFormat
+from lightweight_pycharts.orm.types import Color
 
 from . import window as win
 from . import primative as pr
 from . import series_common as sc
 from .util import ID_Dict, is_dunder
 from .js_cmd import JS_CMD
-from .orm import Symbol, TF
-from .orm.series import (
-    HistogramData,
-    HistogramStyleOptions,
-    Series_DF,
-    SeriesType,
-    AnyBasicData,
-    ValueMap,
-    Whitespace_DF,
-    SingleValueData,
-    update_dataframe,
-)
 
-# pylint: disable=protected-access
-# pylint: disable=arguments-differ
 logger = getLogger("lightweight-pycharts")
 
 SeriesData: TypeAlias = Callable[[], pd.Series]
 DataframeData: TypeAlias = Callable[[], pd.DataFrame]
 
 
-@dataclass(slots=True)
-class BarState:
-    """
-    Dataclass object that holds various information about the current bar.
-    """
-
-    index: int = -1
-    time: pd.Timestamp = pd.Timestamp(0)
-    timestamp: pd.Timestamp = pd.Timestamp(0)
-    time_close: pd.Timestamp = pd.Timestamp(0)
-    time_length: pd.Timedelta = pd.Timedelta(0)
-
-    open: float = nan
-    high: float = nan
-    low: float = nan
-    close: float = nan
-    value: float = nan
-    volume: float = nan
-    ticks: float = nan
-
-    is_ext: bool = False
-    is_new: bool = False
-    is_ohlc: bool = False
-    is_single_value: bool = False
-
-
+# pylint: disable=protected-access
 class Watcher:
     """
     An Indicator instance object that is handed to another indicator it wishes to observe.
@@ -89,7 +47,12 @@ class Watcher:
         self._notify_observers_clear = parent._notify_observers_clear
         self._notify_observers_update = parent._notify_observers_update
 
-        self._set = False
+        # set & updated ensure all indicators only set/update once they are ready to. Set, being
+        # more of a latch, is likely bug free. However, doing this for updated **may** lead to an
+        # edge case bug where an indicator may never (or only intermittently) update if it depends
+        # on two or more Series Indicators that receive data updates at different rates.
+        self.set = False
+        self.updated = False
 
         self.observables: dict[str, Callable] = {}
         self.set_args: dict[str, Callable] = {}
@@ -97,52 +60,57 @@ class Watcher:
         self.update_args: dict[str, Callable] = {}
         self.update_notifiers: list[Indicator] = []
 
+    def reset_updated_state(self):
+        "Reset the Updated state and tell all observers to reset as well, an update is coming"
+        self.updated = False
+        for ind in self.update_notifiers:
+            ind._watcher.reset_updated_state()
+
     def notify_set(self, notifier: Optional["Indicator"] = None):
         "Notify the Watcher that an update occured in the given Indicator"
         if notifier is not None and notifier not in self.set_notifiers:
             return  # This Notifier not involved in setting data (Probably just updates data)
 
-        # TODO: Update this if statement to check a state variable of the observed indicators
-        if all(self.set_args.values()):
-            # Ready, Fire Set Calc then reset set_Notifier Readiness State
-            # Will Fire on Notifier = None, intentional so Watcher self-fires on init
+        if all([ind._watcher.set for ind in self.set_notifiers]):
+            # All indicator srcs Ready, Preform historical set_data calc.
+            # Will Fire on Notifier = None, intentional so Watcher can self-fire on init
             self._set_data(
                 **dict([(name, func()) for name, func in self.set_args.items()])
             )
-            self._set = True
+            self.set = True
             self._notify_observers_set()
 
-    def notify_update(self, notifier: Optional["Indicator"] = None):
+    def notify_update(self, notifier: "Indicator"):
         "Notify the Watcher that an update occured in the given Indicator"
-        if notifier is not None:
-            if notifier not in self.update_notifiers:
-                return  # This Notifier not involved in updating data (Probably just sets data)
-            if not self._set:
-                return  # Indicator not Ready to Update. (Ext. src probably called Update)
+        # Following If statements & logging is really just edge case monitoring
+        if notifier not in self.update_notifiers:
+            logger.warning("Watcher tried to Update, but is not dependent on updater.")
+            return
+        if not self.set:
+            logger.warning("Watcher tried to Update, but is not set yet")
+            return
 
-            if all(self.update_args.values()):
-                # Ready, Fire Update then reset Update_Notifier Readiness State
-                self._update_data(
-                    **dict([(name, func()) for name, func in self.update_args.items()])
-                )
-                self._notify_observers_update()
+        if all([ind._watcher.updated for ind in self.set_notifiers]):
+            # Ready to Update, Fire Update then set updated Readiness State
+            self._update_data(
+                **dict([(name, func()) for name, func in self.update_args.items()])
+            )
+            self.updated = True
+            self._notify_observers_update()
 
     def notify_clear(self, notifier: Optional["Indicator"] = None):
-        "Notify the Watcher that an update occured in the given Indicator"
-        if (
-            notifier is not None
-            and notifier not in self.update_notifiers
-            and notifier not in self.set_notifiers
-        ):
+        "Notify the Watcher that the source it calculated from is no longer valid and should clear"
+        if notifier is not None and notifier not in self.set_notifiers:
             logger.warning(
                 "'%s' tried to clear '%s', but Watcher doesn't care.",
                 notifier.cls_name,
                 self,
-            )
+            )  # Really just an edge case that would be interesting to observe happen.
 
         self._clear_data()
-        self._set = False
-        self._notify_observers_update()
+        self.set = False
+        self.updated = False
+        self._notify_observers_clear()
 
 
 # region --------------------------- Indicator Classes --------------------------- #
@@ -346,12 +314,19 @@ class Indicator(metaclass=IndicatorMeta):
             logger.error("Cannot load obj, %s needs an options Class", self.cls_name)
             return
 
-        # Change all of the dictonary values into their python objects
+        # Change all of the encoded dictonary values into their python objects
         for k, v in args.items():
             arg_type = self.__options__.__arg_types__[k]
             if arg_type == "source":
                 ind_id, func_name = v.split(":")
-                args[k] = getattr(self.parent_frame.indicators[ind_id], func_name)
+                try:
+                    ind = self.parent_frame.indicators[ind_id]
+                    args[k] = getattr(ind, func_name)
+                except (IndexError, AttributeError):
+                    logger.critical("Source link %s is invalid.", v)
+                    args[k] = lambda: None
+                    # Critical Error since this will most likely cause an
+                    # indicator's Set/Update_Data to throw an exception
             elif arg_type == "timestamp":
                 args[k] = pd.Timestamp(v)
             elif arg_type == "enum":
@@ -360,7 +335,7 @@ class Indicator(metaclass=IndicatorMeta):
                 args[k] = Color.from_hex(v)
 
         # pylint: disable=not-callable
-        logger.info(self.__options__(**args))  # ...but it is callable?
+        logger.info(self.__options__(**args))  # ...but I defined it as callable?
         # pylint: enable=not-callable
 
         self.recalculate()
@@ -454,7 +429,7 @@ class Indicator(metaclass=IndicatorMeta):
             raise ValueError(f"{self.cls_name} Missing Arg Links for: {missing_args}")
 
         # In the loops below the '_' param is the default_arg of the function.
-        # It's not used because quite frankly i'm not sure how to implement that...
+        # It's not used because quite frankly i'm not sure how or why you'd implement that...
 
         # Type check the inputs, Prepare Watcher, and look for circular dependencies
         for name, (arg_type, _) in cls.__input_args__.items():
@@ -469,7 +444,7 @@ class Indicator(metaclass=IndicatorMeta):
             # Observables is the Union of set_args & update_args. Useful to have it's own reference
             self._watcher.observables[name] = args[name]
 
-            # Give this Indicator's watcher to the function's bound instance
+            # Give this Indicator's watcher to the function's bound indicator
             bound_cls_inst = args[name].__self__
             if self._watcher not in bound_cls_inst._observers:
                 # Append a weakref of this indicator's observer
@@ -658,415 +633,3 @@ def param[
 
 
 # endregion
-
-# region ----------------------------- Series & Series Options ----------------------------- #
-
-
-@dataclass
-class SeriesIndicatorOptions:
-    "Indicator Options for a Series"
-    visible: bool = True
-    series_type: SeriesType = SeriesType.Candlestick
-
-
-class Series(Indicator):
-    """
-    Draws a Series Object onto the Screen. Expands SeriesCommon behavior by filtering & Aggregating
-    data, Creating a Whitespace Expansion Series, & Allowing the ability to change the series type.
-
-    Other Indicators should subscribe to this object's bar updates as a filtered form of data.
-    """
-
-    __special_id__ = "XyzZy"
-
-    def __init__(
-        self,
-        parent: win.Frame,
-        options: SeriesIndicatorOptions = SeriesIndicatorOptions(),
-        *,
-        js_id: Optional[str] = None,
-    ) -> None:
-        super().__init__(parent, js_id=js_id, display_name="Main-Series")
-
-        # Dunder to allow specific permissions to the main source of a data for a Frame.
-        # Because reasons, the user can never accidentally set the _js_id to be __special_id__.
-        self.__frame_primary_src__ = (
-            self._js_id == self.parent_frame.indicators.prefix + Series.__special_id__
-        )
-
-        self.opts = options
-        self.socket_open = False
-        self.symbol = Symbol("LWPC")
-        self._bar_state: Optional[BarState] = None
-        self.main_data: Optional[Series_DF] = None
-        self.whitespace_data: Optional[Whitespace_DF] = None
-
-        self.main_series = sc.SeriesCommon(self, self.opts.series_type)
-
-    def _init_bar_state(self):
-        if self.main_data is None:
-            return
-
-        df = self.main_data.df
-        col_names = self.main_data.df.columns
-
-        self._bar_state = BarState(
-            index=len(self.main_data.df) - 1,
-            time=self.main_data.curr_bar_open_time,
-            timestamp=self.main_data.curr_bar_open_time,
-            time_close=self.main_data.curr_bar_close_time,
-            time_length=self.main_data.timedelta,
-            open=(df.iloc[-1]["open"] if "open" in col_names else nan),
-            high=(df.iloc[-1]["high"] if "high" in col_names else nan),
-            low=(df.iloc[-1]["low"] if "low" in col_names else nan),
-            close=(df.iloc[-1]["close"] if "close" in col_names else nan),
-            value=(df.iloc[-1]["value"] if "value" in col_names else nan),
-            volume=(df.iloc[-1]["volume"] if "volume" in col_names else nan),
-            ticks=(df.iloc[-1]["ticks"] if "ticks" in col_names else nan),
-            # is_ext=self.main_data.ext, # TODO: Implement time check
-            is_new=True,
-            is_single_value="value" in col_names,
-            is_ohlc="close" in col_names,
-        )
-
-    def _update_bar_state(self):
-        if self.main_data is None or self._bar_state is None:
-            return
-
-        df = self.main_data.df
-        col_names = self.main_data.df.columns
-
-        self._bar_state.index = len(self.main_data.df) - 1
-        self._bar_state.time = self.main_data.curr_bar_open_time
-        # self._bar_state.timestamp ## Set in Update Data
-        self._bar_state.time_close = self.main_data.curr_bar_close_time
-        self._bar_state.time_length = self.main_data.timedelta
-        self._bar_state.open = df.iloc[-1]["open"] if "open" in col_names else nan
-        self._bar_state.high = df.iloc[-1]["high"] if "high" in col_names else nan
-        self._bar_state.low = df.iloc[-1]["low"] if "low" in col_names else nan
-        self._bar_state.close = df.iloc[-1]["close"] if "close" in col_names else nan
-        self._bar_state.value = df.iloc[-1]["value"] if "value" in col_names else nan
-        self._bar_state.volume = df.iloc[-1]["volume"] if "volume" in col_names else nan
-        self._bar_state.ticks = df.iloc[-1]["ticks"] if "ticks" in col_names else nan
-        # self._bar_state.is_ext=self.main_data.ext, TODO: Implement Time check
-        # self._bar_state.is_new ## Set in Update Data
-        # self._bar_state.is_single_value ## Constant
-        # self._bar_state.is_ohlc ## Constant
-
-    def delete(self):
-        super().delete()
-        if self.socket_open:
-            self.events.socket_switch(state="close", symbol=self.symbol, series=self)
-
-    def set_data(
-        self,
-        data: pd.DataFrame | list[dict[str, Any]],
-        *_,
-        symbol: Optional[Symbol] = None,
-        **__,
-    ):
-        "Sets the main source of data for this Frame"
-        # Update the Symbol Regardless if data is good or not
-        if symbol is not None:
-            self.symbol = symbol
-        else:
-            self.symbol = Symbol("LWPC")
-
-        if self.__frame_primary_src__:
-            self.parent_frame.__set_displayed_symbol__(self.symbol)
-
-        # Initialize Data
-        if not isinstance(data, pd.DataFrame):
-            data = pd.DataFrame(data)
-        self.main_data = Series_DF(data, self.symbol.exchange)
-
-        # Clear and Return on bad data.
-        if self.main_data.timeframe == TF(1, "E"):
-            self.clear_data()
-            return
-        if self.main_data.data_type == SeriesType.WhitespaceData:
-            self.clear_data(timeframe=self.main_data.timeframe)
-            return
-
-        self._init_bar_state()
-        self.main_series.set_data(self.main_data)
-
-        # Only make Whitespace Series if this is the primary dataset
-        if self.__frame_primary_src__:
-            self.whitespace_data = Whitespace_DF(self.main_data)
-            self.parent_frame.__set_whitespace__(
-                self.whitespace_data.df,
-                SingleValueData(self.main_data.curr_bar_open_time, 0),
-            )
-
-        if self.__frame_primary_src__:
-            # Only do this once everything else has completed and not Error'd.
-            self.parent_frame.__set_displayed_timeframe__(self.main_data.timeframe)
-
-        # Notify Observers
-        self._notify_observers_set()
-
-    def update_data(self, data_update: AnyBasicData, *_, accumulate=False, **__):
-        """
-        Updates the prexisting Frame's Primary Dataframe. The data point's time should
-        be equal to or greater than the last data point otherwise this will have no effect.
-
-        Can Accept WhitespaceData, SingleValueData, and OhlcData.
-        Function will auto detect if this is a tick or bar update.
-        When Accumulate is set to True, tick updates will accumulate volume,
-        otherwise the last volume will be overwritten.
-        """
-        # Ignoring 4 Operator Errors, it's a false alarm since WhitespaceData.__post_init__()
-        # Will Always convert 'data.time' to a compatible pd.Timestamp.
-        if self.main_data is None or data_update.time < self.main_data.curr_bar_open_time:  # type: ignore
-            return
-
-        if data_update.time < self.main_data.next_bar_time:  # type: ignore
-            # Update the last bar
-            display_data = self.main_data.update_from_tick(
-                data_update, accumulate=accumulate
-            )
-            if self._bar_state is not None:
-                self._bar_state.is_new = False
-        else:
-            # Create new Bar
-            if data_update.time != self.main_data.next_bar_time:
-                # Update given is a new bar, but not the expected time
-                # Ensure it fits the data's time interval
-                time_delta = data_update.time - self.main_data.next_bar_time  # type: ignore
-                data_update.time -= time_delta % self.main_data.timedelta  # type: ignore
-
-            curr_bar_time = self.main_data.curr_bar_open_time
-            display_data = self.main_data.update(data_update)
-            if self._bar_state is not None:
-                self._bar_state.is_new = True
-
-            # Manage Whitespace Series
-            if self.__frame_primary_src__ and self.whitespace_data is not None:
-                if data_update.time != (
-                    expected_time := self.whitespace_data.next_timestamp(curr_bar_time)
-                ):
-                    # New Data Jumped more than expected, Replace Whitespace Data So
-                    # There are no unnecessary gaps.
-                    logger.info(
-                        "Whitespace_DF Predicted incorrectly. Expected_time: %s, Recieved_time: %s",
-                        expected_time,
-                        data_update.time,
-                    )
-                    self.whitespace_data = Whitespace_DF(self.main_data)
-                    self.parent_frame.__set_whitespace__(
-                        self.whitespace_data.df,
-                        SingleValueData(self.main_data.curr_bar_open_time, 0),
-                    )
-                else:
-                    # Lengthen Whitespace Data to keep 500bar Buffer
-                    self.parent_frame.__update_whitespace__(
-                        self.whitespace_data.extend(),
-                        SingleValueData(self.main_data.curr_bar_open_time, 0),
-                    )
-
-        self._update_bar_state()
-        if self._bar_state is not None:
-            self._bar_state.timestamp = pd.Timestamp(data_update.time)
-        self.main_series.update_data(display_data)
-
-        # Notify Observers
-        self._notify_observers_update()
-
-    def clear_data(
-        self, timeframe: Optional[TF] = None, symbol: Optional[Symbol] = None, **_
-    ):
-        """
-        Clears the data in memory and on the screen and, if not none,
-        updates the desired timeframe and symbol for the Frame
-        """
-        self.main_data = None
-        self._bar_state = None
-
-        if self.__frame_primary_src__:
-            self.whitespace_data = None
-            self.parent_frame.__clear_whitespace__()
-
-        if self.socket_open:
-            # Ensure Socket is Closed
-            self.events.socket_switch(state="close", symbol=self.symbol, series=self)
-
-        if symbol is not None:
-            self.symbol = symbol
-            if self.__frame_primary_src__:
-                self.parent_frame.__set_displayed_symbol__(symbol)
-
-        if timeframe is not None and self.__frame_primary_src__:
-            self.parent_frame.__set_displayed_timeframe__(timeframe)
-
-        super().clear_data()
-
-        # Notify Observers
-        self._notify_observers_clear()
-
-    def change_series_type(self, series_type: SeriesType):
-        "Change the Series Type of the main dataset"
-        # Check Input
-        if series_type == SeriesType.WhitespaceData:
-            return
-        if series_type == SeriesType.OHLC_Data:
-            series_type = SeriesType.Candlestick
-        if series_type == SeriesType.SingleValueData:
-            series_type = SeriesType.Line
-        if self.main_data is None or self.opts.series_type == series_type:
-            return
-
-        # Set. No Data renaming needed, that is handeled when converting to json
-        self.opts.series_type = series_type
-        self.main_series.change_series_type(series_type, self.main_data)
-
-        # Update window display if necessary
-        if self.__frame_primary_src__:
-            self.parent_frame.__set_displayed_series_type__(self.opts.series_type)
-
-    def bar_time(self, index: int) -> pd.Timestamp:
-        """
-        Get the timestamp at a given bar index. Negative indices are valid and will start
-        at the last bar time.
-
-        The returned timestamp will always be bound to the limits of the underlying dataset
-        e.g. [FirstBarTime, LastBarTime]. If no underlying data exists 1970-01-01[UTC] is returned.
-
-        The index may be up to 500 bars into the future, though this is only guaranteed to be the
-        desired timestamp if this Series Indicator is the Main Series Data for it's parent Frame.
-        Depending on the data received, Future Timestamps may not always remain valid.
-        """
-        if self.main_data is None:
-            logger.warning("Requested Bar-Time prior setting series data!")
-            return pd.Timestamp(0)
-
-        if self.whitespace_data is not None:
-            # Find index given main dataset and Whitespace Projection
-            total_len = len(self.main_data.df) + len(self.whitespace_data.df)
-            if index > total_len - 1:
-                logger.warning("Requested Bar-Time beyond 500 Bars in the Future.")
-                return self.whitespace_data.df.index[-1]
-            elif index < -(len(self.main_data.df) - 1):
-                logger.warning("Requested Bar-Time prior to start of the dataset.")
-                return self.main_data.df.index[0]
-            else:
-                if index < len(self.main_data.df):
-                    return self.main_data.df.index[index]
-                else:
-                    # Whitespace df grows as data is added hence funky iloc index.
-                    return self.whitespace_data.df["time"].iloc[
-                        (index - len(self.main_data.df)) - 500
-                    ]
-        else:
-            # Series has no Whitespace projection
-            if index > len(self.main_data.df) - 1:
-                logger.warning("Requested Bar-Time beyond the dataset.")
-                return self.main_data.df.index[-1]
-            elif index < -(len(self.main_data.df) - 1):
-                logger.warning("Requested Bar-Time prior to start of the dataset.")
-                return self.main_data.df.index[0]
-            else:
-                return self.main_data.df.index[index]
-
-    # region ---------------- Output Properties ----------------
-
-    @output_property
-    def last_bar_index(self) -> int:
-        "Last Bar Index of the dataset. Returns -1 if there is no valid data"
-        return -1 if self._bar_state is None else self._bar_state.index
-
-    @output_property
-    def last_bar_time(self) -> pd.Timestamp:
-        "Open Time of the Last Bar. Returns 1970-01-01 if there is no valid data"
-        return pd.Timestamp(0) if self._bar_state is None else self._bar_state.time
-
-    @output_property
-    def bar_state(self) -> BarState:
-        "BarState Object that represents the most recent data update. This is an Update-Only Output"
-        if self._bar_state is not None:
-            return self._bar_state
-        return BarState()
-
-    @output_property
-    def dataframe(self) -> pd.DataFrame:
-        "A Reference to the full series dataframe"
-        if self.main_data is not None:
-            return self.main_data.df
-        return pd.DataFrame({})
-
-    @default_output_property
-    def close(self) -> pd.Series:
-        "A Series' Bar closing value"
-        if self.main_data is not None:
-            return self.main_data.df["close"]
-        return pd.Series({})
-
-    # endregion
-
-
-# endregion
-
-
-@dataclass
-class VolumeIndicatorOptions:
-    "Options for a volume series"
-    up_color: Color = Color.from_hex("#26a69a80")
-    down_color: Color = Color.from_hex("#ef535080")
-
-    series_opts = HistogramStyleOptions(
-        priceScaleId="vol", priceFormat=PriceFormat("volume")
-    )
-    price_scale_opts = PriceScaleOptions(scaleMargins=PriceScaleMargins(0.7, 0))
-
-
-class Volume(Indicator):
-    "Histogram Series that plots the Volume of a given Series(Indicator)"
-
-    def __init__(
-        self,
-        parent: win.Frame | Series,
-        src: Optional[Callable] = None,
-        options=VolumeIndicatorOptions(),
-    ) -> None:
-        super().__init__(parent)
-
-        self.opts = options
-        self._data = pd.DataFrame()
-        self.series_map = ValueMap("volume", color="vol_color")
-        self.series = sc.SeriesCommon(
-            self, SeriesType.Histogram, self.opts.series_opts, None, self.series_map
-        )
-        self.series.apply_scale_options(self.opts.price_scale_opts)
-
-        if src is None:
-            src = self.parent_frame.main_series.dataframe
-
-        self.link_args({"data": src})
-
-    def set_data(self, data: pd.DataFrame, *_, **__):
-        if "volume" not in data.columns:
-            return
-
-        self._data = pd.DataFrame(data["volume"])
-
-        if set(["open", "close"]).issubset(data.columns):
-            color = data["close"] > data["open"]
-            self._data["vol_color"] = color.replace(
-                {True: self.opts.up_color, False: self.opts.down_color}
-            )
-        self.series.set_data(self._data)
-
-    def update_data(self, bar_state: BarState, *_, **__):
-        if bar_state.volume is nan:
-            return
-
-        if bar_state.close is nan or bar_state.open is nan:
-            color = None
-        elif bar_state.close > bar_state.open:
-            color = self.opts.up_color
-        else:
-            color = self.opts.down_color
-
-        update_data = HistogramData(bar_state.time, bar_state.volume, color=color)
-        self.series.update_data(update_data)
-        self._data = update_dataframe(self._data, update_data, self.series_map)

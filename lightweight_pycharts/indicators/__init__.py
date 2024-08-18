@@ -1,5 +1,6 @@
-"""Sub-Module Init to make accessing the absurdly large ORM a bit more manageable"""
+"""Sub-Module to make accessing a potentially large Suite of Indicators a bit more manageable"""
 
 from .sma import SMA
+from .series import Series, Volume, BarState
 
-__all__ = ("SMA",)
+__all__ = ("SMA", "Series", "Volume", "BarState")
