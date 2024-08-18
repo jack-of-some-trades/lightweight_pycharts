@@ -30,13 +30,118 @@ SeriesData: TypeAlias = Callable[[], pd.Series]
 DataframeData: TypeAlias = Callable[[], pd.DataFrame]
 
 
+# region --------------------------- Attribute Application Functions --------------------------- #
+
+
+def output_property[T: Callable](func: T) -> T:
+    "Property Decorator used to expose Indicator Parameters to other Indicators"
+    func.__expose_param__ = True
+    return func
+
+
+def default_output_property[T: Callable](func: T) -> T:
+    "Property Decorator used to expose Indicator Parameters to other Indicators"
+    func.__expose_param__ = True
+    func.__default_param__ = True
+    return func
+
+
+def param[
+    T
+](
+    default: T,
+    title: Optional[str] = None,
+    group: Optional[str] = None,
+    inline: Optional[str] = None,
+    tooltip: str = "",
+    *,
+    options: Optional[list[T]] = None,
+    min_val: Optional[T] = None,
+    max_val: Optional[T] = None,
+    step: Optional[T] = None,
+):
+    """
+    Define additional configuration options for an indicator input variable.
+
+    Ints and floats can provide min_val, max_val, and step_val arguments.
+
+    If given an options list, a drop down menu selector will become available.
+    An options list will override any min, max, and step params that are given.
+    """
+
+    try:
+        # Know when to break the rules >:D
+        namespace = currentframe().f_back.f_locals  # type: ignore
+        struct = namespace.get("__arg_params__")
+        if struct is None:
+            struct = namespace["__arg_params__"] = {}
+
+        arg_name = "@arg" + str(
+            len([key for key in namespace.keys() if not is_dunder(key)])
+        )
+
+        struct[arg_name] = {
+            "title": title,
+            "group": group,
+            "inline": inline,
+            "tooltip": tooltip if tooltip != "" else None,
+            "options": options,
+            "min": min_val,
+            "max": max_val,
+            "step": step,
+        }
+
+    except AttributeError as e:
+        raise AttributeError(
+            "Options input function invoked in improper context."
+        ) from e
+
+    return default
+
+
+# endregion
+
+# region --------------------------- Indicator Options Classes --------------------------- #
+
+
+class Options(metaclass=OptionsMeta):
+    "Inheritable OptionsMeta Class"
+    __arg_types__: ClassVar[dict] = {}
+    __src_types__: ClassVar[dict] = {}
+    __menu_struct__: ClassVar[dict] = {}
+
+
+class IndicatorOptions(Protocol):
+    "Protocol Class to type check for an Indicator Options Dataclass Instance"
+    __arg_types__: ClassVar[dict]
+    __src_types__: ClassVar[dict]
+    __menu_struct__: ClassVar[dict]
+    __dataclass_fields__: ClassVar[Dict[str, Any]]
+
+
+class IndicatorOptionsCls(Protocol):
+    "Protocol Class to type check for an Indicator Options Dataclass"
+    __arg_types__: dict
+    __src_types__: dict
+    __menu_struct__: dict
+    __dataclass_fields__: Dict[str, Any]
+
+    def __call__(self, *_, **__) -> IndicatorOptions: ...
+
+
+# endregion
+
+# region --------------------------- Indicator & Watcher Classes --------------------------- #
+
+
 # pylint: disable=protected-access
 class Watcher:
     """
-    An Indicator instance object that is handed to another indicator it wishes to observe.
+    An Indicator instance object that links one indicator to another, monitoring for data updates.
+    Instances of this class are handed to another indicator it wishes to observe in link_args().
 
-    Holds references to it's parent Indicators set, clear, and update methods.
-    Holds References to other indicator's output function calls to fetch data.
+    Watchers hold permanent references to it's parent Indicators set, clear, and update methods.
+    They also hold mutable References to other indicator's output_property functions to fetch data.
     """
 
     def __init__(self, parent: "Indicator"):
@@ -113,34 +218,6 @@ class Watcher:
         self._notify_observers_clear()
 
 
-# region --------------------------- Indicator Classes --------------------------- #
-
-
-class Options(metaclass=OptionsMeta):
-    "Inheritable OptionsMeta Class"
-    __arg_types__: ClassVar[dict] = {}
-    __src_types__: ClassVar[dict] = {}
-    __menu_struct__: ClassVar[dict] = {}
-
-
-class IndicatorOptions(Protocol):
-    "Protocol Class to type check for an Indicator Options Dataclass Instance"
-    __arg_types__: ClassVar[dict]
-    __src_types__: ClassVar[dict]
-    __menu_struct__: ClassVar[dict]
-    __dataclass_fields__: ClassVar[Dict[str, Any]]
-
-
-class IndicatorOptionsCls(Protocol):
-    "Protocol Class to type check for an Indicator Options Dataclass"
-    __arg_types__: dict
-    __src_types__: dict
-    __menu_struct__: dict
-    __dataclass_fields__: Dict[str, Any]
-
-    def __call__(self, *_, **__) -> IndicatorOptions: ...
-
-
 class Indicator(metaclass=IndicatorMeta):
     """
     Indicator Abstract Base Class. This class defines the code neccessary for subclasses to manage
@@ -169,8 +246,9 @@ class Indicator(metaclass=IndicatorMeta):
     # ideal since you lose all type checking during object creation, and the owner of the object
     # isn't the one actually creating the object.
 
-    # Dunder Cls Params specific to each Sub-Class; set by MetaClass
+    # Optional Definition of an Options Dataclasss; set by User
     __options__: Optional[IndicatorOptionsCls] = None
+    # Dunder Cls Params specific to each Sub-Class; set by MetaClass
     __set_args__: dict[str, tuple[type, Any]]
     __input_args__: dict[str, tuple[type, Any]]
     __update_args__: dict[str, tuple[type, Any]]
@@ -558,78 +636,5 @@ class Indicator(metaclass=IndicatorMeta):
 
 
 IndParentType: TypeAlias = win.Frame | Indicator
-# pylint: enable=protected-access
-
-
-# endregion
-
-# region --------------------------- Attribute Application Functions --------------------------- #
-
-
-def output_property[T: Callable](func: T) -> T:
-    "Property Decorator used to expose Indicator Parameters to other Indicators"
-    func.__expose_param__ = True
-    return func
-
-
-def default_output_property[T: Callable](func: T) -> T:
-    "Property Decorator used to expose Indicator Parameters to other Indicators"
-    func.__expose_param__ = True
-    func.__default_param__ = True
-    return func
-
-
-def param[
-    T
-](
-    default: T,
-    title: Optional[str] = None,
-    group: Optional[str] = None,
-    inline: Optional[str] = None,
-    tooltip: str = "",
-    *,
-    options: Optional[list[T]] = None,
-    min_val: Optional[T] = None,
-    max_val: Optional[T] = None,
-    step: Optional[T] = None,
-):
-    """
-    Define additional configuration options for an indicator input variable.
-
-    Ints and floats can provide min_val, max_val, and step_val arguments.
-
-    If given an options list, a drop down menu selector will become available.
-    An options list will override any min, max, and step params that are given.
-    """
-
-    try:
-        # Know when to break the rules >:D
-        namespace = currentframe().f_back.f_locals  # type: ignore
-        struct = namespace.get("__arg_params__")
-        if struct is None:
-            struct = namespace["__arg_params__"] = {}
-
-        arg_name = "@arg" + str(
-            len([key for key in namespace.keys() if not is_dunder(key)])
-        )
-
-        struct[arg_name] = {
-            "title": title,
-            "group": group,
-            "inline": inline,
-            "tooltip": tooltip if tooltip != "" else None,
-            "options": options,
-            "min": min_val,
-            "max": max_val,
-            "step": step,
-        }
-
-    except AttributeError as e:
-        raise AttributeError(
-            "Options input function invoked in improper context."
-        ) from e
-
-    return default
-
 
 # endregion
