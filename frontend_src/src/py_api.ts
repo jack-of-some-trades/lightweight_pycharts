@@ -64,4 +64,6 @@ export class py_api {
     update_series_opts = (opts:any) => console.log(opts)
     update_layout_opts = (opts:any) => console.log(opts)
     update_timeframe_opts = (opts:any) => console.log(opts, window.topbar)
+
+    set_user_colors = (opts:string[]) => {}
 }

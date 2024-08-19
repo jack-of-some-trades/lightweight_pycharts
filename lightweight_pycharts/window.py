@@ -10,7 +10,7 @@ from typing import Literal, Optional
 
 import pandas as pd
 
-from lightweight_pycharts.orm.types import TF
+from lightweight_pycharts.orm.types import TF, Color
 
 from . import orm
 from . import util
@@ -231,6 +231,10 @@ class Window:
     def load_css(self, filepath: str):
         "Pass a .css file's absolute filepath to the window to load it"
         self._fwd_queue.put((JS_CMD.LOAD_CSS, filepath))
+
+    def set_user_colors(self, opts: list[Color]):
+        "Set the User Defined Colors available in the Color Picker"
+        self._fwd_queue.put((JS_CMD.SET_USER_COLORS, opts))
 
     def new_tab(self) -> Container:
         "Add a new Tab. A reference to the new Container is returned"

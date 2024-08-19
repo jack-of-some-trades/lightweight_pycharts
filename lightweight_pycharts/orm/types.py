@@ -72,7 +72,7 @@ class Color:
         if len(hex_value) == 6 or len(hex_value) == 8:
             # Hex String of 6 or 8 Chars
             r, g, b = [int(hex_value[i : i + 2], 16) for i in (0, 2, 4)]
-            alpha = 1 if (len(hex_value) != 8) else int(hex_value[6:8], 16) / 256
+            alpha = 1 if (len(hex_value) != 8) else int(hex_value[6:8], 16) / 255
 
         elif len(hex_value) == 3 or len(hex_value) == 4:
             # Hex String of 3 or 4 Chars
@@ -82,7 +82,7 @@ class Color:
             alpha = (
                 1
                 if (len(hex_value) != 4)
-                else ((int(hex_value[3], 16) << 4) + int(hex_value[3], 16)) / 256
+                else ((int(hex_value[3], 16) << 4) + int(hex_value[3], 16)) / 255
             )
         else:
             raise ValueError(f"Hex Color of length {len(hex_value)} is not valid.")
@@ -105,11 +105,6 @@ class Color:
         a = floor((top_color._a - bot_color._a) * ratio + bot_color._a)
 
         return cls(r, g, b, a)
-
-    @classmethod
-    def from_jdict(cls, j_dict: dict):
-        "Instantiate a new Color Instance from a Loaded JSON Dict"
-        raise NotImplementedError
 
     # region // -------------- Color Getters & Setters -------------- //
     @property
@@ -169,6 +164,15 @@ class Color:
     def __repr__(self):
         "Javascript RGBA Representation of Class Params."
         return f"rgba({self._r},{self._g},{self._b},{self._a})"
+
+    def to_hex(self):
+        "Javascript RGBA Representation of Class Params."
+        return f"#{NumtoHex(self._r)}{NumtoHex(self._g)}{NumtoHex(self._b)}{NumtoHex(round(self._a*255))}"
+
+
+def NumtoHex(num: int):
+    "Format a number into Hex"
+    return hex(num).lstrip("0x").zfill(2)
 
 
 Hex_Color: TypeAlias = str

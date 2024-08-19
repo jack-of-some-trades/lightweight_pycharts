@@ -5,6 +5,7 @@ import { location_reference, overlay_div_props, OverlayDiv, point } from "../../
 
 import "../../../css/frame_widgets/chart_frames/indicator_options.css"
 import { data_src } from "../../../src/frame"
+import { ColorInput } from "../../color_picker"
 
 type options_obj = {[key:string]: any}
 interface indicator_option_props extends Omit<overlay_div_props, "location_ref" | "location">{
@@ -21,11 +22,13 @@ interface indicator_option_props extends Omit<overlay_div_props, "location_ref" 
 function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
     e.preventDefault();
     if (e.target !== null){
-        let nodes = (e.target as HTMLFormElement).querySelectorAll("input, select") 
+        let nodes = Array.from((e.target as HTMLFormElement).querySelectorAll("input, select"))
+        //Filter out all the input tags within the Color Picker. (they're id-less)
+        nodes = nodes.filter((node) => node.id !== undefined) 
 
         window.api.set_indicator_options( c_id, f_id, i_id,
             Object.fromEntries(
-            Array.from(nodes as NodeListOf<HTMLInputElement>, (node) => {
+            Array.from(nodes as HTMLInputElement[], (node) => {
                 switch(node.getAttribute('type')){
                     case ("checkbox"): return [node.id, node.checked]
                     case ("number"): return [node.id, parseFloat(node.value)]
@@ -85,12 +88,13 @@ export function IndicatorOpts(props:indicator_option_props){
 
             {/********* Submit Buttons *********/}
             <div class="footer">
-                <input type="submit" value={"Ok"} onclick={()=>form.requestSubmit()}/>
-                <input type="submit" value={"Apply"}/>
+                <input type="submit" value={"Apply"} onclick={()=>form.requestSubmit()}/>
             </div>
         </OverlayDiv>
     )
 }
+
+// #region --------------------- Group and Inline Els ----------------------- */
 
 interface section_props {
     title: string
@@ -127,6 +131,10 @@ function Inline(props:section_props){
     )
 }
 
+//#endregion
+
+// #region --------------------- Generic Input El ----------------------- */
+
 interface input_switch_props extends input_props {type:string}
 interface input_props {
     key:string, 
@@ -153,7 +161,7 @@ interface input_params {
 function Input(props: input_switch_props){
     const [,inputProps] = splitProps(props, ['type'])
 
-    return <div>
+    return <div class="input_block">
         <label for={props.key} innerText={props.params.title + (props.params.title !== ""? ": ": "")}/>
         <Show when={props.params.options && props.type !== "enum"}>
             <datalist id={props.key + "_datalist"}>
@@ -165,11 +173,11 @@ function Input(props: input_switch_props){
         <Switch>
             <Match when={props.type === "bool"}><BoolInput {...inputProps}/></Match>
             <Match when={props.type === "enum"}><EnumInput {...inputProps}/></Match>
-            <Match when={props.type === "color"}><ColorInput {...inputProps}/></Match>
             <Match when={props.type === "source"}><SourceInput {...inputProps}/></Match>
             <Match when={props.type === "number"}><NumberInput {...inputProps}/></Match>
             <Match when={props.type === "string"}><StringInput {...inputProps}/></Match>
             <Match when={props.type === "timestamp"}><TimeInput {...inputProps}/></Match>
+            <Match when={props.type === "color"}><ColorInputWrap {...inputProps}/></Match>
         </Switch>
         <Show when={props.params.tooltip}>
             <span class="tooltip">
@@ -180,12 +188,20 @@ function Input(props: input_switch_props){
     </div>
 }
 
+//#endregion
+
+// #region --------------------- Specific Inputs ----------------------- */
+
 function BoolInput(props: input_props){
     return <input id={props.key} type="checkbox" checked={props.options[props.key] ?? false}/>
 }
 
 function StringInput(props: input_props){
     return <input id={props.key} type="text" value={props.options[props.key]}/>
+}
+
+function TimeInput(props: input_props){
+    return <input id={props.key} type="datetime-local" value={UnixToString(props.options[props.key])}/>
 }
 
 function NumberInput(props: input_props){
@@ -215,32 +231,16 @@ function EnumInput(props: input_props){
     </span>
 }
 
-const padZeros = (num:number) => String(num).padStart(2,'0')
-const UnixToString = (timestamp: number) => {
-    let d = new Date(timestamp * 1000)
-    return [
-        d.getUTCFullYear(), "-",
-        padZeros(d.getUTCMonth() + 1) , "-",
-        padZeros(d.getUTCDate()), "T",
-        padZeros(d.getUTCHours()), ":",
-        padZeros(d.getUTCMinutes())
-    ].join("")
-    
+function ColorInputWrap(props: input_props){
+    return (
+        <ColorInput 
+            id={props.key}
+            input_id={props.key} 
+            init_color={RGBAToHex(props.options[props.key])}
+            class="color_input_wrapper"
+        />
+    )
 }
-function TimeInput(props: input_props){
-    return <input id={props.key} type="datetime-local" value={UnixToString(props.options[props.key])}/>
-}
-
-const RGBAToHex = (rgba:string) => {
-    return "#" + rgba.replace(/^rgba?\(|\s+|\)$/g, '').split(',') 
-      .filter((string, index) => index !== 3)
-      .map(string => parseFloat(string))
-      .map((number, index) => index === 3 ? Math.round(number * 255) : number)
-      .map(number => number.toString(16))
-      .map(string => string.length === 1 ? "0" + string : string)
-      .join("")
-  }
-function ColorInput(props: input_props){return <input id={props.key} type="color" value={RGBAToHex(props.options[props.key])}/>}
 
 function SourceInput(props: input_props){
     return <span class="select-span">
@@ -248,8 +248,11 @@ function SourceInput(props: input_props){
             <For each={props.sources()}>{({indicator, function_name, source_type}) => {
                 if (props.indicator_id === indicator.id)
                     return // Skip Sources from Self
-                else if (source_type !== props.params.src_type)
-                    return // Skip Mismatched Source Data Types
+                else if (
+                    source_type !== props.params.src_type 
+                    && (source_type !== "any" && props.params.src_type !== "any")
+                )
+                    return // Skip Mismatched Source Data Types if either d_type isn't any
                 else {
                     let src_string = [indicator.id, function_name].join(":")
                     return (
@@ -266,3 +269,31 @@ function SourceInput(props: input_props){
     </span>
 }
 
+
+//#endregion
+
+// #region --------------------- Util Functions ----------------------- */
+
+
+function padZeros (num:number){ return String(num).padStart(2,'0') }
+function UnixToString(timestamp: number){ 
+    let d = new Date(timestamp * 1000)
+    return [
+        d.getUTCFullYear(), "-",
+        padZeros(d.getUTCMonth() + 1) , "-",
+        padZeros(d.getUTCDate()), "T",
+        padZeros(d.getUTCHours()), ":",
+        padZeros(d.getUTCMinutes())
+    ].join("")
+}
+
+
+function RGBAToHex(rgba:string, forceRemoveAlpha=false) {
+    return "#" + rgba.replace(/^rgba?\(|\s+|\)$/g, '').split(',') 
+        .filter((string, index) => !forceRemoveAlpha || index !== 3)
+        .map(string => parseFloat(string))
+        .map((number, index) => index === 3 ? Math.round(number * 255) : number)
+        .map(number => number.toString(16))
+        .map(string => string.length === 1 ? "0" + string : string)
+        .join("")
+}

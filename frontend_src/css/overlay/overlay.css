@@ -16,7 +16,7 @@
     position: fixed;
 
     border-radius: 5px;
-    box-shadow: 0 2px 10px #0007;
+    box-shadow: 0 2px 10px var(--overlay-shadow);
     background-color: var(--overlay-fill);
 }
 

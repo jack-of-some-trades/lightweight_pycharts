@@ -7,6 +7,7 @@ import { TopBar } from './topbar/topbar'
 
 import "../../css/layout/wrapper.css"
 import "../../css/style_default.css"
+import { ColorContext } from '../color_picker'
 import { Container } from './container'
 
 const MARGIN = 5
@@ -80,11 +81,13 @@ export function Wrapper(){
 
 function GlobalContexts(props:JSX.HTMLAttributes<HTMLElement>){
     return <>
+        <ColorContext>
         <ToolBoxContext>
         <OverlayContextProvider>
-            {props.children}
+        {props.children}
         </OverlayContextProvider>
         </ToolBoxContext>
+        </ColorContext>
     </>
 }
 

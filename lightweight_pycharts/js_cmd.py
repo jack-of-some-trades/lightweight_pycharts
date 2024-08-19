@@ -87,6 +87,7 @@ class JS_CMD(IntEnum):
     UPDATE_LAYOUT_FAVS = auto()
     SET_SYMBOL_ITEMS = auto()
     SET_SYMBOL_SEARCH_OPTS = auto()
+    SET_USER_COLORS = auto()
 
     # Container Commands
     SET_LAYOUT = auto()
@@ -180,6 +181,10 @@ def update_symbol_search(symbols: list[types.Symbol]) -> str:
 
 def update_symbol_search_bubbles(category: str, opts: list[str]) -> str:
     return f"api.set_search_filters('{category}', {dump(opts)})"
+
+
+def set_user_colors(opts: list[Color]):
+    return f"api.set_user_colors({dumps([color.to_hex() for color in opts])})"
 
 
 # endregion
@@ -431,6 +436,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.UPDATE_TF_OPTS: set_window_timeframes,
     JS_CMD.UPDATE_SERIES_FAVS: set_window_series_types,
     JS_CMD.UPDATE_LAYOUT_FAVS: set_window_layouts,
+    JS_CMD.SET_USER_COLORS: set_user_colors,
     JS_CMD.SET_SYMBOL_ITEMS: update_symbol_search,
     JS_CMD.SET_SYMBOL_SEARCH_OPTS: update_symbol_search_bubbles,
     # ---- Container Commands ----

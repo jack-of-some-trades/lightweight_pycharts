@@ -151,6 +151,7 @@ export enum icons {
     minimize = "minimize",
     restore = "restore",
     window_add = "window_add",
+    options_add = "options_add",
 
     fib_retrace = "fib_retrace",
     fib_extend = "fib_extend",
