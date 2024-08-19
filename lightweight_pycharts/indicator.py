@@ -171,11 +171,8 @@ class Watcher:
         for ind in self.update_notifiers:
             ind._watcher.reset_updated_state()
 
-    def notify_set(self, notifier: Optional["Indicator"] = None):
+    def notify_set(self):
         "Notify the Watcher that an update occured in the given Indicator"
-        if notifier is not None and notifier not in self.set_notifiers:
-            return  # This Notifier not involved in setting data (Probably just updates data)
-
         if all([ind._watcher.set for ind in self.set_notifiers]):
             # All indicator srcs Ready, Preform historical set_data calc.
             # Will Fire on Notifier = None, intentional so Watcher can self-fire on init
@@ -185,17 +182,9 @@ class Watcher:
             self.set = True
             self._notify_observers_set()
 
-    def notify_update(self, notifier: "Indicator"):
+    def notify_update(self):
         "Notify the Watcher that an update occured in the given Indicator"
-        # Following If statements & logging is really just edge case monitoring
-        if notifier not in self.update_notifiers:
-            logger.warning("Watcher tried to Update, but is not dependent on updater.")
-            return
-        if not self.set:
-            logger.warning("Watcher tried to Update, but is not set yet")
-            return
-
-        if all([ind._watcher.updated for ind in self.set_notifiers]):
+        if all([ind._watcher.updated for ind in self.update_notifiers]):
             # Ready to Update, Fire Update then set updated Readiness State
             self._update_data(
                 **dict([(name, func()) for name, func in self.update_args.items()])
@@ -203,15 +192,8 @@ class Watcher:
             self.updated = True
             self._notify_observers_update()
 
-    def notify_clear(self, notifier: Optional["Indicator"] = None):
+    def notify_clear(self):
         "Notify the Watcher that the source it calculated from is no longer valid and should clear"
-        if notifier is not None and notifier not in self.set_notifiers:
-            logger.warning(
-                "'%s' tried to clear '%s', but Watcher doesn't care.",
-                notifier.cls_name,
-                self,
-            )  # Really just an edge case that would be interesting to observe happen.
-
         self._clear_data()
         self.set = False
         self.updated = False
@@ -291,7 +273,7 @@ class Indicator(metaclass=IndicatorMeta):
         self._ids = self.parent_frame.js_id, self._js_id
         self._fwd_queue = self.parent_frame._fwd_queue
 
-        # Bind the default output function to this instance
+        # Bind the default output function's 'self' to this instance
         if self.__default_output__ is not None:
             self.default_output: Optional[Callable[[], pd.Series]] = (
                 self.__default_output__.__get__(self, self.__class__)
@@ -347,20 +329,17 @@ class Indicator(metaclass=IndicatorMeta):
     def _notify_observers_set(self):
         "Notify All observers to preform a bulk historical calculation"
         for watcher in self._observers:
-            if watcher is not None:
-                watcher.notify_set(self)
+            watcher.notify_set()
 
     def _notify_observers_update(self):
         "Notify All observers there is an update to be made"
         for watcher in self._observers:
-            if watcher is not None:
-                watcher.notify_update(self)
+            watcher.notify_update()
 
     def _notify_observers_clear(self):
         "Notify All observers they should clear their state"
         for watcher in self._observers:
-            if watcher is not None:
-                watcher.notify_clear(self)
+            watcher.notify_clear()
 
     def __parse_options_obj__(self, obj: IndicatorOptions) -> dict:
         "Parse an IndicatorOptions instance into a picklable dict"
@@ -480,9 +459,9 @@ class Indicator(metaclass=IndicatorMeta):
 
     def recalculate(self):
         "Manually force a full recalculation of this indicator and all dependent indicators"
-        self._watcher.notify_set(None)
+        self._watcher.notify_set()
 
-    def link_args(self, args: dict[str, Callable]):
+    def link_args(self, args: dict[str, Callable[[], Any]]):
         """
         Subscribe this indicator's inputs to the provided indicator output arguments.
 
@@ -546,6 +525,9 @@ class Indicator(metaclass=IndicatorMeta):
 
     def unlink_all_args(self):
         "Unsubscribe from all of the Indicator's linked input args."
+        # Clear this indicator and all dependant indicators
+        self._watcher._clear_data()
+
         # Remove self from all of the '_observers' lists that it's appended to
         bound_arg_funcs = self._watcher.observables.values()
         for bound_func_cls in set([func.__self__ for func in bound_arg_funcs]):

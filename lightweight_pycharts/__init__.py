@@ -43,7 +43,7 @@ __all__ = (
     "SeriesType",
     # Indicators
     "Indicator",
-    "Indicators",
+    "Indicators",  # type: ignore - False Alarm
 )
 
 _LOG_LVL = logging.WARNING

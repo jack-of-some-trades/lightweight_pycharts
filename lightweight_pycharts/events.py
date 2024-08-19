@@ -18,7 +18,7 @@ from .orm import types
 
 # prevent circular import
 if TYPE_CHECKING:
-    from .indicator import Series
+    from .indicators import Series
 
 
 class Events:
