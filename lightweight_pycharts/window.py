@@ -42,7 +42,7 @@ class Window:
     def __init__(
         self,
         *,
-        daemon: bool = False,
+        daemon: bool = True,
         events: Optional[Events] = None,
         log_level: Optional[logging._Level] = None,
         options: Optional[orm.options.PyWebViewOptions] = None,
@@ -93,13 +93,16 @@ class Window:
             self._data_request_rsp, socket_switch=self.events.socket_switch
         )
 
+        # Using ID_List over ID_Dict so element order is mutable for PY_CMD.REORDER_CONTAINERS
         self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
 
     # region ------------------------ Private Window Methods  ------------------------ #
 
     def _execute_cmd(self, cmd: PY_CMD, *args):
-        logger.debug("PY_CMD: %s: %s", PY_CMD(cmd).name, str(args))
+        logger.debug("PY_CMD: %s: %s", cmd.name, str(args))
+        # If this CMD list gets very large then it might be worth making another CMD_ROLODEX.
+        # High dependence on window instance variables is keeping this as a Match Statement ATM.
         match cmd, *args:
             case PY_CMD.SYMBOL_SEARCH, str(), bool(), list(), list(), list():
                 self.events.symbol_search(
@@ -111,17 +114,7 @@ class Window:
                 )
 
             case PY_CMD.DATA_REQUEST, str(), str(), orm.Symbol(), orm.TF():
-                if (container := self.get_container(args[0])) is None:
-                    logger.warning(
-                        "Failed Timeframe Switch, Couldn't find Conatiner ID %s",
-                        args[0],
-                    )
-                    return
-                if (frame := container.frames[args[1]]) is None:
-                    logger.warning(
-                        "Failed Timeframe Switch, Could not find Frame ID '%s'", args[1]
-                    )
-                    return
+                frame = self.get_container(args[0]).frames[args[1]]
                 kwargs = {
                     "series": frame.main_series,
                     "symbol": args[2],
@@ -130,54 +123,27 @@ class Window:
                 self.events.data_request(symbol=args[2], tf=args[3], rsp_kwargs=kwargs)
 
             case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts():
-                if (container := self.get_container(args[0])) is None:
-                    logger.warning("Couldn't find Container '%s'", args[0])
-                    return
+                container = self.get_container(args[0])
                 container.set_layout(args[1])
 
             case PY_CMD.SERIES_CHANGE, str(), str(), orm.series.SeriesType():
-                if (container := self.get_container(args[0])) is None:
-                    logger.warning(
-                        "Failed Series Type Change, Couldn't find Conatiner ID %s",
-                        args[0],
-                    )
-                    return
-                if (frame := container.frames[args[1]]) is None:
-                    logger.warning(
-                        "Failed Series Type Change, Couldn't find Frame ID %s",
-                        args[1],
-                    )
-                    return
+                frame = self.get_container(args[0]).frames[args[1]]
                 frame.main_series.change_series_type(args[2])
 
             case PY_CMD.SET_INDICATOR_OPTS, str(), str(), str(), dict():
-                if (container := self.get_container(args[0])) is None:
-                    logger.warning(
-                        "Failed Indicator Set Options, Couldn't find Conatiner ID %s",
-                        args[0],
-                    )
-                    return
-                if (frame := container.frames[args[1]]) is None:
-                    logger.warning(
-                        "Failed Indicator Set Options, Couldn't find Frame ID %s",
-                        args[1],
-                    )
-                    return
-                if (indicator := frame.indicators[args[2]]) is None:
-                    logger.warning(
-                        "Failed Indicator Set Options, Couldn't find Indicator ID %s",
-                        args[2],
-                    )
-                    return
+                indicator = (
+                    self.get_container(args[0]).frames[args[1]].indicators[args[2]]
+                )
                 indicator.__parse_options_dict__(args[3])
 
-            case PY_CMD.ADD_CONTAINER, *_:
+            case PY_CMD.ADD_CONTAINER:
                 self.new_tab()
 
             case PY_CMD.REMOVE_CONTAINER, str():
                 self.del_tab(args[0])
 
             case PY_CMD.REORDER_CONTAINERS, int(), int():
+                # This keeps the Window Obj Tab order identical to what is displayed
                 self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
                 self.containers.insert(args[1], self.containers.pop(args[0]))
 
@@ -197,14 +163,9 @@ class Window:
                 # logger.debug("Window Recieved Command: %s: %s", cmd, rsp)
         logger.debug("Exited Async Queue Manager")
 
-    async def await_close(self):
-        "Await closure if using asyncio. Useful if Daemon = True"
-        if isinstance(self._queue_manager, asyncio.Task):
-            await self._queue_manager
-
     # endregion
 
-    # region ------------------------ Private Event Response Methods  ------------------------ #
+    # region ------------------------ Private Event Response Methods ------------------------ #
 
     @staticmethod
     def _symbol_search_rsp(items: list[orm.types.Symbol], *_, fwd_queue: mp.Queue):
@@ -240,71 +201,71 @@ class Window:
     # region ------------------------ Public Window Methods  ------------------------ #
 
     def show(self):
-        "Show the PyWebView Window"
+        "Show the View Window"
         self._fwd_queue.put(JS_CMD.SHOW)
 
     def hide(self):
-        "Hide the PyWebView Window"
+        "Hide the View Window"
         self._fwd_queue.put(JS_CMD.HIDE)
 
     def maximize(self):
-        "Hide the PyWebView Window"
+        "Hide the View Window"
         self._fwd_queue.put(JS_CMD.MAXIMIZE)
 
     def minimize(self):
-        "Hide the PyWebView Window"
+        "Hide the View Window"
         self._fwd_queue.put(JS_CMD.MINIMIZE)
 
     def restore(self):
-        "Hide the PyWebView Window"
+        "Hide the View Window"
         self._fwd_queue.put(JS_CMD.RESTORE)
 
     def close(self):
-        "Hide the PyWebView Window"
+        "Hide the View Window"
         self._fwd_queue.put(JS_CMD.CLOSE)
+
+    async def await_close(self):
+        "Await closure of the window's asyncio loop. (Window Closure)"
+        await self._queue_manager
 
     def load_css(self, filepath: str):
         "Pass a .css file's absolute filepath to the window to load it"
         self._fwd_queue.put((JS_CMD.LOAD_CSS, filepath))
 
     def new_tab(self) -> Container:
-        """
-        Add a new Tab to the Window interface
-        :returns: A Container obj that represents the Tab's Contents
-        """
+        "Add a new Tab. A reference to the new Container is returned"
         new_id = self._container_ids.generate_id()
         new_container = Container(new_id, self._fwd_queue, self)
         self.containers.append(new_container)
         return new_container
 
-    def del_tab(self, container_id: str) -> None:
-        """
-        Deletes a Tab. Argument Passed should be the _js_id of the container
-        """
-        for container in self.containers:
-            if container.js_id == container_id:
-                # Be sure to allow indicators to clear themselves
-                # This ensures web-sockets and other assets are closed.
-                for frame in container.frames.values():
-                    for indicator in frame.indicators.copy().values():
-                        indicator.delete()
+    def del_tab(self, _id: str | int):
+        "Deletes a Tab. Id can be either the js_id or tab #."
+        container = self.get_container(_id)
 
-                # Remove the Objects from local storable and erase their JS global references
-                self._container_ids.remove(container_id)
-                self.containers.remove(container)
-                self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container_id))
-                self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
-                return
+        # Be sure to allow indicators to clear themselves
+        # This ensures web-sockets and other assets are closed.
+        for frame in container.frames.values():
+            for indicator in frame.indicators.copy().values():
+                indicator.delete()
 
-    def get_container(self, _id: int | str) -> Optional[Container]:
-        "Return the container that either matchs the given _js_id string, or the integer tab number"
+        # Remove the Objects from local storable and erase their JS global references
+        self._container_ids.remove(container.js_id)
+        self.containers.remove(container)
+        self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container.js_id))
+        self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
+
+    def get_container(self, _id: int | str) -> Container:
+        "Return the container that matches either the given js_id, or the tab #"
         if isinstance(_id, str):
             for container in self.containers:
                 if _id == container.js_id:
                     return container
+            raise IndexError(f"Window doesn't have a Container with ID:{_id}")
         else:
             if 0 <= _id < len(self.containers):
                 return self.containers[_id]
+            raise IndexError(f"Container index {_id} out of bounds.")
 
     def set_search_filters(
         self,
@@ -315,15 +276,15 @@ class Window:
         self._fwd_queue.put((JS_CMD.SET_SYMBOL_SEARCH_OPTS, category, items))
 
     def set_layout_favs(self, favs: list[orm.layouts]):
-        "Set the layout types shown on the window's TopBar"
+        "Set the layout types shown on the Window's TopBar"
         self._fwd_queue.put((JS_CMD.UPDATE_LAYOUT_FAVS, {"favorites": favs}))
 
     def set_series_favs(self, favs: list[orm.series.SeriesType]):
-        "Set the Series types shown on the window's TopBar"
+        "Set the Series types shown on the Window's TopBar"
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_FAVS, {"favorites": favs}))
 
     def set_timeframes(self, favs: list[orm.TF], opts: Optional[list[orm.TF]] = None):
-        "Set the Timeframes shown on the window's TopBar and in the dropdown menu"
+        "Set the Timeframes shown on the Window's TopBar and in the dropdown menu"
         menu_opts = {}
         if opts is not None:
             for fav in favs:
@@ -402,9 +363,10 @@ class Frame:
     Frame Objects primarily hold information about the timeseries that is being displayed. They
     retain a copy of data that is used across all sub-panes as well as the references to said panes.
 
-    Since the Main Series Data (and whitespace data) is common across all sub-panes the Python Frame
-    object owns the data and is responsible for setting / updating it. This contrasts the Javascript
-    structure where the Main Series Data is owned by the JS Pane Object that is displaying the data
+    ** ATM this class translates to a Chart_Frame in the Frontend. At some point in the future this
+    will become a Chart_Frame that inherits from an Abstract Frame class. That implementation will
+    match the current Frontend implementation and allow for 'Frame' to be an abstract re-sizeable
+    viewport in the window. Broker integration, Bid/Ask Tables, Stock Screeners... Sky's the limit.
     """
 
     def __init__(self, parent: Container, _js_id: Optional[str] = None) -> None:
@@ -416,17 +378,12 @@ class Frame:
         self._window = parent._window
         self._fwd_queue = parent._fwd_queue
         self.panes = util.ID_Dict[Pane](f"{self._js_id}_p")
-
-        # Dict of all applied indicators. Indicators, using the supplied reference to a frame,
-        # append themselves to this when created. See Indicator DocString for reasoning.
         self.indicators = util.ID_Dict[ind.Indicator]("i")
-
-        self.symbol: Optional[Symbol] = None
-        self.series_type: SeriesType = SeriesType.Candlestick
+        # Indicators append themselves to this ID_Dict. See Indicator DocString for reasoning.
 
         self._fwd_queue.put((JS_CMD.ADD_FRAME, self._js_id, parent._js_id))
 
-        # Add main pane and Series, should never be deleted
+        # Add main pane and Series, neither should ever be deleted
         self.add_pane(Pane.__special_id__)
         indicators.Series(self, js_id=indicators.Series.__special_id__)
 
