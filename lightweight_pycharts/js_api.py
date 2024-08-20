@@ -6,6 +6,7 @@ from inspect import getmembers, ismethod
 import multiprocessing as mp
 from multiprocessing.synchronize import Event as mp_EventClass
 from dataclasses import dataclass, field
+import queue
 from typing import Callable, Optional, Protocol
 from abc import ABC, abstractmethod
 
@@ -131,7 +132,6 @@ class MpHooks:
     "All required Multiprocessor Hooks required for a javascript interface"
     fwd_queue: mp.Queue = field(default_factory=mp.Queue)
     rtn_queue: mp.Queue = field(default_factory=mp.Queue)
-    start_event: mp_EventClass = field(default_factory=mp.Event)
     js_loaded_event: mp_EventClass = field(default_factory=mp.Event)
     stop_event: mp_EventClass = field(default_factory=mp.Event)
 
@@ -151,14 +151,16 @@ class View(ABC):
     are managed via a dedicated processor to help imporve performance.
 
     Attributes:
-        fwd_queue:      Multiprocessing Queue That transfers data from "__main_mp__" to "__view_mp__"
-        rtn_queue:      Multiprocessing Queue That transfers data from "__view_mp__" to "__main_mp__"
-        start_event:    Multiprocessing Event that is set by "__main_mp__" to syncronize all windows being loaded
-        js_loaded_event:   Multiprocessing Event that is set by "__view_mp__" to indicate javascript window has been loaded
-                        and javascript commands can be sent via View.runscript() Method
-        stop_event:     Multiprocessing Event that is set by either __main_mp__ or __view_mp__ to signal application shutdown
+        fwd_queue:          MP Queue That transfers data from __main_mp__ to __view_mp__
+        rtn_queue:          MP Queue That transfers data from __view_mp__ to __main_mp__
+        js_loaded_event:    MP Event that is set by __view_mp__ to indicate javascript window has
+                                been loaded and JS_CMDs can be executed
+        stop_event:         MP Event that is set by either __main_mp__ or __view_mp__ to signal
+                                application shutdown
+        run_script():       Callable function that takes a string representation of javascript that
+                            will be evaluated in the window
+        rolodex:            A Dict Mapping JS_CMDs to Instance Functions for easy access
 
-        runs_script():   Callable function that takes a string representation of javascript that will be evaluated in the window
     """
 
     def __init__(
@@ -169,9 +171,18 @@ class View(ABC):
         self.run_script = run_script
         self.fwd_queue = hooks.fwd_queue
         self.rtn_queue = hooks.rtn_queue
-        self.start_event = hooks.start_event
         self.js_loaded_event = hooks.js_loaded_event
         self.stop_event = hooks.stop_event
+
+        self.rolodex = {
+            JS_CMD.SHOW: self.show,
+            JS_CMD.HIDE: self.hide,
+            JS_CMD.CLOSE: self.close,
+            JS_CMD.MAXIMIZE: self.maximize,
+            JS_CMD.MINIMIZE: self.minimize,
+            JS_CMD.RESTORE: self.restore,
+            JS_CMD.LOAD_CSS: self.load_css,
+        }
 
     @abstractmethod
     def show(self): ...
@@ -192,52 +203,36 @@ class View(ABC):
 
     def _manage_queue(self):
         "Infinite loop to manage Process Queue since it is launched in an isolated process"
+        batch_cmd, batch_size = "", 0
         while not self.stop_event.is_set():
             # get() doesn't need a timeout. the waiting will get interupted by the os
-            # to go manage the thread that the webview is running in.
-            # Bit wasteful. Would be nice to have pywebview run in an asyncio Thread
+            # to go manage the thread that the webview is running in. Bit wasteful i think.
+            # Would be nice to have pywebview run in an asyncio Thread
             msg = self.fwd_queue.get()
-            if isinstance(msg, tuple):
-                cmd, *args = msg
-            elif isinstance(msg, JS_CMD):
-                cmd = msg
-                args = tuple()
-                # Handle Case where only a cmd was put in queue
-            else:
-                logger.warning("Ignoring Invalid Message: %s", msg)
-                continue
-
+            cmd, *args = msg
             logger.debug("Received CMD: %s, args: %s", cmd.name, args)
 
             try:
                 # Lookup JS Command
                 cmd_str = cmds.CMD_ROLODEX[cmd](*args)
-                if cmd_str != "":
-                    self.run_script(cmd_str)
-                else:
-                    # Not Given JS_CMD, check against PyWv Commands
-                    match cmd:
-                        case JS_CMD.SHOW:
-                            self.show()
-                        case JS_CMD.HIDE:
-                            self.hide()
-                        case JS_CMD.CLOSE:
-                            self.close()
-                        case JS_CMD.MAXIMIZE:
-                            self.maximize()
-                        case JS_CMD.MINIMIZE:
-                            self.minimize()
-                        case JS_CMD.RESTORE:
-                            self.restore()
-                        case JS_CMD.LOAD_CSS:
-                            self.load_css(args[0])
             except TypeError as e:
-                logger.error(
-                    "Command:%s: Given %s \n\tError msg: %s",
-                    cmd,
-                    [type(arg) for arg in args],
-                    e,
-                )
+                arg_list = [type(arg) for arg in args]
+                logger.error("Command:%s: Given %s \n\tError msg: %s", cmd, arg_list, e)
+                continue  # Skip to next Command
+
+            if cmd_str is None:
+                self.rolodex[cmd](*args)  # Given a PyWv Command, execute Immediately
+            else:
+                batch_size += 1
+                batch_cmd += cmd_str
+
+            # Batching is critical. Batching is atleast 3x faster than running individual cmds
+            # If not done then the queue can easily pileup too. The Batch Size Limit exists to
+            # limit how much the viewport appears to lockup while being flooded w/ cmds
+            if self.fwd_queue.empty() or batch_size >= 100:
+                self.run_script(batch_cmd)
+                batch_cmd = ""
+                batch_size = 0
 
 
 class PyWv(View):
@@ -296,7 +291,7 @@ class PyWv(View):
 
         self.frameless = kwargs["frameless"]
         if self.frameless:
-            webview.DRAG_REGION_SELECTOR = ".drag-region"
+            webview.DRAG_REGION_SELECTOR = ".frameless-drag-region"
             # Need to do this otherwise a Framed window is draggable
             # and no, you can't just add this class after the window is made..
 
@@ -315,7 +310,6 @@ class PyWv(View):
         self.pyweb_window.events.maximized += self._on_maximized
         self.pyweb_window.events.restored += self._on_restore
 
-        # Wait until main process signals to start
         webview.start(debug=debug)
         self.stop_event.set()
 

@@ -63,7 +63,6 @@ class Window:
         mp_hooks = MpHooks()
         self._fwd_queue = mp_hooks.fwd_queue
         self._rtn_queue = mp_hooks.rtn_queue
-        self._start_event = mp_hooks.start_event
         self._stop_event = mp_hooks.stop_event
         self._js_loaded_event = mp_hooks.js_loaded_event
 
@@ -202,27 +201,27 @@ class Window:
 
     def show(self):
         "Show the View Window"
-        self._fwd_queue.put(JS_CMD.SHOW)
+        self._fwd_queue.put((JS_CMD.SHOW,))
 
     def hide(self):
         "Hide the View Window"
-        self._fwd_queue.put(JS_CMD.HIDE)
+        self._fwd_queue.put((JS_CMD.HIDE,))
 
     def maximize(self):
         "Hide the View Window"
-        self._fwd_queue.put(JS_CMD.MAXIMIZE)
+        self._fwd_queue.put((JS_CMD.MAXIMIZE,))
 
     def minimize(self):
         "Hide the View Window"
-        self._fwd_queue.put(JS_CMD.MINIMIZE)
+        self._fwd_queue.put((JS_CMD.MINIMIZE,))
 
     def restore(self):
         "Hide the View Window"
-        self._fwd_queue.put(JS_CMD.RESTORE)
+        self._fwd_queue.put((JS_CMD.RESTORE,))
 
     def close(self):
         "Hide the View Window"
-        self._fwd_queue.put(JS_CMD.CLOSE)
+        self._fwd_queue.put((JS_CMD.CLOSE,))
 
     async def await_close(self):
         "Await closure of the window's asyncio loop. (Window Closure)"

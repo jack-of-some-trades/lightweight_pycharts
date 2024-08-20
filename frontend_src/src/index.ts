@@ -54,6 +54,8 @@ window.topbar = {
     setLayout : (_:Container_Layouts) => {},
     setTicker : (_:string) => {},
 }
+// Global Workspace Var used by Injected JS Commands
+var _ind = undefined
 
 
 render(Wrapper, document.body)

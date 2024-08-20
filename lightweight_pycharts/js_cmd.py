@@ -146,7 +146,7 @@ def js_code(*scripts: str) -> str:
 
 
 def add_container(_id: str) -> str:
-    return f"var {_id} = container_manager.add_container('{_id}')"
+    return f"var {_id} = container_manager.add_container('{_id}');"
 
 
 def remove_container(_id: str) -> str:
@@ -164,27 +164,27 @@ def remove_reference(*_ids: str) -> str:
 
 
 def set_window_layouts(favs: dict) -> str:
-    return f"api.update_layout_opts({dump(favs)})"
+    return f"api.update_layout_opts({dump(favs)});"
 
 
 def set_window_series_types(favs: dict) -> str:
-    return f"api.update_series_opts({dump(favs)})"
+    return f"api.update_series_opts({dump(favs)});"
 
 
 def set_window_timeframes(opts: dict) -> str:
-    return f"api.update_timeframe_opts({dump(opts)})"
+    return f"api.update_timeframe_opts({dump(opts)});"
 
 
 def update_symbol_search(symbols: list[types.Symbol]) -> str:
-    return f"api.populate_search_symbols({dump(symbols)})"
+    return f"api.populate_search_symbols({dump(symbols)});"
 
 
 def update_symbol_search_bubbles(category: str, opts: list[str]) -> str:
-    return f"api.set_search_filters('{category}', {dump(opts)})"
+    return f"api.set_search_filters('{category}', {dump(opts)});"
 
 
 def set_user_colors(opts: list[Color]):
-    return f"api.set_user_colors({dumps([color.to_hex() for color in opts])})"
+    return f"api.set_user_colors({dumps([color.to_hex() for color in opts])});"
 
 
 # endregion
@@ -193,41 +193,41 @@ def set_user_colors(opts: list[Color]):
 
 
 def set_layout(container_id: str, layout: layouts) -> str:
-    return f"{container_id}.set_layout({layout})"
+    return f"{container_id}.set_layout({layout});"
 
 
 def add_frame(frame_id: str, container_id: str) -> str:
-    return f"var {frame_id} = {container_id}.add_frame('{frame_id}')"
+    return f"var {frame_id} = {container_id}.add_frame('{frame_id}');"
 
 
 def add_pane(pane_id: str, frame_id: str) -> str:
-    return f"var {pane_id} = {frame_id}.add_pane('{pane_id}')"
+    return f"var {pane_id} = {frame_id}.add_pane('{pane_id}');"
 
 
 def set_frame_series_type(frame_id: str, series: SeriesType) -> str:
-    return f"{frame_id}.set_series_type({series})"
+    return f"{frame_id}.set_series_type({series});"
 
 
 def set_frame_symbol(frame_id: str, symbol: types.Symbol) -> str:
-    return f"{frame_id}.set_symbol({dump(symbol)})"
+    return f"{frame_id}.set_symbol({dump(symbol)});"
 
 
 def set_frame_timeframe(frame_id: str, timeframe: types.TF) -> str:
-    return f"{frame_id}.set_timeframe('{timeframe.toString}')"
+    return f"{frame_id}.set_timeframe('{timeframe.toString}');"
 
 
 def set_whitespace_data(frame_id: str, data: DataFrame, p_data: SingleValueData) -> str:
-    return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')}, {dump(p_data)})"
+    return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')}, {dump(p_data)});"
 
 
 def clear_whitespace_data(frame_id: str) -> str:
-    return f"{frame_id}.set_whitespace_data([])"
+    return f"{frame_id}.set_whitespace_data([]);"
 
 
 def update_whitespace_data(
     frame_id: str, data: WhitespaceData, p_data: SingleValueData
 ) -> str:
-    return f"{frame_id}.update_whitespace_data({dump(data)}, {dump(p_data)})"
+    return f"{frame_id}.update_whitespace_data({dump(data)}, {dump(p_data)});"
 
 
 # endregion
@@ -243,45 +243,46 @@ def create_indicator(
     indicator_type: str,
     name: str,
 ) -> str:
-    return f"{frame_id}.create_indicator('{indicator_id}', {dump(outputs)},'{indicator_type}','{name}',{pane_id})"
+    return f"{frame_id}.create_indicator('{indicator_id}', {dump(outputs)},'{indicator_type}','{name}',{pane_id});"
 
 
 def delete_indicator(frame_id: str, indicator_id: str) -> str:
-    return f"{frame_id}.delete_indicator('{indicator_id}')"
+    return f"{frame_id}.delete_indicator('{indicator_id}');"
 
 
 def add_primitive(
     pane_id: str, primitive_id: str, primitive_type: str, args: dict[str, Any]
 ) -> str:
-    return f"{pane_id}.add_primitive('{primitive_id}','{primitive_type}', {dump(args)})"
+    return (
+        f"{pane_id}.add_primitive('{primitive_id}','{primitive_type}', {dump(args)});"
+    )
 
 
 def remove_primitive(pane_id: str, primitive_id: str) -> str:
-    return f"{pane_id}.remove_primitive('{primitive_id}')"
+    return f"{pane_id}.remove_primitive('{primitive_id}');"
 
 
 def update_primitive(pane_id: str, primitive_id: str, args: dict[str, Any]) -> str:
-    return f"{pane_id}.update_primitive('{primitive_id}', {dump(args)})"
+    return f"{pane_id}.update_primitive('{primitive_id}', {dump(args)});"
 
 
 # Retreives an indicator object from a pane to manipulate
 def indicator_preamble(frame_id: str, indicator_id: str) -> str:
-    return f"""
-        let indicator = {frame_id}.indicators.get('{indicator_id}');
-        """
+    # _ind is a workspace var defined at the window level in index.ts for use here
+    return f"_ind = {frame_id}.indicators.get('{indicator_id}');"
 
 
 def indicator_set_menu(frame_id: str, indicator_id: str, menu_struct, options) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.set_menu_struct({dump(menu_struct)}, {dump(options)});"
+        + f"_ind.set_menu_struct({dump(menu_struct)}, {dump(options)});"
     )
 
 
 def indicator_set_options(frame_id: str, indicator_id: str, options) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"if (indicator.setOptions !== undefined) indicator.set_options({dump(options)});"
+        + f"if (_ind.setOptions !== undefined) _ind.set_options({dump(options)});"
     )
 
 
@@ -294,14 +295,14 @@ def add_series(
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.add_series('{series_id}', {series_type});"
+        + f"_ind.add_series('{series_id}', {series_type});"
     )
 
 
 def remove_series(frame_id: str, indicator_id: str, series_id: str) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.remove_series('{series_id}');"
+        + f"_ind.remove_series('{series_id}');"
     )
 
 
@@ -310,20 +311,18 @@ def set_series_data(
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.set_series_data('{series_id}', {dump(data)});"
+        + f"_ind.set_series_data('{series_id}', {dump(data)});"
     )
 
 
 def set_legend_label(frame_id: str, indicator_id: str, label: str) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id) + f"indicator.setLabel('{label}');"
-    )
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.setLabel('{label}');"
 
 
 def clear_series_data(frame_id: str, indicator_id: str, series_id: str) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.set_series_data('{series_id}', []);"
+        + f"_ind.set_series_data('{series_id}', []);"
     )
 
 
@@ -332,7 +331,7 @@ def update_series_data(
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.update_series_data('{series_id}', {dump(data)});"
+        + f"_ind.update_series_data('{series_id}', {dump(data)});"
     )
 
 
@@ -345,7 +344,7 @@ def change_series_type(
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.change_series_type('{series_id}', {series_type}, {dump(data)});"
+        + f"_ind.change_series_type('{series_id}', {series_type}, {dump(data)});"
     )
 
 
@@ -354,7 +353,7 @@ def update_series_opts(
 ) -> str:
     rtn_str = (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.update_series_opts('{series_id}', {dump(opts)});"
+        + f"_ind.update_series_opts('{series_id}', {dump(opts)});"
     )
 
     if opts.autoscaleInfoProvider is not None:
@@ -372,7 +371,7 @@ def update_scale_opts(
 ):
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.update_scale_opts('{series_id}', {dump(opts)});"
+        + f"_ind.update_scale_opts('{series_id}', {dump(opts)});"
     )
 
 
@@ -390,7 +389,7 @@ def add_ind_primitive(
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.add_primitive('{primitive_id}','{primitive_type}', {dump(args)})"
+        + f"_ind.add_primitive('{primitive_id}','{primitive_type}', {dump(args)});"
     )
 
 
@@ -401,7 +400,7 @@ def remove_ind_primitive(
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.remove_primitive('{primitive_id}')"
+        + f"_ind.remove_primitive('{primitive_id}');"
     )
 
 
@@ -413,7 +412,7 @@ def update_ind_primitive(
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"indicator.update_primitive('{primitive_id}', {dump(args)})"
+        + f"_ind.update_primitive('{primitive_id}', {dump(args)});"
     )
 
 
@@ -422,12 +421,12 @@ def update_ind_primitive(
 # endregion
 
 
-def return_blank(*_) -> str:
-    "Return a blank string, The Queue Manager will interpret this to mean a PyWv command was given."
-    return ""
+def lambda_none(*_) -> None:
+    "The Queue Manager will interpret this to mean a PyWv command was given."
+    return None
 
 
-CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
+CMD_ROLODEX: dict[JS_CMD, Callable[..., str | None]] = {
     # ---- Window Commands ----
     JS_CMD.JS_CODE: js_code,
     JS_CMD.ADD_CONTAINER: add_container,
@@ -472,11 +471,11 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str]] = {
     JS_CMD.SET_INDICATOR_MENU: indicator_set_menu,
     JS_CMD.SET_INDICATOR_OPTIONS: indicator_set_options,
     # ---- PyWebView Commands ----
-    JS_CMD.SHOW: return_blank,
-    JS_CMD.HIDE: return_blank,
-    JS_CMD.CLOSE: return_blank,
-    JS_CMD.RESTORE: return_blank,
-    JS_CMD.MAXIMIZE: return_blank,
-    JS_CMD.MINIMIZE: return_blank,
-    JS_CMD.LOAD_CSS: return_blank,
+    JS_CMD.SHOW: lambda_none,
+    JS_CMD.HIDE: lambda_none,
+    JS_CMD.CLOSE: lambda_none,
+    JS_CMD.RESTORE: lambda_none,
+    JS_CMD.MAXIMIZE: lambda_none,
+    JS_CMD.MINIMIZE: lambda_none,
+    JS_CMD.LOAD_CSS: lambda_none,
 }

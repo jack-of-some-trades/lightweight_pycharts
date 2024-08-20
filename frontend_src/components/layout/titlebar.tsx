@@ -26,12 +26,12 @@ export function TitleBar(props:title_bar_props) {
     
     return <div class='layout_title layout_flex' style={props.style}>
         {/**** Tabs Bar ****/}
-        <div ref={tab_div} class="titlebar titlebar_grab tabs drag-region">
+        <div ref={tab_div} class="titlebar titlebar_grab tabs frameless-drag-region">
             <div class="tabs-content"/>
         </div>
 
         {/**** Window Controls ****/}
-        <div class="titlebar titlebar_btns drag-region">
+        <div class="titlebar titlebar_btns frameless-drag-region">
 
             {/**** New Tab and Window Panel Controls ****/}
             <Icon icon={icons.window_add} classList={{window_btn:true}}
