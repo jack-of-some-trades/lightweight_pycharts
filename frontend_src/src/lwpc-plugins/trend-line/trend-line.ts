@@ -12,28 +12,24 @@ import {
 	SingleValueData,
 	Time
 } from 'lightweight-charts';
-import { PrimitiveBase, draw_dot } from '../primitive-base';
+import { PrimitiveBase, draw_dot, primitiveOptions } from '../primitive-base';
 
 
 
 /* --------------------- Primitive Options ----------------------- */
 
-export interface TrendLineOptions {
-	lineColor: string;
+export interface TrendLineOptions extends primitiveOptions {
 	width: number;
-	autoscale: boolean,
-	showLabels: boolean;
-	labelBackgroundColor: string;
-	labelTextColor: string;
+	lineColor: string;
 }
 
 const defaultOptions: TrendLineOptions = {
-	lineColor: 'rgb(255, 0, 0)',
-	width: 1,
+	visible: true,
+	tangible: true,
 	autoscale: false,
-	showLabels: true,
-	labelBackgroundColor: 'rgba(255, 255, 255, 0.85)',
-	labelTextColor: 'rgb(0, 0, 0)',
+
+	width: 1,
+	lineColor: 'rgb(255, 0, 0)',
 };
 
 interface TrendLineParameters {
@@ -48,16 +44,15 @@ export class TrendLine extends PrimitiveBase {
 	_p1: SingleValueData | null;
 	_p2: SingleValueData | null;
 	_paneView: TrendLinePaneView;
-	_options: TrendLineOptions;
+	_options: TrendLineOptions = defaultOptions;
 
-	constructor(params:TrendLineParameters) {
-		super('TrendLine', 'id', false)
+	constructor(id:string, params:TrendLineParameters) {
+		super(
+			id, 'TrendLine', 
+			{...defaultOptions, ...params.options}
+		)
 		this._p1 = params.p1;
 		this._p2 = params.p2;
-		this._options = {
-			...defaultOptions,
-			...params.options,
-		};
 		this._paneView = new TrendLinePaneView(this);
 	}
 	//#region --------------- Util Functions --------------- //
@@ -69,12 +64,7 @@ export class TrendLine extends PrimitiveBase {
 	public updateData(params:TrendLineParameters) {
 		if (params.p1 !== null) this._p1 = params.p1
 		if (params.p2 !== null) this._p2 = params.p2
-		if (params.options !== undefined)
-			this._options = {
-				...this._options,
-				...params.options
-			}
-		this.requestUpdate()
+		this.applyOptions(params.options)
 	}
 	//#endregion 
 
@@ -83,12 +73,13 @@ export class TrendLine extends PrimitiveBase {
 	updateAllViews() { this._paneView.update(); }
 
 	autoscaleInfo(startTimePoint: Logical, endTimePoint: Logical): AutoscaleInfo | null {
-		if (!this._options.autoscale) return null
+		if (!this._options.autoscale || !this._options.visible) return null
 		if (this._p1 === null || this._p2 === null) return null
 
 		const p1Index = this._pointIndex(this._p1);
 		const p2Index = this._pointIndex(this._p2);
 		if (p1Index === null || p2Index === null) return null;
+		// Off-Screen check
 		if (endTimePoint < p1Index || startTimePoint > p2Index) return null;
 
 		return {
@@ -107,8 +98,9 @@ export class TrendLine extends PrimitiveBase {
 	 * Move line / Point on line Function
 	 */
 	onMouseDown(param: MouseEventParams<Time>) {
+		if (!this._options.visible || !this._options.tangible) return
 		const id = param.hoveredObjectId as string
-		if (!id || !id.startsWith('line') || !param.sourceEvent || !param.logical) {
+		if (!id || !id.startsWith(this._id) || !param.sourceEvent || !param.logical) {
 			this._paneView._selected = false
 			return
 		}
@@ -120,7 +112,7 @@ export class TrendLine extends PrimitiveBase {
 		if (!chart_rect) return
 
 		let update_func
-		if (id === "line") {
+		if (id === this._id) {
 			let x = param.logical
 			let y = param.sourceEvent.clientY
 
@@ -138,15 +130,15 @@ export class TrendLine extends PrimitiveBase {
 				y = param.sourceEvent.clientY
 			}
 
-		} else if (id === "line_p1" || id === "line_p2") {
+		} else if (id === this._id+'_p1' || id === this._id+'_p2') {
 			update_func = (param: MouseEventParams<Time>) => {
 				if (!param.sourceEvent) return
 				let t = timescale.coordinateToTime(param.sourceEvent.clientX - chart_rect.left)
 				let p = series.coordinateToPrice(param.sourceEvent.clientY - chart_rect.top)
 				if (t && p)
-					if (id === "line_p1")
+					if (id === this._id+'_p1')
 						this.updateData({p1:{ time: t, value: p }, p2:null})
-					else if (id === "line_p2")
+					else if (id === this._id+'_p2')
 						this.updateData({p1:null, p2:{ time: t, value: p }})
 			}
 		} else return
@@ -177,14 +169,15 @@ export class TrendLine extends PrimitiveBase {
 	}
 
 	onClick(param: MouseEventParams<Time>) {
+		if (!this._options.visible || !this._options.tangible) return
 		switch (param.hoveredObjectId) {
-			case 'line_p1':
+			case this._id+'_p1':
 				console.log('clicked p1')
 				break;
-			case 'line_p2':
+			case this._id+'_p2':
 				console.log('clicked p2')
 				break;
-			case 'line':
+			case this._id:
 				console.log('clicked line')
 				break;
 		}
@@ -204,6 +197,10 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 	_selected: boolean = false
 	_renderer: TrendLinePaneRenderer
 
+	_line_id:string
+	_line_p1_id:string
+	_line_p2_id:string
+
 	line: Path2D | null = null
 	ctx: CanvasRenderingContext2D | null = null
 
@@ -214,6 +211,9 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			this._source._options,
 			this.passback.bind(this)
 		)
+		this._line_id = this._source._id
+		this._line_p1_id = this._line_id + '_p1'
+		this._line_p2_id = this._line_id + '_p2'
 	}
 
 	update() {
@@ -225,6 +225,23 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 		let y2 = series.priceToCoordinate(this._source._p2.value);
 		let x1 = timeScale.timeToCoordinate(this._source._p1.time);
 		let x2 = timeScale.timeToCoordinate(this._source._p2.time);
+
+		// TODO : Reassess this.. it overwrites the data given in order to make the primitive
+		// visible. Should there be a way to revert this edit?
+		if (x1 === null){
+			let new_time = this._source.nearestBarTime(this._source._p1.time)
+			if (new_time !== null){
+				x1 = timeScale.timeToCoordinate(new_time)
+				this._source._p1.time = new_time
+			}
+		}
+		if (x2 === null){
+			let new_time = this._source.nearestBarTime(this._source._p2.time)
+			if (new_time !== null){
+				x2 = timeScale.timeToCoordinate(new_time)
+				this._source._p2.time = new_time
+			}
+		}
 
 		if (x1 === null || x2 === null || y1 === null || y2 === null) {
 			this._p1 = null
@@ -250,10 +267,15 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 	/**
 	 * Implementation of a Hit test when you have access to the Canvas Target...
 	 * This function gets invoked a LOT. Need to make sure it's efficient.
+	 * 
+	 * The External ID convention is [i_XXXX_]p_XXXX[_[arg]] where i_XXXX is the unique id for
+	 * the parent indicator if applicable, p_XXXX the unique ID for this primitive, and [_[arg]]
+	 * is any optional extention to specify what part of the primitive (_p1 or _p2 in this case)
 	 */
 	hitTest(x: number, y: number): PrimitiveHoveredItem | null {
 		if (this.line === null || this.ctx === null) return null
 		if (this._p1 === null || this._p2 === null) return null
+		if (!this._source._options.tangible || !this._source._options.visible) return null
 
 		this._hovered = false //Assume it isn't. Will correct if not.
 		if (!( //Course X range Check
@@ -269,9 +291,9 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 		//Only check to a square around the point since it's much faster
 		if (Math.abs(this._p1.x - x) < 10 && Math.abs(this._p1.y - y) < 10) {
 			this._hovered = true
-			return {
+			return { 
 				cursorStyle: 'grab',
-				externalId: "line_p1",
+				externalId: this._line_p1_id,
 				zOrder: 'normal'
 			}
 		}
@@ -279,7 +301,7 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			this._hovered = true
 			return {
 				cursorStyle: 'grab',
-				externalId: "line_p2",
+				externalId: this._line_p2_id,
 				zOrder: 'normal'
 			}
 		}
@@ -289,7 +311,7 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			this._hovered = true
 			return {
 				cursorStyle: 'grab',
-				externalId: "line",
+				externalId: this._line_id,
 				zOrder: 'normal'
 			}
 		}
@@ -339,29 +361,3 @@ class TrendLinePaneRenderer implements ISeriesPrimitivePaneRenderer {
 		this._selected = selected
 	}
 }
-
-
-
-
-// update_func = (e: MouseEvent) => {
-// 	let dx = e.clientX - x
-// 	let dy = e.clientY - y
-
-// 	if (!this._p1 || !this._p2) return
-// 	let c1x = timescale.timeToCoordinate(this._p1.time)
-// 	let c1y = series.priceToCoordinate(this._p1.value)
-// 	let c2x = timescale.timeToCoordinate(this._p2.time)
-// 	let c2y = series.priceToCoordinate(this._p2.value)
-
-// 	if (!c1x || !c1y || !c2x || !c2y) return
-// 	let p1x = timescale.coordinateToTime(c1x + dx)
-// 	let p1y = series.coordinateToPrice(c1y + dy)
-// 	let p2x = timescale.coordinateToTime(c2x + dx)
-// 	let p2y = series.coordinateToPrice(c2y + dy)
-
-// 	if (!p1x || !p1y || !p2x || !p2y) return
-// 	this._updateData({ time: p1x, value: p1y }, { time: p2x, value: p2y })
-// 	x = e.clientX
-// 	y = e.clientY
-// }
-// update_func = update_func.bind(

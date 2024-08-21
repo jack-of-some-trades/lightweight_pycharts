@@ -116,6 +116,27 @@ export function makeid(id_list: string[], prefix: string = ''): string {
     }
 }
 
+/**
+ * Simple Binary Search
+ * @param arr Array of any time
+ * @param el Element to Search for
+ * @param compare_fn Comparison Function that should return a number.
+ * @returns Index of the found element, or when negative, the index where the element should be inserted at.
+ */
+export function binarySearch(arr:Array<any>, el:any, compare_fn:(a:any, b:any) => number) {
+    let m = 0;
+    let n = arr.length - 1;
+    while (m <= n) {
+        let k = (n + m) >> 1;
+        let cmp = compare_fn(el, arr[k]);
+
+        if (cmp > 0) m = k + 1
+        else if(cmp < 0) n = k - 1
+        else return k
+    }
+    return ~m;
+}
+
 //#endregion
 
 

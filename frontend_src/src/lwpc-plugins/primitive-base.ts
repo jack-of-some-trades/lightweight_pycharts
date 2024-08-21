@@ -14,7 +14,13 @@ import {
     Time
 } from 'lightweight-charts';
 import { ensureDefined } from '../helpers/assertions';
+import { binarySearch } from '../types';
 
+export interface primitiveOptions {
+    visible: boolean
+    tangible: boolean
+    autoscale: boolean
+}
 
 /**
  * This is a near identical implementation of the plugin-base that comes with 
@@ -29,9 +35,9 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
     protected _chart: IChartApi | undefined = undefined;
     protected _series: ISeriesApi<keyof SeriesOptionsMap> | undefined = undefined;
 
-    protected _id: string = ""
-    protected _type: string = "null"
-    protected _autoscale: boolean = false
+    _id: string = ""
+    _type: string = "null"
+    _options: primitiveOptions
 
     private _requestUpdate?: () => void;
     protected requestUpdate(): void { if (this._requestUpdate) this._requestUpdate(); }
@@ -43,24 +49,33 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
     protected onDblClick?(param: MouseEventParams<Time>): void;
     protected onCrosshairMove?(param: MouseEventParams<Time>): void;
 
-    constructor(_type:string, _id:string, _autoscale:boolean){
-        this._type = _type
+    constructor(_id:string, _type:string, _opts:primitiveOptions){
         this._id = _id
-        this._autoscale = _autoscale
+        this._type = _type
+        this._options = _opts
     }
 
-    public abstract updateData(params: any): void
+    options():primitiveOptions {return structuredClone(this._options)}
+    applyOptions(opts:Partial<primitiveOptions> | undefined){
+        if (opts !== undefined)
+            this._options = {...this._options, ...opts}
+        this.requestUpdate()
+    }
+
+    public abstract updateData(params: object): void
 
     public attached({ chart, series, requestUpdate }: SeriesAttachedParameter<Time>) {
         this._chart = chart;
         this._series = series;
 
-        //Attach Listeners if they were defined by the subclass
-        if (this.onDataUpdate) { this._series.subscribeDataChanged(this._fireDataUpdated); }
-        if (this.onClick) { this._chart.subscribeClick(this._fireClick); }
-        if (this.onDblClick) { this._chart.subscribeDblClick(this._fireDblClick); }
-        if (this.onCrosshairMove) { this._chart.subscribeCrosshairMove(this._fireCrosshairMove); }
-        if (this.onMouseDown) { this._chart.chartElement().addEventListener('mousedown', this._fireMouseDown); }
+        //Attach Listeners if they were defined by the subclass and obj is tangible
+        if (this._options.tangible){
+            if (this.onDataUpdate) { this._series.subscribeDataChanged(this._fireDataUpdated); }
+            if (this.onClick) { this._chart.subscribeClick(this._fireClick); }
+            if (this.onDblClick) { this._chart.subscribeDblClick(this._fireDblClick); }
+            if (this.onCrosshairMove) { this._chart.subscribeCrosshairMove(this._fireCrosshairMove); }
+            if (this.onMouseDown) { this._chart.chartElement().addEventListener('mousedown', this._fireMouseDown); }
+        }
         // this._chart.chartElement().addEventListener('mousedown', this._fireClick)
         this._requestUpdate = requestUpdate;
         this.requestUpdate();
@@ -177,6 +192,24 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
         if (!px || !py) return null
 
         return { time: px, value: py }
+    }
+
+    //Utility Function to look at the chart's timescale and grab the nearest time to the time given
+    nearestBarTime(time:Time, look_left:boolean = true): Time | null {
+        //@ts-ignore // Fetches the raw data from the timescale
+        let time_points = this._chart?.timeScale().kl._u
+        if (time_points === undefined) return null
+        //@ts-ignore // When valid, pulls the unix time from the raw data
+        const bar_times = Array.from(time_points, (v) => v.originalTime)
+        // In this library python ensures all times are numbers => Time as Number is valid.
+        let index = binarySearch(bar_times, time as Number, (a,b) => a-b)
+
+        if (index >= 0)
+            return bar_times[index]
+        else if (look_left)
+            return bar_times[-index]
+        else
+            return bar_times[Math.min(-index + 1 , bar_times.length - 1)]
     }
 }
 

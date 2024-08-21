@@ -154,7 +154,7 @@ export class pane {
     protected add_primitive(_id: string, _type: string, params:object) {
         let primitive_type = primitives.get(_type)
         if (primitive_type === undefined) return
-        let new_obj = new primitive_type(params)
+        let new_obj = new primitive_type(_id, params)
 
         this.primitives_right.set(_id, new_obj)
         this.primitive_right.attachPrimitive(new_obj)
@@ -177,7 +177,7 @@ export class pane {
     resize(){this.chart.resize(Math.max(this.div().clientWidth-2, 0), Math.max(this.div().clientHeight-2, 0), false)}
 
     create_line(point1: SingleValueData, point2: SingleValueData) {
-        const trend = new TrendLine({p1:point1, p2:point2});
+        const trend = new TrendLine("some_id", {p1:point1, p2:point2});
         this.primitive_right.attachPrimitive(trend);
     }
 
