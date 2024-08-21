@@ -273,6 +273,7 @@ class OptionsMeta(type):
             "default": arg,
             "tooltip": arg_params["tooltip"],
             "options": arg_params["options"],
+            "autosend": arg_params["autosend"],
         }
 
         rtn_struct["title"] = (
@@ -308,7 +309,7 @@ class OptionsMeta(type):
     def _parse_arg(arg_key: str, arg: Any, arg_type: str, src_arg: str) -> dict:
         "Create __menu_struct__ args from a parameter that had no param() call"
 
-        rtn_struct = {"title": arg_key, "default": arg}
+        rtn_struct = {"title": arg_key, "default": arg, "autosend": True}
 
         if arg_type == "source" and src_arg != "":
             rtn_struct["src_type"] = src_arg

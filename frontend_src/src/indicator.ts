@@ -129,7 +129,6 @@ export class indicator {
         let series = this.series.get(_id)
         if (series === undefined) return
         series.setData(data)
-        this.pane.autoscale_time_axis()
     }
 
     protected update_series_data(_id: string, data: u.AnySeriesData) {

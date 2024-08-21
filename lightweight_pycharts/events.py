@@ -126,10 +126,13 @@ class Emitter[T: Emitter_Protocols](list[T]):
     called with the appended functions's return args as parameters if there are any.
     """
 
-    def __init__(self, response: Optional[Callable] = None, single_responder=True):
+    # TODO : Make this class track async tasks that it has created so they can be closed
+    # This will likely entail making the class definitively only handle one response function
+
+    def __init__(self, response: Optional[Callable] = None):
         super().__init__()
         self.response = response
-        self.__single_responder__ = single_responder
+        self.__single_responder__ = True
 
     def __iadd__(self, func: T) -> Self:
         if func not in self:
@@ -145,7 +148,6 @@ class Emitter[T: Emitter_Protocols](list[T]):
 
     # rsp_kwargs are set when the event it emitted, They are arguments
     # passed directly to the response function of the emitter.
-    # Needed so Multiple Emits can safely be done at once.
     def __call__(self, *args, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs):
         if len(self) == 0:
             return

@@ -59,6 +59,7 @@ def param[
     min_val: Optional[T] = None,
     max_val: Optional[T] = None,
     step: Optional[T] = None,
+    autosend: bool = True,
 ):
     """
     Define additional configuration options for an indicator input variable.
@@ -89,6 +90,7 @@ def param[
             "min": min_val,
             "max": max_val,
             "step": step,
+            "autosend": autosend,
         }
 
     except AttributeError as e:
@@ -341,6 +343,10 @@ class Indicator(metaclass=IndicatorMeta):
         for watcher in self._observers:
             watcher.notify_clear()
 
+    def recalculate(self):
+        "Manually force a full recalculation of this indicator and all dependent indicators"
+        self._watcher.notify_set()
+
     def __parse_options_obj__(self, obj: IndicatorOptions) -> dict:
         "Parse an IndicatorOptions instance into a picklable dict"
         if self.__options__ is None:
@@ -392,14 +398,16 @@ class Indicator(metaclass=IndicatorMeta):
                 args[k] = Color.from_hex(v)
 
         # pylint: disable=not-callable
-        logger.info(self.__options__(**args))  # ...but I defined it as callable?
+        recalculate = self.update_options(self.__options__(**args))
+        # ...but I defined it as having a __call__?
         # pylint: enable=not-callable
 
-        self.recalculate()
+        if recalculate:
+            self.recalculate()
 
     def delete(self):
         "Remove the indicator and all of it's instance objects"
-        self.unlink_all_args()
+        self._unlink_all_args()
         for series in self._series.copy().values():
             series.delete()
         for primative in self._primitives.copy().values():
@@ -457,9 +465,16 @@ class Indicator(metaclass=IndicatorMeta):
         for primative in self._primitives.values():
             primative.clear()
 
-    def recalculate(self):
-        "Manually force a full recalculation of this indicator and all dependent indicators"
-        self._watcher.notify_set()
+    def update_options(self, _: IndicatorOptions) -> bool:
+        """
+        Optional Abstract Method. If the user adjusts this indicator's Options on the screen,
+        This method is called with a new instance of the __options__ dataclass.
+
+        The user defines how the options instance is applied to the indicator and then returns a
+        boolean. If true is returned, the indictor will force a full recalculation of itself and
+        all dependent indicators.
+        """
+        return False
 
     def link_args(self, args: dict[str, Callable[[], Any]]):
         """
@@ -468,7 +483,7 @@ class Indicator(metaclass=IndicatorMeta):
         :param: args: a dictionary providing links for all Set and Update args.
         """
         if len(self._watcher.observables) > 0:
-            self.unlink_all_args()  # Clear all present args before setting
+            self._unlink_all_args()  # Clear all present args before setting
 
         cls = self.__class__
 
@@ -520,13 +535,10 @@ class Indicator(metaclass=IndicatorMeta):
                 self._watcher.update_args[name] = args[name]
                 self._watcher.update_notifiers.append(bound_cls_inst)
 
-        # Preform initial calc If all the indicators observed are ready.
-        self._watcher.notify_set()
-
-    def unlink_all_args(self):
+    def _unlink_all_args(self):
         "Unsubscribe from all of the Indicator's linked input args."
         # Clear this indicator and all dependant indicators
-        self._watcher._clear_data()
+        self._watcher.notify_clear()
 
         # Remove self from all of the '_observers' lists that it's appended to
         bound_arg_funcs = self._watcher.observables.values()

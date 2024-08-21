@@ -152,12 +152,7 @@ class Window:
             if self._rtn_queue.empty():
                 await asyncio.sleep(0.05)
             else:
-                msg = self._rtn_queue.get()
-                if isinstance(msg, tuple):
-                    cmd, *rsp = msg
-                else:
-                    cmd = msg
-                    rsp = tuple()
+                cmd, *rsp = self._rtn_queue.get()
                 self._execute_cmd(cmd, *rsp)
                 # logger.debug("Window Recieved Command: %s: %s", cmd, rsp)
         logger.debug("Exited Async Queue Manager")

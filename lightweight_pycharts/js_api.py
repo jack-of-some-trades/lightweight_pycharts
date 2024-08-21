@@ -60,7 +60,7 @@ class js_api:
         self.view_window.restore()
 
     def add_container(self) -> None:
-        self.rtn_queue.put(PY_CMD.ADD_CONTAINER)
+        self.rtn_queue.put((PY_CMD.ADD_CONTAINER,))
 
     def remove_container(self, _id: str) -> None:
         self.rtn_queue.put((PY_CMD.REMOVE_CONTAINER, _id))

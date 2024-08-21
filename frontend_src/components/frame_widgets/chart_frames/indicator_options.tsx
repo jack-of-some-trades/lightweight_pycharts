@@ -24,7 +24,7 @@ function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
     if (e.target !== null){
         let nodes = Array.from((e.target as HTMLFormElement).querySelectorAll("input, select"))
         //Filter out all the input tags within the Color Picker. (they're id-less)
-        nodes = nodes.filter((node) => node.id !== undefined) 
+        nodes = nodes.filter((node) => node.id !== "") 
 
         window.api.set_indicator_options( c_id, f_id, i_id,
             Object.fromEntries(
@@ -40,10 +40,10 @@ function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
 }
 
 export function IndicatorOpts(props:indicator_option_props){
+    let form = document.createElement('form')
     const [passDown,] = splitProps(props, ["sources", "options", "indicator_id"])
     const [location, setLocation] = createSignal<point>({x:0, y:0})
     const position_menu = () => {setLocation({x:window.innerWidth*0.7, y:window.innerHeight*0.2})}
-    let form = document.createElement('form')
 
     const boundSubmit = onSubmit.bind(
         undefined, 
@@ -51,6 +51,7 @@ export function IndicatorOpts(props:indicator_option_props){
         props.frame_id, 
         props.indicator_id
     )
+    const submit = () => form.requestSubmit()
 
     return (
         <OverlayDiv
@@ -74,13 +75,13 @@ export function IndicatorOpts(props:indicator_option_props){
             <form ref={form} onSubmit={boundSubmit}>
                 <For each={Object.entries(props.menu_struct)}>{([key, [type, params]]) => 
                     <Switch fallback={<>
-                            <Input key={key} type={type} params={params} {...passDown}/>
+                            <Input key={key} type={type} params={params} submit={submit} {...passDown}/>
                         </>}>
                         <Match when={type === "group"}>
-                            <Group title={key} params={params} {...passDown}/>
+                            <Group title={key} params={params} submit={submit} {...passDown}/>
                         </Match>
                         <Match when={type === "inline"}>
-                            <Inline title={key} params={params} {...passDown}/>
+                            <Inline title={key} params={params} submit={submit} {...passDown}/>
                         </Match>
                     </Switch>
                 }</For>
@@ -88,7 +89,7 @@ export function IndicatorOpts(props:indicator_option_props){
 
             {/********* Submit Buttons *********/}
             <div class="footer">
-                <input type="submit" value={"Apply"} onclick={()=>form.requestSubmit()}/>
+                <input type="submit" value={"Apply"} onclick={submit}/>
             </div>
         </OverlayDiv>
     )
@@ -101,10 +102,11 @@ interface section_props {
     params: object
     options: options_obj
     indicator_id:string,
+    submit: () => void,
     sources: Accessor<data_src[]>
 }
 function Group(props:section_props){
-    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id"])
+    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id", "submit"])
     return  (
         <div class="group">
             <h3 innerText={props.title}/>
@@ -121,7 +123,7 @@ function Group(props:section_props){
     )
 }
 function Inline(props:section_props){
-    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id"])
+    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id", "submit"])
     return  (
         <div class="inline">
             <For each={Object.entries(props.params)}>{([key, [type, params]]) => 
@@ -141,6 +143,7 @@ interface input_props {
     indicator_id:string,
     params:input_params, 
     options:options_obj,
+    submit: () => void,
     sources: Accessor<data_src[]>
 }
 //The following interface is a catch all for anything the Indicator Options 
@@ -148,6 +151,7 @@ interface input_props {
 interface input_params {
     title: string
     default : any   //This has no current use.
+    autosend: boolean
     tooltip?: string
     options?: Array<any>
 
@@ -193,15 +197,30 @@ function Input(props: input_switch_props){
 // #region --------------------- Specific Inputs ----------------------- */
 
 function BoolInput(props: input_props){
-    return <input id={props.key} type="checkbox" checked={props.options[props.key] ?? false}/>
+    return <input 
+        id={props.key} 
+        type="checkbox" 
+        checked={props.options[props.key] ?? false}
+        onInput={props.params.autosend? props.submit: undefined}
+    />
 }
 
 function StringInput(props: input_props){
-    return <input id={props.key} type="text" value={props.options[props.key]}/>
+    return <input 
+        id={props.key} 
+        type="text" 
+        value={props.options[props.key]} 
+        onInput={props.params.autosend? props.submit: undefined}
+    />
 }
 
 function TimeInput(props: input_props){
-    return <input id={props.key} type="datetime-local" value={UnixToString(props.options[props.key])}/>
+    return <input 
+        id={props.key} 
+        type="datetime-local" 
+        value={UnixToString(props.options[props.key])}
+        onInput={props.params.autosend? props.submit: undefined}
+    />
 }
 
 function NumberInput(props: input_props){
@@ -212,13 +231,17 @@ function NumberInput(props: input_props){
             min={props.params.min}
             step={props.params.step}
             list={props.params.options ? props.key + "_datalist" : undefined}
+            onInput={props.params.autosend? props.submit: undefined}
         />
     )
 }
 
 function EnumInput(props: input_props){
     return <span class="select-span">
-        <select id={props.key}>
+        <select
+            id={props.key} 
+            onInput={props.params.autosend? props.submit: undefined}
+        >
             <For each={props.params.options}>{(option) =>
                 <option 
                     value={option}
@@ -238,13 +261,18 @@ function ColorInputWrap(props: input_props){
             input_id={props.key} 
             init_color={RGBAToHex(props.options[props.key])}
             class="color_input_wrapper"
+            onInput={props.params.autosend? props.submit: undefined}
         />
     )
 }
 
 function SourceInput(props: input_props){
     return <span class="select-span">
-        <select id={props.key} attr:type="source">
+        <select 
+            id={props.key} 
+            attr:type="source" 
+            onInput={props.params.autosend? props.submit: undefined}
+        >
             <For each={props.sources()}>{({indicator, function_name, source_type}) => {
                 if (props.indicator_id === indicator.id)
                     return // Skip Sources from Self

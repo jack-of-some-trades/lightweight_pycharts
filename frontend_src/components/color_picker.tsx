@@ -1,4 +1,4 @@
-import { createContext, createSignal, For, JSX, onCleanup, onMount, Show, splitProps, useContext } from "solid-js"
+import { createContext, createEffect, createSignal, For, JSX, onCleanup, onMount, Show, splitProps, useContext } from "solid-js"
 
 
 import { createStore, SetStoreFunction } from "solid-js/store"
@@ -41,25 +41,24 @@ export function ColorContext(props:JSX.HTMLAttributes<HTMLElement>){
 
 // #region --------------------- Color Picker Element ----------------------- */
 
-interface color_input_props extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'ref'> {
+interface color_input_props extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'ref'|'onInput'|'oninput'> {
     input_id:string, 
-    init_color:string //Hex String
+    init_color:string, //Hex String
+    onInput?:(color:string)=>void,
 }
 export function ColorInput(props:color_input_props){
     let divRef = document.createElement('div')
     let opacityRef = document.createElement('input')
-
     const [showMenu, setShowMenu] = createSignal(false)
     const [selectedColor, setSelectedColor] = createSignal(props.init_color)
-
-    const [, divProps] = splitProps(props, ["input_id", "init_color"])
+    const [, divProps] = splitProps(props, ["input_id", "init_color", 'onInput'])
 
     //Document wide Hide menu to close out color picker when a click occurs outside of it.
     const hide_menu = (e:MouseEvent) => {if(! divRef.contains(e.target as HTMLElement)) setShowMenu(false)}
     onMount(() => document.addEventListener('mousedown', hide_menu))
     onCleanup(() => document.removeEventListener('mousedown', hide_menu))
 
-    //Functions to parse input and click events to set the selectedColor
+    //#region ---- Functions to parse input and click events ---- 
     function onColorSelect(e:MouseEvent, color:string){
         if(e.button === 0) {
             let hex_num = Math.round(parseInt(opacityRef.value) * 2.55)
@@ -76,6 +75,12 @@ export function ColorInput(props:color_input_props){
 
     const get_opacity = () => Math.round(Number('0x' + selectedColor().slice(7))/ 2.55 )
 
+    createEffect(()=>{
+        if (props.onInput) props.onInput(selectedColor())
+    })
+
+    //#endregion
+
     return <div ref={divRef} {...divProps} style={{'background-color':selectedColor()}}>
         {/* Inner div to conform to parent's size shape, also set position to relative. */}
         <div onClick={(e)=>{if(e.button === 0) setShowMenu(true)}}
@@ -83,7 +88,7 @@ export function ColorInput(props:color_input_props){
         >
             <Show when={showMenu()}>
                 <div class="color_menu">
-                    <ColorSet  onSel={onColorSelect}/>
+                    <DefaultColorSet onSel={onColorSelect}/>
                     <div class="cpick_separator"/>
                     <UserColorSet onSel={onColorSelect}/>
                     <div class="cpick_separator"/>
@@ -98,7 +103,7 @@ export function ColorInput(props:color_input_props){
             </Show>
         </div>
 
-        {/* invisible Input tag, w/ user id, to fetch the chosen color */}
+        {/* invisible Input tag, w/ user id, to enable querySelecting the chosen color */}
         <input 
             id={props.input_id} 
             type="color_picker" 
@@ -107,7 +112,7 @@ export function ColorInput(props:color_input_props){
     </div>
 }
 
-function ColorSet(props:{onSel:(e:MouseEvent, color:string)=>void}){
+function DefaultColorSet(props:{onSel:(e:MouseEvent, color:string)=>void}){
     return <div class="color_set"> 
         <For each={default_colors}>{(color)=>
             <div 
@@ -131,10 +136,9 @@ function UserColorSet(props:{onSel:(e:MouseEvent, color:string)=>void}){
     return <div class="color_set user_opts"> 
         <For each={userColors}>{(color, i) => <>
             <div class="color_box" style={{"background-color":color}} 
-                onKeyDown={(e) => {
-                    if(e.key === 'Delete')
-                        setUserColors([...userColors.slice(0,i()), ...userColors.slice(i() + 1)])
-                    }}
+                onKeyDown={(e) => { if(e.key === 'Delete')
+                    setUserColors([...userColors.slice(0,i()), ...userColors.slice(i() + 1)])
+                }}
                 onMouseDown={(e) => props.onSel(e, color)}
             >
                 <input 

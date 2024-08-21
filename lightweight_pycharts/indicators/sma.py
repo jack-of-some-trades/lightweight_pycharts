@@ -1,18 +1,18 @@
 from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Self
 
 import pandas as pd
 
 from lightweight_pycharts.indicator import (
     Options,
     Indicator,
-    IndParentType,
     SeriesData,
     default_output_property,
     param,
 )
-from lightweight_pycharts.orm.series import SingleValueData
+from lightweight_pycharts.orm.enum import LineStyle
+from lightweight_pycharts.orm.series import LineStyleOptions, SingleValueData
 from lightweight_pycharts import series_common as sc
 from lightweight_pycharts.orm.types import Color
 
@@ -27,48 +27,61 @@ class Method(Enum):
 @dataclass
 class SMAOptions(Options):
     "Dataclass of Options for the SMA Indicator"
-    per: ... = pd.Timestamp(1e15)
     src: Optional[SeriesData] = None
-    period: int = param(9, group="Test", inline="sub-group")
-    period_box: bool = param(False, group="Test", inline="sub-group")
-    period2: int = param(3, "Another_param", "Test", min_val=5, max_val=10, step=2)
-    arg: ... = Color.from_rgb(200, 50, 100)
-    arg2: ... = param(True, tooltip="Just a checkbox")
-    method: Method = param(Method.SMA, group="Test")
+    method: Method = param(Method.SMA, "Calculation Method")
+    period: int = param(9, "Period")
+    color: ... = param(Color.from_rgb(200, 50, 100), "Line Color", inline="line_style")
+    size: ... = param(1, "Line Size", inline="line_style", min_val=0, max_val=5)
 
 
-# pylint: disable=arguments-differ
+# pylint: disable=arguments-differ possibly-unused-variable
 class SMA(Indicator):
     "Simple Moving Average Indicator"
 
     __options__ = SMAOptions
 
-    def __init__(
-        self,
-        parent: IndParentType,
-        opts: Optional[SMAOptions] = None,
-    ):
+    def __init__(self, parent, opts: Optional[SMAOptions] = None):
         super().__init__(parent)
         if opts is None:
-            self.opts = SMAOptions()
-        else:
-            self.opts = opts
+            opts = SMAOptions()
 
-        if self.opts.src is None:
-            self.opts.src = self.default_parent_src
-
+        self.src = None
+        self.period = 0
         self._data = pd.Series()
         self.line_series = sc.LineSeries(self)
+        self.line_series.apply_options(
+            LineStyleOptions(lineStyle=LineStyle.SparseDotted)
+        )
 
-        self.init_menu(self.opts)
-        self.link_args({"data": self.opts.src})
+        self.update_options(opts)
+        self.init_menu(opts)
+        self.recalculate()
+
+    def update_options(self, opts: SMAOptions) -> bool:
+        self.line_series.apply_options(
+            LineStyleOptions(color=opts.color, lineWidth=opts.size)
+        )
+
+        if self.period != opts.period:
+            self.period = opts.period
+            recalc = True
+
+        if opts.src is None:
+            opts.src = self.default_parent_src
+
+        if self.src != opts.src:
+            self.src = opts.src
+            self.link_args({"data": self.src})
+            recalc = True
+
+        return "recalc" in locals()
 
     def set_data(self, data: pd.Series, *_, **__):
-        self._data = data.rolling(window=self.opts.period).mean()
+        self._data = data.rolling(window=self.period).mean()
         self.line_series.set_data(self._data)
 
     def update_data(self, time: pd.Timestamp, data: pd.Series, *_, **__):
-        self._data[time] = data.tail(self.opts.period).mean()
+        self._data[time] = data.tail(self.period).mean()
         self.line_series.update_data(SingleValueData(time, self._data.iloc[-1]))
 
     @default_output_property

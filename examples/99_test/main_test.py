@@ -68,7 +68,7 @@ async def socket_request_handler(
         series.socket_open = True
         for _, _, t, o, h, l, c, v in df.itertuples():
             series.update_data(OhlcData(t, o, h, l, c, v))
-            await asyncio.sleep(0.08)
+            await asyncio.sleep(0.04)
         series.socket_open = False
 
     if state == "open" and symbol.ticker == "LWPC-TICK":
@@ -93,7 +93,7 @@ async def main():
     from the window. The spawning of a child process is what necessitates
     the use of a [ if __name__ == "__main__": ] block.
     """
-    window = lwc.Window(daemon=True, log_level="INFO", debug=True, frameless=False)
+    window = lwc.Window(log_level="INFO", debug=True, frameless=False)
     window.events.data_request += data_request_handler
     window.events.symbol_search += symbol_search_handler
     window.events.socket_switch += socket_request_handler
