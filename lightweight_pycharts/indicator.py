@@ -513,20 +513,25 @@ class Indicator(metaclass=IndicatorMeta):
                     f"{self.cls_name} Given {rtn_type} for parameter {name}. Expected {arg_type}"
                 )
 
-            # Observables is the Union of set_args & update_args. Useful to have it's own reference
-            self._watcher.observables[name] = args[name]
-
             # Give this Indicator's watcher to the function's bound indicator
             bound_cls_inst = args[name].__self__
-            if self._watcher not in bound_cls_inst._observers:
+            if bound_cls_inst._watcher in self._observers:
+                logger.critical(  # ATM this only protects against direct circular dependencies
+                    "Circular Indicator dependency between %s & %s",
+                    bound_cls_inst.cls_name,
+                    self.cls_name,
+                )
+                # Provide a Fake Source that yields an empty instance of the type expected. While
+                # this delays a crash, this does allow the user to fix the issue before then.
+                args[name] = arg_type  # === lambda: arg_type()
+                args[name].__self__ = None
+
+            elif self._watcher not in bound_cls_inst._observers:
                 # Append a weakref of this indicator's observer
                 bound_cls_inst._observers.append(self._watcher)
 
-            if bound_cls_inst in self._observers:
-                raise Warning(
-                    f"Circular Indicator dependency between {bound_cls_inst.name} & {self.cls_name}"
-                )
-
+            # Observables is the Union of set_args & update_args. Useful to have it's own reference
+            self._watcher.observables[name] = args[name]
             # Create Dicts of Param_Name:Callable & Host_Indicator: Bool
             if name in cls.__set_args__:
                 self._watcher.set_args[name] = args[name]
@@ -543,7 +548,8 @@ class Indicator(metaclass=IndicatorMeta):
         # Remove self from all of the '_observers' lists that it's appended to
         bound_arg_funcs = self._watcher.observables.values()
         for bound_func_cls in set([func.__self__ for func in bound_arg_funcs]):
-            bound_func_cls._observers.remove(self._watcher)
+            if bound_func_cls is not None:
+                bound_func_cls._observers.remove(self._watcher)
 
         # Clear Watcher
         self._watcher.set_args = {}

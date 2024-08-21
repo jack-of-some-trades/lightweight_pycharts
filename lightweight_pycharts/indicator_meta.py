@@ -69,7 +69,7 @@ class IndicatorMeta(ABCMeta):
 
     @staticmethod
     def parse_input_args(sig: Signature) -> dict[str, tuple[type, Any]]:
-        "Parse Function Signatures into a dict of param names, type definitions and default values"
+        "Parse Set_Data & Update_Data Function Signatures into {param name: [type , default value]}"
         args = {}
         for pos, (name, _param) in enumerate(sig.parameters.items()):
 
@@ -82,7 +82,7 @@ class IndicatorMeta(ABCMeta):
 
             if _param.kind == _param.POSITIONAL_ONLY:
                 raise TypeError(
-                    "Indicator Abstract Methods Cannot Use Position Only Args."
+                    "Indicator Set/Update Methods Cannot Use Position Only Args."
                 )  # Look, i'm not gonna code the Watcher to dance around that shit.
 
             param_default = _param.default
