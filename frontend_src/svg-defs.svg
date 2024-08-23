@@ -185,9 +185,8 @@
 </svg>
 
 <svg id="series_area" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-  <linearGradient id="series_area_gradient" gradientTransform="rotate(65)">
-    <stop offset=".4" stop-color="currentcolor" stop-opacity="80%"/>
-    <stop offset="0.95" stop-color="currentcolor" stop-opacity="0%"/>
+  <linearGradient id="series_area_gradient" gradientTransform="rotate(90)">
+    <stop offset=".4" stop-color="currentcolor" stop-opacity="60%"/>
     <stop offset="0.95" stop-color="currentcolor" stop-opacity="0%"/>
   </linearGradient>
   <path style="fill: url('#series_area_gradient'); stroke: transparent;" d="M 1.953 23.48 C 4.489 20.48 10.242 11 11.581 12 C 13.134 13.16 12.994 18 16 18 C 19.006 18 24.998 9.422 26 8 L 26 26 L 2 26 L 1.953 23.48 Z"/>

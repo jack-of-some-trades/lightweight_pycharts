@@ -52,9 +52,10 @@ export function SeriesSwitcher(){
 
     // Tell Python when the Series Type changes
     function onSel(series:Series_Type){
+        if (window.active_container === undefined || window.active_frame === undefined) return
         window.api.series_change(
-            window.active_container?.id ?? '',
-            window.active_frame?.id ?? '',
+            window.active_container.id,
+            window.active_frame.id,
             series
         )
     }
