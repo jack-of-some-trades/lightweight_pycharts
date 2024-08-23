@@ -43,9 +43,9 @@ export function PaneLegend(props:legend_props){
 }
 
 
-const gearProps = {width: 20, height: 16}
-const closeProps = {width: 16, height: 16}
-const eyeProps = {width: 22, height: 16, viewBox:"2 2 20 18"}
+const gearProps = {width: 16, height: 16}
+const closeProps = {width: 16, height: 16, viewBox:"-4 -4 26 26"}
+const eyeProps = {width: 20, height: 16, viewBox:"2 2 20 20"}
 // const menuProps = {width: 18, height: 18, style:{padding:"0px 2px"}}
 
 interface tag_props {
@@ -88,7 +88,7 @@ function IndicatorTag(props:tag_props){
                 </Show>
 
                 <Show when={props.deletable}>
-                    <Icon icon={icons.close_small} {...closeProps}/> {/* onClk => delete *Through window.api* */}
+                    <Icon icon={icons.close} {...closeProps}/> {/* onClk => delete *Through window.api* */}
                 </Show>
 
                 {/* <Icon icon={icons.menu_ext_small} {...menuProps}/>  onClk => spawn Simple Menu? */}

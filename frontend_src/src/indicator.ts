@@ -78,7 +78,7 @@ export class indicator {
     setVisibility(arg:boolean){
         this.objVisibility[1](arg)
         const _maps = [this.series, this.primitives_left, this.primitives_right, this.primitives_overlay]
-        // This only works because the structure of primtives and series are similar enough
+        // This only works because the structure of primitives and series are similar enough
         for (let i = 0; i < _maps.length; i++)
             if (arg) for (const [k, v] of _maps[i].entries()){
                 v.applyOptions({visible: this.visiblity.get(k)??true})

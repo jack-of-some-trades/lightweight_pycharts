@@ -1,59 +1,63 @@
+
 <svg id="blank" xmlns="http://www.w3.org/2000/svg" width='0' height="0"/>
 
 <!-- #region ________________ Menu icons ________________ -->
 
 <svg id="menu" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 28 28" width='28' height="28">
-    <path fill="currentColor" d="M6 7h16a1 1 0 1 1 0 2H6z" ></path>
-    <path fill="currentColor" d="M6 13h16a1 1 0 1 1 0 2H6z"></path>
-    <path fill="currentColor" d="M6 19h16a1 1 0 1 1 0 2H6z"></path>
-    <path fill="currentColor" d="M6 9a1 1 0 1 1 0 -2zM6 15a1 1 0 1 1 0 -2zM6 21a1 1 0 1 1 0 -2z"></path>
+  <path style="stroke-linecap: round; fill: none; stroke: currentcolor; stroke-width: 2;" d="M 5 7 L 23 7 M 5 13 L 23 13 M 5 19 L 23 19"/>
 </svg>
 
 <svg id="menu_ext_small" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 4" width="16" height="4" fill="none">
-    <circle stroke="currentColor" cx="2" cy="2" r="1.5"></circle>
-    <circle stroke="currentColor" cx="8" cy="2" r="1.5"></circle>
-    <circle stroke="currentColor" cx="14" cy="2" r="1.5"></circle>
+    <circle stroke="currentColor" cx="2" cy="2" r="1.5"/>
+    <circle stroke="currentColor" cx="8" cy="2" r="1.5"/>
+    <circle stroke="currentColor" cx="14" cy="2" r="1.5"/>
 </svg>
 
 <svg id="menu_ext" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M7.5 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM5 14.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zm9.5-1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM12 14.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zm9.5-1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM19 14.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0z"></path>
+  <circle stroke="currentColor" cx="6" cy="14" r="2"/>
+  <circle stroke="currentColor" cx="14" cy="14" r="2"/>
+  <circle stroke="currentColor" cx="22" cy="14" r="2"/>
 </svg>
 
-<svg id="menu_add" xmlns="http://www.w3.org/2000/svg" viewBox="-1 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M13.5 6a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM4 14.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z"></path>
-    <path fill="currentColor" d="M9 14h4v-4h1v4h4v1h-4v4h-1v-4H9v-1z"></path>
+<svg id="menu_add" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 27" width="28" height="28">
+  <circle stroke="currentColor" cx="13.5" cy="13.5" r="7.5" fill="none"/>
+  <path style="fill: none; stroke: currentcolor;" d="M 9 13.5 L 18 13.5 M 13.5 9 L 13.5 18"/>
 </svg>
 
-<svg id="menu_search" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
-    <path fill="currentColor" d="M3.5 8a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM8 2a6 6 0 1 0 3.65 10.76l3.58 3.58 1.06-1.06-3.57-3.57A6 6 0 0 0 8 2Z"></path>
+<svg id="menu_search" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="18" height="18">
+  <g stroke='currentcolor' fill="none">
+    <ellipse style="stroke-width: 2;" cx="13" cy="13" rx="10" ry="10"/>
+    <path style="stroke-linecap: round;" d="M 21 21 L 25 25" stroke-width="3"/>
+    <path style="stroke-width: 2; stroke-linecap: round;" d="M 7 10 C 5.335 15.582 8.879 18.106 11 19"/>
+  </g>
 </svg>
 
-<svg id="menu_search_quick" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M15 11v4l1-1.5 2.33-3.5.67-1h-3V4l-1 1.5L12.67 9 12 10h3v1Zm2-7v4h2a1 1 0 0 1 .83 1.55l-4 6A1 1 0 0 1 14 15v-4h-2a1 1 0 0 1-.83-1.56l4-6A1 1 0 0 1 17 4ZM5 13.5a7.5 7.5 0 0 1 6-7.35v1.02A6.5 6.5 0 1 0 18.98 13h1a7.6 7.6 0 0 1-1.83 5.44l4.7 4.7-.7.71-4.71-4.7A7.5 7.5 0 0 1 5 13.5Z"></path>
-</svg>
-
-<svg id="menu_arrow_we" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox ="0 0 8 16" width='8' height="8" style="transform: rotate(0.5turn);">
-    <path d="M.6 1.4l1.4-1.4 8 8-8 8-1.4-1.4 6.389-6.532-6.389-6.668z"></path>
+<svg id="menu_arrow_we" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 8 16" width='8' height="8">
+    <path d="M 7 14 L 1 8 L 7 2" stroke="currentcolor" fill="none" stroke-width="2"/>
 </svg>
 
 <svg id="menu_arrow_ew" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox ="0 0 8 16" width='8' height="8">
-    <path d="M.6 1.4l1.4-1.4 8 8-8 8-1.4-1.4 6.389-6.532-6.389-6.668z"></path>
+    <path d="M 1 14 L 7 8 L 1 2" stroke="currentcolor" fill="none" stroke-width="2"/>
 </svg>
 
-<svg id="menu_arrow_ns" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 8" width="12" height="6" fill="currentColor">
-    <path d="M0 1.475l7.396 6.04.596.485.593-.49L16 1.39 14.807 0 7.393 6.122 8.58 6.12 1.186.08z"></path>
+<svg id="menu_arrow_ns" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 8" width="12" height="6">
+    <path d="M 15 1 L 8 7 L 1 1" stroke="currentcolor" fill="none" stroke-width="2"/>
 </svg>
 
-<svg id="menu_arrow_sn" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 8" width="12" height="6" fill="currentColor" style="transform: rotate(0.5turn);">
-    <path d="M0 1.475l7.396 6.04.596.485.593-.49L16 1.39 14.807 0 7.393 6.122 8.58 6.12 1.186.08z"></path>
+<svg id="menu_arrow_sn" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 8" width="12" height="6">
+    <path d="M 15 7 L 8 1 L 1 7" stroke="currentcolor" fill="none" stroke-width="2"/>
 </svg>
 
 <svg id="menu_arrow_up_down" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
-    <path fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="square" d="M6.145 11.968L14 5.5l7.855 6.468a.3.3 0 0 1-.191.532H6.336a.3.3 0 0 1-.19-.532zm0 4.064L14 22.5l7.855-6.468a.3.3 0 0 0-.191-.532H6.336a.3.3 0 0 0-.19.532z"></path>
+    <path fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="square" d="M6.145 11.968L14 5.5l7.855 6.468a.3.3 0 0 1-.191.532H6.336a.3.3 0 0 1-.19-.532zm0 4.064L14 22.5l7.855-6.468a.3.3 0 0 0-.191-.532H6.336a.3.3 0 0 0-.19.532z"/>
 </svg>
 
-<svg id="menu_dragable" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none">
-    <path d="M9 6H9.01M15 6H15.01M15 12H15.01M9 12H9.01M9 18H9.01M15 18H15.01M10 6C10 6.55228 9.55228 7 9 7C8.44772 7 8 6.55228 8 6C8 5.44772 8.44772 5 9 5C9.55228 5 10 5.44772 10 6ZM16 6C16 6.55228 15.5523 7 15 7C14.4477 7 14 6.55228 14 6C14 5.44772 14.4477 5 15 5C15.5523 5 16 5.44772 16 6ZM10 12C10 12.5523 9.55228 13 9 13C8.44772 13 8 12.5523 8 12C8 11.4477 8.44772 11 9 11C9.55228 11 10 11.4477 10 12ZM16 12C16 12.5523 15.5523 13 15 13C14.4477 13 14 12.5523 14 12C14 11.4477 14.4477 11 15 11C15.5523 11 16 11.4477 16 12ZM10 18C10 18.5523 9.55228 19 9 19C8.44772 19 8 18.5523 8 18C8 17.4477 8.44772 17 9 17C9.55228 17 10 17.4477 10 18ZM16 18C16 18.5523 15.5523 19 15 19C14.4477 19 14 18.5523 14 18C14 17.4477 14.4477 17 15 17C15.5523 17 16 17.4477 16 18Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<svg id="menu_dragable" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 20 20">
+  <g stroke='currentcolor' fill="currentcolor">
+    <circle cx="7" cy="4" rx="1.5" r="1.5"/><circle cx="13" cy="4" rx="1.5" r="1.5"/>
+    <circle cx="7" cy="10" rx="1.5" r="1.5"/><circle cx="13" cy="10" rx="1.5" r="1.5"/>
+    <circle cx="7" cy="16" rx="1.5" r="1.5"/><circle cx="13" cy="16" rx="1.5" r="1.5"/>
+  </g>
 </svg>
 
 <!-- #endregion -->
@@ -91,66 +95,74 @@
 
 <!-- #region ________________ Cursors ________________ -->
 
-<svg id="cursor_cross" xmlns="http://www.w3.org/2000/svg" viewBox ="1 1 28 28" width='28' height="28" fill="currentColor">
-    <path d="M18 15h8v-1h-8z"></path>
-    <path d="M14 18v8h1v-8zM14 3v8h1v-8zM3 15h8v-1h-8z"></path>
+<svg id="cursor_cross" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 27 27" width='28' height="28">
+  <path style="fill: none; stroke: currentcolor" d="M 13.5 2 L 13.5 8 M 2 13.5 L 8 13.5 M 25 13.5 L 19 13.5 M 13.5 19 L 13.5 25 M 13.5 11 L 13.5 16 M 16 13.5 L 11 13.5"/>
 </svg>
 
-<svg id="cursor_dot" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 28 28" width='28' height="28" fill="currentColor">
-    <circle  cx="14" cy="14" r="3"></circle>
+<svg id="cursor_dot" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 28 28" width='28' height="28">
+    <circle fill="currentColor" cx="14" cy="14" r="3"/>
 </svg>
 
-<svg id="cursor_arrow" xmlns="http://www.w3.org/2000/svg" viewBox ="-2 1 28 28" width='28' height="28" fill="currentColor">
-    <path d="M11.682 16.09l3.504 6.068 1.732-1-3.497-6.057 3.595-2.1L8 7.74v10.512l3.682-2.163zm-.362 1.372L7 20V6l12 7-4.216 2.462 3.5 6.062-3.464 2-3.5-6.062z"></path>
+<svg id="cursor_arrow" xmlns="http://www.w3.org/2000/svg" viewBox ="-8 -8 38 38" width='28' height="28" >
+  <path fill="currentColor" stroke="transparent" d="M4.40701 3.41403C3.94876 3.27925 3.71963 3.21186 3.56363 3.27001C3.42768 3.32069 3.32045 3.42793 3.26977 3.56387C3.21162 3.71988 3.27901 3.949 3.41379 4.40726L7.61969 18.7073C7.74493 19.1332 7.80756 19.3461 7.93395 19.4449C8.04424 19.5312 8.18564 19.5672 8.32377 19.5443C8.48206 19.5181 8.639 19.3611 8.95286 19.0473L11.9999 16.0002L16.4343 20.4345C16.6323 20.6325 16.7313 20.7315 16.8454 20.7686C16.9459 20.8012 17.054 20.8012 17.1545 20.7686C17.2686 20.7315 17.3676 20.6325 17.5656 20.4345L20.4343 17.5659C20.6323 17.3679 20.7313 17.2689 20.7684 17.1547C20.801 17.0543 20.801 16.9461 20.7684 16.8457C20.7313 16.7315 20.6323 16.6325 20.4343 16.4345L15.9999 12.0002L19.047 8.95311C19.3609 8.63924 19.5178 8.48231 19.5441 8.32402C19.567 8.18589 19.5309 8.04448 19.4447 7.93419C19.3458 7.8078 19.1329 7.74518 18.7071 7.61993L4.40701 3.41403Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
 
-<svg id="cursor_erase" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 28 28" width='28' height="28" fill="currentColor">
-    <g fill-rule="nonzero">
-        <path d="M15.3 22l8.187-8.187c.394-.394.395-1.028.004-1.418l-4.243-4.243c-.394-.394-1.019-.395-1.407-.006l-11.325 11.325c-.383.383-.383 1.018.007 1.407l1.121 1.121h7.656zm-9.484-.414c-.781-.781-.779-2.049-.007-2.821l11.325-11.325c.777-.777 2.035-.78 2.821.006l4.243 4.243c.781.781.78 2.048-.004 2.832l-8.48 8.48h-8.484l-1.414-1.414z"></path>
-        <path d="M13.011 22.999h7.999v-1h-7.999zM13.501 11.294l6.717 6.717.707-.707-6.717-6.717z"></path>
-    </g>
+<svg id="cursor_erase" xmlns="http://www.w3.org/2000/svg" viewBox ="0 0 28 28" width='28' height="28">
+  <path fill="currentcolor" stroke="none" d="M 23.426 20.801 L 15.25 20.801 L 23.832 11.831 C 24.055 11.597 24.055 11.218 23.832 10.984 L 17.318 4.175 C 17.211 4.063 17.065 4 16.913 4 C 16.761 4 16.615 4.063 16.509 4.175 L 4.168 17.073 C 3.945 17.306 3.945 17.686 4.168 17.92 L 7.904 21.824 C 8.01 21.937 8.155 22 8.308 22 L 23.426 22 C 23.744 22 24 21.732 24 21.401 C 24 21.07 23.744 20.801 23.426 20.801 Z M 16.913 5.445 L 22.616 11.407 L 15.871 18.457 L 10.169 12.496 L 16.913 5.445 Z M 13.629 20.801 L 8.546 20.801 L 5.385 17.496 L 9.357 13.343 L 15.061 19.304 L 13.629 20.801 Z"/>
 </svg>
 
 <!-- #endregion -->
 
 <!-- #region ________________ Series Candles ________________ -->
 
-<svg id="candle_heiken_ashi" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
-    <path d="M9 8v12h3V8H9zm-1-.502C8 7.223 8.215 7 8.498 7h4.004c.275 0 .498.22.498.498v13.004a.493.493 0 0 1-.498.498H8.498A.496.496 0 0 1 8 20.502V7.498z"></path>
-    <path d="M10 4h1v3.5h-1z"></path>
-    <path d="M17 6v6h3V6h-3zm-1-.5c0-.276.215-.5.498-.5h4.004c.275 0 .498.23.498.5v7c0 .276-.215.5-.498.5h-4.004a.503.503 0 0 1-.498-.5v-7z"></path>
-    <path d="M18 2h1v3.5h-1z"></path>
+<svg id="candle_heiken_ashi" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g fill="none" stroke="currentColor">
+    <rect x="4.5" y="13.5" width="4" height="12"/>
+    <rect x="11.5" y="9.5" width="4" height="10"/>
+    <rect x="18.5" y="5.5" width="4" height="8"/>
+    <path d="M 6.5 6 L 6.5 14"/>
+    <path d="M 20.5 2 L 20.5 5"/>
+    <path d="M 13.5 4 L 13.5 10"/>
+  </g>
 </svg>
 
-<svg id="candle_regular" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
-    <path d="M17 11v6h3v-6h-3zm-.5-1h4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .5-.5z"></path>
-    <path d="M18 7h1v3.5h-1zm0 10.5h1V21h-1z"></path>
-    <path d="M9 8v12h3V8H9zm-.5-1h4a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 .5-.5z"></path>
-    <path d="M10 4h1v3.5h-1zm0 16.5h1V24h-1z"></path>
+<svg id="candle_regular" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g fill="none" stroke="currentColor">
+    <rect x="4.5" y="13.5" width="4" height="10"/>
+    <rect x="11.5" y="9.5" width="4" height="4"/>
+    <rect x="18.5" y="9.5" width="4" height="8"/>
+    <path d="M 6.5 6 L 6.5 14"/><path d="M 20.5 7 L 20.5 10"/><path d="M 13.5 2 L 13.5 10"/>
+    <path d="M 20.5 17 L 20.5 25"/><path d="M 13.5 13 L 13.5 16"/><path d="M 6.5 23 L 6.5 26"/>
+  </g>
 </svg>
 
-<svg id="candle_rounded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
-  <rect x="6.5" y="7" width="6" height="14" rx="3" ry="3" style="fill: none; stroke: currentColor;"/>
-  <rect x="15.5" y="10" width="6" height="8" rx="3" ry="3" style="fill: none; stroke: currentColor;"/>
-  <path d="M 18 7 L 19 7 L 19 10 L 18 10 L 18 7 Z M 18 18 L 19 18 L 19 21 L 18 21 L 18 18 Z"/>
-  <path d="M 9 4 L 10 4 L 10 7 L 9 7 L 9 4 Z M 9 21 L 10 21 L 10 24 L 9 24 L 9 21 Z"/>
+<svg id="candle_rounded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g fill="none" stroke="currentColor">
+    <rect x="4" y="13.5" width="5" height="10" rx="3"/>
+    <rect x="11" y="8.5" width="5" height="5"  rx="3"/>
+    <rect x="18" y="9.5" width="5" height="8"  rx="3"/>
+    <path d="M 6.5 6 L 6.5 14"/><path d="M 20.5 7 L 20.5 10"/><path d="M 13.5 2 L 13.5 9"/>
+    <path d="M 20.5 17 L 20.5 25"/><path d="M 13.5 13 L 13.5 16"/><path d="M 6.5 23 L 6.5 26"/>
+  </g>
 </svg>
 
 <svg id="candle_bar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
     <g fill="none" stroke="currentColor" stroke-linecap="square">
-        <path d="M10.5 7.5v15M7.5 20.5H10M13.5 11.5H11M19.5 6.5v15M16.5 9.5H19M22.5 16.5H20"></path>
+        <path d="M 5.5 6 L 5.5 26 M 13.5 2 L 13.5 16 M 21.5 7 L 21.5 25"/>
+        <path d="M 3 23.5 L 5.5 23.5 M 5.5 13.5 L 8 13.5"/>
+        <path d="M 13 13.5 L 11 13.5 M 13.5 9.5 L 16 9.5"/>
+        <path d="M 21 9.5 L 19 9.5 M 22 17.5 L 24 17.5"/>
     </g>
 </svg>
 
-<svg id="candle_hollow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
-    <path d="M17 11v6h3v-6h-3zm-.5-1h4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .5-.5z"></path>
-    <path d="M18 7h1v3.5h-1zm0 10.5h1V21h-1z"></path>
-    <path d="M9 8v11h3V8H9zm-.5-1h4a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-12a.5.5 0 0 1 .5-.5z"></path>
-    <path d="M10 4h1v5h-1zm0 14h1v5h-1zM8.5 9H10v1H8.5zM11 9h1.5v1H11zm-1 1h1v1h-1zm-1.5 1H10v1H8.5zm2.5 0h1.5v1H11zm-1 1h1v1h-1zm-1.5 1H10v1H8.5zm2.5 0h1.5v1H11zm-1 1h1v1h-1zm-1.5 1H10v1H8.5zm2.5 0h1.5v1H11zm-1 1h1v1h-1zm-1.5 1H10v1H8.5zm2.5 0h1.5v1H11z"></path>
-</svg>
-
-<svg id="candle_volume" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M18 4h1v3h3.5c.28 0 .5.22.5.5v13a.5.5 0 0 1-.5.5H19v3h-1v-3h-3.5a.5.5 0 0 1-.5-.5v-13c0-.28.22-.5.5-.5H18V4Zm-3 16h7V8h-7v12ZM10 7H9v3H7.5a.5.5 0 0 0-.5.5v8c0 .28.22.5.5.5H9v3h1v-3h1.5a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5H10V7Zm-1 4H8v7h3v-7H9Z"></path>
+<svg id="candle_hollow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g fill="none" stroke="currentColor">
+    <rect x="4.5" y="13.5" width="4" height="10" fill="currentcolor"/>
+    <rect x="11.5" y="9.5" width="4" height="4" fill="currentcolor"/>
+    <rect x="18.5" y="9.5" width="4" height="8"/>
+    <path d="M 6.5 6 L 6.5 14"/><path d="M 20.5 7 L 20.5 10"/><path d="M 13.5 2 L 13.5 10"/>
+    <path d="M 20.5 17 L 20.5 25"/><path d="M 13.5 13 L 13.5 16"/><path d="M 6.5 23 L 6.5 26"/>
+  </g>
 </svg>
 
 
@@ -159,33 +171,62 @@
 <!-- #region ________________ Series Options ________________ -->
 
 <svg id='series_line' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="m25.39 7.31-8.83 10.92-6.02-5.47-7.16 8.56-.76-.64 7.82-9.36 6 5.45L24.61 6.7l.78.62Z"></path>
+  <path style="fill: none; stroke:currentcolor; stroke-linecap:round;" d="M 2 21 L 4 18.166666666666668 C 6 15.333333333333334 10 9.666666666666666 12 9.666666666666666 C 14 9.666666666666666 14 15.333333333333334 16 15.333333333333334 C 18 15.333333333333334 22 9.666666666666666 24 6.833333333333333 L 26 4"/>
 </svg>
 
-<svg id='series_line_markers' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
-    <path fill-rule="evenodd" d="m18.43 15.91 6.96-8.6-.78-.62-6.96 8.6a2.49 2.49 0 0 0-2.63.2l-2.21-2.02A2.5 2.5 0 0 0 10.5 10a2.5 2.5 0 1 0 1.73 4.3l2.12 1.92a2.5 2.5 0 1 0 4.08-.31ZM10.5 14a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm7.5 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"></path>
-    <path d="M8.37 13.8c.17.3.4.54.68.74l-5.67 6.78-.76-.64 5.75-6.88Z"></path>
+<svg id='series_line_markers' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <path style="fill: transparent; stroke:currentcolor;" d="M 2 21 L 10 10 L 17 16 L 26 4"/>
+  <ellipse style="fill: currentcolor; stroke: currentcolor;" cx="10" cy="10" rx="2" ry="2"/>
+  <ellipse style="fill: currentcolor; stroke: currentcolor;" cx="17" cy="16" rx="2" ry="2"/>
 </svg>
-
+  
 <svg id="series_step_line" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
-    <path d="M19 5h5v1h-4v13h-6v-7h-4v12H5v-1h4V11h6v7h4V5Z"></path>
+  <path style="fill: none; stroke: currentcolor;" d="M 2 22 L 8 22 L 8 16 L 14 16 L 14 10 L 20 10 L 20 4 L 26 4"/>
 </svg>
 
 <svg id="series_area" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="m25.35 5.35-9.5 9.5-.35.36-.35-.36-4.65-4.64-8.15 8.14-.7-.7 8.5-8.5.35-.36.35.36 4.65 4.64 9.15-9.14.7.7ZM2 21h1v1H2v-1Zm2-1H3v1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v-1h1V9h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1v1H9v1H8v1H7v1H6v1H5v1H4v1Zm1 0v1H4v-1h1Zm1 0H5v-1h1v1Zm1 0v1H6v-1h1Zm0-1H6v-1h1v1Zm1 0H7v1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v1h1v-1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1v1H9v1H8v1H7v1h1v1Zm1 0v1H8v-1h1Zm0-1H8v-1h1v1Zm1 0H9v1h1v1h1v-1h1v1h1v-1h1v1h1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1v1H9v1h1v1Zm1 0v1h-1v-1h1Zm0-1v-1h-1v1h1Zm0 0v1h1v1h1v-1h-1v-1h-1Zm6 2v-1h1v1h-1Zm2 0v1h-1v-1h1Zm0-1h-1v-1h1v1Zm1 0h-1v1h1v1h1v-1h1v1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v-1h1v-1h-1v1h-1v1h-1v1h-1v1h1v1Zm1 0h-1v1h1v-1Zm0-1h1v1h-1v-1Zm0-1h1v-1h-1v1Zm0 0v1h-1v-1h1Zm-4 3v1h-1v-1h1Z"></path>
+  <linearGradient id="series_area_gradient" gradientTransform="rotate(65)">
+    <stop offset=".4" stop-color="currentcolor" stop-opacity="80%"/>
+    <stop offset="0.95" stop-color="currentcolor" stop-opacity="0%"/>
+    <stop offset="0.95" stop-color="currentcolor" stop-opacity="0%"/>
+  </linearGradient>
+  <path style="fill: url('#series_area_gradient'); stroke: transparent;" d="M 1.953 23.48 C 4.489 20.48 10.242 11 11.581 12 C 13.134 13.16 12.994 18 16 18 C 19.006 18 24.998 9.422 26 8 L 26 26 L 2 26 L 1.953 23.48 Z"/>
+  <path style="fill: none; stroke:currentcolor; stroke-linecap:round;" d="M 2 21 L 4 18.166666666666668 C 6 15.333333333333334 10 9.666666666666666 12 9.833333333333334 C 14 10 14 16 16 16.166666666666668 C 18 16.333333333333332 22 10.666666666666666 24 7.833333333333333 L 26 5"/>
 </svg>
 
 <svg id="series_baseline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="m10.49 7.55-.42.7-2.1 3.5.86.5 1.68-2.8 1.8 2.82.84-.54-2.23-3.5-.43-.68Zm12.32 4.72-.84-.54 2.61-4 .84.54-2.61 4Zm-5.3 6.3 1.2-1.84.84.54-1.63 2.5-.43.65-.41-.65-1.6-2.5.85-.54 1.17 1.85ZM4.96 16.75l.86.52-2.4 4-.86-.52 2.4-4ZM3 14v1h1v-1H3Zm2 0h1v1H5v-1Zm2 0v1h1v-1H7Zm2 0h1v1H9v-1Zm2 0v1h1v-1h-1Zm2 0h1v1h-1v-1Zm2 0v1h1v-1h-1Zm2 0h1v1h-1v-1Zm2 0v1h1v-1h-1Zm2 0h1v1h-1v-1Zm2 0v1h1v-1h-1Zm2 0h1v1h-1v-1Z"></path>
+  <linearGradient id="series_baseline_gradient" gradientTransform="rotate(90)">
+    <stop offset="0" stop-color="currentcolor" stop-opacity="0%"/>
+    <stop offset="0.5" stop-color="currentcolor" stop-opacity="60%"/>
+    <stop offset="1" stop-color="currentcolor" stop-opacity="0%"/>
+  </linearGradient>
+  <path style="fill: none; stroke: currentcolor; stroke-linecap:round;" d="M 2 21 L 4 18.166666666666668 C 6 15.333333333333334 10 9.666666666666666 12 9.833333333333334 C 14 10 14 16 16 16.166666666666668 C 18 16.333333333333332 22 10.666666666666666 24 7.833333333333333 L 26 5"/>
+  <path style="fill: url('#series_baseline_gradient'); stroke: transparent;" d="M 1.953 21.48 C 4.489 18.48 10 9.52 12 9.509 C 14.24 9.496 12.994 16 16 16 C 19.006 16 24.998 6.422 26 5 L 26 14 L 19 14 L 20 13 L 14 13 L 14 14 L 7 14 L 8 13 L 2 13 L 1.953 21.48 Z"/>
 </svg>
 
+<!-- 
+<svg id="series_baseline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <linearGradient id="series_baseline_gradient" gradientTransform="rotate(90)">
+    <stop offset="0" stop-color="currentcolor" stop-opacity="0%"/>
+    <stop offset="0.5" stop-color="currentcolor" stop-opacity="30%"/>
+    <stop offset="1" stop-color="currentcolor" stop-opacity="0%"/>
+  </linearGradient>
+  <path style="fill: none; stroke: currentcolor; stroke-linecap:round;" d="M 2 21 L 4 18.166666666666668 C 6 15.333333333333334 10 9.666666666666666 12 9.833333333333334 C 14 10 14 16 16 16.166666666666668 C 18 16.333333333333332 22 10.666666666666666 24 7.833333333333333 L 26 5"/>
+  <path style="fill: url('#series_baseline_gradient'); stroke: transparent;" d="M 1.953 21.48 C 4.489 18.48 10 9.52 12 9.509 C 14.24 9.496 12.994 16 16 16 C 19.006 16 24.998 6.422 26 5 L 26 13 L 2 13 L 1.953 21.48 Z"/>
+</svg> 
+-->
+
 <svg id="series_histogram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M12 7v14h5V7h-5Zm4 1h-3v12h3V8ZM19 15v6h5v-6h-5Zm4 1h-3v4h3v-4ZM5 12h5v9H5v-9Zm1 1h3v7H6v-7Z"></path>
+  <g stroke="currentcolor" fill="none">
+    <rect x="8.5" y="12.5" width="4" height="10"/><rect x="12.5" y="6.5" width="4" height="16"/>
+    <rect x="16.5" y="13.5" width="4" height="9"/><rect x="4.5" y="14.5" width="4" height="8"/>
+    <rect x="20.5" y="18.5" width="4" height="4"/>
+  </g>
 </svg>
 
 <!-- #endregion -->
 
-<!-- #region ________________ Layout Descriptors ________________ -->
+<!-- #region ________________ File / Window / Settings Tools ________________ -->
 
 
 <svg id="maximize" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor">
@@ -198,56 +239,71 @@
 </svg>
 
 <svg id="minimize" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="18" height="18" viewBox="0 0 52 52" enable-background="new 0 0 52 52" xml:space="preserve">
-	<path d="M50,48.5c0,0.8-0.7,1.5-1.5,1.5h-45C2.7,50,2,49.3,2,48.5v-3C2,44.7,2.7,44,3.5,44h45   c0.8,0,1.5,0.7,1.5,1.5V48.5z"/>
+	<path d="M50,48.5c0,0.8-0.7,1.5-1.5,1.5h-45C2.7,50,2,49.3,2,48.5v-3C2,44.7,2.7,44,3.5,44h45 c0.8,0,1.5,0.7,1.5,1.5V48.5z"/>
 </svg>
 
 <svg id="edit" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M16.73 6.56a2.5 2.5 0 0 1 3.54 0l1.17 1.17a2.5 2.5 0 0 1 0 3.54l-.59.58-9 9-1 1-.14.15H6v-4.7l.15-.15 1-1 9-9 .58-.59Zm2.83.7a1.5 1.5 0 0 0-2.12 0l-.23.24 3.29 3.3.23-.24a1.5 1.5 0 0 0 0-2.12l-1.17-1.17Zm.23 4.24L16.5 8.2l-8.3 8.3 3.3 3.3 8.3-8.3Zm-9 9L7.5 17.2l-.5.5V21h3.3l.5-.5Z"></path>
+    <path fill="none" stroke-linecap="round" stroke="currentColor" d="M 17.599 7.424 L 20.575 10.4 M 12.838 23.493 L 23.55 23.493 M 4.506 23.493 L 4.506 20.517 L 19.682 5.341 C 20.503 4.52 21.836 4.52 22.658 5.341 C 23.479 6.163 23.479 7.496 22.658 8.317 L 7.482 23.493 L 4.506 23.493 Z"/>
 </svg>
 
-<svg id="undo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M8.707 13l2.647 2.646-.707.708L6.792 12.5l3.853-3.854.708.708L8.707 12H14.5a5.5 5.5 0 0 1 5.5 5.5V19h-1v-1.5a4.5 4.5 0 0 0-4.5-4.5H8.707z"></path>
+<svg id="undo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+    <path fill="none" stroke-linecap="round" stroke="currentColor" d="M 4 7.5 L 15 7.5 C 17.76 7.5 20 9.74 20 12.5 C 20 15.261 17.76 17.5 15 17.5 M 4 7.5 L 7 4.5 M 4 7.5 L 7 10.5 M 8 17.5 L 11 17.5"/>
 </svg>
 
-<svg id="redo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M18.293 13l-2.647 2.646.707.708 3.854-3.854-3.854-3.854-.707.708L18.293 12H12.5A5.5 5.5 0 0 0 7 17.5V19h1v-1.5a4.5 4.5 0 0 1 4.5-4.5h5.793z"></path>
+<svg id="redo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+    <path fill="none" stroke-linecap="round" stroke="currentColor" d="M 20 7.503 L 9 7.503 C 6.239 7.503 4 9.742 4 12.503 C 4 15.265 6.239 17.503 9 17.503 M 20 7.503 L 17 4.503 M 20 7.503 L 17 10.503 M 16 17.503 L 13 17.503"/>
 </svg>
 
 <svg id="copy" xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none">
-    <path stroke="currentColor" d="M8 9.5H6.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V20m-8-1.5h11a1 1 0 0 0 1-1v-11a1 1 0 0 0-1-1h-11a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1z"></path>
+  <g stroke="currentcolor" fill="none" stroke-width="1" stroke-linecap="round">
+    <path d="M 21.5 10.501 C 21.487 8.326 21.391 7.148 20.623 6.38 C 19.744 5.501 18.33 5.501 15.501 5.501 L 12.501 5.501 C 9.673 5.501 8.259 5.501 7.38 6.38 C 6.501 7.259 6.501 8.673 6.501 11.501 L 6.501 16.501 C 6.501 19.33 6.501 20.744 7.38 21.623 C 8.259 22.501 9.673 22.501 12.501 22.501 L 15.501 22.501 C 18.33 22.501 19.744 22.501 20.623 21.623 C 21.501 20.744 21.501 19.33 21.501 16.501 L 21.501 15.501"/>
+    <path d="M 2.5 9.5 L 2.5 15.5 C 2.5 17.157 3 18.527 6.5 18.5 M 17.5 5.5 C 17.528 3 16.157 1.5 14.5 1.5 L 10.5 1.5 C 6.729 1.5 4.844 1.5 3.672 2.672 C 3.019 3.325 2.73 4.2 2.602 5.5"/>
+  </g>
 </svg>
 
-<svg id="reset" xmlns="http://www.w3.org/2000/svg" width="28" height="28"><g fill="none" fill-rule="evenodd" stroke="currentColor">
-    <path d="M6.5 15A8.5 8.5 0 1 0 15 6.5H8.5"></path>
-    <path d="M12 10L8.5 6.5 12 3"></path>
-</g></svg>
-
-<svg id="settings" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M18 14a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm-1 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-    <path fill="currentColor" fill-rule="evenodd" d="M8.5 5h11l5 9-5 9h-11l-5-9 5-9Zm-3.86 9L9.1 6h9.82l4.45 8-4.45 8H9.1l-4.45-8Z"></path>
+<svg id="settings" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g stroke="currentcolor" stroke-width="1" fill="none">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M9.39504 19.3711L9.97949 20.6856C10.1532 21.0768 10.4368 21.4093 10.7957 21.6426C11.1547 21.8759 11.5736 22.0001 12.0017 22C12.4298 22.0001 12.8488 21.8759 13.2077 21.6426C13.5667 21.4093 13.8502 21.0768 14.0239 20.6856L14.6084 19.3711C14.8164 18.9047 15.1664 18.5159 15.6084 18.26C16.0532 18.0034 16.5677 17.8941 17.0784 17.9478L18.5084 18.1C18.934 18.145 19.3636 18.0656 19.7451 17.8713C20.1265 17.6771 20.4434 17.3763 20.6573
+        17.0056C20.8714 16.635 20.9735 16.2103 20.951 15.7829C20.9285 15.3555 20.7825 14.9438 20.5306 14.5978L19.6839 13.4344C19.3825 13.0171 19.2214 12.5148 19.2239 12C19.2238 11.4866 19.3864 10.9864 19.6884 10.5711L20.535 9.40778C20.7869 9.06175 20.933 8.65007 20.9554 8.22267C20.9779 7.79528 20.8759 7.37054 20.6617 7C20.4478 6.62923 20.1309 6.32849 19.7495 6.13423C19.3681 5.93997 18.9385 5.86053 18.5128 5.90556L17.0828 6.05778C16.5722 6.11141
+        16.0576 6.00212 15.6128 5.74556C15.1699 5.48825 14.8199 5.09736 14.6128 4.62889L14.0239 3.31444C13.8502 2.92317 13.5667 2.59072 13.2077 2.3574C12.8488 2.12408 12.4298 1.99993 12.0017 2C11.5736 1.99993 11.1547 2.12408 10.7957 2.3574C10.4368 2.59072 10.1532 2.92317 9.97949 3.31444L9.39504 4.62889C9.18797 5.09736 8.83792 5.48825 8.39504 5.74556C7.95026 6.00212 7.43571 6.11141 6.92504 6.05778L5.4906 5.90556C5.06493 5.86053 4.63534 5.93997 4.25391 6.13423C3.87249 6.32849 3.55561 6.62923 
+        3.34171 7C3.12753 7.37054 3.02549 7.79528 3.04798 8.22267C3.07046 8.65007 3.2165 9.06175 3.46838 9.40778L4.31504 10.5711C4.61698 10.9864 4.77958 11.4866 4.77949 12C4.77958 12.5134 4.61698 13.0137 4.31504 13.4289L3.46838 14.5922C3.2165 14.9382 3.07046 15.3499 3.04798 15.7773C3.02549 16.2047 3.12753 16.6295 3.34171 17C3.55582 17.3706 3.87274 17.6712 4.25411 17.8654C4.63548 18.0596 5.06496 18.1392 5.4906 18.0944L6.9206 17.9422C7.43127 17.8886 7.94581 17.9979 8.3906 18.2544C8.83513 18.511 9.18681 18.902 9.39504 19.3711Z"/>
+  </g>
 </svg>
 
 <svg id="settings_small" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
-    <path fill="currentColor" fill-rule="evenodd" d="m3.14 9 2.72-5h6.28l2.72 5-2.72 5H5.86L3.14 9Zm2.13-6h7.46L16 9l-3.27 6H5.27L2 9l3.27-6Zm5.37 6A1.57 1.57 0 1 1 7.5 9a1.57 1.57 0 0 1 3.14 0Zm1 0A2.57 2.57 0 1 1 6.5 9a2.57 2.57 0 0 1 5.14 0Z"></path>
+  <g stroke="currentcolor" stroke-width="1" fill="none">
+    <circle cx="9" cy="9" r="2"/>
+    <path d="M 7.04 14.544 L 7.479 15.53 C 7.609 15.824 7.822 16.074 8.091 16.248 C 8.36 16.424 8.674 16.516 8.995 16.516 C 9.316 16.516 9.631 16.424 9.9 16.248 C 10.168 16.074 10.382 15.824 10.511 15.53 L 10.95 14.544 C 11.107 14.195 11.369 13.904 11.7 13.712 C 12.034 13.519 12.42 13.437 12.803 13.477 L 13.875 13.591 C 14.194 13.626 14.516 13.565 14.801 13.42 C 15.089 13.275 15.326 13.049 15.487 12.77 C 15.647 12.493 15.723 12.175 15.706 11.854
+        C 15.689 11.533 15.58 11.225 15.391 10.966 L 14.756 10.093 C 14.53 9.78 14.41 9.404 14.411 9.017 C 14.411 8.632 14.533 8.257 14.76 7.946 L 15.394 7.074 C 15.583 6.814 15.693 6.505 15.71 6.185 C 15.726 5.864 15.649 5.546 15.489 5.268 C 15.328 4.989 15.091 4.764 14.806 4.618 C 14.519 4.473 14.197 4.413 13.877 4.447 L 12.806 4.562 C 12.423 4.601 12.037 4.52 11.703 4.327 C 11.371 4.134 11.109 3.841 10.954 3.489 L 10.511 2.504 C 10.382 2.211 10.168
+        1.961 9.9 1.786 C 9.631 1.611 9.316 1.519 8.995 1.519 C 8.674 1.519 8.36 1.611 8.091 1.786 C 7.822 1.961 7.609 2.211 7.479 2.504 L 7.04 3.489 C 6.885 3.841 6.622 4.134 6.29 4.327 C 5.958 4.52 5.571 4.601 5.188 4.562 L 4.113 4.447 C 3.793 4.413 3.472 4.473 3.186 4.618 C 2.899 4.764 2.662 4.989 2.501 5.268 C 2.341 5.546 2.264 5.864 2.281 6.185 C 2.297 6.505 2.407 6.814 2.597 7.074 L 3.231 7.946 C 3.458 8.257 3.579 8.632 3.579 9.017 C 3.579 9.402
+        3.458 9.778 3.231 10.089 L 2.597 10.961 C 2.407 11.221 2.297 11.53 2.281 11.85 C 2.264 12.171 2.341 12.488 2.501 12.767 C 2.662 13.045 2.899 13.27 3.186 13.416 C 3.472 13.561 3.793 13.62 4.113 13.587 L 5.185 13.473 C 5.568 13.433 5.953 13.515 6.287 13.707 C 6.62 13.9 6.885 14.193 7.04 14.544 Z"/>
+  </g>
+</svg>
+
+<svg id="settings_slider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+    <path fill="currentColor" d="M 13.5 6 C 13.5 5.647 13.575 5 13.693 5 L 3 5 L 3 7 L 13.693 7 C 13.575 7 13.5 6.353 13.5 6 Z M 21.706 5 C 21.273 4 20.119 3 18.75 3 C 17.01 3 15.6 4.343 15.6 6 C 15.6 7.657 17.01 9 18.75 9 C 20.119 9 21.273 8 21.706 7 L 24 7 L 24 5 L 21.706 5 Z M 13.5 14 C 13.5 14.353 13.424 14.686 13.306 15 L 24 15 L 24 13 L 13.306 13 C 13.424 13 13.5 13.647 13.5 14 Z M 11.4 14 C 11.4 15.657 9.99 17 8.25 17 C 6.88 17 5.727 16 5.293 15 L 3 15 L 3 13 L 5.293 13 C 5.727 12 6.88 11 8.25 11 C 9.99 11 11.4 12.343 11.4 14 Z"/>
 </svg>
 
 <svg id="close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
-    <path stroke="currentColor" stroke-width="1.2" d="m1.5 1.5 15 15m0-15-15 15"></path>
+    <path stroke="currentColor" stroke-width="1.2" d="m1.5 1.5 15 15m0-15-15 15"/>
 </svg>
 
-<svg id="close_small" xmlns="http://www.w3.org/2000/svg" viewBox="4 4 16 14" width="24" height="22" fill="none">
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M17.35 6.35l-10 10-.7-.7 10-10 .7.7z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M6.65 6.35l10 10 .7-.7-10-10-.7.7z"></path>
-</svg>
-
-<svg id="add_section" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M4 10h5V9H4v1zM11 10h6V9h-6v1zM24 10h-5V9h5v1zM6.5 14c-.83 0-1.5.67-1.5 1.5v3c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5v-3c0-.83-.67-1.5-1.5-1.5h-15zM6 15.5c0-.28.22-.5.5-.5h15c.28 0 .5.22.5.5v3a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5v-3z"></path>
+<svg id="add_section" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+  <rect x="4.5" y="3.5" width="15" height="5" rx="1" ry="1" style="fill: none; stroke: currentcolor;"/>
+  <rect x="4.5" y="15.5" width="15" height="5" rx="1" ry="1" style="fill: none; stroke: currentcolor;"/>
+  <g fill-rule="evenodd" fill="currentcolor" stroke="none">
+    <path d="M 20.062 13 L 16.937 13 C 16.419 13 16 12.665 16 12.25 L 16 11.75 C 16 11.336 16.419 11 16.937 11 L 20.062 11 C 20.58 11 21 11.336 21 11.75 L 21 12.25 C 21 12.665 20.58 13 20.062 13"/>
+    <path d="M 13.25 13 L 10.75 13 C 10.335 13 10 12.664 10 12.25 L 10 11.75 C 10 11.336 10.335 11 10.75 11 L 13.25 11 C 13.664 11 14 11.336 14 11.75 L 14 12.25 C 14 12.664 13.664 13 13.25 13"/>
+    <path d="M 7.062 13 L 3.937 13 C 3.419 13 3 12.664 3 12.25 L 3 11.75 C 3 11.336 3.419 11 3.937 11 L 7.062 11 C 7.58 11 8 11.336 8 11.75 L 8 12.25 C 8 12.664 7.58 13 7.062 13"/>
+  </g>
 </svg>
 
 <svg id="window_add" xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke="currentColor" viewBox="0 0 24 24">
-    <path fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5px" fill-rule="evenodd" class="cls-1" d="M21,13.06V17a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V9A2,2,0,0,1,5,7h6.51"/>
-    <line fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5px"  x1="15" y1="7" x2="21" y2="7"/>
-    <line fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5px"  x1="18" y1="4" x2="18" y2="10"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5px">
+    <path fill-rule="evenodd" class="cls-1" d="M21,13.06V17a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V9A2,2,0,0,1,5,7h6.51"/>
+    <line x1="15" y1="7" x2="21" y2="7"/><line x1="18" y1="4" x2="18" y2="10"/>
+  </g>
 </svg>
 
 <svg id="options_add" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -257,358 +313,378 @@
     <path d="M10.5 19.77V15.73C10.5 14.14 9.86 13.5 8.27 13.5H4.23C2.64 13.5 2 14.14 2 15.73V19.77C2 21.36 2.64 22 4.23 22H8.27C9.86 22 10.5 21.36 10.5 19.77Z" fill="currentColor"/>
 </svg>
 
-
 <!-- #endregion -->
 
 <!-- #region ________________ Line Draw Tools ________________ -->
 
 <svg id="trend_line" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M7.354 21.354l14-14-.707-.707-14 14z"></path>
-        <path d="M22.5 7c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM5.5 24c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+    <ellipse cx="5.5" cy="5.5" rx="2.5" ry="2.5" style="fill:currentcolor"/>
+    <ellipse cx="22.5" cy="22.5" rx="2.5" ry="2.5" style="fill:currentcolor"/>
+    <path d="M 5 5 L 23 23" style="stroke: currentcolor;"/>
 </svg>
 
 <svg id="trend_ray" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M8.354 20.354l5-5-.707-.707-5 5z"></path>
-        <path d="M16.354 12.354l8-8-.707-.707-8 8z"></path>
-        <path d="M14.5 15c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM6.5 23c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <ellipse cx="5.5" cy="5.5" rx="2.5" ry="2.5" style="fill:currentcolor"/>
+  <ellipse cx="14.5" cy="14.5" rx="2.5" ry="2.5" style="fill:currentcolor" />
+  <path style="stroke:currentcolor" d="M 22.834 22.865 L 5 5"/>
 </svg>
 
 <svg id="trend_extended" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M4.354 25.354l5-5-.707-.707-5 5z"></path>
-        <path d="M12.354 17.354l5-5-.707-.707-5 5z"></path>
-        <path d="M20.354 9.354l5-5-.707-.707-5 5z"></path>
-        <path d="M18.5 12c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM10.5 20c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <ellipse cx="8.5" cy="8.5" rx="2.5" ry="2.5" style="fill:currentcolor"/>
+  <ellipse cx="19.5" cy="19.5" rx="2.5" ry="2.5" style="fill:currentcolor"/>
+  <path style="stroke: currentcolor;" d="M 25 25 L 3 3"/>
 </svg>
 
 <svg id="horiz_line" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M4 15h8.5v-1h-8.5zM16.5 15h8.5v-1h-8.5z"></path>
-        <path d="M14.5 16c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <ellipse cx="14" cy="14" rx="2.5" ry="2.5" style="fill:currentcolor"/>
+  <path style="stroke: currentcolor;" d="M 25 14 L 3 14"/>
 </svg>
 
 <svg id="horiz_ray" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M8.5 15h16.5v-1h-16.5z"></path>
-        <path d="M6.5 16c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <ellipse cx="5.5" cy="14" rx="2.5" ry="2.5" style="fill: currentcolor;" />
+  <path style="stroke: currentcolor;" d="M 25 14 L 3 14"/>
 </svg>
 
 <svg id="vert_line" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M15 12.5v-8.5h-1v8.5zM14 16.5v8.5h1v-8.5z"></path>
-        <path d="M14.5 16c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <ellipse cx="14" cy="14" rx="2.5" ry="2.5" style="fill:currentcolor"/>
+  <path style="stroke: currentcolor;" d="M 14 25 L 14 3"/>
 </svg>
 
 <svg id="channel_parallel" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M8.354 18.354l10-10-.707-.707-10 10zM12.354 25.354l5-5-.707-.707-5 5z"></path>
-        <path d="M20.354 17.354l5-5-.707-.707-5 5z"></path>
-        <path d="M19.5 8c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM6.5 21c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM18.5 20c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <g style="stroke: currentcolor; fill: currentcolor;"> 
+    <ellipse cx="9.5" cy="4.5" rx="2.5" ry="2.5"/>
+    <ellipse cx="23.5" cy="18.5" rx="2.5" ry="2.5"/>
+    <path d="M 10 5 L 24 19"/><path d="M 3.91 9.908 L 7 13"/>
+    <path d="M 9 15 L 13 19"/><path d="M 15 21 L 18.09 24.092"/>
+  <g/>
 </svg>
 
 <svg id="channel_disjoint" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M20.534 4.664l-13.318 4.701.333.943 13.318-4.701zM20.802 22.371l-13.285-4.689-.333.943 13.285 4.689z"></path>
-        <path d="M5.5 12c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM22.5 6c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM5.5 19c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM22.5 25c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <g fill="currentColor" stroke="currentcolor">
+    <ellipse cx="5.5" cy="8.5" rx="2.5" ry="2.5"/>
+    <ellipse cx="22.5" cy="19.5" rx="2.5" ry="2.5"/>
+    <path d="M 5 8 L 23 20"/><path d="M 5 20 L 8 18"/>
+    <path d="M 20 10 L 23 8"/><path d="M 11 15.812 L 16.897 12"/>
+  </g>
 </svg>
 
-<svg id="brush" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M1.789 23l.859-.854.221-.228c.18-.19.38-.409.597-.655.619-.704 1.238-1.478 1.815-2.298.982-1.396 1.738-2.776 2.177-4.081 1.234-3.667 5.957-4.716 8.923-1.263 3.251 3.785-.037 9.38-5.379 9.38h-9.211zm9.211-1c4.544 0 7.272-4.642 4.621-7.728-2.45-2.853-6.225-2.015-7.216.931-.474 1.408-1.273 2.869-2.307 4.337-.599.852-1.241 1.653-1.882 2.383l-.068.078h6.853z"></path>
-        <path d="M18.182 6.002l-1.419 1.286c-1.031.935-1.075 2.501-.096 3.48l1.877 1.877c.976.976 2.553.954 3.513-.045l5.65-5.874-.721-.693-5.65 5.874c-.574.596-1.507.609-2.086.031l-1.877-1.877c-.574-.574-.548-1.48.061-2.032l1.419-1.286-.672-.741z"></path>
-    </g>
-</svg>
-
-<svg id="highlighter" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 23" width="25" height="23">
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M13.402 0L6.78144 6.71532C6.67313 6.82518 6.5917 6.95862 6.54354 7.10518L5.13578 11.3889C4.89843 12.1111 5.08375 12.9074 5.61449 13.4458L5.68264 13.5149L0 19.2789L8.12695 22.4056L11.2874 19.1999L11.3556 19.269C11.8863 19.8073 12.6713 19.9953 13.3834 19.7546L17.6013 18.3285C17.7493 18.2784 17.8835 18.1945 17.9931 18.0832L24.6912 11.2892L23.9857 10.5837L17.515 17.147L7.70658 7.19818L14.1076 0.705575L13.402 0ZM6.07573 11.7067L7.24437 8.15061L16.576 17.6158L13.0701 18.8012C12.7141 18.9215 12.3215 18.8275 12.0562 18.5584L6.31509 12.7351C6.04972 12.466 5.95706 12.0678 6.07573 11.7067ZM6.30539 14.3045L10.509 18.5682L7.87935 21.2355L1.78414 18.8904L6.30539 14.3045Z"></path>
+<svg id="brush" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 52 52" width="28" height="28">
+    <path fill="currentcolor" d="M46.443,6.719C40.506,15.546,22.623,33.4,22.623,33.4l-.007-.007c-.042.046-.08.094-.125.139a4.964,4.964,0,0,1-4.114,1.4,6.089,6.089,0,0,1-1.529,5.678s-7.52,9.3-15.854,3.44c0,0,4.494-1.259,4.885-4.885a8.753,8.753,0,0,1,2.7-7.04,5.741,5.741,0,0,1,5.445-1.6,4.95,4.95,0,0,1,1.411-4.047c.044-.045.093-.083.139-.126l-.007-.007S33.438,8.488,42.278,2.559a2.982,2.982,0,0,1,4.165,4.16ZM15.456,33.486a3.849,3.849,0,0,0-2.733-1.165,3.809,3.809,0,0,0-2.744,1.171,7.277,7.277,0,0,0-2.145,5.677,7.608,7.608,0,0,1-2.557,4.776,7.133,7.133,0,0,0,1.285.116c4.75,0,8.752-4.66,8.789-4.7C15.352,39.357,18.09,36.121,15.456,33.486Zm.538-3.478a2.938,2.938,0,0,0,.854,2.109,3.064,3.064,0,0,0,2.146.891,2.9,2.9,0,0,0,2.066-.874l1.554-1.57.274-.28-4.2-4.2c-.092.089-.2.2-.287.279L16.847,27.9A2.931,2.931,0,0,0,15.994,30.008ZM44.72,4.286A.974.974,0,0,0,44.027,4a1.055,1.055,0,0,0-.635.222c-6.218,4.17-18,15.367-23.3,20.5l4.159,4.159c5.14-5.3,16.364-17.083,20.568-23.332A.974.974,0,0,0,44.72,4.286Z" fill-rule="evenodd"/>
 </svg>
 
 <svg id="polyline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M16.5 6h4v-1h-4z" id="Line"></path>
-        <path d="M16.5 15h4v-1h-4z"></path>
-        <path d="M8.5 23h4v-1h-4z"></path>
-        <path d="M8.298 11.591l5.097-4.46-.659-.753-5.097 4.46zM22 7.5v5h1v-5z"></path>
-        <path d="M14 16.5v4h1v-4z"></path>
-        <path d="M6 14.5v6h1v-6z"></path>
-        <path d="M6.5 14c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM14.5 7c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM22.5 7c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM14.5 16c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM22.5 16c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM6.5 24c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM14.5 24c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <g stroke="currentcolor" fill="currentColor">
+    <ellipse cx="21.5" cy="22.5" rx="2" ry="2"/><ellipse cx="6.5" cy="20.5" rx="2" ry="2"/>
+    <ellipse cx="8.5" cy="6.5" rx="2" ry="2"/><ellipse cx="21.5" cy="4.5" rx="2" ry="2"/>
+    <ellipse cx="15.5" cy="14.5" rx="2" ry="2"/>
+    <path d="M 8 21 L 22 23"/><path d="M 21 22 L 16 15"/>
+    <path d="M 16 14 L 21 5"/><path d="M 22 4 L 10 6"/>
+    <path d="M 6 22 L 9 6"/>
+  </g>
 </svg>
 
 <svg id="fib_retrace" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M3 5h22v-1h-22z"></path>
-        <path d="M3 17h22v-1h-22z"></path>
-        <path d="M3 11h19.5v-1h-19.5z"></path>
-        <path d="M5.5 23h19.5v-1h-19.5z"></path>
-        <path d="M3.5 24c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM24.5 12c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <g fill="currentColor" stroke="currentcolor">
+    <ellipse cx="4.5" cy="23.5" rx="2.5" ry="2.5"/><ellipse cx="23.5" cy="4.5" rx="2.5" ry="2.5"/>
+    <path d="M 25 23.5 L 3 23.5"/><path d="M 25 4.5 L 3 4.5"/><path d="M 9 10 L 4 10"/><path d="M 7 14 L 4 14"/>
+    <path d="M 17 10 L 11 10"/><path d="M 24 10 L 19 10"/><path d="M 9 18 L 4 18"/><path d="M 17 18 L 11 18"/>
+    <path d="M 24 18 L 19 18"/><path d="M 13 14 L 9 14"/><path d="M 19 14 L 15 14"/><path d="M 24 14 L 21 14"/>
+  </g>
 </svg>
 
 <svg id="fib_extend" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M4 25h22v-1h-22z" id="Line"></path>
-        <path d="M4 21h22v-1h-22z"></path>
-        <path d="M6.5 17h19.5v-1h-19.5z"></path>
-        <path d="M5 14.5v-3h-1v3zM6.617 9.275l10.158-3.628-.336-.942-10.158 3.628z"></path>
-        <path d="M18.5 6c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM4.5 11c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM4.5 18c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <g fill="currentColor" stroke="currentcolor">
+    <ellipse cx="4.5" cy="23.5" rx="2.5" ry="2.5"/> <ellipse cx="23.5" cy="17.5" rx="2.5" ry="2.5"/>
+    <path d="M 25 23.5 L 3 23.5"/><path d="M 25 17.5 L 3 17.5"/><path d="M 9 4 L 4 4"/>
+    <path d="M 7 8 L 4 8"/><path d="M 17 4 L 11 4"/><path d="M 24 4 L 19 4"/>
+    <path d="M 9 12 L 4 12"/><path d="M 17 12 L 11 12"/><path d="M 24 12 L 19 12"/>
+    <path d="M 13 8 L 9 8"/><path d="M 19 8 L 15 8"/><path d="M 24 8 L 21 8"/>
+ </g>
 </svg>
     
 <!-- #endregion -->
 
-<!-- #region ________________ Layout Descriptors ________________ -->
+<!-- #region ________________ Chart Measure Tools ________________ -->
 
 <svg id="range_price" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor">
-        <path fill-rule="nonzero" d="M4 5h16.5v-1h-16.5zM25 24h-16.5v1h16.5z" id="Line"></path>
-        <path fill-rule="nonzero" d="M6.5 26c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM22.5 6c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-        <path fill-rule="nonzero" d="M14 9v14h1v-14z"></path>
-        <path d="M14.5 6l2.5 3h-5z"></path>
+  <g fill="currentColor" stroke="currentcolor">
+    <ellipse cx="4.5" cy="23.5" rx="2.5" ry="2.5"/>
+    <path d="M 25 23.5 L 3 23.5"/>
+    <ellipse cx="4.5" cy="4.5" rx="2.5" ry="2.5"/>
+    <path d="M 25 4.5 L 3 4.5"/>
+    <path stroke="transparent" d="M 15.5 7 L 18 10 L 13 10 L 15.5 7 Z"/>
+    <path stroke="transparent" d="M 15.5 -21 L 18 -18 L 13 -18 L 15.5 -21 Z" transform="matrix(1,0,0,-1,0,0)"/>
+    <path d="M 15.5 10.11 L 15.5 18"/>
     </g>
 </svg>
 
 <svg id="range_date" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor">
-        <path fill-rule="nonzero" d="M20 14h-14v1h14z" id="Line"></path>
-        <path d="M20 17v-5l3 2.5z"></path>
-        <path fill-rule="nonzero" d="M24 8.5v16.5h1v-16.5zM4 4v16.5h1v-16.5z"></path>
-        <path fill-rule="nonzero" d="M4.5 24c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM24.5 8c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
+  <g fill="currentColor" stroke="currentcolor">
+    <ellipse cx="4.5" cy="23.5" rx="2.5" ry="2.5"/>
+    <ellipse cx="23.5" cy="23.5" rx="2.5" ry="2.5"/>
+    <path d="M 13.334 4.779 L 15.834 7.779 L 10.834 7.779 L 13.334 4.779 Z" style="stroke: transparent; transform-origin: 11px 5px;" transform="matrix(0, -1, 1, 0, -5, 9)"/>
+    <path d="M 15.5 -21 L 18 -18 L 13 -18 L 15.5 -21 Z" style="stroke: transparent;" transform="matrix(0, 1, -1, 0, 0, -4)"/>
+    <path d="M 4.5 22 L 4.5 4"/>
+    <path d="M 23.5 22 L 23.5 4"/>
+    <path d="M 8 11.5 L 20 11.5"/>
+  </g>
 </svg>
 
 <svg id="range_price_date" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor">
-        <path fill-rule="nonzero" d="M6.5 23v1h17.5v-17.5h-1v16.5z"></path>
-        <path fill-rule="nonzero" d="M21.5 5v-1h-17.5v17.5h1v-16.5z"></path>
-        <path fill-rule="nonzero" d="M4.5 25c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM23.5 6c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-        <path fill-rule="nonzero" d="M13 9v13h1v-13z" id="Line"></path>
-        <path d="M13.5 6l2.5 3h-5z"></path>
-        <path fill-rule="nonzero" d="M19 14h-13v1h13z"></path>
-        <path d="M19 17v-5l3 2.5z"></path>
-    </g>
+  <g fill="currentColor" stroke="currentcolor">
+    <ellipse cx="4.5" cy="23.5" rx="2.5" ry="2.5"/><ellipse cx="23.5" cy="4.5" rx="2.5" ry="2.5"/>
+    <path d="M 9 18 L 19 9"/>
+    <path stroke="none" d="M 8 19 L 13 19 L 8 14 M 20 8 L 15 8 L 20 13"/>
+    <path d="M 16 23.5 L 4.5 23.5 M 4.5 22 L 4.5 12 M 23 4.5 L 12 4.5 M 23.5 5 L 23.5 16"/>
+  </g>
 </svg>
 
 <svg id="bar_pattern" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="nonzero">
-        <path d="M6 6v6.5h1v-6.5zM7 22v-2.5h-1v2.5zM11 11v2.5h1v-2.5zM12 24v-7.5h-1v7.5zM16 5v5.5h1v-5.5zM17 21v-2.5h-1v2.5zM21 7v4.5h1v-4.5zM22 19v-2.5h-1v2.5z"></path>
-        <path d="M6 13v6h1v-6h-1zm-1-1h3v8h-3v-8z"></path>
-        <path d="M11 16h1v-2h-1v2zm-1-3h3v4h-3v-4z"></path>
-        <path d="M16 18h1v-7h-1v7zm-1-8h3v9h-3v-9z"></path>
-        <path d="M21 16h1v-4h-1v4zm-1-5h3v6h-3v-6z"></path>
-    </g>
+  <g fill="transparent" stroke='currentcolor'>
+    <rect x="5.5" y="6.5" width="4" height="11"/>
+    <rect x="12.5" y="18.5" width="4" height="4"/>
+    <rect x="19.5" y="9.5" width="4" height="11"/>
+    <path d="M 7.5 17 L 7.5 22"/><path d="M 7.5 7 L 7.5 2"/><path d="M 14.5 18 L 14.5 9"/>
+    <path d="M 14.5 22 L 14.5 26"/><path d="M 21.5 21 L 21.5 23"/><path d="M 21.5 9 L 21.5 3"/>
+  </g>
 </svg>
 
-<svg id="bar_ghost_feed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor">
-        <path fill-rule="nonzero" d="M4.529 18.21l3.157-1.292-.379-.926-3.157 1.292z"></path>
-        <path fill-rule="nonzero" d="M9.734 16.081l2.97-1.215-.379-.926-2.97 1.215z"></path>
-        <path fill-rule="nonzero" d="M14.725 14.039l2.957-1.21-.379-.926-2.957 1.21z"></path>
-        <path fill-rule="nonzero" d="M19.708 12.001l3.114-1.274-.379-.926-3.114 1.274z"></path>
-        <path d="M8 18h1v3h-1z" id="Path"></path>
-        <path d="M8 9h1v5h-1z"></path>
-        <path fill-rule="nonzero" d="M8 18h1v-4h-1v4zm-1-5h3v6h-3v-6z" id="Rectangle-44"></path>
-        <path d="M18 16h1v3h-1z" id="Path"></path>
-        <path d="M18 3h1v6h-1z"></path>
-        <path fill-rule="nonzero" d="M18 16h1v-7h-1v7zm-1-8h3v9h-3v-9z" id="Rectangle-44"></path>
-        <path d="M13 6h1v5h-1z"></path>
-        <path d="M13 15h1v5h-1z"></path>
-        <path fill-rule="nonzero" d="M13 15h1v-4h-1v4zm-1-5h3v6h-3v-6z"></path>
-        <path fill-rule="nonzero" d="M2.5 20c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5zM24.5 11c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5zm0 1c-1.381 0-2.5-1.119-2.5-2.5s1.119-2.5 2.5-2.5 2.5 1.119 2.5 2.5-1.119 2.5-2.5 2.5z"></path>
-    </g>
-</svg>
-
-<svg id="anchored_vwap" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
-    <path fill="currentColor" d="M17 17h1v6h-1v-6zM17 2h1v5h-1V2z"></path>
-    <path fill="currentColor" d="M16 17h3V8h-3v9zM15 7h5v11h-5V7zM10 5h1v5h-1V5zM10 22h1v3h-1v-3z"></path>
-    <path fill="currentColor" d="M9 21h3V10H9v11zM8 9h5v13H8V9z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M25.27 9.42L14.1 16.53l-6.98-1.5L5.3 16.4l-.6-.8 2.18-1.64 7.02 1.5 10.83-6.88.54.84z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M4 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 1a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path>
-</svg>
-
-<svg id="vol_profile_fixed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M5 21.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM3.5 24a2.5 2.5 0 0 0 .5-4.95V3H3v16.05A2.5 2.5 0 0 0 3.5 24zM25 5.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0zM23.5 3a2.5 2.5 0 0 1 .5 4.95V24h-1V7.95A2.5 2.5 0 0 1 23.5 3z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M9 7H4v2h5V7zM3 6v4h7V6H3z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12 10H4v2h8v-2zM3 9v4h10V9H3z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M7 13H4v2h3v-2zm-4-1v4h5v-4H3z"></path>
+<svg id="vol_profile_fixed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g fill="transparent" stroke='currentcolor'>
+    <ellipse fill="currentcolor" cx="4.5" cy="24.5" rx="2.5" ry="2.5"/>
+    <ellipse fill="currentcolor" cx="23.5" cy="24.5" rx="2.5" ry="2.5"/>
+    <path d="M 4.5 24 L 4.5 1"/>
+    <path d="M 23.5 24 L 23.5 1"/>
+    <rect x="4.5" y="16.5" width="5" height="3"/>
+    <rect x="4.5" y="13.5" width="10" height="3"/>
+    <rect x="4.5" y="7.5" width="8" height="3"/>
+    <rect x="4.5" y="4.5" width="5" height="3"/>
+    <rect x="4.5" y="10.5" width="15" height="3"/>
+  </g>
 </svg>
 
 <svg id="vol_profile_anchored" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M24 3h-1v4h-6v3h-5v3H8.95a2.5 2.5 0 1 0 0 1H15v3h5v3h3v4h1V3Zm-6 7h5V8h-5v2Zm-1 1h-4v2h10v-2h-6Zm4 5h-5v-2h7v2h-2Zm0 3v-2h2v2h-2ZM6.5 15a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+  <g fill="transparent" stroke='currentcolor'>
+    <ellipse fill="currentcolor" cx="4.5" cy="24.5" rx="2.5" ry="2.5"/><path d="M 4.5 24 L 4.5 1"/>
+    <rect x="4.5" y="16.5" width="5" height="3"/>
+    <rect x="4.5" y="13.5" width="10" height="3"/>
+    <rect x="4.5" y="7.5" width="8" height="3"/>
+    <rect x="4.5" y="4.5" width="5" height="3"/>
+    <rect x="4.5" y="10.5" width="15" height="3"/>
+  </g>
 </svg>
 
 <!-- #endregion -->
 
 <!-- #region ________________ indicator visibility ________________ -->
 
-<svg id="indicator" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
-    <path stroke="currentColor" d="M6 12l4.8-4.8a1 1 0 0 1 1.4 0l2.7 2.7a1 1 0 0 0 1.3.1L23 5"></path>
-    <path fill="currentColor" fill-rule="evenodd" d="M19 12a1 1 0 0 0-1 1v4h-3v-1a1 1 0 0 0-1-1h-3a1 1 0 0 0-1 1v2H7a1 1 0 0 0-1 1v4h17V13a1 1 0 0 0-1-1h-3zm0 10h3v-9h-3v9zm-1 0v-4h-3v4h3zm-4-4.5V22h-3v-6h3v1.5zM10 22v-3H7v3h3z"></path>
+<svg id="indicator_on_stratagy" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
+  <g fill="none" stroke='currentcolor' stroke-linecap="round">
+    <path style="fill-opacity: 0.1; fill: currentcolor;" d="M 25 24.5 L 4.5 24.5 C 3.5 24.5 2.5 24.5 2.5 23 L 2.5 3"/>
+    <path d="M 2.561 15 C 4 12.049 6 8.049 8 7.049 C 10 6.049 12 6.049 14 7.049 C 16 8.049 17 9.049 19 9.049 C 21 9.049 23 8.049 25 6.049"/>
+    <rect x="5.5" y="20.5" width="3" height="4" rx="1" ry="1"/>
+    <rect x="8.5" y="21.5" width="3" height="3" rx="1" ry="1"/>
+    <rect x="11.5" y="17.5" width="3" height="7" rx="1" ry="1"/>
+    <rect x="20.5" y="17.5" width="3" height="7" rx="1" ry="1"/>
+    <rect x="2.5" y="15.5" width="3" height="9" rx="1" ry="1"/>
+    <rect x="17.5" y="14.5" width="3" height="10" rx="1" ry="1"/>
+    <rect x="14.5" y="12.5" width="3" height="12" rx="1" ry="1"/>
+  </g>
 </svg>
 
 <svg id="indicator_template" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M8 7h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zM6 8c0-1.1.9-2 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8zm11-1h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm-2 1c0-1.1.9-2 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8zm-4 8H8a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1zm-3-1a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h3a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H8zm9 1h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1zm-2 1c0-1.1.9-2 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2v-3z"></path>
+  <g fill="none" stroke='currentcolor' stroke-linecap="round">
+    <rect x="4.5" y="4.5" width="8" height="8" rx="2"/>
+    <rect x="14.5" y="4.5" width="8" height="8" rx="2"/>
+    <rect x="14.5" y="14.5" width="8" height="8" rx="2"/>
+    <rect x="4.5" y="14.5" width="8" height="8" rx="2"/>
+  </g>
 </svg>
 
-<svg id="indicator_on_stratagy" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
-    <g fill="none" fill-rule="evenodd" stroke="currentColor">
-        <path stroke-linecap="square" d="M11.5 21.5v-7m3 7v-5m3 5v-3m-9 3v-5"></path>
-        <path d="M5.5 22v-3"></path>
-        <path stroke-linecap="square" d="M5.5 13.5l4.297-4.297a2.406 2.406 0 0 1 3.406 0l2.594 2.594c.94.94 2.463.943 3.406 0L23.5 7.5M22.5 12.5v6m-3-3h6"></path>
-    </g>
+<svg id="indicator" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+  <g fill="none" stroke='currentcolor' stroke-linecap="round">
+    <rect x="6.5" y="20.5" width="3" height="4" rx="1" ry="1"/>
+    <rect x="9.5" y="21.5" width="3" height="3" rx="1" ry="1"/>
+    <rect x="12.5" y="17.5" width="3" height="7" rx="1" ry="1"/>
+    <rect x="18.5" y="17.5" width="3" height="7" rx="1" ry="1"/>
+    <rect x="15.5" y="14.5" width="3" height="10" rx="1" ry="1"/>
+    <rect x="21.5" y="20.5" width="3" height="4" rx="1" ry="1"/>
+    <path d="M 4 13.631 L 4.5 14.410 C 5 15.19 6 16.749 8.666 15.58 C 11.333 14.41 15.666 10.512 18.5 9.538 C 21.333 8.564 22.666 10.513 23.333 11.5 L 24 12.462"/>
+    <path d="M 5 8.5 L 12 8.5 M 8.5 5 L 8.5 12"/>
+  </g>
 </svg>
 
-<svg id="eye_normal" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 22" width="24" height="22" fill="none">
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M17.9948 7.91366C16.6965 6.48549 14.6975 5 11.9999 5C9.30225 5 7.30322 6.48549 6.00488 7.91366C6.00488 7.91366 4 10 4 11C4 12 6.00488 14.0863 6.00488 14.0863C7.30322 15.5145 9.30225 17 11.9999 17C14.6975 17 16.6965 15.5145 17.9948 14.0863C17.9948 14.0863 20 12 20 11C20 10 17.9948 7.91366 17.9948 7.91366ZM6.74482 13.4137C7.94648 14.7355 9.69746 16 11.9999 16C14.3022 16 16.0532 14.7355 17.2549 13.4137C17.2549 13.4137 19 11.5 19 11C19 10.5 17.2549 8.58634 17.2549 8.58634C16.0532 7.26451 14.3022 6 11.9999 6C9.69746 6 7.94648 7.26451 6.74482 8.58634C6.74482 8.58634 5 10.5 5 11C5 11.5 6.74482 13.4137 6.74482 13.4137Z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12 13C13.1046 13 14 12.1046 14 11C14 9.89543 13.1046 9 12 9C10.8954 9 10 9.89543 10 11C10 12.1046 10.8954 13 12 13ZM12 14C13.6569 14 15 12.6569 15 11C15 9.34315 13.6569 8 12 8C10.3431 8 9 9.34315 9 11C9 12.6569 10.3431 14 12 14Z"></path>
+<svg id="eye_normal" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" fill="none"> 
+    <path d="M2.42012 12.7132C2.28394 12.4975 2.21584 12.3897 2.17772 12.2234C2.14909 12.0985 2.14909 11.9015 2.17772 11.7766C2.21584 11.6103 2.28394 11.5025 2.42012 11.2868C3.54553 9.50484 6.8954 5 12.0004 5C17.1054 5 20.4553 9.50484 21.5807 11.2868C21.7169 11.5025 21.785 11.6103 21.8231 11.7766C21.8517 11.9015 21.8517 12.0985 21.8231 12.2234C21.785 12.3897 21.7169 12.4975 21.5807 12.7132C20.4553 14.4952 17.1054 19 12.0004 19C6.8954 19 3.54553 14.4952 2.42012 12.7132Z"/>
+    <path d="M12.0004 15C13.6573 15 15.0004 13.6569 15.0004 12C15.0004 10.3431 13.6573 9 12.0004 9C10.3435 9 9.0004 10.3431 9.0004 12C9.0004 13.6569 10.3435 15 12.0004 15Z"/>
+  </g>
 </svg>
 
-<svg id="eye_crossed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 22" width="24" height="22" fill="none">
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M8.8503 16.2712C9.76531 16.7135 10.8152 17 11.9999 17C14.6975 17 16.6965 15.5145 17.9948 14.0863C17.9948 14.0863 20 12 20 11C20 10 17.9948 7.91366 17.9948 7.91366C17.8729 7.77954 17.7448 7.64491 17.6105 7.51105L16.9035 8.2181C17.0254 8.33968 17.1425 8.46276 17.2549 8.58634C17.2549 8.58634 19 10.5 19 11C19 11.5 17.2549 13.4137 17.2549 13.4137C16.0532 14.7355 14.3022 16 11.9999 16C11.1218 16 10.324 15.8161 9.60627 15.5153L8.8503 16.2712ZM7.09663 13.7823C6.97455 13.6606 6.85728 13.5374 6.74482 13.4137C6.74482 13.4137 5 11.5 5 11C5 10.5 6.74482 8.58634 6.74482 8.58634C7.94648 7.26451 9.69746 6 11.9999 6C12.8781 6 13.6761 6.18398 14.394 6.48495L15.1499 5.729C14.2348 5.28657 13.1847 5 11.9999 5C9.30225 5 7.30322 6.48549 6.00488 7.91366C6.00488 7.91366 4 10 4 11C4 12 6.00488 14.0863 6.00488 14.0863C6.12693 14.2206 6.25516 14.3553 6.38959 14.4893L7.09663 13.7823Z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M11.2231 13.8984C11.4709 13.9647 11.7313 14 12 14C13.6569 14 15 12.6569 15 11C15 10.7313 14.9647 10.4709 14.8984 10.2231L13.9961 11.1254C13.934 12.1301 13.1301 12.934 12.1254 12.9961L11.2231 13.8984ZM11.8751 9.00384C10.87 9.06578 10.0658 9.87001 10.0038 10.8751L9.10166 11.7772C9.03535 11.5294 9 11.2688 9 11C9 9.34315 10.3431 8 12 8C12.2688 8 12.5294 8.03535 12.7772 8.10166L11.8751 9.00384Z"></path>
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M5.64648 16.6465L17.6465 4.64648L18.3536 5.35359L6.35359 17.3536L5.64648 16.6465Z"></path>
+<svg id="eye_crossed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" fill="none"> 
+    <path d="M10.7429 5.09232C11.1494 5.03223 11.5686 5 12.0004 5C17.1054 5 20.4553 9.50484 21.5807 11.2868C21.7169 11.5025 21.785 11.6103 21.8231 11.7767C21.8518 11.9016 21.8517 12.0987 21.8231 12.2236C21.7849 12.3899 21.7164 12.4985 21.5792 12.7156C21.2793 13.1901 20.8222 13.8571 20.2165 14.5805M6.72432 6.71504C4.56225 8.1817 3.09445 10.2194 2.42111 
+    11.2853C2.28428 11.5019 2.21587 11.6102 2.17774 11.7765C2.1491 11.9014 2.14909 12.0984 2.17771 12.2234C2.21583 12.3897 2.28393 12.4975 2.42013 12.7132C3.54554 14.4952 6.89541 19 12.0004 19C14.0588 19 15.8319 18.2676 17.2888 17.2766M3.00042 3L21.0004 21M9.8791 9.87868C9.3362 10.4216 9.00042 11.1716 9.00042 12C9.00042 13.6569 10.3436 15 12.0004 15C12.8288 15 13.5788 14.6642 14.1217 14.1213"/> 
+  </g>
 </svg>
 
-<svg id="eye_loading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 22" width="24" height="22" fill="none">
-    <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M17.9948 7.91366C16.6965 6.48549 14.6975 5 11.9999 5C9.30225 5 7.30322 6.48549 6.00488 7.91366C6.00488 7.91366 4 10 4 11C4 12 6.00488 14.0863 6.00488 14.0863C7.30322 15.5145 9.30225 17 11.9999 17C14.6975 17 16.6965 15.5145 17.9948 14.0863C17.9948 14.0863 20 12 20 11C20 10 17.9948 7.91366 17.9948 7.91366ZM6.74482 13.4137C7.94648 14.7355 9.69746 16 11.9999 16C14.3022 16 16.0532 14.7355 17.2549 13.4137C17.2549 13.4137 19 11.5 19 11C19 10.5 17.2549 8.58634 17.2549 8.58634C16.0532 7.26451 14.3022 6 11.9999 6C9.69746 6 7.94648 7.26451 6.74482 8.58634C6.74482 8.58634 5 10.5 5 11C5 11.5 6.74482 13.4137 6.74482 13.4137Z"></path>
-</svg>
-
-<svg id="eye_loading_animated" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 22" width="24" height="22" fill="none">
-    <path stroke="currentColor" stroke-linecap="round" d="M14.5 11C14.5 9.61929 13.3807 8.5 12 8.5C10.6193 8.5 9.5 9.61929 9.5 11C9.5 12.3807 10.6193 13.5 12 13.5"></path>
+<svg id="eye_loading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g stroke="currentcolor"  stroke-linecap="round" stroke-linejoin="round" fill="none"> 
+    <path d="M2.42012 12.7132C2.28394 12.4975 2.21584 12.3897 2.17772 12.2234C2.14909 12.0985 2.14909 11.9015 2.17772 11.7766C2.21584 11.6103 2.28394 11.5025 2.42012 11.2868C3.54553 9.50484 6.8954 5 12.0004 5C17.1054 5 20.4553 9.50484 21.5807 11.2868C21.7169 11.5025 21.785 11.6103 21.8231 11.7766C21.8517 11.9015 21.8517 12.0985 21.8231 12.2234C21.785 12.3897 21.7169 12.4975 21.5807 12.7132C20.4553 14.4952 17.1054 19 12.0004 19C6.8954 19 3.54553 14.4952 2.42012 12.7132Z"/>
+    <path style="fill: none; stroke-linecap: round; stroke: currentcolor; transform-origin: 12px 12px;" d="M 12.029 8.556 C 14.679 8.556 16.336 11.425 15.011 13.721 C 13.795 15.827 10.838 16.043 9.329 14.136">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="750ms" repeatCount="indefinite"/>
+    </path>
+  </g>
 </svg>
     
 <!-- #endregion -->
 
 <!-- #region ________________ Right Panel Stuffs ________________ -->
 
-<svg id="replay" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="none" stroke="currentColor" d="M13.5 20V9l-6 5.5 6 5.5zM21.5 20V9l-6 5.5 6 5.5z"></path>
+<svg id="rewind" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+    <path stroke="currentcolor" fill="none" stroke-width="1.5" stroke-linecap="round" d="M 12.416 5.51 L 5.764 10.261 C 3.46 11.908 3.46 15.333 5.764 16.98 L 12.416 21.732 M 23.771 19.932 L 23.771 7.31 C 23.771 5.63 21.874 4.655 20.506 5.63 L 11.671 11.941 C 10.519 12.764 10.519 14.478 11.671 15.3 L 20.506 21.612 C 21.874 22.588 23.771 21.611 23.771 19.932 Z"/>
 </svg>
 
-<svg id="pie_chart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
-    <path d="M0 0h28v28H0z"></path>
-    <path stroke="currentColor" d="M13.5 23.5a9 9 0 0 0 9-9h-9v-9a9 9 0 0 0 0 18zM22 6l-6.5 6.5m4-8l-4 4m8 0l-4 4"></path>
-    <path stroke="currentColor" d="M24.5 12.5a9 9 0 0 0-9-9v9h9z"></path>
-</svg>
-
-<svg id="calendar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" fill-rule="evenodd" d="M15 11h2v4h-2v-4Zm-1 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1h8v-1a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1h1a3 3 0 0 1 3 3v16a3 3 0 0 1-3 3H13a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3h1v-1Zm4 2h8v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2h1a2 2 0 0 1 2 2v4H11v-4c0-1.1.9-2 2-2h1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2Zm-7 7v11c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2V20H11Zm18-9h-2v4h2v-4Z"></path>
+<svg id="calendar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+    <path stroke="currentColor" fill="none" d="M 5 11 L 23 11 M 19 15.002 L 9 15 M 12.333 19.001 L 9 19 M 9 5 L 9 7 M 19 5 L 19 7 M 8.2 23 L 19.8 23 C 20.92 23 21.48 23 21.908 22.782 C 22.284 22.591 22.59 22.285 22.782 21.908 C 23 21.481 23 20.921 23 19.8 L 23 10.2 C 23 9.08 23 8.52 22.782 8.092 C 22.59 7.716 
+    22.284 7.41 21.908 7.218 C 21.48 7 20.92 7 19.8 7 L 8.2 7 C 7.079 7 6.519 7 6.092 7.218 C 5.715 7.41 5.409 7.716 5.218 8.092 C 5 8.52 5 9.08 5 10.2 L 5 19.8 C 5 20.921 5 21.481 5.218 21.908 C 5.409 22.285 5.715 22.591 6.092 22.782 C 6.519 23 7.079 23 8.2 23 Z"/>
 </svg>
 
 <svg id="calendar_to_date" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M11 4h-1v2H7.5A2.5 2.5 0 0 0 5 8.5V13h1v-2h16v8.5c0 .83-.67 1.5-1.5 1.5H14v1h6.5a2.5 2.5 0 0 0 2.5-2.5v-11A2.5 2.5 0 0 0 20.5 6H18V4h-1v2h-6V4Zm6 4V7h-6v1h-1V7H7.5C6.67 7 6 7.67 6 8.5V10h16V8.5c0-.83-.67-1.5-1.5-1.5H18v1h-1Zm-5.15 10.15-3.5-3.5-.7.7L10.29 18H4v1h6.3l-2.65 2.65.7.7 3.5-3.5.36-.35-.36-.35Z"></path>
+    <path stroke="currentColor" stroke-linejoin="round" stroke-linecap="round" fill="none" d="M 5 11 L 23 11 M 14.333 14 L 19 17 M 14.333 20 L 19 17 L 9 17 M 9 5 L 9 7 M 19 5 L 19 7 M 8.2 23 L 19.8 23 C 20.92 23 21.48 23 21.908 22.782 C 22.284 22.591 22.59 22.285 22.782 21.908 C 23 21.481 23 20.921 
+    23 19.8 L 23 10.2 C 23 9.08 23 8.52 22.782 8.092 C 22.59 7.716 22.284 7.41 21.908 7.218 C 21.48 7 20.92 7 19.8 7 L 8.2 7 C 7.079 7 6.519 7 6.092 7.218 C 5.715 7.41 5.409 7.716 5.218 8.092 C 5 8.52 5 9.08 5 10.2 L 5 19.8 C 5 20.921 5 21.481 5.218 21.908 C 5.409 22.285 5.715 22.591 6.092 22.782 C 6.519 23 7.079 23 8.2 23 Z"/>
 </svg>
 
-<svg id="question_mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" d="M10 21.5a11.5 11.5 0 1 1 23 0 11.5 11.5 0 0 1-23 0ZM21.5 9a12.5 12.5 0 1 0 0 25 12.5 12.5 0 0 0 0-25ZM18 17c0-.87.32-1.6.9-2.13a3.78 3.78 0 0 1 2.6-.87c2.32 0 3.5 1.37 3.5 2.5 0 1.23-.8 1.96-1.8 2.7l-.27.2c-.4.3-.83.61-1.16.95-.42.42-.77.95-.77 1.65v2h1v-2c0-.32.15-.62.48-.95.27-.27.62-.52 1.01-.81l.3-.23c1-.74 2.21-1.74 2.21-3.51 0-1.87-1.82-3.5-4.5-3.5-1.35 0-2.48.4-3.27 1.13A3.8 3.8 0 0 0 17 17h1Zm4.5 11c0 .55-.46 1-1 1s-1-.45-1-1 .46-1 1-1 1 .45 1 1Zm-1 2c1.08 0 2-.9 2-2s-.92-2-2-2-2 .9-2 2 .92 2 2 2Z"></path>
+<svg id="flame" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+    <path stroke="currentColor" fill="none" d="M 13.944 23.428 C 18.37 23.428 21.889 21.158 21.889 15.484 C 21.889 9.809 16.214 9.809 16.214 3 C 12.809 5.27 11.254 7.653 10.539 12.08 C 9.386 11.267 8.577 10.052 8.27 8.675 C 7.136 9.809 6 13.214 6 15.484 C 6 19.048 7.454 23.428 13.944 23.428 Z"/>
 </svg>
 
-<svg id="light_bulb_on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" fill-rule="evenodd" d="M30 18.5a8.5 8.5 0 0 1-4.5 7.5H22v-6h2v-1h-5v1h2v6h-3.5A8.5 8.5 0 1 1 30 18.5ZM17 27v3a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-3h-9Zm-1-.75A9.49 9.49 0 0 1 21.5 9 9.5 9.5 0 0 1 27 26.25V30a2 2 0 0 1-2 2 2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2 2 2 0 0 1-2-2v-3.75ZM20 33a1 1 0 0 1-1-1h5a1 1 0 0 1-1 1h-3ZM6.94 18.5c0-2.2.57-4.26 1.56-6.08L7.67 12a13.48 13.48 0 0 0 0 13l.83-.42a12.6 12.6 0 0 1-1.56-6.08Zm27.56-6.08a12.6 12.6 0 0 1 0 12.16l.83.42a13.48 13.48 0 0 0 0-13l-.83.42ZM9.77 18.5a10 10 0 0 1 1.24-4.82l-.84-.42a10.87 10.87 0 0 0 0 10.48l.84-.42a10 10 0 0 1-1.24-4.82ZM32 13.68a10 10 0 0 1 0 9.64l.84.42a10.87 10.87 0 0 0 0-10.48l-.84.42Z"></path>
-</svg>
-
-<svg id="light_bulb_off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" fill-rule="evenodd" d="M25.5 26a8.5 8.5 0 1 0-8 0H21v-6h-2v-1h5v1h-2v6h3.5ZM17 30v-3h9v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1Zm-5-11.5c0 3.2 1.58 6.03 4 7.75V30c0 1.1.9 2 2 2 0 1.1.9 2 2 2h3a2 2 0 0 0 2-2 2 2 0 0 0 2-2v-3.75A9.49 9.49 0 0 0 21.5 9a9.5 9.5 0 0 0-9.5 9.5ZM19 32a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1h-5Z"></path>
-</svg>
-
-<svg id="hotlist" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" fill-rule="evenodd" d="M29.48 15.32c-.16-.14-.4-.07-.48.13a6.05 6.05 0 0 1-2.38 3.13 6.16 6.16 0 0 1-.8.42c-.06.03-.14-.03-.13-.1a19.45 19.45 0 0 0 .08-.9v-.1c.38-5.91-2.43-9.13-4.59-10.41a7.4 7.4 0 0 0-.79-.4c-.1-.05-.21.13-.2.24a5.7 5.7 0 0 1-.04.73v.01c-.27 2.49-2.22 4.29-4.21 6.14-1.63 1.5-3.29 3.05-4.11 5.02a10.48 10.48 0 0 0-.83 4.06A10.9 10.9 0 0 0 20.17 34c.95-.59 1.34-1.82 1.33-3.04 0-.35-.04-.7-.11-1.03.28 0 .68.14 1.07.41A3.36 3.36 0 0 1 23.83 34 10.89 10.89 0 0 0 33 23.29c0-3.15-1.36-5.98-3.52-7.97Zm-4.56 17.4c4.1-1.23 7.08-5 7.08-9.43 0-2.5-.94-4.78-2.5-6.52a6.43 6.43 0 0 1-3.27 3.14m-1.3 12.81a4.3 4.3 0 0 0-2.2-3.39c-.4-.23-.88-.4-1.34-.4h-1.22l.24 1.2c.13.62.12 1.3-.03 1.86-.1.41-.27.73-.48.94A9.9 9.9 0 0 1 12 23.3c0-1.3.27-2.53.75-3.67.42-1 1.1-1.91 1.95-2.81.6-.64 1.23-1.23 1.9-1.84l.87-.82c1.57-1.5 3.2-3.22 3.61-5.54 1.9 1.34 4.29 4.44 3.61 10.16-.09.78.7 1.52 1.55 1.14"></path>
-</svg>
-
-<svg id="object_tree" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" d="M21.34 12.13a1 1 0 0 1 .98 0l10.41 5.93a1 1 0 0 1 0 1.73l-10.4 5.93a1 1 0 0 1-.99 0L10.78 19.8a1 1 0 0 1 0-1.75l10.56-5.92Zm.49.87-10.56 5.93 10.56 5.93 10.4-5.93L21.84 13ZM33.5 24.86l-11.66 6.8L10 25l.5-.87 11.33 6.38L32.99 24l.5.87Z"></path>
+<svg id="alert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+    <path stroke="none" fill="currentcolor" d="M 10.069 3.361 C 10.294 3.72 10.185 4.194 9.826 4.418 L 5.733 6.976 C 5.373 7.201 4.9 7.092 4.675 6.733 C 4.45 6.373 4.559 5.9 4.919 5.675 L 9.012 3.117 C 9.371 2.892 9.844 3.001 10.069 3.361 Z M 17.977 3.361 C 18.202 3.001 18.675 2.892 19.035 
+    3.117 L 23.128 5.675 C 23.487 5.9 23.597 6.373 23.372 6.733 C 23.148 7.092 22.674 7.201 22.315 6.976 L 18.222 4.418 C 17.861 4.194 17.753 3.72 17.977 3.361 Z M 14.023 6.581 C 9.361 6.581 5.581 10.361 5.581 15.023 C 5.581 19.685 9.361 23.465 14.023 23.465 C 18.685 23.465 22.465 19.685 
+    22.465 15.023 C 22.465 10.361 18.685 6.581 14.023 6.581 Z M 4.046 15.023 C 4.046 9.513 8.513 5.046 14.023 5.046 C 19.533 5.046 24 9.513 24 15.023 C 24 20.533 19.533 25 14.023 25 C 8.513 25 4.046 20.533 4.046 15.023 Z M 14.023 10.163 C 14.447 10.163 14.791 10.507 14.791 10.93 L 14.791 
+    14.705 L 17.124 17.039 C 17.424 17.339 17.424 17.825 17.124 18.124 C 16.824 18.424 16.339 18.424 16.039 18.124 L 13.481 15.566 C 13.337 15.422 13.256 15.227 13.256 15.023 L 13.256 10.93 C 13.256 10.507 13.6 10.163 14.023 10.163 Z"/>
 </svg>
 
 <svg id="alert_add" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="m19.54 4.5 3.96 4.32-.74.68-3.96-4.32.74-.68ZM7.46 4.5 3.5 8.82l.74.68L8.2 5.18l-.74-.68ZM19.74 10.33A7.5 7.5 0 0 1 21 14.5v.5h1v-.5a8.5 8.5 0 1 0-8.5 8.5h.5v-1h-.5a7.5 7.5 0 1 1 6.24-11.67Z"></path>
-    <path fill="currentColor" d="M13 9v5h-3v1h4V9h-1ZM19 20v-4h1v4h4v1h-4v4h-1v-4h-4v-1h4Z"></path>
+    <path stroke="none" fill="currentcolor" d="M 9.012 3.117 C 9.371 2.892 10.185 4.194 9.826 4.418 L 5.733 6.976 C 5.373 7.201 4.9 7.092 4.675 6.733 C 4.45 6.373 4.559 5.9 4.919 5.675 L 9.012 3.117 Z M 17.977 3.361 C 18.202 3.001 18.675 2.892 19.035 3.117 L 23.128 5.675 C 23.487 5.9 23.597 
+    6.373 23.372 6.733 C 23.148 7.092 22.674 7.201 22.315 6.976 L 18.222 4.418 C 17.861 4.194 17.753 3.72 17.977 3.361 Z M 14.023 6.581 C 9.361 6.581 5.581 10.361 5.581 15.023 C 5.581 19.685 9.361 23.465 14.023 23.465 C 18.685 23.465 22.465 19.685 22.465 15.023 C 22.465 10.361 18.685 6.581 
+    14.023 6.581 Z M 4.046 15.023 C 4.046 9.513 8.513 5.046 14.023 5.046 C 19.533 5.046 24 9.513 24 15.023 C 24 20.533 19.533 25 14.023 25 C 8.513 25 4.046 20.533 4.046 15.023 Z"/>
+    <path stroke="currentcolor" stroke-linecap="round" fill="none" d="M 18 15 L 14 15 M 14 15 L 10 15 M 14 15 L 14 11 M 14 15 L 14 19"/>
 </svg>
 
-<svg id="alert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="28" height="28">
-    <path fill="currentColor" d="M35 14.66 29.16 9l-.7.72 5.84 5.66.7-.72ZM9 14.66 14.84 9l.7.72-5.84 5.66-.7-.72ZM22 16v7h-5v1h6v-8h-1Z"></path>
-    <path fill="currentColor" fill-rule="evenodd" d="M22 33a11 11 0 1 0 0-22 11 11 0 0 0 0 22Zm0-1a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"></path>
+<svg id="notification" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g stroke-linecap="round" stroke="currentcolor" fill="none"> 
+    <path d="M 7.6 14.031 C 7.466 10.292 10.308 7.147 13.953 7 C 17.597 7.147 20.439 10.292 20.306 14.031 C 20.306 15.583 21.95 17.096 21.999 18.653 C 21.999 18.675 21.999 18.696 21.999 18.719 C 22.034 19.716 21.276 20.555 20.304 20.593 L 16.635 20.593 C 16.639 21.357 16.357 22.094 15.85 
+    22.653 C 15.362 23.197 14.673 23.507 13.953 23.507 C 13.232 23.507 12.544 23.197 12.055 22.653 C 11.548 22.094 11.267 21.357 11.27 20.593 L 7.6 20.593 C 6.628 20.555 5.87 19.716 5.905 18.719 C 5.905 18.696 5.905 18.675 5.905 18.653 C 5.955 17.101 7.6 15.585 7.6 14.031 Z"/>
+    <path d="M 12 4.5 L 16 4.5 M 11 20.5 L 17 20.5"/>
+  </g>
 </svg>
 
-<svg id="alert_large" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" d="M35 14.66 29.16 9l-.7.72 5.84 5.66.7-.72ZM9 14.66 14.84 9l.7.72-5.84 5.66-.7-.72ZM22 16v7h-5v1h6v-8h-1Z"></path>
-    <path fill="currentColor" fill-rule="evenodd" d="M22 33a11 11 0 1 0 0-22 11 11 0 0 0 0 22Zm0-1a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"></path>
-</svg>
-
-<svg id="alert_notification" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" d="M22.5 11a2.5 2.5 0 0 0-2.48 2.14.5.5 0 0 1-.3.4C16.97 14.63 15 17.2 15 20V27h15V20c0-2.8-1.98-5.37-4.71-6.46a.5.5 0 0 1-.31-.4A2.5 2.5 0 0 0 22.5 11ZM31 27a2 2 0 1 1 0 4h-5.04c-.26 1.57-1.7 3-3.46 3a3.62 3.62 0 0 1-3.46-3H14a2 2 0 1 1 0-4V20c0-3.18 2.16-6.01 5.09-7.28a3.5 3.5 0 0 1 6.82 0C28.84 13.99 31 16.82 31 20V27Zm-10.94 4c.25 1.06 1.26 2 2.44 2s2.19-.94 2.44-2h-4.88ZM14 28a1 1 0 1 0 0 2h17a1 1 0 1 0 0-2H14Z"></path>
-</svg>
-
-<svg id="watchlist" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-    <path fill="currentColor" d="M13 11h18a2 2 0 0 1 2 2v17a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V13c0-1.1.9-2 2-2Zm18-1H13a3 3 0 0 0-3 3v17a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V13a3 3 0 0 0-3-3Zm-2 11H15v1h14v-1Zm-14-5h14v1H15v-1Zm14 10H15v1h14v-1Z"></path>
+<svg id="notification_silence" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g stroke-linecap="round" stroke="currentcolor" fill="none"> 
+    <path d="M 7.6 14.031 C 7.466 10.292 10.308 7.147 13.953 7 C 14.294 7.014 14.627 7.054 14.952 7.118 M 18.628 9.215 C 19.76 10.484 20.372 12.177 20.306 14.031 C 20.306 15.583 21.95 17.096 21.999 18.653 C 21.999 18.675 21.999 18.696 21.999 18.719 C 22.034 19.716 21.276 20.555 20.304 20.593 
+    L 16.635 20.593 C 16.639 21.357 16.357 22.094 15.85 22.653 C 15.362 23.197 14.673 23.507 13.953 23.507 C 13.232 23.507 12.544 23.197 12.055 22.653 C 11.548 22.094 11.267 21.357 11.27 20.593 L 7.6 20.593"/>
+    <path d="M 12 4.5 L 16 4.5 M 11 20.5 L 17 20.5"/>
+    <path d="M 3 24 L 23 4"/>
+  </g>
 </svg>
 
 <svg id="data_window" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M5 2H4v3H1v1h3v3h1V6h3V5H5V2Z"></path>
-    <path fill="currentColor" fill-rule="evenodd" d="M17.5 11h-7a1.5 1.5 0 0 0 0 3h7a1.5 1.5 0 0 0 0-3Zm-7-1a2.5 2.5 0 0 0 0 5h7a2.5 2.5 0 0 0 0-5h-7Z"></path>
-    <path fill="currentColor" d="M8 18h12v1H8v-1Z"></path>
-    <path fill="currentColor" d="M21.5 6H10V5h11.5A2.5 2.5 0 0 1 24 7.5v14a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 4 21.5V11h1v10.5c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5v-14c0-.83-.67-1.5-1.5-1.5Z"></path>
+    <path fill="currentColor" d="M 21.871 2 C 21.72 1.999 21.58 2.078 21.504 2.21 L 20.838 3.347 C 20.639 3.281 20.427 3.247 20.207 3.247 C 19.069 3.247 18.139 4.179 18.139 5.315 C 18.139 5.911 18.394 6.448 18.799 6.826 L 16.113 11.409 C 15.724 11.216 15.289 11.107 14.829 11.107 C 13.39 11.107 12.189 12.168 11.969 13.547 L 9.034 13.083 C 8.985 11.987 8.074 11.107 6.968 11.107 C 5.831 11.107 4.9 12.038 4.9 13.176 C 4.9 13.683 5.086 14.15 5.393 14.511 L 2.092 18.712 C 1.948 18.89 1.975 19.149 2.153 19.294
+    C 2.33 19.437 2.591 19.41 2.735 19.233 C 2.737 19.23 2.74 19.226 2.743 19.224 L 6.043 15.023 C 6.322 15.164 6.636 15.244 6.968 15.244 C 7.851 15.244 8.61 14.683 8.904 13.9 L 11.958 14.383 C 12.145 15.798 13.363 16.899 14.827 16.899 C 16.423 16.899 17.724 15.598 17.724 14.002 C 17.724 13.167 17.366 12.411 16.794 11.881 L 19.503 7.26 C 19.723 7.34 19.959 7.384 20.207 7.384 C 21.344 7.384 22.276 6.452 22.276 5.316 C 22.276 4.693 21.996 4.134 21.558 3.754 L 22.219 2.628 C 22.337 2.432 22.274 2.179 22.078
+    2.061 C 22.017 2.023 21.944 2.001 21.871 2 Z M 20.207 4.075 C 20.403 4.075 20.587 4.12 20.751 4.2 C 20.787 4.228 20.828 4.251 20.871 4.266 C 21.219 4.484 21.448 4.871 21.448 5.316 C 21.448 6.006 20.897 6.556 20.207 6.556 C 19.993 6.556 19.794 6.504 19.62 6.411 C 19.582 6.377 19.539 6.35 19.492 6.333 C 19.174 6.108 18.967 5.738 18.967 5.316 C 18.967 4.625 19.516 4.075 20.207 4.075 Z M 19.038 11.25 C 18.809 11.255 18.628 11.445 18.633 11.673 C 18.636 11.785 18.684 11.892 18.765 11.967 C 20.359 13.487
+    20.797 15.855 19.853 17.844 C 18.91 19.834 16.8 20.992 14.615 20.721 C 12.428 20.45 10.666 18.811 10.238 16.651 C 10.197 16.427 9.982 16.276 9.756 16.319 C 9.532 16.359 9.384 16.575 9.424 16.798 C 9.424 16.804 9.425 16.808 9.426 16.812 C 9.924 19.319 11.976 21.228 14.513 21.542 C 15.823 21.705 17.111 21.422 18.203 20.794 L 22.654 25.859 C 22.805 26.031 23.067 26.048 23.238 25.898 C 23.244 25.892 23.251 25.885 23.257 25.879 L 25.464 23.673 C 25.625 23.511 25.625 23.25 25.464 23.088 C 25.46 23.083 
+    25.454 23.079 25.45 23.075 L 20.442 18.505 C 20.497 18.405 20.551 18.302 20.6 18.199 C 21.696 15.889 21.185 13.133 19.337 11.369 C 19.257 11.29 19.149 11.248 19.038 11.25 Z M 6.969 11.935 C 7.659 11.935 8.209 12.485 8.209 13.176 C 8.209 13.867 7.659 14.416 6.969 14.416 C 6.705 14.416 6.463 14.335 6.262 14.198 C 6.261 14.198 6.261 14.198 6.261 14.198 C 6.229 14.16 6.19 14.129 6.146 14.106 C 5.89 13.88 5.728 13.548 5.728 13.176 C 5.728 12.485 6.278 11.935 6.969 11.935 Z M 14.829 11.935 C 15.244 11.935
+    15.631 12.056 15.955 12.265 C 15.992 12.307 16.039 12.34 16.09 12.361 C 16.582 12.738 16.897 13.331 16.897 14.002 C 16.897 15.15 15.976 16.071 14.829 16.071 C 13.712 16.071 12.808 15.198 12.762 14.093 C 12.77 14.047 12.77 13.999 12.761 13.954 C 12.788 12.83 13.698 11.935 14.829 11.935 Z M 19.989 19.211 L 23.61 22.515 L 22.072 23.944 L 18.894 20.327 C 19.303 20.008 19.672 19.635 19.989 19.211 Z"/>
 </svg>
 
+
+<svg id="object_tree" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g stroke-linecap="round" stroke="currentcolor" fill="none">
+    <path d="M 4.979 4.715 C 2.993 5.509 2 5.906 2 6.4 C 2 6.894 2.993 7.291 4.979 8.085 L 7.787 9.208 C 9.773 10.003 10.766 10.4 12 10.4 C 13.234 10.4 14.227 10.003 16.213 9.208 L 19.021 8.085 C 21.007 7.291 22 6.894 22 6.4 C 22 5.906 21.007 5.509 19.021 4.715 L 16.213 3.592 C 14.227 2.797 13.234 2.4 12 2.4 C 11.046 2.4 10.236 2.637 9 3.112"/>
+    <path d="M 5.766 9.2 L 4.979 9.515 C 2.993 10.309 2 10.706 2 11.2 C 2 11.693 2.993 12.091 4.979 12.885 L 7.787 14.008 C 9.773 14.803 10.766 15.2 12 15.2 C 13.234 15.2 14.227 14.803 16.213 14.008 L 19.021 12.885 C 21.007 12.091 22 11.693 22 11.2 C 22 10.706 21.007 10.309 19.021 9.515 L 18.234 9.2"/>
+    <path d="M 19.021 17.685 C 21.007 16.891 22 16.493 22 16 C 22 15.506 21.007 15.109 19.021 14.315 L 18.234 14 M 5.766 14 L 4.979 14.315 C 2.993 15.109 2 15.506 2 16 C 2 16.493 2.993 16.891 4.979 17.685 L 7.787 18.808 C 9.773 19.603 10.766 20 12 20 C 12.954 20 13.764 19.763 15 19.288"/>
+  </g>
+</svg>
+
+<svg id="frame_editor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g fill="none" stroke="currentcolor">
+    <rect x="3.5" y="3.5" width="12" height="11" rx="2"/>
+    <rect x="15.5" y="3.5" width="9" height="5" rx="2"/>
+    <rect x="9.5" y="14.5" width="15" height="10" rx="2"/>
+    <rect x="3.5" y="14.5" width="6" height="10" rx="2"/>
+    <rect x="15.5" y="8.5" width="9" height="6" rx="2"/>
+  </g>
+</svg>
 <!-- #endregion -->
 
 <!-- #region ________________ Various Icons ________________ -->
 
 <svg id="link" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M15.08 5.75a5.07 5.07 0 0 1 7.17 7.17l-3.23 3.23-.7-.7 3.22-3.24a4.07 4.07 0 1 0-5.75-5.75l-3.23 3.23-.7-.71 3.22-3.23Zm-9.33 9.33a5.07 5.07 0 1 0 7.17 7.17l3.23-3.23-.7-.7-3.24 3.22a4.07 4.07 0 1 1-5.75-5.75l3.23-3.23-.71-.7-3.23 3.22Zm10.77-4.3-5.74 5.74.7.7 5.75-5.74-.71-.7Z"></path>
+    <path stroke="currentcolor" stroke-width="1" stroke-linecap="round" fill="none" d="M 10.971 19.906 C 10.716 20.146 10.519 20.305 10.315 20.424 C 9.324 20.995 8.102 20.995 7.112 20.424 C 6.747 20.211 6.396 19.861 5.693 19.159 C 4.992 18.456 4.639 18.104 4.429 17.741 C 3.857 16.749 3.857 15.529 4.429 14.536 C 4.639 14.17 4.992 13.821 5.693 13.117 L 8.713 10.095 C 9.417 9.395 9.767 9.043 10.132 8.834 C 11.124 8.26 12.344 8.26 13.336 8.834 C 13.701 9.043 14.052 9.395 14.754 10.095 C 15.458 10.801 15.807 11.15 16.019 11.516 C 16.591 12.507 16.591
+     13.729 16.019 14.719 C 15.902 14.923 15.742 15.122 15.503 15.375 M 12.497 12.371 C 12.257 12.624 12.097 12.824 11.98 13.027 C 11.409 14.016 11.409 15.238 11.98 16.23 C 12.192 16.595 12.541 16.945 13.245 17.65 C 13.947 18.35 14.298 18.702 14.663 18.912 C 15.654 19.485 16.876 19.485 17.867 18.912 C 18.232 18.702 18.583 18.35 19.287 17.65 L 22.307 14.629 C 23.008 13.925 23.359 13.575 23.571 13.21 C 24.143 12.218 24.143 10.997 23.571 10.005 C 23.359 9.641 23.008 9.29 22.307 8.586 C 21.603 7.884 21.253 7.534 20.888 7.322 C 19.896 6.751 18.676 6.751 17.685 7.322 C 17.481 7.44 17.282 7.599 17.029 7.84"/>
+</svg>
+
+<svg id="unlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <g stroke="currentcolor" stroke-width="1" stroke-linecap="round" fill="none">
+    <path d="M 16 11.658 C 15.76 11.911 14.097 13.482 13.98 13.685 C 13.409 14.674 13.409 15.896 13.98 16.888 C 14.192 17.253 14.541 17.603 15.245 18.308 C 15.947 19.008 16.298 19.36 16.663 19.57 C 17.654 20.143 18.876 20.143 19.867 19.57 C 20.232 19.36 20.583 19.008 21.287 18.308 L 24.307 15.287 C 25.008 14.583 25.359 14.233 25.571 13.868 C 26.143 12.876 26.143 11.655 25.571 10.663 C 25.359 10.299 25.008 9.948 24.307 9.244 C 23.603 8.542 23.253 8.192 22.888 7.98 C 21.896 7.409 20.676 7.409 19.685 7.98 C 19.481 8.098 16.253 11.417 16 11.658"/>
+    <path d="M 13.517 14.529 C 13.262 14.769 8.519 19.453 8.315 19.572 C 7.324 20.143 6.102 20.143 5.112 19.572 C 4.747 19.359 4.396 19.009 3.693 18.307 C 2.992 17.604 2.639 17.252 2.429 16.889 C 1.857 15.897 1.857 14.677 2.429 13.684 C 2.639 13.318 2.992 12.969 3.693 12.265 L 6.713 9.243 C 7.417 8.543 7.767 8.191 8.132 7.982 C 9.124 7.408 10.344 7.408 11.336 7.982 C 11.701 8.191 12.052 8.543 12.754 9.243 C 13.458 9.949 13.807 10.298 14.019 10.664 C 14.591 11.655 14.591 12.877 14.019 13.867 C 13.902 14.071 13.742 14.27 13.503 14.523"/>
+  </g>
 </svg>
 
 <svg id="lock_unlocked" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M14 6a3 3 0 0 0-3 3v3h8.5a2.5 2.5 0 0 1 2.5 2.5v7a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 6 21.5v-7A2.5 2.5 0 0 1 8.5 12H10V9a4 4 0 0 1 8 0h-1a3 3 0 0 0-3-3zm-1 11a1 1 0 1 1 2 0v2a1 1 0 1 1-2 0v-2zm-6-2.5c0-.83.67-1.5 1.5-1.5h11c.83 0 1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5h-11A1.5 1.5 0 0 1 7 21.5v-7z"></path>
+  <g stroke="currentcolor" stroke-linecap="round" fill="none">
+    <path d="M2 16C2 13.1716 2 11.7574 2.87868 10.8787C3.75736 10 5.17157 10 8 10H16C18.8284 10 20.2426 10 21.1213 10.8787C22 11.7574 22 13.1716 22 16C22 18.8284 22 20.2426 21.1213 21.1213C20.2426 22 18.8284 22 16 22H8C5.17157 22 3.75736 22 2.87868 21.1213C2 20.2426 2 18.8284 2 16Z"/>
+    <circle cx="12" cy="16" r="2"/>
+    <path d="M6 10V8C6 4.68629 8.68629 2 12 2C14.7958 2 17.1449 3.91216 17.811 6.5"/>
+  </g>
 </svg>
 
 <svg id="lock_locked" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M14 6a3 3 0 0 0-3 3v3h6V9a3 3 0 0 0-3-3zm4 6V9a4 4 0 0 0-8 0v3H8.5A2.5 2.5 0 0 0 6 14.5v7A2.5 2.5 0 0 0 8.5 24h11a2.5 2.5 0 0 0 2.5-2.5v-7a2.5 2.5 0 0 0-2.5-2.5H18zm-5 5a1 1 0 1 1 2 0v2a1 1 0 1 1-2 0v-2zm-6-2.5c0-.83.67-1.5 1.5-1.5h11c.83 0 1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5h-11A1.5 1.5 0 0 1 7 21.5v-7z"></path>
+  <g stroke="currentcolor" stroke-linecap="round" fill="none">
+    <path d="M2 16C2 13.1716 2 11.7574 2.87868 10.8787C3.75736 10 5.17157 10 8 10H16C18.8284 10 20.2426 10 21.1213 10.8787C22 11.7574 22 13.1716 22 16C22 18.8284 22 20.2426 21.1213 21.1213C20.2426 22 18.8284 22 16 22H8C5.17157 22 3.75736 22 2.87868 21.1213C2 20.2426 2 18.8284 2 16Z"/>
+    <circle cx="12" cy="16" r="2"/>
+    <path d="M 5.752 9.791 L 5.752 7.765 C 5.752 4.403 8.476 1.681 11.836 1.681 C 15.197 1.681 17.92 4.403 17.92 7.765 L 17.92 9.791"/>
+  </g>
 </svg>
 
 <svg id="ruler" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
-    <path fill="currentColor" d="M2 9.75a1.5 1.5 0 0 0-1.5 1.5v5.5a1.5 1.5 0 0 0 1.5 1.5h24a1.5 1.5 0 0 0 1.5-1.5v-5.5a1.5 1.5 0 0 0-1.5-1.5zm0 1h3v2.5h1v-2.5h3.25v3.9h1v-3.9h3.25v2.5h1v-2.5h3.25v3.9h1v-3.9H22v2.5h1v-2.5h3a.5.5 0 0 1 .5.5v5.5a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-5.5a.5.5 0 0 1 .5-.5z" transform="rotate(-45 14 14)"></path>
+  <g stroke="currentcolor" stroke-linecap="round" fill="none">
+    <path d="M 6.645 19.509 L 21.348 19.509 C 23.448 19.509 24.499 18.414 24.499 16.223 L 24.499 11.841 C 24.499 9.65 23.448 8.555 21.348 8.555 L 6.645 8.555 C 4.544 8.555 3.494 9.65 3.494 11.841 L 3.494 16.223 C 3.494 18.414 4.544 19.509 6.645 19.509 Z"/>
+    <path d="M 20.5 9 L 20.5 14 M 7.5 9 L 7.5 13 M 11.5 9 L 11.5 14 M 16.5 9 L 16.5 12"/>
+  </g>
 </svg>
 
 <svg id="magnet" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <g fill="currentColor" fill-rule="evenodd">
-        <path fill-rule="nonzero" d="M14 10a2 2 0 0 0-2 2v11H6V12c0-4.416 3.584-8 8-8s8 3.584 8 8v11h-6V12a2 2 0 0 0-2-2zm-3 2a3 3 0 0 1 6 0v10h4V12c0-3.864-3.136-7-7-7s-7 3.136-7 7v10h4V12z"></path>
-        <path d="M6.5 18h5v1h-5zm10 0h5v1h-5z"></path>
-    </g>
+  <g fill="none" stroke="currentcolor" stroke-linecap="round">
+    <path d="M 16.58 4.533 L 18.825 4.533 C 19.729 4.533 20.461 5.238 20.461 6.111 L 20.461 7.688 C 20.461 8.56 19.729 9.267 18.825 9.267 L 16.58 9.267 M 16.58 4.533 L 12.82 4.533 C 7.396 4.533 3 8.772 3 14.001 C 3 19.23 7.396 23.467 12.82 23.467 L 16.58 23.467 M 16.58 4.533 L 16.58 9.267 M 16.58 9.267 L 12.762 9.267 C 10.048 9.267 7.849 11.386 7.849 14.001 C 7.849 16.615 10.048 18.735 12.762 18.735 L 16.58 18.735 M 16.58 18.735 L 18.825 18.735 C 19.729 18.735 20.461 19.441 20.461 20.313 L 20.461 21.89 C 20.461 22.761 19.729 23.467 18.825 23.467 L 16.58 23.467 M 16.58 18.735 L 16.58 23.467"/>
+  </g>
 </svg>
 
 <svg id="magnet_strong" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="nonzero" d="M14 5a7 7 0 0 0-7 7v3h4v-3a3 3 0 1 1 6 0v3h4v-3a7 7 0 0 0-7-7zm7 11h-4v3h4v-3zm-10 0H7v3h4v-3zm-5-4a8 8 0 1 1 16 0v8h-6v-8a2 2 0 1 0-4 0v8H6v-8zm3.293 11.294l-1.222-2.037.858-.514 1.777 2.963-2 1 1.223 2.037-.858.514-1.778-2.963 2-1zm9.778-2.551l.858.514-1.223 2.037 2 1-1.777 2.963-.858-.514 1.223-2.037-2-1 1.777-2.963z"></path>
+  <g fill="none" stroke="currentcolor" stroke-linecap="round">
+    <path d="M 16.58 4.533 L 18.825 4.533 C 19.729 4.533 20.461 5.238 20.461 6.111 L 20.461 7.688 C 20.461 8.56 19.729 9.267 18.825 9.267 L 16.58 9.267 M 16.58 4.533 L 12.82 4.533 C 7.396 4.533 3 8.772 3 14.001 C 3 19.23 7.396 23.467 12.82 23.467 L 16.58 23.467 M 16.58 4.533 L 16.58 9.267 M 16.58 9.267 L 12.762 9.267 C 10.048 9.267 7.849 11.386 7.849 14.001 C 7.849 16.615 10.048 18.735 12.762 18.735 L 16.58 18.735 M 16.58 18.735 L 18.825 18.735 C 19.729 18.735 20.461 19.441 20.461 20.313 L 20.461 21.89 C 20.461 22.761 19.729 23.467 18.825 23.467 L 16.58 23.467 M 16.58 18.735 L 16.58 23.467"/>
+    <path d="M 24.267 8.703 C 24.267 8.703 25.631 10.307 25.631 14.051 C 25.631 17.795 24.267 19.4 24.267 19.4"/>
+    <path d="M 22.145 11.376 C 22.145 11.376 22.6 12.179 22.6 14.051 C 22.6 15.923 22.145 16.725 22.145 16.725"/>
+  </g>
 </svg>
 
-<svg id="star" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18" fill="none">
-    <path stroke="currentColor" d="M9 2.13l1.903 3.855.116.236.26.038 4.255.618-3.079 3.001-.188.184.044.259.727 4.237-3.805-2L9 12.434l-.233.122-3.805 2.001.727-4.237.044-.26-.188-.183-3.079-3.001 4.255-.618.26-.038.116-.236L9 2.13z"></path>
+<svg id="star" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
+  <path fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" d="M 8.415 2.868 C 8.594 2.366 8.684 2.114 8.816 2.045 C 8.932 1.985 9.07 1.985 9.184 2.045 C 9.317 2.114 9.406 2.366 9.585 2.868 L 10.771 6.188 C 10.822 6.331 10.847 6.403 10.894 6.456 C 10.934 6.503 10.986 6.539 11.045 6.563 C 11.111 6.588 11.188 6.59 11.344 6.594 L 14.953 6.665 C 15.499 6.675 15.772 6.681 15.881 6.782 C 15.974 6.871 16.018 6.998 15.994 7.123 C 15.968 7.267 15.749 7.428 15.314 7.749 L 12.438 9.873 C 12.314 9.964 12.252 10.01 12.214 10.069 C 12.181 10.121 12.161 10.181 12.156 10.241 C 12.151 10.311 12.174 10.383 12.219 10.528 L 13.265 13.893 C 13.422 14.401 13.501 14.655 13.436 14.788 C 13.379 14.902 13.268 14.981 13.139 14.998 C 12.99 15.018 12.765 14.866 12.317 14.562 L 9.355 12.555 C 9.227 12.468 9.163 12.425 9.094 12.408 C 9.032 12.393 8.968 12.393 8.906 12.408 C 8.837 12.425 8.773 12.468 8.646 12.555 L 5.683 14.562 C 5.234 14.866 5.01 15.018 4.861 14.998 C 4.733 14.981 4.62 14.902 4.564 14.788 C 4.499 14.655 4.578 14.401 4.736 13.893 L 5.781 10.528 C 5.826 10.383 5.848 10.311 5.844 10.241 C 5.839 10.181 5.82 10.121 5.786 10.069 C 5.748 10.01 5.687 9.964 5.563 9.873 L 2.686 7.749 C 2.251 7.428 2.034 7.267 2.007 7.123 C 1.983 6.998 2.025 6.871 2.12 6.782 C 2.228 6.681 2.501 6.675 3.048 6.665 L 6.656 6.594 C 6.812 6.59 6.889 6.588 6.957 6.563 C 7.014 6.539 7.067 6.503 7.108 6.456 C 7.153 6.403 7.178 6.331 7.23 6.188 L 8.415 2.868 Z"/>
 </svg>
 
-<svg id="star_filled" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18" fill="none">
-    <path fill="currentColor" d="M9 1l2.35 4.76 5.26.77-3.8 3.7.9 5.24L9 13l-4.7 2.47.9-5.23-3.8-3.71 5.25-.77L9 1z"></path>
+<svg id="star_filled" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
+  <path fill="currentcolor" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" d="M 8.415 2.868 C 8.594 2.366 8.684 2.114 8.816 2.045 C 8.932 1.985 9.07 1.985 9.184 2.045 C 9.317 2.114 9.406 2.366 9.585 2.868 L 10.771 6.188 C 10.822 6.331 10.847 6.403 10.894 6.456 C 10.934 6.503 10.986 6.539 11.045 6.563 C 11.111 6.588 11.188 6.59 11.344 6.594 L 14.953 6.665 C 15.499 6.675 15.772 6.681 15.881 6.782 C 15.974 6.871 16.018 6.998 15.994 7.123 C 15.968 7.267 15.749 7.428 15.314 7.749 L 12.438 9.873 C 12.314 9.964 12.252 10.01 12.214 10.069 C 12.181 10.121 12.161 10.181 12.156 10.241 C 12.151 10.311 12.174 10.383 12.219 10.528 L 13.265 13.893 C 13.422 14.401 13.501 14.655 13.436 14.788 C 13.379 14.902 13.268 14.981 13.139 14.998 C 12.99 15.018 12.765 14.866 12.317 14.562 L 9.355 12.555 C 9.227 12.468 9.163 12.425 9.094 12.408 C 9.032 12.393 8.968 12.393 8.906 12.408 C 8.837 12.425 8.773 12.468 8.646 12.555 L 5.683 14.562 C 5.234 14.866 5.01 15.018 4.861 14.998 C 4.733 14.981 4.62 14.902 4.564 14.788 C 4.499 14.655 4.578 14.401 4.736 13.893 L 5.781 10.528 C 5.826 10.383 5.848 10.311 5.844 10.241 C 5.839 10.181 5.82 10.121 5.786 10.069 C 5.748 10.01 5.687 9.964 5.563 9.873 L 2.686 7.749 C 2.251 7.428 2.034 7.267 2.007 7.123 C 1.983 6.998 2.025 6.871 2.12 6.782 C 2.228 6.681 2.501 6.675 3.048 6.665 L 6.656 6.594 C 6.812 6.59 6.889 6.588 6.957 6.563 C 7.014 6.539 7.067 6.503 7.108 6.456 C 7.153 6.403 7.178 6.331 7.23 6.188 L 8.415 2.868 Z"/>
 </svg>
 
-<svg id="snapshot" xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor">
-    <path fill-rule="evenodd" clip-rule="evenodd" d="M11.118 6a.5.5 0 0 0-.447.276L9.809 8H5.5A1.5 1.5 0 0 0 4 9.5v10A1.5 1.5 0 0 0 5.5 21h16a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 21.5 8h-4.309l-.862-1.724A.5.5 0 0 0 15.882 6h-4.764zm-1.342-.17A1.5 1.5 0 0 1 11.118 5h4.764a1.5 1.5 0 0 1 1.342.83L17.809 7H21.5A2.5 2.5 0 0 1 24 9.5v10a2.5 2.5 0 0 1-2.5 2.5h-16A2.5 2.5 0 0 1 3 19.5v-10A2.5 2.5 0 0 1 5.5 7h3.691l.585-1.17z"></path>
-    <path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 18a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm0 1a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9z"></path>
-</svg>
-
-<svg id="text_note" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" d="M15 5H6.5C5.67 5 5 5.67 5 6.5v15c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5V16h1v5.5a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 4 21.5v-15A2.5 2.5 0 0 1 6.5 4H15v1Zm7.41-.3a2 2 0 0 0-2.82 0l-.94.95-7.5 7.5-1 1-.15.14V19h4.7l.15-.15 1-1 7.5-7.5.94-.94a2 2 0 0 0 0-2.82L22.41 4.7Zm-2.12.71a1 1 0 0 1 1.42 0l1.88 1.88a1 1 0 0 1 0 1.42l-.59.58-1.65-1.64L19.71 6l.58-.59Zm.36 2.94L22.29 10l-6.79 6.8-1.65-1.65-1.64-1.65L19 6.7l1.65 1.65Zm-7.5 7.5 1.64 1.65-.5.5H11v-3.3l.5-.5 1.65 1.65Z"></path>
-</svg>
 
 <svg id="trash" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
-    <path fill="currentColor" fill-rule="evenodd" d="M11.5 6a.5.5 0 0 0-.5.5V8h6V6.5a.5.5 0 0 0-.5-.5h-5zM18 8V6.5c0-.83-.67-1.5-1.5-1.5h-5c-.83 0-1.5.67-1.5 1.5V8H5.5a.5.5 0 0 0 0 1H7v12.5A2.5 2.5 0 0 0 9.5 24h9a2.5 2.5 0 0 0 2.5-2.5V9h1.5a.5.5 0 0 0 0-1H18zm2 1H8v12.5c0 .83.67 1.5 1.5 1.5h9c.83 0 1.5-.67 1.5-1.5V9zm-8.5 3c.28 0 .5.22.5.5v7a.5.5 0 0 1-1 0v-7c0-.28.22-.5.5-.5zm5.5.5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0v-7z"></path>
+  <g stroke="currentcolor" stroke-linecap="round" fill="none">
+    <path d="M 6.5 6.5 L 20.5 6.5"/>
+    <path d="M 9.517 6.477 L 9.628 6.477 C 10.549 6.477 11.295 5.731 11.295 4.81 C 11.295 4.626 11.444 4.477 11.628 4.477 L 15.406 4.477 C 15.59 4.477 15.739 4.626 15.739 4.81 C 15.739 5.731 16.485 6.477 17.406 6.477 L 17.517 6.477"/>
+    <path d="M 19.517 10.477 L 18.746 19.726 C 18.617 21.281 17.317 22.477 15.757 22.477 L 11.277 22.477 C 9.717 22.477 8.417 21.281 8.288 19.726 L 7.517 10.477"/>
+  </g>
 </svg>
     
 <!-- #endregion -->
@@ -619,72 +695,142 @@
     <path fill="currentColor" d="M8.5 6A2.5 2.5 0 0 0 6 8.5V11h1V8.5C7 7.67 7.67 7 8.5 7H11V6H8.5zM6 17v2.5A2.5 2.5 0 0 0 8.5 22H11v-1H8.5A1.5 1.5 0 0 1 7 19.5V17H6zM19.5 7H17V6h2.5A2.5 2.5 0 0 1 22 8.5V11h-1V8.5c0-.83-.67-1.5-1.5-1.5zM22 19.5V17h-1v2.5c0 .83-.67 1.5-1.5 1.5H17v1h2.5a2.5 2.5 0 0 0 2.5-2.5z"></path>
 </svg>
 
-<svg id="layout_single" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" d="M2.5 1C1.67 1 1 1.67 1 2.5v12c0 .83.67 1.5 1.5 1.5h14c.83 0 1.5-.67 1.5-1.5v-12c0-.83-.67-1.5-1.5-1.5h-14ZM0 2.5A2.5 2.5 0 0 1 2.5 0h14A2.5 2.5 0 0 1 19 2.5v12a2.5 2.5 0 0 1-2.5 2.5h-14A2.5 2.5 0 0 1 0 14.5v-12Z"></path>
+<svg id="layout_single" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <rect x="1.5" y="1.5" width="18" height="16" rx="2.5" stroke="currentcolor" fill="none"/>
 </svg>
 
-<svg id="layout_double_vert" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H9v15H2.5A1.5 1.5 0 0 1 1 14.5v-12ZM10 16h6.5c.83 0 1.5-.67 1.5-1.5v-12c0-.83-.67-1.5-1.5-1.5H10v15ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_double_vert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="9" height="16" rx="2.5"/>
+    <rect x="10.5" y="1.5" width="9" height="16" rx="2.5"/>
+  </g>
 </svg>
 
-<svg id="layout_double_horiz" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1h14c.83 0 1.5.67 1.5 1.5V8H1V2.5ZM1 9v5.5c0 .83.67 1.5 1.5 1.5h14c.83 0 1.5-.67 1.5-1.5V9H1Zm1.5-9A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_double_horiz" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="18" height="8" rx="2.5"/>
+    <rect x="1.5" y="9.5" width="18" height="8" rx="2.5"/>
+  </g>
 </svg>
 
-<svg id="layout_triple_horiz" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1h14c.83 0 1.5.67 1.5 1.5V5H1V2.5ZM1 6v5h17V6H1Zm17 6H1v2.5c0 .83.67 1.5 1.5 1.5h14c.83 0 1.5-.67 1.5-1.5V12ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_triple_horiz" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 18" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="18" height="5" rx="2.5"/>
+    <rect x="1.5" y="6.5" width="18" height="5" rx="2.5"/>
+    <rect x="1.5" y="11.5" width="18" height="5" rx="2.5"/>
+  </g>
 </svg>
 
-<svg id="layout_triple_vert" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H6v15H2.5A1.5 1.5 0 0 1 1 14.5v-12ZM7 16h5V1H7v15Zm6-15v15h3.5c.83 0 1.5-.67 1.5-1.5v-12c0-.83-.67-1.5-1.5-1.5H13ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_triple_vert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="6" height="16" rx="2.5"/>
+    <rect x="7.5" y="1.5" width="6" height="16" rx="2.5"/>
+    <rect x="13.5" y="1.5" width="6" height="16" rx="2.5"/>
+  </g>
 </svg>
 
-<svg id="layout_triple_left" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H9v15H2.5A1.5 1.5 0 0 1 1 14.5v-12ZM10 16h6.5c.83 0 1.5-.67 1.5-1.5V9h-8v7Zm8-8V2.5c0-.83-.67-1.5-1.5-1.5H10v7h8ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_triple_left" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="9" height="16" rx="2.5"/>
+    <rect x="10.5" y="1.5" width="9" height="8" rx="2.5"/>
+    <rect x="10.5" y="9.5" width="9" height="8" rx="2.5"/>
+  </g>
 </svg>
 
-<svg id="layout_triple_bottom" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H9v7H1V2.5ZM1 9v5.5c0 .83.67 1.5 1.5 1.5h14c.83 0 1.5-.67 1.5-1.5V9H1Zm17-1V2.5c0-.83-.67-1.5-1.5-1.5H10v7h8ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_triple_bottom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="9.5" width="18" height="8" rx="2.5"/>
+    <rect x="1.5" y="1.5" width="9" height="8" rx="2.5"/>
+    <rect x="10.5" y="1.5" width="9" height="8" rx="2.5"/>
+  </g>
 </svg>
 
-<svg id="layout_triple_top" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1h14c.83 0 1.5.67 1.5 1.5V8H1V2.5ZM1 9v5.5c0 .83.67 1.5 1.5 1.5H9V9H1Zm9 7h6.5c.83 0 1.5-.67 1.5-1.5V9h-8v7ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_triple_top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="18" height="8" rx="2.5"/>
+    <rect x="1.5" y="9.5" width="9" height="8" rx="2.5"/>
+    <rect x="10.5" y="9.5" width="9" height="8" rx="2.5"/>
+  </g>
 </svg>
 
-<svg id="layout_triple_right" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H9v7H1V2.5ZM1 9v5.5c0 .83.67 1.5 1.5 1.5H9V9H1Zm9 7h6.5c.83 0 1.5-.67 1.5-1.5v-12c0-.83-.67-1.5-1.5-1.5H10v15ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_triple_right" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="10.5" y="1.5" width="9" height="16" rx="2.5"/>
+    <rect x="1.5" y="1.5" width="9" height="8" rx="2.5"/>
+    <rect x="1.5" y="9.5" width="9" height="8" rx="2.5"/>
+  </g>
 </svg>
 
 <svg id="layout_quad_v" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
-  <path fill="currentColor" fill-rule="evenodd" d="M 2 3.5 C 2 2.67 2.67 2 3.5 2 L 10 2 L 10 7 L 10 9 L 2 9 L 2 3.5 Z M 2 10 L 2 15.5 C 2 16.33 2.67 17 3.5 17 L 10 17 L 10 10 L 10 9 L 8 9 L 8 10 L 2 10 Z M 11 17 L 17.5 17 C 18.33 17 19 16.33 19 15.5 L 19 10 L 13 10 L 13 9 L 11 9 L 11 10 L 11 12 L 11 17 Z M 19 9 L 19 3.5 C 19 2.67 18.33 2 17.5 2 L 11 2 L 11 9 L 19 9 Z M 3.5 1 C 2.119 1 1 2.119 1 3.5 L 1 15.5 C 1 16.88 2.119 18 3.5 18 L 17.5 18 C 18.881 18 20 16.88 20 15.5 L 20 3.5 C 20 2.119 18.881 1 17.5 1 L 3.5 1 Z"/>
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="9" height="6" rx="2"/>
+    <rect x="10.5" y="1.5" width="9" height="10" rx="2"/>
+    <rect x="10.5" y="11.5" width="9" height="6" rx="2"/>
+    <rect x="1.5" y="7.5" width="9" height="10" rx="2"/>
+  </g>
 </svg>
 
 <svg id="layout_quad_h" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M 2 3.5 C 2 2.67 2.67 2 3.5 2 L 10 2 L 10 7 L 11 7 L 11 9 L 10 9 L 2 9 L 2 3.5 Z M 2 10 L 2 15.5 C 2 16.33 2.67 17 3.5 17 L 10 17 L 10 10 L 2 10 Z M 11 17 L 17.5 17 C 18.33 17 19 16.33 19 15.5 L 19 10 L 11 10 L 10 10 L 10 12 L 11 12 L 11 17 Z M 19 9 L 19 3.5 C 19 2.67 18.33 2 17.5 2 L 11 2 L 11 9 L 19 9 Z M 3.5 1 C 2.119 1 1 2.119 1 3.5 L 1 15.5 C 1 16.88 2.119 18 3.5 18 L 17.5 18 C 18.881 18 20 16.88 20 15.5 L 20 3.5 C 20 2.119 18.881 1 17.5 1 L 3.5 1 Z"></path>
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="11" height="8" rx="2"/>
+    <rect x="12.5" y="1.5" width="7" height="8" rx="2"/>
+    <rect x="8.5" y="9.5" width="11" height="8" rx="2"/>
+    <rect x="1.5" y="9.5" width="7" height="8" rx="2"/>
+  </g>
 </svg>
 
-<svg id="layout_quad_vert" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H4v15H2.5A1.5 1.5 0 0 1 1 14.5v-12ZM5 16h4V1H5v15Zm5-15v15h4V1h-4Zm5 0v15h1.5c.83 0 1.5-.67 1.5-1.5v-12c0-.83-.67-1.5-1.5-1.5H15ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_quad_vert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="4.5" height="16" rx="2"/>
+    <rect x="6" y="1.5" width="4.5" height="16" rx="2"/>
+    <rect x="10.5" y="1.5" width="4.5" height="16" rx="2"/>
+    <rect x="15" y="1.5" width="4.5" height="16" rx="2"/>
+  </g>
 </svg>
 
-<svg id="layout_quad_horiz" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1h14c.83 0 1.5.67 1.5 1.5V4H1V2.5ZM1 5v3h17V5H1Zm17 4H1v3h17V9Zm0 4H1v1.5c0 .83.67 1.5 1.5 1.5h14c.83 0 1.5-.67 1.5-1.5V13ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_quad_horiz" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="18" height="4" rx="2"/>
+    <rect x="1.5" y="5.5" width="18" height="4" rx="2"/>
+    <rect x="1.5" y="9.5" width="18" height="4" rx="2"/>
+    <rect x="1.5" y="13.5" width="18" height="4" rx="2"/>
+  </g>
 </svg>
 
-<svg id="layout_quad_left" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H9v15H2.5A1.5 1.5 0 0 1 1 14.5v-12ZM10 16h6.5c.83 0 1.5-.67 1.5-1.5V12h-8v4Zm8-5V6h-8v5h8Zm0-6V2.5c0-.83-.67-1.5-1.5-1.5H10v4h8ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_quad_left" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 18" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="9" height="15" rx="2.5"/>
+    <rect x="10.5" y="1.5" width="9" height="5" rx="2"/>
+    <rect x="10.5" y="6.5" width="9" height="5" rx="2"/>
+    <rect x="10.5" y="11.5" width="9" height="5" rx="2"/>
+  </g>
 </svg>
 
-<svg id="layout_quad_right" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19" style="transform: rotate(0.5turn);">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1H9v15H2.5A1.5 1.5 0 0 1 1 14.5v-12ZM10 16h6.5c.83 0 1.5-.67 1.5-1.5V12h-8v4Zm8-5V6h-8v5h8Zm0-6V2.5c0-.83-.67-1.5-1.5-1.5H10v4h8ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_quad_right" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 18" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="10.5" y="1.5" width="9" height="15" rx="2.5"/>
+    <rect x="1.5" y="1.5" width="9" height="5" rx="2"/>
+    <rect x="1.5" y="6.5" width="9" height="5" rx="2"/>
+    <rect x="1.5" y="11.5" width="9" height="5" rx="2"/>
+  </g>
 </svg>
 
-<svg id="layout_quad_top" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1h14c.83 0 1.5.67 1.5 1.5V8H1V2.5ZM1 9v5.5c0 .83.67 1.5 1.5 1.5H6V9H1Zm6 7h5V9H7v7Zm6 0h3.5c.83 0 1.5-.67 1.5-1.5V9h-5v7ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_quad_top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="1.5" width="18" height="8" rx="2.5"/>
+    <rect x="1.5" y="9.5" width="6" height="8" rx="2"/>
+    <rect x="7.5" y="9.5" width="6" height="8" rx="2"/>
+    <rect x="13.5" y="9.5" width="6" height="8" rx="2"/>
+  </g>
 </svg>
 
-<svg id="layout_quad_bottom" xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 21 19" width="21" height="19" style="transform: rotate(0.5turn);">
-    <path fill="currentColor" fill-rule="evenodd" d="M1 2.5C1 1.67 1.67 1 2.5 1h14c.83 0 1.5.67 1.5 1.5V8H1V2.5ZM1 9v5.5c0 .83.67 1.5 1.5 1.5H6V9H1Zm6 7h5V9H7v7Zm6 0h3.5c.83 0 1.5-.67 1.5-1.5V9h-5v7ZM2.5 0A2.5 2.5 0 0 0 0 2.5v12A2.5 2.5 0 0 0 2.5 17h14a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 0h-14Z"></path>
+<svg id="layout_quad_bottom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 19" width="21" height="19">
+  <g fill="none" stroke="currentcolor">
+    <rect x="1.5" y="9.5" width="18" height="8" rx="2.5"/>
+    <rect x="1.5" y="1.5" width="6" height="8" rx="2"/>
+    <rect x="7.5" y="1.5" width="6" height="8" rx="2"/>
+    <rect x="13.5" y="1.5" width="6" height="8" rx="2"/>
+  </g>
 </svg>
 
 <!-- #endregion -->

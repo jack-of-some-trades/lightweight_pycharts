@@ -107,13 +107,13 @@ export function SeriesSwitcher(){
 //#region --------------------- Overlay Menu --------------------- //
 
 const series_icon_map: { [key: number]: icons; } = {
-    0: icons.close_small,   //Whitespace Data -> No Icon
-    1: icons.close_small,   //Single Value Data -> No Icon
+    0: icons.close,         //Whitespace Data -> No Icon
+    1: icons.close,         //Single Value Data -> No Icon
     2: icons.series_line,
     3: icons.series_area,
     4: icons.series_baseline,
     5: icons.series_histogram,
-    6: icons.close_small,   //OHLC Data -> No Icon
+    6: icons.close,         //OHLC Data -> No Icon
     7: icons.candle_bar,
     8: icons.candle_regular,
     // 9: icons.series_step_line,
