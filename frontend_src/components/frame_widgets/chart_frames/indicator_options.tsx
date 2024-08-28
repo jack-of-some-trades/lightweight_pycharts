@@ -6,6 +6,7 @@ import { location_reference, overlay_div_props, OverlayDiv, point } from "../../
 import "../../../css/frame_widgets/chart_frames/indicator_options.css"
 import { data_src } from "../../../src/frame"
 import { ColorInput } from "../../color_picker"
+import { NavigatorMenu } from "../../navigator_menu"
 
 type options_obj = {[key:string]: any}
 interface indicator_option_props extends Omit<overlay_div_props, "location_ref" | "location">{
@@ -17,6 +18,88 @@ interface indicator_option_props extends Omit<overlay_div_props, "location_ref" 
     container_id:string
     frame_id:string
     indicator_id:string
+}
+
+export function IndicatorOpts(props:indicator_option_props){
+    const [InputFormProps,] = splitProps(props, ['id', 'parent_ind', 'menu_struct', 'options', 'sources', 'container_id', 'frame_id', 'indicator_id'])
+    const [location, setLocation] = createSignal<point>({x:0, y:0})
+    const position_menu = () => {setLocation({x:window.innerWidth*0.7, y:window.innerHeight*0.2})}
+
+    return (
+        <OverlayDiv
+            id={props.id}
+            location={location()}
+            setLocation={setLocation}
+            classList={{indicator_opts:true}}
+            location_ref={location_reference.CENTER}
+            updateLocation={position_menu}
+            drag_handle={`#${props.id}>.title_box`}
+            bounding_client_id={`#${props.id}>.title_box`}
+        >
+            {/********* Title Bar *********/}
+            <div class="title_box">
+                <h2>{props.parent_ind.type + " • " + props.parent_ind.name + "Options"}</h2>
+                <Icon icon={icons.close} force_reload={true} onClick={props.close_menu}/>
+            </div>
+
+            <NavigatorMenu
+                overlay_id={props.id}
+                style={{padding:"2px 6px", "margin-bottom":"12px"}}
+                tabs={{
+                    "Inputs":()=><InputForm {...InputFormProps}/>,
+                    "Outputs":()=><div innerText={"Hello World"}/>,
+                }}
+            />
+        </OverlayDiv>
+    )
+}
+
+// #region --------------------- Inputs Form ----------------------- */
+
+interface input_form_props {
+    menu_struct: object
+    container_id: string
+    frame_id: string
+    indicator_id: string
+    sources: Accessor<data_src[]>
+    options: options_obj
+}
+
+function InputForm(props:input_form_props){
+    const [passDown,] = splitProps(props, ['sources', 'options', 'indicator_id'])
+
+    let form = document.createElement('form')
+    const submit = () => form.requestSubmit()
+    const boundSubmit = onSubmit.bind(
+        undefined, 
+        props.container_id, 
+        props.frame_id, 
+        props.indicator_id
+    )
+
+    return <>
+        <form 
+            ref={form} 
+            onSubmit={boundSubmit}
+            onKeyPress={(e) => {if(e.key === "Enter") submit()}}
+        >
+            <For each={Object.entries(props.menu_struct)}>{([key, [type, params]]) => 
+                <Switch fallback={<>
+                        <Input key={key} type={type} params={params} submit={submit} {...passDown}/>
+                    </>}>
+                    <Match when={type === "group"}>
+                        <Group title={key} params={params} submit={submit} {...passDown}/>
+                    </Match>
+                    <Match when={type === "inline"}>
+                        <Inline title={key} params={params} submit={submit} {...passDown}/>
+                    </Match>
+                </Switch>
+            }</For>
+        </form>
+        <div class="footer">
+            <input type="submit" value={"Apply"} onclick={submit}/>
+        </div>
+    </>
 }
 
 function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
@@ -37,62 +120,6 @@ function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
             })
         ))
     }
-}
-
-export function IndicatorOpts(props:indicator_option_props){
-    let form = document.createElement('form')
-    const [passDown,] = splitProps(props, ["sources", "options", "indicator_id"])
-    const [location, setLocation] = createSignal<point>({x:0, y:0})
-    const position_menu = () => {setLocation({x:window.innerWidth*0.7, y:window.innerHeight*0.2})}
-
-    const boundSubmit = onSubmit.bind(
-        undefined, 
-        props.container_id, 
-        props.frame_id, 
-        props.indicator_id
-    )
-    const submit = () => form.requestSubmit()
-
-    return (
-        <OverlayDiv
-            id={props.id}
-            location={location()}
-            setLocation={setLocation}
-            classList={{indicator_opts:true}}
-            location_ref={location_reference.CENTER}
-            updateLocation={position_menu}
-            drag_handle={`#${props.id}>.title_box`}
-            bounding_client_id={`#${props.id}>.title_box`}
-            onKeyPress={(e) => {if(e.key === "Enter") form.requestSubmit()}}
-        >
-            {/********* Title Bar *********/}
-            <div class="title_box">
-                <h2>{props.parent_ind.type + " • " + props.parent_ind.name + "Options"}</h2>
-                <Icon icon={icons.close} force_reload={true} onClick={props.close_menu}/>
-            </div>
-            
-            {/********* Input Form Loop *********/}
-            <form ref={form} onSubmit={boundSubmit}>
-                <For each={Object.entries(props.menu_struct)}>{([key, [type, params]]) => 
-                    <Switch fallback={<>
-                            <Input key={key} type={type} params={params} submit={submit} {...passDown}/>
-                        </>}>
-                        <Match when={type === "group"}>
-                            <Group title={key} params={params} submit={submit} {...passDown}/>
-                        </Match>
-                        <Match when={type === "inline"}>
-                            <Inline title={key} params={params} submit={submit} {...passDown}/>
-                        </Match>
-                    </Switch>
-                }</For>
-            </form>
-
-            {/********* Submit Buttons *********/}
-            <div class="footer">
-                <input type="submit" value={"Apply"} onclick={submit}/>
-            </div>
-        </OverlayDiv>
-    )
 }
 
 // #region --------------------- Group and Inline Els ----------------------- */
@@ -190,6 +217,32 @@ function Input(props: input_switch_props){
             </span>
         </Show>
     </div>
+}
+
+//#endregion
+
+// #region --------------------- Util Functions ----------------------- */
+
+function padZeros (num:number){ return String(num).padStart(2,'0') }
+function UnixToString(timestamp: number){ 
+    let d = new Date(timestamp * 1000)
+    return [
+        d.getUTCFullYear(), "-",
+        padZeros(d.getUTCMonth() + 1) , "-",
+        padZeros(d.getUTCDate()), "T",
+        padZeros(d.getUTCHours()), ":",
+        padZeros(d.getUTCMinutes())
+    ].join("")
+}
+
+function RGBAToHex(rgba:string, forceRemoveAlpha=false) {
+    return "#" + rgba.replace(/^rgba?\(|\s+|\)$/g, '').split(',') 
+        .filter((string, index) => !forceRemoveAlpha || index !== 3)
+        .map(string => parseFloat(string))
+        .map((number, index) => index === 3 ? Math.round(number * 255) : number)
+        .map(number => number.toString(16))
+        .map(string => string.length === 1 ? "0" + string : string)
+        .join("")
 }
 
 //#endregion
@@ -299,29 +352,4 @@ function SourceInput(props: input_props){
 
 
 //#endregion
-
-// #region --------------------- Util Functions ----------------------- */
-
-
-function padZeros (num:number){ return String(num).padStart(2,'0') }
-function UnixToString(timestamp: number){ 
-    let d = new Date(timestamp * 1000)
-    return [
-        d.getUTCFullYear(), "-",
-        padZeros(d.getUTCMonth() + 1) , "-",
-        padZeros(d.getUTCDate()), "T",
-        padZeros(d.getUTCHours()), ":",
-        padZeros(d.getUTCMinutes())
-    ].join("")
-}
-
-
-function RGBAToHex(rgba:string, forceRemoveAlpha=false) {
-    return "#" + rgba.replace(/^rgba?\(|\s+|\)$/g, '').split(',') 
-        .filter((string, index) => !forceRemoveAlpha || index !== 3)
-        .map(string => parseFloat(string))
-        .map((number, index) => index === 3 ? Math.round(number * 255) : number)
-        .map(number => number.toString(16))
-        .map(string => string.length === 1 ? "0" + string : string)
-        .join("")
-}
+//#endregion
