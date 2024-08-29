@@ -135,7 +135,7 @@ class Window:
                 )
                 indicator.__parse_options_dict__(args[3])
 
-            case PY_CMD.ADD_CONTAINER:
+            case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
 
             case PY_CMD.REMOVE_CONTAINER, str():

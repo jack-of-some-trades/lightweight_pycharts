@@ -5,8 +5,10 @@ import { location_reference, overlay_div_props, OverlayDiv, point } from "../../
 
 import "../../../css/frame_widgets/chart_frames/indicator_options.css"
 import { data_src } from "../../../src/frame"
+import { AnySeries, Series_Type } from "../../../src/types"
 import { ColorInput } from "../../color_picker"
 import { NavigatorMenu } from "../../navigator_menu"
+import { SeriesStylePicker } from "./series_style_editor"
 
 type options_obj = {[key:string]: any}
 interface indicator_option_props extends Omit<overlay_div_props, "location_ref" | "location">{
@@ -21,11 +23,16 @@ interface indicator_option_props extends Omit<overlay_div_props, "location_ref" 
 }
 
 export function IndicatorOpts(props:indicator_option_props){
-    const [InputFormProps,] = splitProps(props, ['id', 'parent_ind', 'menu_struct', 'options', 'sources', 'container_id', 'frame_id', 'indicator_id', 'parent_ind'])
-    const [StyleFormProps,] = splitProps(props, ['parent_ind'])
     const [location, setLocation] = createSignal<point>({x:0, y:0})
     const position_menu = () => {setLocation({x:window.innerWidth*0.7, y:window.innerHeight*0.2})}
 
+    const StyleFormProps = {
+        series:props.parent_ind.series, 
+        series_types:props.parent_ind.series_types, 
+        series_names:props.parent_ind.series_names
+    }
+    const [InputFormProps,] = splitProps(props, ['id', 'parent_ind', 'menu_struct', 'options', 'sources', 'container_id', 'frame_id', 'indicator_id', 'parent_ind'])
+    
     return (
         <OverlayDiv
             id={props.id}
@@ -78,9 +85,10 @@ function InputForm(props:input_form_props){
         props.parent_ind
     )
 
-    return <>
+    return <div class="form_wrapper">
         <form 
-            ref={form} 
+            ref={form}
+            class='input_form'
             onSubmit={boundSubmit}
             onKeyPress={(e) => {if(e.key === "Enter") submit()}}
         >
@@ -100,7 +108,7 @@ function InputForm(props:input_form_props){
         <div class="footer">
             <input type="submit" value={"Apply"} onclick={submit}/>
         </div>
-    </>
+    </div>
 }
 
 function onSubmit(c_id:string, f_id:string, ind:indicator, e:Event){
@@ -343,21 +351,41 @@ function SourceInput(props: input_props){
     </span>
 }
 //#endregion
-//#endregion
 
-// #region --------------------- Series Style Editor ----------------------- */
+// #endregion
+
+
+// #region --------------------- Series Style Selector Forms ----------------------- */
 
 interface series_editor_props {
-
+    series: Map<string, AnySeries>
+    series_types: Map<string, Series_Type>
+    series_names: Map<string, string | undefined>
 }
 
 function SeriesEditor(props: series_editor_props){
+    let style_wrapper = document.createElement('div')
 
-    return <>
+    const submitAll = () => {
+        style_wrapper.querySelectorAll('form').forEach(form => form.requestSubmit());
+    }
+
+    return <div ref={style_wrapper} class="form_wrapper">
+        <For each={Array.from(props.series_types.entries())}>{([_id, type], i) => {
+            let series = props.series.get(_id)
+            if (series === undefined) return
+            return ( 
+                <SeriesStylePicker 
+                    name={props.series_names.get(_id) ?? `Series #${i() + 1}`}
+                    series={series} 
+                    series_type={type} 
+                />
+            )
+        }}</For>
         <div class="footer">
-            <input type="submit" value={"Apply"}/>
+            <input type="submit" value={"Apply"} onClick={submitAll}/>
         </div>
-    </>
+    </div>
 }
 
 // #endregion

@@ -1,0 +1,32 @@
+
+.series_style_selector {
+    width:-webkit-fill-available;
+}
+
+.series_style_selector .style_selector_row {
+    width: -webkit-fill-available;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: 12px;
+}
+
+.series_style_selector .style_selector_row:first-child {
+    position: relative;
+    margin: 6px 0 0 0;
+    padding-top: 6px;
+    border-top: 1px solid var(--accent-color);
+}
+
+/* Make the last element in a row fill the space */
+.series_style_selector .style_selector_row span:last-child,
+.series_style_selector .style_selector_row input:last-child,
+.series_style_selector .style_selector_row select:last-child{
+    width: -webkit-fill-available;
+}
+
+.series_style_selector .style_selector_row:first-child input[type=checkbox]{
+    right: 0px;
+    width: auto; /* overwrite previous rule */
+    position: absolute;
+}

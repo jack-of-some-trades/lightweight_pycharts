@@ -398,7 +398,7 @@ class Series(Indicator):
 
     @output_property
     def dataframe(self) -> pd.DataFrame:
-        "A Reference to the full series dataframe"
+        "A reference to the full series dataframe"
         if self.main_data is not None:
             return self.main_data.df
         return pd.DataFrame({})
@@ -406,8 +406,36 @@ class Series(Indicator):
     @default_output_property
     def close(self) -> pd.Series:
         "A Series' Bar closing value"
-        if self.main_data is not None:
+        if self.main_data is not None and "close" in self.main_data.df.columns:
             return self.main_data.df["close"]
+        return pd.Series({})
+
+    @output_property
+    def open(self) -> pd.Series:
+        "A Series' Bar open value"
+        if self.main_data is not None and "open" in self.main_data.df.columns:
+            return self.main_data.df["open"]
+        return pd.Series({})
+
+    @output_property
+    def high(self) -> pd.Series:
+        "A Series' Bar high value"
+        if self.main_data is not None and "high" in self.main_data.df.columns:
+            return self.main_data.df["high"]
+        return pd.Series({})
+
+    @output_property
+    def low(self) -> pd.Series:
+        "A Series' Bar low value"
+        if self.main_data is not None and "low" in self.main_data.df.columns:
+            return self.main_data.df["low"]
+        return pd.Series({})
+
+    @output_property
+    def volume(self) -> pd.Series:
+        "A Series' Bar low value"
+        if self.main_data is not None and "volume" in self.main_data.df.columns:
+            return self.main_data.df["volume"]
         return pd.Series({})
 
     # endregion
@@ -443,7 +471,7 @@ class Volume(Indicator):
         self._data = pd.DataFrame()
         self.series_map = ValueMap("volume", color="vol_color")
         self.series = sc.SeriesCommon(
-            self, SeriesType.Histogram, self.opts.series_opts, None, self.series_map
+            self, SeriesType.Histogram, self.opts.series_opts, v_map=self.series_map
         )
         self.series.apply_scale_options(self.opts.price_scale_opts)
 

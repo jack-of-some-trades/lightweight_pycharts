@@ -51,7 +51,9 @@ export function ColorInput(props:color_input_props){
     let opacityRef = document.createElement('input')
     const [showMenu, setShowMenu] = createSignal(false)
     const [selectedColor, setSelectedColor] = createSignal(
-        props.init_color.startsWith('#') ? props.init_color : RGBAToHex(props.init_color)
+        props.init_color === '' ? '#00000000' :
+        props.init_color.startsWith('#') ? props.init_color :
+        RGBAToHex(props.init_color)
     )
     const [, divProps] = splitProps(props, ["input_id", "init_color", 'onInput'])
 

@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Optional, Self
+from typing import Optional
 
 import pandas as pd
 
@@ -48,7 +48,7 @@ class SMA(Indicator):
         self.src = None
         self.period = 0
         self._data = pd.Series()
-        self.line_series = sc.LineSeries(self)
+        self.line_series = sc.LineSeries(self, name="My SMA")
         self.line_series.apply_options(
             LineStyleOptions(lineStyle=LineStyle.SparseDotted)
         )

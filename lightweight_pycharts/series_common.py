@@ -40,6 +40,8 @@ class SeriesCommon:
         indicator: "Indicator",
         series_type: s.SeriesType,
         options=s.SeriesOptionsCommon(),
+        *,
+        name: Optional[str] = None,
         display_pane_id: Optional[str] = None,
         v_map: s.ValueMap | dict[str, str] = {"close": "value", "value": "close"},
     ) -> None:
@@ -74,7 +76,7 @@ class SeriesCommon:
         self._parent_series = ref(indicator._series)
         self._fwd_queue = indicator._fwd_queue
 
-        self._fwd_queue.put((JS_CMD.ADD_SERIES, *self._ids, self._series_type))
+        self._fwd_queue.put((JS_CMD.ADD_SERIES, *self._ids, self._series_type, name))
         self.apply_options(self._options)
 
     def __del__(self):
@@ -265,9 +267,17 @@ class LineSeries(SeriesCommon):
         self,
         indicator: "Indicator",
         options=s.LineStyleOptions(),
+        *,
+        name: Optional[str] = None,
         display_pane_id: Optional[str] = None,
     ):
-        super().__init__(indicator, s.SeriesType.Line, options, display_pane_id)
+        super().__init__(
+            indicator,
+            s.SeriesType.Line,
+            options,
+            name=name,
+            display_pane_id=display_pane_id,
+        )
         self._options = options
 
     @property
@@ -301,7 +311,9 @@ class HistogramSeries(SeriesCommon):
         options=s.HistogramStyleOptions(),
         display_pane_id: Optional[str] = None,
     ):
-        super().__init__(indicator, s.SeriesType.Histogram, options, display_pane_id)
+        super().__init__(
+            indicator, s.SeriesType.Histogram, options, display_pane_id=display_pane_id
+        )
         self._options = options
 
     @property
@@ -350,7 +362,12 @@ class CandlestickSeries(SeriesCommon):
         options=s.CandlestickStyleOptions(),
         display_pane_id: Optional[str] = None,
     ):
-        super().__init__(indicator, s.SeriesType.Candlestick, options, display_pane_id)
+        super().__init__(
+            indicator,
+            s.SeriesType.Candlestick,
+            options,
+            display_pane_id=display_pane_id,
+        )
 
     def update_data(
         self, data: s.WhitespaceData | s.OhlcData | s.CandlestickData

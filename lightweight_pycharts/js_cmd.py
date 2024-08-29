@@ -2,7 +2,7 @@
 
 from math import floor
 from enum import Enum, IntEnum, auto
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 from json import JSONEncoder, dumps
 from dataclasses import is_dataclass, asdict
 
@@ -291,11 +291,15 @@ def indicator_set_options(frame_id: str, indicator_id: str, options) -> str:
 
 
 def add_series(
-    frame_id: str, indicator_id: str, series_id: str, series_type: SeriesType
+    frame_id: str,
+    indicator_id: str,
+    series_id: str,
+    series_type: SeriesType,
+    name: Optional[str],
 ) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"_ind.add_series('{series_id}', {series_type});"
+        + f"_ind.add_series('{series_id}', {series_type}, {dump(name)});"
     )
 
 

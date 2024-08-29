@@ -28,7 +28,9 @@ export class indicator {
     menuVisibility: Accessor<boolean> | undefined
     setMenuVisibility: Setter<boolean> | undefined
 
-    private series = new Map<string, u.AnySeries>()
+    series = new Map<string, u.AnySeries>()
+    series_types = new Map<string, u.Series_Type>()
+    series_names = new Map<string, string | undefined>()
     private visiblity = new Map<string, boolean>()
     private primitives_left = new Map<string, PrimitiveBase>()
     private primitives_right = new Map<string, PrimitiveBase>()
@@ -118,7 +120,9 @@ export class indicator {
     //Functions marked as protected are done so it indicate the original intent
     //only encompassed being called from python, not from within JS.
 
-    protected add_series(_id: string, series_type: u.Series_Type) {
+    protected add_series(_id: string, series_type: u.Series_Type, series_name:string|undefined = undefined) {
+        this.series_types.set(_id, series_type)
+        this.series_names.set(_id, series_name)
         this.series.set(_id, this._create_series_(series_type))
     }
 
@@ -127,6 +131,8 @@ export class indicator {
         if (series === undefined) return
 
         this.pane.chart.removeSeries(series)
+        this.series_names.delete(_id)
+        this.series_types.delete(_id)
         this.series.delete(_id)
     }
 
@@ -168,6 +174,7 @@ export class indicator {
         //@ts-ignore (Type Checking Done in Python, Data should already be updated if it needed to be)
         new_series.setData(data)
         this.series.set(_id, new_series)
+        this.series_types.set(_id, series_type)
         this.pane.chart.removeSeries(series)
 
         //Setting Data Changes Visible Range, set it back.
