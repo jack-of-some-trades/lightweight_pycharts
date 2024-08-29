@@ -573,6 +573,16 @@ class Indicator(metaclass=IndicatorMeta):
             )
         )
 
+    def update_menu(self, opts: IndicatorOptions):
+        "Update the Options shown in the UI Menu. Only effective when called after init_menu()"
+        if self.__options__ is None:
+            logger.error("Cannot set Menu, %s needs an options Class", self.cls_name)
+            return
+
+        self._fwd_queue.put(
+            (JS_CMD.SET_INDICATOR_OPTIONS, *self._ids, self.__parse_options_obj__(opts))
+        )
+
     def set_label(self, label: str):
         "Set the label text for this indicator in the pane's Legend. Raw HTML Accepted"
         self._fwd_queue.put((JS_CMD.SET_LEGEND_LABEL, *self._ids, label))

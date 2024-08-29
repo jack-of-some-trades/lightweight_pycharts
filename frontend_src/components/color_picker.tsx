@@ -43,14 +43,16 @@ export function ColorContext(props:JSX.HTMLAttributes<HTMLElement>){
 
 interface color_input_props extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'ref'|'onInput'|'oninput'> {
     input_id:string, 
-    init_color:string, //Hex String
+    init_color:string, //rbga() or #hex string
     onInput?:(color:string)=>void,
 }
 export function ColorInput(props:color_input_props){
     let divRef = document.createElement('div')
     let opacityRef = document.createElement('input')
     const [showMenu, setShowMenu] = createSignal(false)
-    const [selectedColor, setSelectedColor] = createSignal(props.init_color)
+    const [selectedColor, setSelectedColor] = createSignal(
+        props.init_color.startsWith('#') ? props.init_color : RGBAToHex(props.init_color)
+    )
     const [, divProps] = splitProps(props, ["input_id", "init_color", 'onInput'])
 
     //Document wide Hide menu to close out color picker when a click occurs outside of it.
@@ -63,14 +65,12 @@ export function ColorInput(props:color_input_props){
         if(e.button === 0) {
             let hex_num = Math.round(parseInt(opacityRef.value) * 2.55)
             setSelectedColor(color + hex_num.toString(16).padStart(2,'0'))
-            console.log(selectedColor())
         }
     }
 
     function onOpacitySelect(){
         let hex_num = Math.round(parseInt(opacityRef.value) * 2.55)
         setSelectedColor(selectedColor().slice(0, 7) + hex_num.toString(16).padStart(2,'0'))
-        console.log(selectedColor(), opacityRef.value)
     }
 
     const get_opacity = () => Math.round(Number('0x' + selectedColor().slice(7))/ 2.55 )
@@ -78,8 +78,6 @@ export function ColorInput(props:color_input_props){
     createEffect(()=>{
         if (props.onInput) props.onInput(selectedColor())
     })
-
-    //#endregion
 
     return <div ref={divRef} {...divProps} style={{'background-color':selectedColor()}}>
         {/* Inner div to conform to parent's size shape, also set position to relative. */}
@@ -157,4 +155,14 @@ function UserColorSet(props:{onSel:(e:MouseEvent, color:string)=>void}){
             />
         </div>
     </div>
+}
+
+function RGBAToHex(rgba:string, forceRemoveAlpha=false) {
+    return "#" + rgba.replace(/^rgba?\(|\s+|\)$/g, '').split(',') 
+        .filter((string, index) => !forceRemoveAlpha || index !== 3)
+        .map(string => parseFloat(string))
+        .map((number, index) => index === 3 ? Math.round(number * 255) : number)
+        .map(number => number.toString(16))
+        .map(string => string.length === 1 ? "0" + string : string)
+        .join("")
 }

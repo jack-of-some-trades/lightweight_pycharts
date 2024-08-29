@@ -282,7 +282,7 @@ def indicator_set_menu(frame_id: str, indicator_id: str, menu_struct, options) -
 def indicator_set_options(frame_id: str, indicator_id: str, options) -> str:
     return (
         indicator_preamble(frame_id, indicator_id)
-        + f"if (_ind.setOptions !== undefined) _ind.set_options({dump(options)});"
+        + f"_ind.applyOptions({dump(options)});"
     )
 
 

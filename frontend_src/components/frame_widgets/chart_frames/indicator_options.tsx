@@ -21,7 +21,8 @@ interface indicator_option_props extends Omit<overlay_div_props, "location_ref" 
 }
 
 export function IndicatorOpts(props:indicator_option_props){
-    const [InputFormProps,] = splitProps(props, ['id', 'parent_ind', 'menu_struct', 'options', 'sources', 'container_id', 'frame_id', 'indicator_id'])
+    const [InputFormProps,] = splitProps(props, ['id', 'parent_ind', 'menu_struct', 'options', 'sources', 'container_id', 'frame_id', 'indicator_id', 'parent_ind'])
+    const [StyleFormProps,] = splitProps(props, ['parent_ind'])
     const [location, setLocation] = createSignal<point>({x:0, y:0})
     const position_menu = () => {setLocation({x:window.innerWidth*0.7, y:window.innerHeight*0.2})}
 
@@ -36,7 +37,6 @@ export function IndicatorOpts(props:indicator_option_props){
             drag_handle={`#${props.id}>.title_box`}
             bounding_client_id={`#${props.id}>.title_box`}
         >
-            {/********* Title Bar *********/}
             <div class="title_box">
                 <h2>{props.parent_ind.type + " • " + props.parent_ind.name + "Options"}</h2>
                 <Icon icon={icons.close} force_reload={true} onClick={props.close_menu}/>
@@ -44,10 +44,10 @@ export function IndicatorOpts(props:indicator_option_props){
 
             <NavigatorMenu
                 overlay_id={props.id}
-                style={{padding:"2px 6px", "margin-bottom":"12px"}}
+                style={{padding:"2px 6px", margin:"12px", "margin-top":'0px', "border-bottom":"2px solid var(--background-fill)"}}
                 tabs={{
                     "Inputs":()=><InputForm {...InputFormProps}/>,
-                    "Outputs":()=><div innerText={"Hello World"}/>,
+                    "Style":()=><SeriesEditor {...StyleFormProps}/>,
                 }}
             />
         </OverlayDiv>
@@ -61,12 +61,13 @@ interface input_form_props {
     container_id: string
     frame_id: string
     indicator_id: string
+    parent_ind: indicator
     sources: Accessor<data_src[]>
     options: options_obj
 }
 
 function InputForm(props:input_form_props){
-    const [passDown,] = splitProps(props, ['sources', 'options', 'indicator_id'])
+    const [passDown,] = splitProps(props, ['sources', 'options', 'parent_ind', 'indicator_id'])
 
     let form = document.createElement('form')
     const submit = () => form.requestSubmit()
@@ -74,7 +75,7 @@ function InputForm(props:input_form_props){
         undefined, 
         props.container_id, 
         props.frame_id, 
-        props.indicator_id
+        props.parent_ind
     )
 
     return <>
@@ -102,15 +103,14 @@ function InputForm(props:input_form_props){
     </>
 }
 
-function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
+function onSubmit(c_id:string, f_id:string, ind:indicator, e:Event){
     e.preventDefault();
     if (e.target !== null){
         let nodes = Array.from((e.target as HTMLFormElement).querySelectorAll("input, select"))
         //Filter out all the input tags within the Color Picker. (they're id-less)
         nodes = nodes.filter((node) => node.id !== "") 
 
-        window.api.set_indicator_options( c_id, f_id, i_id,
-            Object.fromEntries(
+        let packaged_input = Object.fromEntries(
             Array.from(nodes as HTMLInputElement[], (node) => {
                 switch(node.getAttribute('type')){
                     case ("checkbox"): return [node.id, node.checked]
@@ -118,7 +118,10 @@ function onSubmit(c_id:string, f_id:string, i_id:string, e:Event){
                     default: return [node.id, node.value]
                 }
             })
-        ))
+        )
+        //One of the few times a change in JS is directly applied to the JS object
+        ind.applyOptions(packaged_input)
+        window.api.set_indicator_options( c_id, f_id, ind.id, packaged_input)
     }
 }
 
@@ -235,16 +238,6 @@ function UnixToString(timestamp: number){
     ].join("")
 }
 
-function RGBAToHex(rgba:string, forceRemoveAlpha=false) {
-    return "#" + rgba.replace(/^rgba?\(|\s+|\)$/g, '').split(',') 
-        .filter((string, index) => !forceRemoveAlpha || index !== 3)
-        .map(string => parseFloat(string))
-        .map((number, index) => index === 3 ? Math.round(number * 255) : number)
-        .map(number => number.toString(16))
-        .map(string => string.length === 1 ? "0" + string : string)
-        .join("")
-}
-
 //#endregion
 
 // #region --------------------- Specific Inputs ----------------------- */
@@ -312,7 +305,7 @@ function ColorInputWrap(props: input_props){
         <ColorInput 
             id={props.key}
             input_id={props.key} 
-            init_color={RGBAToHex(props.options[props.key])}
+            init_color={props.options[props.key]}
             class="color_input_wrapper"
             onInput={props.params.autosend? props.submit: undefined}
         />
@@ -349,7 +342,22 @@ function SourceInput(props: input_props){
         <Icon icon={icons.menu_arrow_ns}/>
     </span>
 }
-
-
 //#endregion
 //#endregion
+
+// #region --------------------- Series Style Editor ----------------------- */
+
+interface series_editor_props {
+
+}
+
+function SeriesEditor(props: series_editor_props){
+
+    return <>
+        <div class="footer">
+            <input type="submit" value={"Apply"}/>
+        </div>
+    </>
+}
+
+// #endregion

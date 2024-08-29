@@ -6,7 +6,6 @@ from inspect import getmembers, ismethod
 import multiprocessing as mp
 from multiprocessing.synchronize import Event as mp_EventClass
 from dataclasses import dataclass, field
-import queue
 from typing import Callable, Optional, Protocol
 from abc import ABC, abstractmethod
 

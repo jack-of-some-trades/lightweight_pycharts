@@ -210,6 +210,10 @@ export class indicator {
         _obj.updateData(params)
     }
 
+    applyOptions(options_in:object){
+        if (this.setOptions) this.setOptions(options_in)
+    }
+
     protected set_menu_struct(menu_struct:object, options_in:object){
         if (this.menu_id !== undefined) {
             if (this.setOptions) this.setOptions(options_in)
