@@ -1,7 +1,13 @@
-import { createSignal, JSX, onMount, Show } from "solid-js"
+/**
+ * The Title Bar is the topmost component of the layout and holds the Tabs of the window.
+ * The Title Bar instantiates the Conatiner Component & Coupled Container_Manager's 
+ * Singleton instances. This is done because the TitleBar, displaying each tab, must have high
+ * coupling with all of the Containers and what container is being actively displayed.
+ */
+
+import { createSignal, JSX, mergeProps, onMount, Show, splitProps } from "solid-js"
 import { container_manager } from "../../src/container_manager"
-import { ToggleBtn } from "../buttons"
-import { Icon, icons } from '../icons'
+import { Icon, icon_props, icons } from '../icons'
 import { LAYOUT_SECTIONS } from "./wrapper"
 
 import "../../css/layout/tabs.css"
@@ -67,3 +73,39 @@ export function TitleBar(props:title_bar_props) {
         </div>
     </div>
 }
+
+
+//#region -------------------- Toggle Button Component -------------------- //
+
+interface togglebtn_props extends icon_props{
+    onAct?:()=>void,
+    onDeact?:()=>void,
+    activated?:boolean,
+}
+
+const default_togglebtn:togglebtn_props = {
+    icon:'',
+    activated: false,
+    onAct:()=>{console.log('Button Activated!')},
+    onDeact:()=>{console.log('Button Deactivated!')},
+}
+
+function ToggleBtn(props:togglebtn_props) {
+    const merged = mergeProps(default_togglebtn, props)
+    const [activated, setActivated] = createSignal(merged.activated)
+    const [, iconProps] = splitProps(merged, ['onAct', 'onDeact'])
+
+    iconProps.onClick = () => {
+        setActivated(!activated())
+        if (activated() && merged.onAct) merged.onAct()
+        else if (!activated() && merged.onDeact) merged.onDeact()
+    }
+
+    //Set Initial State
+    if (activated() && merged.onAct) merged.onAct()
+    else if (!activated() && merged.onDeact) merged.onDeact()
+
+    return <Icon {...iconProps} activated={activated()}/>
+}
+
+//#endregion

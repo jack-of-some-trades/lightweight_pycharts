@@ -1,21 +1,39 @@
+/**
+ * Indicator Options Menu. This Integrates directly with a Python Indicator Options Dataclass.
+ * The Menu_struct that is generated on Python Sub-class initilization is decomposed here to 
+ * generate the UI Menu that allows manipulation of Indicator Input Variables.
+ */
 import { Accessor, createSignal, For, Match, Show, splitProps, Switch } from "solid-js"
-import { indicator } from "../../../src/indicator"
-import { Icon, icons, TextIcon } from "../../icons"
-import { location_reference, overlay_div_props, OverlayDiv, point } from "../../overlay/overlay_manager"
-
-import "../../../css/frame_widgets/chart_frames/indicator_options.css"
 import { data_src } from "../../../src/frame"
+import { indicator } from "../../../src/indicator"
 import { AnySeries, Series_Type } from "../../../src/types"
 import { ColorInput } from "../../color_picker"
+import { Icon, icons, TextIcon } from "../../icons"
+import { location_reference, overlay_div_props, OverlayDiv, point } from "../../layout/overlay_manager"
 import { NavigatorMenu } from "../../navigator_menu"
 import { SeriesStylePicker } from "./series_style_editor"
 
+import "../../../css/frame_widgets/chart_frames/indicator_options.css"
+
+/**
+ * @close_menu : Callable to the close Options Menu
+ * @parent_ind : Parent indicator Object.
+ * @menu_strict : Multi-level dictionary that stores group, inline, and input type information.
+ *                Deconstruction of this object directly generates the visible menu
+ * @options : Key:Value Pairs of the options that will be displayed. This is a 1:1 mapping of the
+ *            Indicator Options Dataclass variables and values
+ * @sources : Reactive List of all the data sources within the frame. This is used to generate a
+ *            Data source options <select/> List
+ * @*_ids : JS Ids that are packaged with the selected options and returned to python. The Ids
+ *          are used to address the options to the correct indicator that needs to be updated.
+ */
 type options_obj = {[key:string]: any}
 interface indicator_option_props extends Omit<overlay_div_props, "location_ref" | "location">{
+    close_menu: ()=>{}
     parent_ind:indicator
+
     menu_struct: object
     options: options_obj
-    close_menu: ()=>{}
     sources: Accessor<data_src[]>
     container_id:string
     frame_id:string
@@ -62,6 +80,10 @@ export function IndicatorOpts(props:indicator_option_props){
 }
 
 // #region --------------------- Inputs Form ----------------------- */
+/**
+ * INPUT FORM Section:: Creates and parses a UI Options Menu to set the user input
+ * options for a given indicator.
+ */
 
 interface input_form_props {
     menu_struct: object
@@ -73,6 +95,7 @@ interface input_form_props {
     options: options_obj
 }
 
+/** Form to wrap around all of the generated options inputs */
 function InputForm(props:input_form_props){
     const [passDown,] = splitProps(props, ['sources', 'options', 'parent_ind', 'indicator_id'])
 
@@ -111,6 +134,11 @@ function InputForm(props:input_form_props){
     </div>
 }
 
+/**
+ * Generic Submit function, Each menu binds the first three arguments. This is invoked when
+ * the form is submitted, It query's all <input/> tags and uses the [#Id : Value] of each to
+ * construct an object of the new options to be sent back to Python.
+ */
 function onSubmit(c_id:string, f_id:string, ind:indicator, e:Event){
     e.preventDefault();
     if (e.target !== null){
@@ -356,6 +384,11 @@ function SourceInput(props: input_props){
 
 
 // #region --------------------- Series Style Selector Forms ----------------------- */
+
+/**
+ * Style FORM Section:: Creates a form for each Series applied to the Indicator. Allows for the
+ * series options to be directly manipulated via the GUI
+ */
 
 interface series_editor_props {
     series: Map<string, AnySeries>

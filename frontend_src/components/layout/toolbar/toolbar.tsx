@@ -1,7 +1,9 @@
-
+/**
+ * ToolBar Component (and sub-components) that are displayed along the Left hand side of the screen.
+ */
 import { Accessor, createContext, createEffect, createSignal, For, JSX, on, Setter, useContext } from "solid-js"
 import { Icon, icons } from "../../icons"
-import { location_reference, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager"
+import { location_reference, OverlayCTX, OverlayDiv, point } from "../overlay_manager"
 import { toolbar_menu_props, ToolBarMenuButton } from "./toolbar_menu"
 
 import "../../../css/layout/toolbar.css"
@@ -26,6 +28,10 @@ export function ToolBar(props:JSX.HTMLAttributes<HTMLDivElement>){
     </div>
 }
 
+/**
+ * Toggle Star at the Bottom of the Tool*Bar* and shows/hides the Tool*Box*. 
+ * The ToolBox is the floating menu that shows the user-favorite tools
+ */
 function ToolBoxToggle(){
     const id = "toolbox"
     const visibilitySignal = createSignal<boolean>(false)
@@ -80,9 +86,10 @@ const default_toolbox_props:toolbox_context_props = {
 let ToolboxContext = createContext<toolbox_context_props>(default_toolbox_props)
 export function ToolBoxCTX():toolbox_context_props { return useContext(ToolboxContext) }
 
-
+/**
+ * Context that holds information on the ToolBox overlay menu Location and selected tools
+ */
 export function ToolBoxContext(props:JSX.HTMLAttributes<HTMLElement>){
-
     const [tools, setTools] = createSignal<icons[]>([])
     const [location, setLocation] = createSignal<point>({x:-1, y:-1})
 
@@ -126,6 +133,11 @@ function ToolBoxOverlay( props:toolbox_props ){
 
 
 //#region --------------------- Toolbar Section Props --------------------- //
+
+/**
+ * Constant Prop Objects. These are Props for the ToolBox Overlay Menus and define
+ * what tools exist in each menu.
+ */
 
 const crosshair_menu_props:toolbar_menu_props = {
     id:"crosshair_menu",

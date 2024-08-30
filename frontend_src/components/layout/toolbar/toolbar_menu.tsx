@@ -1,8 +1,12 @@
+/**
+ * ToolBox Overlay Menu and Menu-Open Button.
+ */
+
 import { createSignal, For, Setter, splitProps } from "solid-js";
 import { TOOL_FUNC_MAP } from "../../../src/tools";
 import { Icon, icons } from "../../icons";
-import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager";
-import { MenuItem, ShowMenuButton } from "../../overlay/simple_menu";
+import { MenuItem, ShowMenuButton } from "../../simple_menu";
+import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../overlay_manager";
 import { ToolBoxCTX } from "./toolbar";
 
 export interface toolbar_menu_props{
@@ -11,6 +15,13 @@ export interface toolbar_menu_props{
     default_icon:icons
 }
 
+/**
+ * A single container Button to be displayed within the Toolbar. Placing the 
+ * Button within the Tool-Bar automatically generates a button to open a menu
+ * and display the tools given within the props.
+ * 
+ * Each Tool is keyed to it's respective svg icon.
+ */
 export function ToolBarMenuButton(props:toolbar_menu_props){
     let el = document.createElement('div')
 
@@ -63,7 +74,11 @@ interface toolbar_overlay_props extends Omit<overlay_div_props, "location_ref"> 
     location:point
     setIcon:Setter<icons>
 }
-
+/**
+ * Overlay Menu showing the available tool options within this menu. 
+ * @param props.tools : 2D-Array. The first array holds all of the menu groups
+ *                      Each sub-Array holds the tools within each group
+ */
 function ToolBarOverlay(props:toolbar_overlay_props){
     const tools = ToolBoxCTX().tools
     const setTools = ToolBoxCTX().setTools

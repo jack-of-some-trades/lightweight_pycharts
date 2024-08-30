@@ -1,9 +1,11 @@
-
+/**
+ * Generic Components for creating Menu Sections, Selectable Items, and Favorite-able Items
+ */
 import { createSignal, JSX, mergeProps, onMount, Show, splitProps } from "solid-js";
-import "../../css/overlay/simple_menu.css";
-import { Icon, icons } from "../icons";
-import { OverlayCTX } from "./overlay_manager";
+import { Icon, icons } from "./icons";
+import { OverlayCTX } from "./layout/overlay_manager";
 
+import "../css/simple_menu.css";
 
 //  ***************  Show Overlay Menu Button  *************** //
 interface menu_btn_props extends JSX.HTMLAttributes<HTMLDivElement> {
@@ -12,6 +14,9 @@ interface menu_btn_props extends JSX.HTMLAttributes<HTMLDivElement> {
     icon_deact:icons
 }
 
+/**
+ * Overlay Menu Show / Hide Button
+ */
 export function ShowMenuButton(props:menu_btn_props){
     let el = document.createElement('div')
     const [, divProps] = splitProps(props, ['id', "style", "icon_act", "icon_deact"])

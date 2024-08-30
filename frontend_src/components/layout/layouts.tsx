@@ -1,3 +1,13 @@
+/**
+ * <Layout/> is a Component that directly couples with layout.ts.
+ * Where is the component that puts display objects on the screen as layout.ts is the
+ * computation behind the screen sizing and manipulating each "layout_display"
+ * 
+ * Together, they create a modular predefined layout of elements that are user resizable and
+ * ambivalent to their contents. This Component is used by both the Main window container to
+ * size each 'Frame', and by Charting_Frames to size individual Charting_Panes.
+ */
+
 import { Accessor, For, JSX, Setter } from "solid-js"
 import { Orientation } from "../../src/layouts"
 

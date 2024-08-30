@@ -2,7 +2,7 @@ import { PriceScaleOptions } from "lightweight-charts";
 import { Accessor, createSignal, Setter, Signal } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import { IndicatorOpts } from "../components/frame_widgets/chart_frames/indicator_options";
-import { OverlayCTX } from "../components/overlay/overlay_manager";
+import { OverlayCTX } from "../components/layout/overlay_manager";
 import { data_src } from "./frame";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
@@ -221,6 +221,8 @@ export class indicator {
         if (this.setOptions) this.setOptions(options_in)
     }
 
+    //TODO : Make it so that a Style Settings Menu will still be generated without needing 
+    //to call the function below, or even require a menu_struct/Indicator Options Class
     protected set_menu_struct(menu_struct:object, options_in:object){
         if (this.menu_id !== undefined) {
             if (this.setOptions) this.setOptions(options_in)

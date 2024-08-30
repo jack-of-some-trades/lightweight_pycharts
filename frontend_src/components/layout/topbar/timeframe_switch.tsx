@@ -1,9 +1,13 @@
+/**
+ * Timeframe Switcher Component and respective Overlay Component
+ */
+
 import { createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import { interval, interval_map, tf } from "../../../src/types";
 import { icons, TextIcon } from "../../icons";
-import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../../overlay/overlay_manager";
-import { MenuItem, MenuSection, ShowMenuButton } from "../../overlay/simple_menu";
+import { MenuItem, MenuSection, ShowMenuButton } from "../../simple_menu";
+import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../overlay_manager";
 
 // CSS in topbar.css
 

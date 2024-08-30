@@ -1,7 +1,12 @@
+/**
+ * Abstract Component that behaves similarly to a navigation bar typically located at the top
+ * of a webpage. Implemented using <Show/> Tags so that it can be nested at any level of the program.
+ */
+
 import { Component, createEffect, createSignal, For, JSX, on, onMount, Show, Signal, splitProps } from "solid-js"
+import { OverlayCTX } from "./layout/overlay_manager"
 
 import "../css/navigator_menu.css"
-import { OverlayCTX } from "./overlay/overlay_manager"
 
 interface nav_menu_props extends JSX.HTMLAttributes<HTMLDivElement>{
     tabs: {[key:string]: Component}

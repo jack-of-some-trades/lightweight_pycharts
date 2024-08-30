@@ -1,12 +1,16 @@
+/**
+ * The Topbar is located just above the charting window and holds controls for
+ * changing the layout, timeframe, symbol, and series types
+ */
 
 import { JSX } from "solid-js"
-import "../../../css/layout/topbar.css"
-import { IndicatorsBox } from "../../overlay/indicators_menu"
-import { SymbolSearchBox } from "../../overlay/symbol_search"
+import { IndicatorsBox } from "./indicators_menu"
 import { LayoutSwitcher } from "./layout_switch"
 import { SeriesSwitcher } from "./series_switch"
+import { SymbolSearchBox } from "./symbol_search"
 import { TimeframeSwitcher } from "./timeframe_switch"
 
+import "../../../css/layout/topbar.css"
 
 export function TopBar(props:JSX.HTMLAttributes<HTMLDivElement>){
     return <div class='layout_main layout_flex' {...props}>

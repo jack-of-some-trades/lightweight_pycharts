@@ -1,6 +1,11 @@
+/**
+ * Wrapper is the Topmost layer of the Component Tree. Upon running index.ts this is invoked
+ * and construction of the entire SolidJS Component tree is initiated.
+ */
+
 import { JSX, createEffect, onMount } from 'solid-js'
 import { SetStoreFunction, createStore } from 'solid-js/store'
-import { OverlayContextProvider } from '../overlay/overlay_manager'
+import { OverlayContextProvider } from './overlay_manager'
 import { TitleBar } from './titlebar'
 import { ToolBar, ToolBoxContext } from './toolbar/toolbar'
 import { TopBar } from './topbar/topbar'
@@ -17,6 +22,10 @@ const NAVBAR_WIDTH = 52
 const TOOLBAR_WIDTH = 46
 const UTILBAR_WIDTH = 38
 
+/**
+ * An Interface defining how to layout the screen. Each object is a component of the screen. 
+ * Each object's value is an HTMLDiv's Styling Object that's applied to their respective Div.
+ */
 interface layout_struct {
     center:{width:string, height:string, top:string, left:string},
     titlebar:{width:string, height:string, top:string, left:string},
@@ -45,6 +54,9 @@ export enum LAYOUT_SECTIONS {
     CENTER = 'div_center'
 }
 
+/**
+ * Top Level Component for the Entire Window.
+ */
 export function Wrapper(){
     const [layout, set_layout] = createStore(layout_default)
 
@@ -79,6 +91,9 @@ export function Wrapper(){
     </>
 }
 
+/**
+ * Dump Location for any Contexts that are created else where and need to be placed into the window.
+ */
 function GlobalContexts(props:JSX.HTMLAttributes<HTMLElement>){
     return <>
         <ColorContext>

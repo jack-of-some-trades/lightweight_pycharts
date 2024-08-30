@@ -1,6 +1,15 @@
+/**
+ * Overlay Manager Displays & Hides Menus that have been attached to the Context.
+ * 
+ * This file also provides an OverlayDiv Component that standardizes the Div
+ * that gets attached to the overlay manager on top of providing some useful
+ * placing & bounding functionality
+ */
+
 import { Accessor, createContext, createEffect, createSignal, For, JSX, on, onCleanup, onMount, Setter, Show, Signal, splitProps, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
-import "../../css/overlay/overlay.css";
+
+import "../../css/layout/overlay.css";
 
 
 //#region --------------------- Context Manager --------------------- //

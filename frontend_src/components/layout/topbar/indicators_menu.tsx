@@ -1,13 +1,10 @@
-import { Icon, icons } from "../icons";
-
-import "../../css/overlay/indicator_menu.css";
-
-/* This is the File with the Button that get's mounted on the topbar and the resulting menu 
- * that opens allowing the user to search for Indicators to apply.
- *
- * For the Indicator Options Editing menu go to ../frame_widgets/chart_frames.
+/**
+ * Indicator File Search Menu and Topbar Show/Hide Toggle Button
  */
 
+import { Icon, icons } from "../../icons";
+
+import "../../../css/layout/indicator_menu.css";
 
 // Box that gets mounted to the Topbar
 export function IndicatorsBox(){

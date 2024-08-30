@@ -1,9 +1,16 @@
+/**
+ * SVG Icon Component and the respective Resource that loads all of the SVGs into the window.
+ * 
+ * The SVGs are stored in a .svg file. This file is loaded in as a resource and then parsed.
+ * The svgs in that parsed DOM Object are then copied into the main window as needed.
+ * 
+ * This method of loading SVGs works surprisingly well and prevents the SVG paths from being 
+ * hardcoded into a typescript file AND Allows for default attrs (viewport, width, height, etc)
+ * to be written in with the <path/> information.
+ */
+
 import { createEffect, createResource, JSX, mergeProps, splitProps } from "solid-js";
 import "../css/icon.css";
-
-//This method of loading in an entirely new doc of just SVGs and query selecting works pretty well
-//There's a small delay that requires <Icon/> to be loaded on an effect, but it allows the attrs 
-//(viewport, width, height, etc) to be hardcoded into the loaded doc and not in this file.
 
 const [SVG_DOC] = createResource(async () => await fetch('./svg-defs.svg').then(
     (resp) => resp.text().then((svg_file_text) => {

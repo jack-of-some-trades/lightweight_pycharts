@@ -1,14 +1,14 @@
-
+/**
+ * Symbol Search Overlay Menu and Topbar Menu Show/Hide Toggle Button
+ */
 
 import { createSignal, For, onCleanup, onMount, Setter, splitProps } from "solid-js"
-import "../../css/overlay/symbol_search.css"
-import { Icon, icons } from "../icons"
-import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "./overlay_manager"
-
 import { createStore, SetStoreFunction } from "solid-js/store"
-import "../../css/overlay/symbol_search.css"
-import { symbol_item } from "../../src/types"
+import { symbol_item } from "../../../src/types"
+import { Icon, icons } from "../../icons"
+import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../overlay_manager"
 
+import "../../../css/layout/symbol_search.css"
 
 interface select_filters {
     exchange:string[],

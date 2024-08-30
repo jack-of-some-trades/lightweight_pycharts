@@ -1,3 +1,9 @@
+/**
+ * Container Manager handles the creation, deletion, and display of Containers and their
+ * respective Tabs at the top of the window. This file also contains the code required to
+ * display and manipulate the Tabs visible at the top of the screen.
+ */
+
 import { container } from "./container"
 
 const Draggabilly = require('draggabilly')

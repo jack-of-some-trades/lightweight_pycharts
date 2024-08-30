@@ -1,3 +1,11 @@
+/**
+ * Container Context and Display Component. The Container is the Center component of the
+ * Window. It is instantiated at the top level alongside the other sections of the window.
+ * The Context, and thus what is displayed, is controlled by the Container_Manager. 
+ * 
+ * This Component should be considered as a Singleton.
+ */
+
 import { createContext, createSignal, JSX, useContext } from "solid-js";
 import { default_layout_ctx_args, Layout, layout_display } from "./layouts";
 

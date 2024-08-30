@@ -1,15 +1,17 @@
-
+/**
+ * Component To be displayed over a Charting Pane that show the applied indicators and gives
+ * access to visibility and input settings.
+ */
 import { Accessor, createSignal, For, onCleanup, onMount, Setter, Show } from "solid-js"
-import "../../../css/frame_widgets/chart_frames/pane.css"
 import { indicator } from "../../../src/indicator"
-import { pane } from "../../../src/pane"
 import { Icon, icons } from "../../icons"
 
+import "../../../css/frame_widgets/chart_frames/pane.css"
 
-export interface legend_props {
-    parent_pane:pane
-    indicators_list:Accessor<indicator[]>
-}
+/**
+ * @indicators_list : SolidJS Reactive list of indicators.
+ */
+export interface legend_props {indicators_list:Accessor<indicator[]>}
 
 export function PaneLegend(props:legend_props){
     const [display, setDisplay] = createSignal<boolean>(true)
@@ -58,6 +60,9 @@ interface tag_props {
     innerHtml: Accessor<string | undefined> 
 }
 
+/**
+ * A Label for a single Indicator.
+ */
 function IndicatorTag(props:tag_props){
     const [hover, setHover] = createSignal<boolean>(false)
 

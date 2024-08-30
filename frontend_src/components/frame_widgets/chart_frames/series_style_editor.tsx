@@ -1,3 +1,6 @@
+/**
+ * Components that generate a <form/> to edit and apply changes to ISeriesAPI options
+ */
 import { AreaSeriesOptions, LineStyle, LineStyleOptions, SeriesOptionsCommon } from "lightweight-charts"
 import { For, Match, Switch } from "solid-js"
 import { AnySeries, Series_Type } from "../../../src/types"
@@ -12,6 +15,10 @@ interface series_style_picker{
     series_type: Series_Type
 }
 
+/**
+ * Entry Point Component that creates a <form/> and Populates it with the relative settings
+ * based on the type of series object it was provided
+ */
 export function SeriesStylePicker(props:series_style_picker){
     let form = document.createElement('form')
     const options = props.series.options()
@@ -28,6 +35,11 @@ export function SeriesStylePicker(props:series_style_picker){
     )
 }
 
+/**
+ * Generic Submit function. Each form binds the first argument and invokes the function on submit.
+ * The function packages all of the <input/> Tag values into a partial object that is applied
+ * directly to the ISeriesAPI Options.
+ */
 function onSubmit(series:AnySeries, e:SubmitEvent){
     e.preventDefault();
     if (e.target !== null){
@@ -52,10 +64,11 @@ function onSubmit(series:AnySeries, e:SubmitEvent){
 
 // #region --------------------- Series Styles ----------------------- */
 
-interface editor_opts {
-    onSubmit:()=>void
-    name:string
-}
+/**
+ * Individual Style Components for each type of ISeriesAPI Instance
+ */
+
+interface editor_opts { onSubmit:()=>void, name:string }
 
 function LineStyleEditor(options:LineStyleOptions & SeriesOptionsCommon & editor_opts){
     return <div class='series_style_selector'>

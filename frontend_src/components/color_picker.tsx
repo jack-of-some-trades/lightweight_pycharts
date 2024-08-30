@@ -1,6 +1,8 @@
+/**
+ * The Color Picker is a globally Accessible and placeable Component that allows for easy
+ * Selection of both predefined and user-defined colors. 
+ */
 import { createContext, createEffect, createSignal, For, JSX, onCleanup, onMount, Show, splitProps, useContext } from "solid-js"
-
-
 import { createStore, SetStoreFunction } from "solid-js/store"
 import "../css/color_picker.css"
 import { Icon, icons } from "./icons"
@@ -16,6 +18,11 @@ const default_colors = [
 
 // #region --------------------- Color Picker Context ----------------------- */
 
+/**
+ * The Color Picker Context creates a global store for user defined colors.
+ * If a color is added either via the GUI or Python Window Cmds it will be placed
+ * in this context and thus accessed anywhere A ColorPicker is placed into the GUI
+ */
 interface color_context_props { userColors: string[], setUserColors:SetStoreFunction<string[]> }
 const default_color_props:color_context_props = { userColors: [], setUserColors: () => {} }
 
@@ -41,6 +48,15 @@ export function ColorContext(props:JSX.HTMLAttributes<HTMLElement>){
 
 // #region --------------------- Color Picker Element ----------------------- */
 
+/**
+ * ColorInput is the UI Component That is placed into a menu.
+ * @input_id : #ID Tag to be placed onto an invisible <input/> Tag. The Value of this input tag
+ *      is querySelectable and returns an 8 Character Hex String
+ * @init_color : rbga() or #hex string color code. An empty string is treated as '#00000000'
+ * @onInput : Callable Function where the sole argument provided is the color hex string.
+ *      This function is invoked everytime the color changes and thus can be used in place of
+ *      querySelecting the <input/> Tag.
+ */
 interface color_input_props extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'ref'|'onInput'|'oninput'> {
     input_id:string, 
     init_color:string, //rbga() or #hex string
@@ -62,28 +78,28 @@ export function ColorInput(props:color_input_props){
     onMount(() => document.addEventListener('mousedown', hide_menu))
     onCleanup(() => document.removeEventListener('mousedown', hide_menu))
 
-    //#region ---- Functions to parse input and click events ---- 
+    // #region ---- ---- Functions to parse input and click events ---- 
     function onColorSelect(e:MouseEvent, color:string){
         if(e.button === 0) {
-            let hex_num = Math.round(parseInt(opacityRef.value) * 2.55)
-            setSelectedColor(color + hex_num.toString(16).padStart(2,'0'))
+            let hex_opacity = Math.round(parseInt(opacityRef.value) * 2.55)
+            setSelectedColor(color + hex_opacity.toString(16).padStart(2,'0'))
         }
     }
 
     function onOpacitySelect(){
-        let hex_num = Math.round(parseInt(opacityRef.value) * 2.55)
-        setSelectedColor(selectedColor().slice(0, 7) + hex_num.toString(16).padStart(2,'0'))
+        let hex_opacity = Math.round(parseInt(opacityRef.value) * 2.55)
+        setSelectedColor(selectedColor().slice(0, 7) + hex_opacity.toString(16).padStart(2,'0'))
     }
 
     const get_opacity = () => Math.round(Number('0x' + selectedColor().slice(7))/ 2.55 )
 
-    createEffect(()=>{
-        if (props.onInput) props.onInput(selectedColor())
-    })
+    createEffect(()=>{if (props.onInput) props.onInput(selectedColor())})
+    // #endregion ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     return <div ref={divRef} {...divProps} style={{'background-color':selectedColor()}}>
         {/* Inner div to conform to parent's size shape, also set position to relative. */}
-        <div onClick={(e)=>{if(e.button === 0) setShowMenu(true)}}
+        <div 
+            onClick={(e)=>{if(e.button === 0) setShowMenu(true)}}
             style={{width:"100%", height:"100%", position:"relative"}}
         >
             <Show when={showMenu()}>
