@@ -1,15 +1,15 @@
 /**
  * Components that generate a <form/> to edit and apply changes to ISeriesAPI options
  */
-import { AreaSeriesOptions, LineStyle, LineStyleOptions, SeriesOptionsCommon } from "lightweight-charts"
-import { For, Match, Switch } from "solid-js"
+import { AreaSeriesOptions, LineStyle, LineStyleOptions, LineType, PriceLineSource, SeriesOptionsCommon } from "lightweight-charts"
+import { createSignal, For, Match, Show, Signal, Switch } from "solid-js"
 import { AnySeries, Series_Type } from "../../src/types"
 import { ColorInput } from "../color_picker"
 import { Icon, icons } from "../icons"
 
 import "../../css/charting_frame/series_style_editor.css"
 
-interface series_style_picker{
+interface series_style_editor_props{
     name: string
     series: AnySeries
     series_type: Series_Type
@@ -19,7 +19,7 @@ interface series_style_picker{
  * Entry Point Component that creates a <form/> and Populates it with the relative settings
  * based on the type of series object it was provided
  */
-export function SeriesStylePicker(props:series_style_picker){
+export function SeriesStyleEditor(props:series_style_editor_props){
     let form = document.createElement('form')
     const options = props.series.options()
     const submit = () => form.requestSubmit()
@@ -27,9 +27,9 @@ export function SeriesStylePicker(props:series_style_picker){
         <form ref={form} class='style_form' onSubmit={onSubmit.bind(undefined, props.series)}>
             <Switch>
                 <Match when={props.series_type===Series_Type.LINE}>
-                    <LineStyleEditor {...(options as any)} name={props.name} onSubmit={submit}/></Match>
+                    <LineSeriesEditor {...(options as any)} name={props.name} submit={submit}/></Match>
                 <Match when={props.series_type===Series_Type.AREA}>
-                    <AreaStyleEditor {...(options as any)} name={props.name} onSubmit={submit}/></Match>
+                    <AreaSeriesEditor {...(options as any)} name={props.name} submit={submit}/></Match>
             </Switch>
         </form>
     )
@@ -49,8 +49,10 @@ function onSubmit(series:AnySeries, e:SubmitEvent){
 
         series.applyOptions(Object.fromEntries(
             Array.from(nodes as HTMLInputElement[], (node) => {
+                console.log(node.getAttribute('type'))
                 switch(node.getAttribute('type')){
                     case ("checkbox"): return [node.id, node.checked]
+                    case (null): return [node.id, parseInt(node.value)] // <select/> tag
                     case ("number"): return [node.id, parseFloat(node.value)]
                     //Color Picker can return '' because lightweight-charts treats that as 'no color selected'
                     case ("color_picker"): return [node.id, (node.value.endsWith('00')? '' : node.value)]
@@ -62,44 +64,48 @@ function onSubmit(series:AnySeries, e:SubmitEvent){
 }
 
 
-// #region --------------------- Series Styles ----------------------- */
+// #region --------------------- Series Editors ----------------------- */
 
 /**
  * Individual Style Components for each type of ISeriesAPI Instance
  */
 
-interface editor_opts { onSubmit:()=>void, name:string }
+interface editor_opts { submit:()=>void, name:string }
 
-function LineStyleEditor(options:LineStyleOptions & SeriesOptionsCommon & editor_opts){
+function LineSeriesEditor(options:LineStyleOptions & SeriesOptionsCommon & editor_opts){
+    const adv_settings = createSignal(false)
     return <div class='series_style_selector'>
-        <div class="style_selector_row">
-            <label for={'visible'} innerText={options.name}/>
-            <Checkbox key={'visible'} visible={options.visible} submit={options.onSubmit}/>
-        </div>
-        <div class="style_selector_row">
-            <label innerText='Plot Line:'/>
-            <Checkbox key={'lineVisible'} visible={options.lineVisible} submit={options.onSubmit}/>
-            <ColorInputWrapper key={'color'} default={options.color} submit={options.onSubmit}/>
-            <LineWidthPicker key={'lineWidth'} default={options.lineWidth} submit={options.onSubmit}/>
-            <LineStylePicker key={'lineStyle'} default={options.lineStyle} submit={options.onSubmit}/>
-        </div>
-        <PriceLine 
-            visible={options.priceLineVisible}
-            color={options.priceLineColor}
-            width={options.priceLineWidth} 
-            style={options.priceLineStyle}
-            submit={options.onSubmit}
+        <TitleBar 
+            name={options.name} 
+            visible={options.visible} 
+            submit={options.submit} 
+            signal={adv_settings}
         />
-        <PriceLabel 
-            title={options.title} 
-            visible={options.lastValueVisible} 
-            submit={options.onSubmit}
+        <PlotLine
+            keys={['Plot Line: ', 'lineVisible', 'color', 'lineWidth', 'lineStyle', 'lineType']}
+            vis={options.lineVisible}
+            color={options.color}
+            width={options.lineWidth}
+            style={options.lineStyle}
+            type={options.lineType}
+            submit={options.submit}
+            show_adv={adv_settings[0]()}
+        />
+        <SeriesCommon 
+            show_adv={adv_settings[0]()}
+            submit={options.submit}
+            options={options}
+        />
+        <Markers
+            show_adv={adv_settings[0]()}
+            submit={options.submit}
+            options={options}
         />
     </div>
 }
 
 
-function AreaStyleEditor(options:AreaSeriesOptions & SeriesOptionsCommon & editor_opts){
+function AreaSeriesEditor(options:AreaSeriesOptions & SeriesOptionsCommon & editor_opts){
     return <></>
 }
 
@@ -107,23 +113,119 @@ function AreaStyleEditor(options:AreaSeriesOptions & SeriesOptionsCommon & edito
 
 // #region --------------------- Series Style Grouped Components ----------------------- */
 
+function TitleBar(props:{name:string, visible:boolean, submit:()=>void, signal:Signal<boolean>}){
+    return <div class="style_selector_row">
+        <label for={'visible'} innerText={props.name}/>
+        <Checkbox key={'visible'} visible={props.visible} submit={props.submit}/>
+        <span>
+            <input type="checkbox" checked={props.signal[0]()} onInput={(e)=>props.signal[1](e.target.checked)}/>
+            <label innerText={'Adv. Opts:'}/>
+        </span>
+    </div>
+}
+
+
+function SeriesCommon(props:{show_adv:boolean, submit:()=>void, options:SeriesOptionsCommon}){
+    return <>
+        <PriceLine 
+            visible={props.options.priceLineVisible}
+            color={props.options.priceLineColor}
+            width={props.options.priceLineWidth} 
+            style={props.options.priceLineStyle}
+            source={props.options.priceLineSource}
+            submit={props.submit}
+            show_adv={props.show_adv}
+        />
+        <PriceLabel 
+            title={props.options.title} 
+            visible={props.options.lastValueVisible} 
+            submit={props.submit}
+        />
+        <Baseline
+            show_adv={props.show_adv}
+            visible={props.options.baseLineVisible}
+            color={props.options.baseLineColor}
+            style={props.options.baseLineStyle}
+            width={props.options.baseLineWidth}
+            submit={props.submit}
+        />
+    </>
+}
+
+
+interface plot_line_props{
+    keys:string[], vis:boolean, color:string, width:number, style:LineStyle, type:LineType, submit:()=>void, show_adv:boolean
+}
+function PlotLine(props:plot_line_props){
+    return <div class="style_selector_row">
+        <label for={props.keys[1]} innerText={props.keys[0]}/>
+        <Checkbox key={props.keys[1]} visible={props.vis} submit={props.submit}/>
+        <ColorInputWrapper key={props.keys[2]} default={props.color} submit={props.submit}/>
+        <LineWidthPicker key={props.keys[3]} default={props.width} submit={props.submit}/>
+        <Show when={props.show_adv}>
+            <LineTypePicker key={props.keys[5]} default={props.type} submit={props.submit}/>
+        </Show>
+        <LineStylePicker key={props.keys[4]} default={props.style} submit={props.submit}/>
+    </div>
+}
+
+
 function PriceLabel(props:{title:string, visible:boolean, submit:()=>void}){
     return <div class="style_selector_row">
-        <label innerText='Price Label:'/>
+        <label for={'lastValueVisible'} innerText='Price Label:'/>
         <Checkbox key={'lastValueVisible'} visible={props.visible} submit={props.submit}/>
         <input type='text' id={'title'} value={props.title} onInput={props.submit}/>
     </div>
 }
 
 
-function PriceLine(props:{visible:boolean, width:number, style:LineStyle, color:string, submit:()=>void}){
+interface price_line_props{
+    visible:boolean, color:string, width:number, style:LineStyle, source:PriceLineSource, submit:()=>void, show_adv:boolean
+}
+function PriceLine(props:price_line_props){
     return <div class="style_selector_row">
-        <label innerText='Price Line:'/>
+        <label for={'priceLineVisible'}  innerText='Price Line:'/>
         <Checkbox key={'priceLineVisible'} visible={props.visible} submit={props.submit}/>
         <ColorInputWrapper key={'priceLineColor'} default={props.color} submit={props.submit}/>
         <LineWidthPicker key={'priceLineWidth'} default={props.width} submit={props.submit}/>
+        <Show when={props.show_adv}>
+            <LineSourcePicker key={'priceLineSource'} default={props.source} submit={props.submit}/>
+        </Show>
         <LineStylePicker key={'priceLineStyle'} default={props.style} submit={props.submit}/>
     </div>
+}
+
+interface baseline_props{
+    visible:boolean, color:string, width:number, style:LineStyle, submit:()=>void, show_adv:boolean
+}
+function Baseline(props:baseline_props){
+    return <Show when={props.show_adv}>
+        <div class="style_selector_row">
+        <label for={'baseLineVisible'}  innerText='Baseline:'/>
+        <Checkbox key={'baseLineVisible'} visible={props.visible} submit={props.submit}/>
+        <ColorInputWrapper key={'baseLineColor'} default={props.color} submit={props.submit}/>
+        <LineWidthPicker key={'baseLineWidth'} default={props.width} submit={props.submit}/>
+        <LineStylePicker key={'baseLineStyle'} default={props.style} submit={props.submit}/>
+        </div>
+    </Show>
+}
+
+
+function Markers(props:{show_adv:boolean, submit:()=>void, options:LineStyleOptions}){
+    return <Show when={props.show_adv}>
+        <div class="style_selector_row">
+            <label for={'pointMarkersVisible'} innerText='Data pts:'/>
+            <Checkbox key={'pointMarkersVisible'} visible={props.options.pointMarkersVisible} submit={props.submit}/>
+            <LineWidthPicker key={'pointMarkersRadius'} default={props.options.pointMarkersRadius??2.5} submit={props.submit}/>
+            <label for={'crosshairMarkerVisible'} innerText='Crosshair pt:'/>
+            <Checkbox key={'crosshairMarkerVisible'} visible={props.options.crosshairMarkerVisible} submit={props.submit}/>
+            <LineWidthPicker key={'crosshairMarkerRadius'} default={props.options.crosshairMarkerRadius} submit={props.submit}/>
+            <ColorInputWrapper key={'crosshairMarkerBackgroundColor'} default={props.options.crosshairMarkerBackgroundColor} submit={props.submit}/>
+            <LineWidthPicker key={'crosshairMarkerBorderWidth'} default={props.options.crosshairMarkerBorderWidth} submit={props.submit}/>
+            <ColorInputWrapper key={'crosshairMarkerBorderColor'} default={props.options.crosshairMarkerBorderColor} submit={props.submit}/>
+        </div>
+    </Show>
+
 }
 
 // #endregion
@@ -144,7 +246,7 @@ function LineWidthPicker(props:{key:string, default:number, submit:()=>void}){
         id={props.key} 
         type="number" 
         value={props.default}
-        step={1} min={1} max={10}
+        step={'any'} min={1} max={10}
         onInput={props.submit}
     />
 }
@@ -160,6 +262,31 @@ function LineStylePicker(props:{key:string, default:LineStyle, submit:()=>void})
         <Icon icon={icons.menu_arrow_ns}/>
     </span>
 }
+
+function LineTypePicker(props:{key:string, default:LineType, submit:()=>void}){
+    return <span class="select-span">
+        <select id={props.key} value={props.default} onInput={props.submit}>
+            <For each={Object.entries(LineType)}>{([name, style]) => {
+                if ( typeof(style) === "number" )
+                    return <option value={style} innerText={name} selected={props.default === style? true : undefined}/>
+            }}</For>
+        </select>
+        <Icon icon={icons.menu_arrow_ns}/>
+    </span>
+}
+
+function LineSourcePicker(props:{key:string, default:PriceLineSource, submit:()=>void}){
+    return <span class="select-span">
+        <select id={props.key} value={props.default} onInput={props.submit}>
+            <For each={Object.entries(PriceLineSource)}>{([name, style]) => {
+                if ( typeof(style) === "number" )
+                    return <option value={style} innerText={name} selected={props.default === style? true : undefined}/>
+            }}</For>
+        </select>
+        <Icon icon={icons.menu_arrow_ns}/>
+    </span>
+}
+
 
 function ColorInputWrapper(props:{key:string, default:string, submit:()=>void}){
     return (

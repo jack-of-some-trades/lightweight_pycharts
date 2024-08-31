@@ -11,7 +11,7 @@ import { ColorInput } from "../color_picker"
 import { Icon, icons, TextIcon } from "../icons"
 import { location_reference, overlay_div_props, OverlayDiv, point } from "../layout/overlay_manager"
 import { NavigatorMenu } from "../navigator_menu"
-import { SeriesStylePicker } from "./series_style_editor"
+import { SeriesStyleEditor } from "./series_style_editor"
 
 import "../../css/charting_frame/indicator_options.css"
 
@@ -64,7 +64,7 @@ export function IndicatorOpts(props:indicator_option_props){
         >
             <div class="title_box">
                 <h2>{props.parent_ind.type + " • " + props.parent_ind.name + "Options"}</h2>
-                <Icon icon={icons.close} force_reload={true} onClick={props.close_menu}/>
+                <Icon icon={icons.close} force_reload={true} onMouseDown={props.close_menu}/>
             </div>
 
             <NavigatorMenu
@@ -408,7 +408,7 @@ function SeriesEditor(props: series_editor_props){
             let series = props.series.get(_id)
             if (series === undefined) return
             return ( 
-                <SeriesStylePicker 
+                <SeriesStyleEditor 
                     name={props.series_names.get(_id) ?? `Series #${i() + 1}`}
                     series={series} 
                     series_type={type} 
