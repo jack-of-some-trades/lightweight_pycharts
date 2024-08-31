@@ -1,12 +1,12 @@
 import * as lwc from "lightweight-charts";
 import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createSignal, JSX, Setter } from "solid-js";
-import { ChartPane } from "../components/frame_widgets/chart_frames/chart_elements";
+import { ChartPane } from "../../components/charting_frame/chart_elements";
+import * as u from "../types";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
 import { TrendLine } from "./lwpc-plugins/trend-line/trend-line";
-import * as u from "./types";
 
 
 //The portion of a chart where things are actually drawn

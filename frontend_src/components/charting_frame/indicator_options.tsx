@@ -4,16 +4,16 @@
  * generate the UI Menu that allows manipulation of Indicator Input Variables.
  */
 import { Accessor, createSignal, For, Match, Show, splitProps, Switch } from "solid-js"
-import { data_src } from "../../../src/frame"
-import { indicator } from "../../../src/indicator"
-import { AnySeries, Series_Type } from "../../../src/types"
-import { ColorInput } from "../../color_picker"
-import { Icon, icons, TextIcon } from "../../icons"
-import { location_reference, overlay_div_props, OverlayDiv, point } from "../../layout/overlay_manager"
-import { NavigatorMenu } from "../../navigator_menu"
+import { data_src } from "../../src/charting_frame/charting_frame"
+import { indicator } from "../../src/charting_frame/indicator"
+import { AnySeries, Series_Type } from "../../src/types"
+import { ColorInput } from "../color_picker"
+import { Icon, icons, TextIcon } from "../icons"
+import { location_reference, overlay_div_props, OverlayDiv, point } from "../layout/overlay_manager"
+import { NavigatorMenu } from "../navigator_menu"
 import { SeriesStylePicker } from "./series_style_editor"
 
-import "../../../css/frame_widgets/chart_frames/indicator_options.css"
+import "../../css/charting_frame/indicator_options.css"
 
 /**
  * @close_menu : Callable to the close Options Menu

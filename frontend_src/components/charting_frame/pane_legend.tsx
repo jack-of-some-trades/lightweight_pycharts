@@ -3,10 +3,10 @@
  * access to visibility and input settings.
  */
 import { Accessor, createSignal, For, onCleanup, onMount, Setter, Show } from "solid-js"
-import { indicator } from "../../../src/indicator"
-import { Icon, icons } from "../../icons"
+import { indicator } from "../../src/charting_frame/indicator"
+import { Icon, icons } from "../icons"
 
-import "../../../css/frame_widgets/chart_frames/pane.css"
+import "../../css/charting_frame/pane.css"
 
 /**
  * @indicators_list : SolidJS Reactive list of indicators.

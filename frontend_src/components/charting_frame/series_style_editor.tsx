@@ -3,11 +3,11 @@
  */
 import { AreaSeriesOptions, LineStyle, LineStyleOptions, SeriesOptionsCommon } from "lightweight-charts"
 import { For, Match, Switch } from "solid-js"
-import { AnySeries, Series_Type } from "../../../src/types"
-import { ColorInput } from "../../color_picker"
-import { Icon, icons } from "../../icons"
+import { AnySeries, Series_Type } from "../../src/types"
+import { ColorInput } from "../color_picker"
+import { Icon, icons } from "../icons"
 
-import "../../../css/frame_widgets/chart_frames/series_style_editor.css"
+import "../../css/charting_frame/series_style_editor.css"
 
 interface series_style_picker{
     name: string

@@ -3,7 +3,7 @@
  */
 
 import { createSignal, For, Setter, splitProps } from "solid-js";
-import { TOOL_FUNC_MAP } from "../../../src/tools";
+import { TOOL_FUNC_MAP } from "../../../src/charting_frame/tools";
 import { Icon, icons } from "../../icons";
 import { MenuItem, ShowMenuButton } from "../../simple_menu";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../overlay_manager";

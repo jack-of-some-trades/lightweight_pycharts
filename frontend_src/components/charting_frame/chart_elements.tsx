@@ -2,8 +2,8 @@
  * JSX Components that are responsible for displaying, or are displayed on top of, a Charting Window.
  */
 import { Accessor, JSX, Setter, Signal } from "solid-js";
-import { TextIcon } from "../../icons";
-import { Layout, layout_display } from "../../layout/layouts";
+import { TextIcon } from "../icons";
+import { Layout, layout_display } from "../layout/layouts";
 import { legend_props, PaneLegend } from "./pane_legend";
 
 

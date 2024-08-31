@@ -13,8 +13,8 @@ import {
     SingleValueData,
     Time
 } from 'lightweight-charts';
+import { binarySearch } from '../../types';
 import { ensureDefined } from '../helpers/assertions';
-import { binarySearch } from '../types';
 
 export interface primitiveOptions {
     visible: boolean

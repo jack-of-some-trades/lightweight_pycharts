@@ -1,10 +1,10 @@
 import { render } from 'solid-js/web';
 import { Wrapper } from "../components/layout/wrapper";
+import { pane } from "./charting_frame/pane";
 import { container } from "./container";
 import { container_manager } from './container_manager';
-import { frame } from "./frame";
+import { frame } from './frame';
 import { Container_Layouts } from './layouts';
-import { pane } from "./pane.js";
 import { py_api } from "./py_api";
 import { Series_Type, tf } from './types';
 

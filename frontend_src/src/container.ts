@@ -1,7 +1,8 @@
 import { Accessor, Setter } from "solid-js"
 import { ContainerCTX } from "../components/layout/container"
 import { layout_display } from "../components/layout/layouts"
-import { chart_frame, frame } from "./frame"
+import { chart_frame } from "./charting_frame/charting_frame"
+import { frame } from "./frame"
 import { Container_Layouts, flex_frame, layout_switch, num_frames, Orientation, resize_sections } from "./layouts"
 
 export type update_tab_func = (
@@ -71,7 +72,10 @@ export class container{
     }
 
     /**
-     * Called by Python when creating a Frame. Returns the new Frame
+     * Called by Python when creating a Frame. Returns the new Frame so it can be made a global var.
+     * TODO: Make this instantiate an Abstract Frame that can be transmuted into a Chart_Frame
+     * Will Require a UI Element for display and Frame type Selection. Alternatively, set up a
+     * add_[type]_frame method for each type of frame and don't allow frame type manipulation.
      */
     protected add_frame(new_id: string): frame {
         let new_frame = new chart_frame(new_id, this.update_tab)
@@ -139,14 +143,5 @@ export class container{
 
         //If succsessful, update container variable and UI
         window.topbar.setLayout(layout)
-    }
-
-    /**
-     * Creates a new Frame that's tied to the DIV element given in specs.
-     */
-    private _create_frame(id: string = ''): frame {
-        let new_frame = new chart_frame(id, this.update_tab)
-        this.frames.push(new_frame)
-        return new_frame
     }
 }

@@ -1,14 +1,14 @@
 import { PriceScaleOptions } from "lightweight-charts";
 import { Accessor, createSignal, Setter, Signal } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { IndicatorOpts } from "../components/frame_widgets/chart_frames/indicator_options";
-import { OverlayCTX } from "../components/layout/overlay_manager";
-import { data_src } from "./frame";
+import { IndicatorOpts } from "../../components/charting_frame/indicator_options";
+import { OverlayCTX } from "../../components/layout/overlay_manager";
+import * as u from "../types";
+import { data_src } from "./charting_frame";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
 import { pane } from "./pane";
 import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series";
-import * as u from "./types";
 
 export class indicator {
     id: string
