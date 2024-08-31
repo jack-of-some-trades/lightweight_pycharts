@@ -2,8 +2,8 @@
  * Components that generate a <form/> to edit and apply changes to ISeriesAPI options
  */
 import { AreaSeriesOptions, LineStyle, LineStyleOptions, LineType, PriceLineSource, SeriesOptionsCommon } from "lightweight-charts"
-import { createSignal, For, Match, Show, Signal, Switch } from "solid-js"
-import { AnySeries, Series_Type } from "../../src/types"
+import { createEffect, createSignal, For, Match, on, Show, Signal, Switch } from "solid-js"
+import { AnySeries, LineSeries, Series_Type } from "../../src/types"
 import { ColorInput } from "../color_picker"
 import { Icon, icons } from "../icons"
 
@@ -27,7 +27,7 @@ export function SeriesStyleEditor(props:series_style_editor_props){
         <form ref={form} class='style_form' onSubmit={onSubmit.bind(undefined, props.series)}>
             <Switch>
                 <Match when={props.series_type===Series_Type.LINE}>
-                    <LineSeriesEditor {...(options as any)} name={props.name} submit={submit}/></Match>
+                    <LineSeriesEditor series={props.series as LineSeries} name={props.name} submit={submit}/></Match>
                 <Match when={props.series_type===Series_Type.AREA}>
                     <AreaSeriesEditor {...(options as any)} name={props.name} submit={submit}/></Match>
             </Switch>
@@ -70,15 +70,20 @@ function onSubmit(series:AnySeries, e:SubmitEvent){
  * Individual Style Components for each type of ISeriesAPI Instance
  */
 
-interface editor_opts { submit:()=>void, name:string }
+interface editor_props { submit:()=>void, name:string }
 
-function LineSeriesEditor(options:LineStyleOptions & SeriesOptionsCommon & editor_opts){
+function LineSeriesEditor(props:{series:LineSeries} & editor_props){
+    let options = props.series.options()
     const adv_settings = createSignal(false)
+
+    //Update the Options when the advenced settings toggle to make sure they are up-to-date
+    createEffect(on(adv_settings[0], () => options = props.series.options()))
+
     return <div class='series_style_selector'>
         <TitleBar 
-            name={options.name} 
+            name={props.name} 
             visible={options.visible} 
-            submit={options.submit} 
+            submit={props.submit} 
             signal={adv_settings}
         />
         <PlotLine
@@ -88,24 +93,24 @@ function LineSeriesEditor(options:LineStyleOptions & SeriesOptionsCommon & edito
             width={options.lineWidth}
             style={options.lineStyle}
             type={options.lineType}
-            submit={options.submit}
+            submit={props.submit}
             show_adv={adv_settings[0]()}
         />
         <SeriesCommon 
             show_adv={adv_settings[0]()}
-            submit={options.submit}
+            submit={props.submit}
             options={options}
         />
         <Markers
             show_adv={adv_settings[0]()}
-            submit={options.submit}
+            submit={props.submit}
             options={options}
         />
     </div>
 }
 
 
-function AreaSeriesEditor(options:AreaSeriesOptions & SeriesOptionsCommon & editor_opts){
+function AreaSeriesEditor(options:AreaSeriesOptions & SeriesOptionsCommon & editor_props){
     return <></>
 }
 
@@ -195,6 +200,7 @@ function PriceLine(props:price_line_props){
     </div>
 }
 
+
 interface baseline_props{
     visible:boolean, color:string, width:number, style:LineStyle, submit:()=>void, show_adv:boolean
 }
@@ -217,6 +223,7 @@ function Markers(props:{show_adv:boolean, submit:()=>void, options:LineStyleOpti
             <label for={'pointMarkersVisible'} innerText='Data pts:'/>
             <Checkbox key={'pointMarkersVisible'} visible={props.options.pointMarkersVisible} submit={props.submit}/>
             <LineWidthPicker key={'pointMarkersRadius'} default={props.options.pointMarkersRadius??2.5} submit={props.submit}/>
+
             <label for={'crosshairMarkerVisible'} innerText='Crosshair pt:'/>
             <Checkbox key={'crosshairMarkerVisible'} visible={props.options.crosshairMarkerVisible} submit={props.submit}/>
             <LineWidthPicker key={'crosshairMarkerRadius'} default={props.options.crosshairMarkerRadius} submit={props.submit}/>

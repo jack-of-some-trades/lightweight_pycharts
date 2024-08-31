@@ -64,7 +64,7 @@ export function IndicatorOpts(props:indicator_option_props){
         >
             <div class="title_box">
                 <h2>{props.parent_ind.type + " • " + props.parent_ind.name + "Options"}</h2>
-                <Icon icon={icons.close} force_reload={true} onMouseDown={props.close_menu}/>
+                <Icon icon={icons.close} force_reload={true} onClick={props.close_menu}/>
             </div>
 
             <NavigatorMenu
