@@ -80,6 +80,16 @@ def update_dataframe(
 
 # region -------------------------------- Pandas Series Objects -------------------------------- #
 
+# TODO: Integrate a method of tracking what is displayed and use that to limit the amount displayed.
+# Currently, All data is sent to the screen. This may be thousands of data-points that may never be
+# viewed. To limit the load on the Multi-processor fwd_queue an 'infinite history' system is needed
+# i.e. : https://tradingview.github.io/lightweight-charts/tutorials/demos/infinite-history
+#
+# I imagine this code will originate w/ a JS Window API callback in the rtn_queue. From there,
+# The Main_Series of the respective frame will handle the call; Updating a 'bars-back' variable in
+# the Frame's Main Series[_DF/Ind]. This update will then propagate down through the indicator stack
+# so each indicator can inform their respective series_common elements to display a certain range.
+
 
 @pd.api.extensions.register_dataframe_accessor("lwc_df")
 class Series_DF:
@@ -562,6 +572,11 @@ class Whitespace_DF:
         "Extends the dataframe with one datapoint of whitespace. This whitespace datapoint is a valid trading time."
         if self.simple_override:  # Don't Bother with calendar if 24/7 market
             return self._simple_extend()
+
+        # TODO : Optimize this function... by optimizing pandas_market_calendars... :(
+        # The calendar function calls far above and a way the most inefficient code in all of
+        # the backend calculations that are done. Sadly it's also the library that probably
+        # slows down start-up the most. It just does everything I need it to do tho.
 
         curr_bar_time: pd.Timestamp = self.df["time"].iloc[-1]
         next_bar_time = curr_bar_time + self.pd_tf

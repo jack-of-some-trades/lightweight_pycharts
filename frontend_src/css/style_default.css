@@ -68,6 +68,7 @@
     --chart-xhair-mode: 0;
     --chart-right-offset: 20;
     --chart-scale-mode: 1;
+    --chart-tv-logo: true;
     --chart-scale-mode-left: var(--chart-scale-mode);
     --chart-scale-mode-right: var(--chart-scale-mode);
 

@@ -292,6 +292,7 @@ class LayoutOptions:
     textColor: Optional[JS_Color] = None
     fontSize: Optional[int] = None
     fontFamily: Optional[str] = None
+    attributionLogo: Optional[bool] = None
 
 
 @dataclass
