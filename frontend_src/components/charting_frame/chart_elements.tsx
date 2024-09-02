@@ -74,7 +74,9 @@ export function ChartPane(props:chart_pane_props){
 
 
 /**
- * To Be Implemented: Component to display over a given price axis to change the scale between Log and Linear.
+ * Buttons that show when the user hovers over either the left or right price scale.
+ * The Buttons allow the user to change between Normal, Log, %, and
+ * index-to-100 scales. The scale can also be inverted.
  */
 interface scale_props extends JSX.HTMLAttributes<HTMLDivElement>{
     scale_ref:HTMLTableCellElement
