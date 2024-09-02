@@ -213,7 +213,6 @@ export class pane {
 /* Default TimeChart Options. It's a Function so the style is Evaluated at pane construction */
 function DEFAULT_PYCHART_OPTS(){
     const style = getComputedStyle(document.documentElement)
-    console.log(style.getPropertyValue("--chart-tv-logo"))
     const OPTS: DP<lwc.TimeChartOptions> = {
         layout: {                   // ---- Layout Options ----
             background: {

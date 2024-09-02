@@ -75,7 +75,10 @@
 
 /* ---------------- Charts / Panes ---------------- */
 
-.tv-lightweight-charts { box-sizing: border-box; }
+.tv-lightweight-charts { 
+    box-sizing: border-box; 
+    cursor: crosshair;
+}
 
 .pane_ruler,
 .frame_ruler{

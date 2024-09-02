@@ -1,5 +1,6 @@
 import { Signal } from "solid-js"
 import { icons } from "../../components/icons"
+import { setArrow, setCrosshair, setDot } from "./lwpc-plugins/cursors"
 import { creatingTrendLine, trendline_user_interface } from "./lwpc-plugins/trend-line/trend-line-ui"
 import { pane } from "./pane"
 
@@ -53,6 +54,9 @@ export function onToolSelect(
 
 // Icon:Function map. The Function should be more or less a bound 'onToolSelect()' instance.
 export const TOOL_FUNC_MAP = new Map<icons, ()=>void> ([
+    [icons.cursor_dot, setDot],
+    [icons.cursor_arrow, setArrow],
+    [icons.cursor_cross, setCrosshair],
     [icons.trend_line, trendline_user_interface],
 ])
 
