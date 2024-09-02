@@ -1,6 +1,6 @@
 import * as lwc from "lightweight-charts";
 import { DeepPartial as DP, Time } from "lightweight-charts";
-import { RoundedCandleSeriesOptions } from "./plugins/rounded-candles-series/rounded-candles-series";
+import { RoundedCandleSeriesOptions } from "./charting_frame/plugins/rounded-candles-series/rounded-candles-series";
 
 // #region ---------------- Enums & Interfaces ---------------- //
 

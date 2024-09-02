@@ -7,7 +7,7 @@ import { location_reference, OverlayCTX, OverlayDiv, point } from "../overlay_ma
 import { toolbar_menu_props, ToolBarMenuButton } from "./toolbar_menu"
 
 import "../../../css/layout/toolbar.css"
-import { TOOL_FUNC_MAP } from "../../../src/charting_frame/tools"
+import { TOOL_CREATION_MAP, TOOL_FUNC_MAP } from "../../../src/charting_frame/tools"
 
 export function ToolBar(props:JSX.HTMLAttributes<HTMLDivElement>){
     return <div class='layout_main layout_flex flex_col' {...props}>
@@ -123,7 +123,11 @@ function ToolBoxOverlay( props:toolbox_props ){
         >
             <Icon hover={false} icon={icons.menu_dragable}/>
             <For each={tools()}>{(tool)=>
-                <Icon icon={tool} onClick={TOOL_FUNC_MAP.get(tool)}/>
+                <Icon 
+                    icon={tool} 
+                    onClick={TOOL_FUNC_MAP.get(tool)}
+                    attr:active={TOOL_CREATION_MAP.get(tool)?.[0]() ? "" : undefined}
+                />
             }</For>
         </OverlayDiv>
     )

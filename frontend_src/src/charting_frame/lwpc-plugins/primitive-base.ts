@@ -15,6 +15,7 @@ import {
 } from 'lightweight-charts';
 import { binarySearch } from '../../types';
 import { ensureDefined } from '../helpers/assertions';
+import { pane } from '../pane';
 
 export interface primitiveOptions {
     visible: boolean
@@ -32,8 +33,9 @@ export interface primitiveOptions {
  * Docs: https://tradingview.github.io/lightweight-charts/docs/plugins/series-primitives
  */
 export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
-    protected _chart: IChartApi | undefined = undefined;
-    protected _series: ISeriesApi<keyof SeriesOptionsMap> | undefined = undefined;
+    _pane: pane | undefined
+    protected _chart: IChartApi | undefined
+    protected _series: ISeriesApi<keyof SeriesOptionsMap> | undefined
 
     _id: string = ""
     _type: string = "null"

@@ -34,7 +34,7 @@ export class chart_frame extends frame {
     setStyle: Setter<string>
     setDisplays: Setter<layout_display[]>
 
-    private panes: pane[] = []
+    panes: pane[] = []
     private flex_panes: flex_frame[] = []
 
     constructor(id: string, tab_update_func: update_tab_func) {

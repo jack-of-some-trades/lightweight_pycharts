@@ -197,10 +197,6 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 	_selected: boolean = false
 	_renderer: TrendLinePaneRenderer
 
-	_line_id:string
-	_line_p1_id:string
-	_line_p2_id:string
-
 	line: Path2D | null = null
 	ctx: CanvasRenderingContext2D | null = null
 
@@ -211,9 +207,6 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			this._source._options,
 			this.passback.bind(this)
 		)
-		this._line_id = this._source._id
-		this._line_p1_id = this._line_id + '_p1'
-		this._line_p2_id = this._line_id + '_p2'
 	}
 
 	update() {
@@ -293,7 +286,7 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			this._hovered = true
 			return { 
 				cursorStyle: 'grab',
-				externalId: this._line_p1_id,
+				externalId: this._source._id + '_p1',
 				zOrder: 'normal'
 			}
 		}
@@ -301,7 +294,7 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			this._hovered = true
 			return {
 				cursorStyle: 'grab',
-				externalId: this._line_p2_id,
+				externalId: this._source._id + '_p2',
 				zOrder: 'normal'
 			}
 		}
@@ -311,7 +304,7 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			this._hovered = true
 			return {
 				cursorStyle: 'grab',
-				externalId: this._line_id,
+				externalId: this._source._id,
 				zOrder: 'normal'
 			}
 		}

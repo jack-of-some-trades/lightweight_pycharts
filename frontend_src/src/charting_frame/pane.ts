@@ -6,7 +6,6 @@ import * as u from "../types";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
 import { primitives } from "./lwpc-plugins/primitives";
-import { TrendLine } from "./lwpc-plugins/trend-line/trend-line";
 
 
 //The portion of a chart where things are actually drawn
@@ -151,21 +150,15 @@ export class pane {
         )
     }
 
+    /* Create then add a primitive from known object parameters */
     protected add_primitive(_id: string, _type: string, params:object) {
         let primitive_type = primitives.get(_type)
         if (primitive_type === undefined) return
         let new_obj = new primitive_type(_id, params)
 
+        new_obj._pane = this
         this.primitives_right.set(_id, new_obj)
         this.primitive_right.attachPrimitive(new_obj)
-    }
-
-    protected remove_primitive(_id: string) {
-        let _obj = this.primitives_right.get(_id)
-        if (_obj === undefined) return
-
-        this.primitive_right.detachPrimitive(_obj) 
-        this.primitives_right.delete(_id)
     }
 
     protected update_primitive(_id: string, params:object) {
@@ -174,12 +167,30 @@ export class pane {
         _obj.updateData(params)
     }
 
-    resize(){this.chart.resize(Math.max(this.div().clientWidth-2, 0), Math.max(this.div().clientHeight-2, 0), false)}
+    /* Attach a primitive that is already constructed. */
+    attach_primitive(obj:PrimitiveBase){
+        const primitive_ids = Object.keys(this.primitives_right)
+        const new_id = u.makeid(primitive_ids, 'p_')
 
-    create_line(point1: SingleValueData, point2: SingleValueData) {
-        const trend = new TrendLine("some_id", {p1:point1, p2:point2});
-        this.primitive_right.attachPrimitive(trend);
+        // TODO : Reassess the fact that the js_id is not constant here. This is the only location (currently)
+        // where it isn't constant. That breaks an unspoken rule to allow primitives to easily transfer
+        // from one series to another avoiding collisions. That should probably change and instead an entirely
+        // new Primititive with the same options should be created
+        obj._id = new_id
+        obj._pane = this
+        this.primitives_right.set(new_id, obj)
+        this.primitive_right.attachPrimitive(obj)
     }
+
+    remove_primitive(_id: string) {
+        let _obj = this.primitives_right.get(_id)
+        if (_obj === undefined) return
+
+        this.primitive_right.detachPrimitive(_obj) 
+        this.primitives_right.delete(_id)
+    }
+
+    resize(){this.chart.resize(Math.max(this.div().clientWidth-2, 0), Math.max(this.div().clientHeight-2, 0), false)}
 
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }

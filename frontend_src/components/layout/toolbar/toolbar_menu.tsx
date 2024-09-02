@@ -2,8 +2,8 @@
  * ToolBox Overlay Menu and Menu-Open Button.
  */
 
-import { createSignal, For, Setter, splitProps } from "solid-js";
-import { TOOL_FUNC_MAP } from "../../../src/charting_frame/tools";
+import { createSignal, For, onMount, Setter, splitProps } from "solid-js";
+import { TOOL_CREATION_MAP, TOOL_FUNC_MAP } from "../../../src/charting_frame/tools";
 import { Icon, icons } from "../../icons";
 import { MenuItem, ShowMenuButton } from "../../simple_menu";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../overlay_manager";
@@ -53,8 +53,10 @@ export function ToolBarMenuButton(props:toolbar_menu_props){
             onMouseEnter={() => seticonDeact(icons.menu_arrow_ew)} 
             onMouseLeave={() => seticonDeact(icons.blank)}
         >
-            <Icon 
-                icon={displayIcon()} 
+            <Icon
+                icon={displayIcon()}
+                attr:active={TOOL_CREATION_MAP.get(displayIcon())?.[0]() ? "" : undefined}
+                onClick={TOOL_FUNC_MAP.get(displayIcon())}
                 classList={{toolbar_icon_btn:true}}
             />
             <ShowMenuButton 
@@ -80,6 +82,7 @@ interface toolbar_overlay_props extends Omit<overlay_div_props, "location_ref"> 
  *                      Each sub-Array holds the tools within each group
  */
 function ToolBarOverlay(props:toolbar_overlay_props){
+    let setDisplay: Setter<boolean>
     const tools = ToolBoxCTX().tools
     const setTools = ToolBoxCTX().setTools
     const [,overlayDivProps] = splitProps(props, ["tools", "setIcon"])
@@ -96,7 +99,10 @@ function ToolBarOverlay(props:toolbar_overlay_props){
         const tool_func = TOOL_FUNC_MAP.get(tool)
         if (tool_func) tool_func()
         else console.log("invalid tool")
+        setDisplay(false)
     }
+
+    onMount(()=>{setDisplay = OverlayCTX().getDisplaySetter(props.id)})
 
     return (
         <OverlayDiv 
