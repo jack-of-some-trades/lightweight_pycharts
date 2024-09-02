@@ -1,6 +1,6 @@
 import * as lwc from "lightweight-charts";
 import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
-import { Accessor, createSignal, JSX, Setter } from "solid-js";
+import { Accessor, createEffect, createSignal, JSX, on, Setter, Signal } from "solid-js";
 import { ChartPane } from "../../components/charting_frame/chart_elements";
 import * as u from "../types";
 import { indicator } from "./indicator";
@@ -30,6 +30,11 @@ export class pane {
     whitespace_series: u.LineSeries
     private chart_div: HTMLDivElement
 
+    private leftScaleMode: Signal<number>
+    private leftScaleInvert: Signal<boolean>
+    private rightScaleMode: Signal<number>
+    private rightScaleInvert: Signal<boolean>
+
     // Reference to Indicators on the Pane used to construct the Pane's Legend
     private indicators: Accessor<indicator[]>
     private setIndicators: Setter<indicator[]>
@@ -53,7 +58,19 @@ export class pane {
         const indicatorSignal = createSignal<indicator[]>([])
         this.indicators = indicatorSignal[0]
         this.setIndicators = indicatorSignal[1]
-        
+
+        //Signals for Scale Display
+        this.rightScaleMode = createSignal<number>(OPTS.rightPriceScale?.mode ?? 0)
+        this.rightScaleInvert = createSignal<boolean>(OPTS.rightPriceScale?.invertScale ?? false)
+        this.leftScaleMode = createSignal<number>(OPTS.leftPriceScale?.mode ?? 0)
+        this.leftScaleInvert = createSignal<boolean>(OPTS.leftPriceScale?.invertScale ?? false)
+
+        //Change Options when any of the above are updated
+        createEffect(on(
+            [this.rightScaleMode[0], this.rightScaleInvert[0], this.leftScaleMode[0], this.leftScaleInvert[0]],
+            ()=>{this.update_opts({})
+        }))
+
         const legend_props = {
             parent_pane:this,
             indicators_list:this.indicators
@@ -61,25 +78,16 @@ export class pane {
         this.element = ChartPane({
             ref:setDiv,
             chart_el:this.chart_div,
-            legend_props:legend_props
+            legend_props:legend_props,
+
+            rightScaleMode: this.rightScaleMode,
+            rightScaleInvert: this.rightScaleInvert,
+            leftScaleMode: this.leftScaleMode,
+            leftScaleInvert: this.leftScaleInvert,
         })
 
 
-        //Create Logscale Toggle Button
-        // const Box = this.chart_div.querySelector("table > tr:nth-child(2) > td:nth-child(3) > div") as HTMLDivElement
-        // if (this.chart.options().rightPriceScale.visible){
-        //     const showLogBtn = createSignal<boolean>(false)
-        //     const logScale = createSignal<number>(OPTS.rightPriceScale?.mode ?? 0)
-        //     createEffect(() => {this.update_opts({rightPriceScale:{mode:logScale[0]()}})})
-
-        //     this.derender_logButton = render(() => scale_toggle({
-        //         class:"scale_toggle_right", show:showLogBtn[0], scale:logScale
-        //     }), this.div)
-        //     Box.addEventListener('mouseenter', ()=>showLogBtn[1](true))
-        //     Box.addEventListener('mouseleave', ()=>showLogBtn[1](false))
-        //     Box.addEventListener('click', (e) => {if(e.button === 0) logScale[1](logScale[0]() == 1? 0 : 1)})
-        // }
-
+        //Create Scale Control Buttons
         this.whitespace_series = this.chart.addLineSeries()
         //Add Blank Series that primtives can be attached to
         this.primitive_left = this.chart.addLineSeries({ priceScaleId: 'left', visible: false, autoscaleInfoProvider: undefined })
@@ -190,12 +198,30 @@ export class pane {
         this.primitives_right.delete(_id)
     }
 
+    update_opts(newOpts: DP<lwc.TimeChartOptions>) {
+        //Splice in the priceScale options overwritting/updating signals as needed
+        optionsSplice(newOpts, 'leftPriceScale', 'mode', this.leftScaleMode)
+        optionsSplice(newOpts, 'leftPriceScale', 'invertScale', this.leftScaleInvert)
+        optionsSplice(newOpts, 'rightPriceScale', 'mode', this.rightScaleMode)
+        optionsSplice(newOpts, 'rightPriceScale', 'invertScale', this.rightScaleInvert)
+        this.chart.applyOptions(newOpts)
+    }
+
     resize(){this.chart.resize(Math.max(this.div().clientWidth-2, 0), Math.max(this.div().clientHeight-2, 0), false)}
 
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
-    update_opts(newOpts: DP<lwc.TimeChartOptions>) { this.chart.applyOptions(newOpts) }
     update_timescale_opts(newOpts: DP<lwc.HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
+}
+
+function optionsSplice(opts:any, group:string, object:string, signal:any){
+    if (opts[group] !== undefined)
+        if(opts[group][object] === undefined)
+            opts[group][object] = signal[0]()   //Set the Object to the signal
+        else
+            signal[1](opts[group][object])      //Update the signal w/ the Obj's value
+    else
+        opts[group] = {[object]:signal[0]()}    //Create the Whole Group with the signal value added
 }
 
 
