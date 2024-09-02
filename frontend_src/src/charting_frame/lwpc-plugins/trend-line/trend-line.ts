@@ -12,8 +12,8 @@ import {
 	SingleValueData,
 	Time
 } from 'lightweight-charts';
+import { point } from '../../../../components/layout/overlay_manager';
 import { PrimitiveBase, draw_dot, primitiveOptions } from '../primitive-base';
-
 
 
 /* --------------------- Primitive Options ----------------------- */
@@ -104,48 +104,22 @@ export class TrendLine extends PrimitiveBase {
 			this._paneView._selected = false
 			return
 		}
-		const timescale = this.chart.timeScale()
-		const series = this.series
 
-
-		const chart_rect = this.chart.chartElement().getBoundingClientRect()
-		if (!chart_rect) return
-
+		//Determine moveMove update Function
 		let update_func
 		if (id === this._id) {
-			let x = param.logical
-			let y = param.sourceEvent.clientY
-
-			update_func = (param: MouseEventParams<Time>) => {
-				if (!param.logical || !param.sourceEvent || !this._p1 || !this._p2) return
-				let dx = param.logical - x as Logical
-				let dy = param.sourceEvent.clientY - y as Coordinate
-
-				let p1 = this.movePoint(this._p1, dx, dy)
-				let p2 = this.movePoint(this._p2, dx, dy)
-
-				if (!p1 || !p2) return
-				this.updateData({p1:p1, p2:p2})
-				x = param.logical
-				y = param.sourceEvent.clientY
-			}
-
-		} else if (id === this._id+'_p1' || id === this._id+'_p2') {
-			update_func = (param: MouseEventParams<Time>) => {
-				if (!param.sourceEvent) return
-				let t = timescale.coordinateToTime(param.sourceEvent.clientX - chart_rect.left)
-				let p = series.coordinateToPrice(param.sourceEvent.clientY - chart_rect.top)
-				if (t && p)
-					if (id === this._id+'_p1')
-						this.updateData({p1:{ time: t, value: p }, p2:null})
-					else if (id === this._id+'_p2')
-						this.updateData({p1:null, p2:{ time: t, value: p }})
-			}
+			//Binding a point object so that x & y can update inside function call 
+			update_func = this.mouseMoveWholeLine.bind(
+				this, {x:param.logical,y:param.sourceEvent.localY}
+			)
+		} else if (id === this._id+'_p1'){
+			update_func = this.mouseMoveEndPoint.bind(this, true)
+		} else if (id === this._id+'_p2'){
+			update_func = this.mouseMoveEndPoint.bind(this, false)
 		} else return
 
 		//Now that we're gurenteed to have clicked on the line somewhere...
 		this._paneView._selected = true
-
 
 		const chart = this.chart
 		const pressedMove = chart.options().handleScroll.valueOf() as HandleScrollOptions | boolean
@@ -165,7 +139,7 @@ export class TrendLine extends PrimitiveBase {
 			chart.unsubscribeCrosshairMove(update_func)
 			//Reenable Scrolling effect if it was set
 			chart.applyOptions({ handleScroll: { pressedMouseMove: pressedMoveReEnable } })
-		})
+		},{once:true})
 	}
 
 	onClick(param: MouseEventParams<Time>) {
@@ -182,6 +156,33 @@ export class TrendLine extends PrimitiveBase {
 				break;
 		}
 	}
+
+	private mouseMoveEndPoint(p1: boolean, param: MouseEventParams<Time>){
+		if (!param.sourceEvent) return
+		let t = this.chart.timeScale().coordinateToTime(param.sourceEvent.localX)
+		let p = this.series.coordinateToPrice(param.sourceEvent.localY)
+
+		if (t && p)
+			if (p1)
+				this.updateData({p1:{ time: t, value: p }, p2:null})
+			else
+				this.updateData({p1:null, p2:{ time: t, value: p }})
+	}
+
+	private mouseMoveWholeLine(last_point:point , param: MouseEventParams<Time>){
+		if (!param.logical || !param.sourceEvent || !this._p1 || !this._p2) return
+		let dx = param.logical - last_point.x as Logical
+		let dy = param.sourceEvent.localY - last_point.y as Coordinate
+
+		let p1 = this.movePoint(this._p1, dx, dy)
+		let p2 = this.movePoint(this._p2, dx, dy)
+
+		if (!p1 || !p2) return
+		this.updateData({p1:p1, p2:p2})
+		last_point.x = param.logical
+		last_point.y = param.sourceEvent.localY
+	}
+
 	//#endregion
 }
 
