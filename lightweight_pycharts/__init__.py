@@ -1,20 +1,21 @@
 """ 
-Lightweight-pycharts is an ORM implementation of TradingView's Lightweight Charts API.
-This Module Spawns a new process and 
+Lightweight-pycharts is a locally executed Web-App constructed from Python and Typescript.
+The Web-App is Launched via PyWebView and builds heavily on TradingView's Lightweight Charts API.
 
-https://github.com/jack-of-some-trades/lightweight-pycharts
+The Primary Goal is to offer a means to Display and Manipulate timeseries data from any source,
+static or dynamic, without restriction.
+
+https://github.com/jack-of-some-trades/lightweight_pycharts
+
+TradingView Lightweight Charts™
+Copyright (с) 2023 TradingView, Inc. https://www.tradingview.com/
 """
 
 import logging
 
-import lightweight_pycharts.orm.enum as enum
-import lightweight_pycharts.orm.types as types
-import lightweight_pycharts.orm.series as series
-import lightweight_pycharts.orm.options as options
+from lightweight_pycharts import orm
+from lightweight_pycharts import indicators
 
-# Without the following line Pylance shows the above lines as errors?
-from . import orm
-from . import indicators
 from .indicator import Indicator
 from .window import Window, Container, Frame, Pane
 from .orm.types import TF, Color, Symbol
@@ -26,11 +27,6 @@ __all__ = (
     "Container",
     "Frame",
     "Pane",
-    # SubModules
-    "types",
-    "enum",
-    "series",
-    "options",
     #
     # Types
     "TF",

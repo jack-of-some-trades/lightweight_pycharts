@@ -1,15 +1,10 @@
-import sys
-import pathlib
-
-sys.path.append(str(pathlib.Path().resolve()))
-# prior code is only needed for when developing/editing the library directly
-
 import asyncio
-import pandas as pd
 from typing import Optional
 
+import pandas as pd
+
 import lightweight_pycharts as lwc
-from lightweight_pycharts.orm.types import Symbol
+from lightweight_pycharts import Symbol
 from lightweight_pycharts.orm.series import OhlcData, SingleValueData
 
 

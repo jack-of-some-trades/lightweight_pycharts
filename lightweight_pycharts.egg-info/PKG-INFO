@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: lightweight-pycharts
+Version: 0.0.0
+Summary: Python based web-app for Viewing & Manipulating TimeSeries Data.
+Home-page: https://github.com/jack-of-some-trades/lightweight-pycharts
+Author: jack_of_some_trades
+Author-email: Bryce.m.hawk@gmail.com
+License: TBD
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=2.2.2
+Requires-Dist: pandas_market_calendars>=4.4.1
+Requires-Dist: pywebview>=5.1
+
+TBD

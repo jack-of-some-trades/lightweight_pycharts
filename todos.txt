@@ -1,0 +1,20 @@
+- Indicators Search Menu + Python Import-Lib
+
+
+- Series(Indicator) + Volume Refactor
+- Series Common Additions (Markers, H-lines, Sub-class Typing extensions)
+
+
+- Python Separation of Frames and Charting Frames
+- Util Side Window
+
+
+- Refactor Types.ts to be a lightweight-chart.d.typings extension
+- Primitive Series Base Class?
+
+
+- Additional primitive Tools
+
+
+- Chart Mouse Event/Keyboard Listener to open menus / delete objects
+	- Window Wide Keyboard Listener?
