@@ -150,13 +150,18 @@ export class indicator {
 
     /**
      * Unfortunately, change_series_type changes the draw order of the Series on screen.
-     * This is the result of deleteing the old series and creating a new one. The draw order
-     * appears to be determined by the order in which the series objects are added to the screen.
-     * After some trial testing it appears the chart object has an 'rw' property. This is a map
-     * w/ the series objects as keys. I do not know the type of the value. This 'rw' map gets
-     * reordered when adding/removing series objects. I already tried to reorder this map
-     * to change the display order, but that had no effect on the display. of note: it did not
-     * break anything.
+     * This is the result of deleteing the old series and creating a new one... I mean that would be
+     * unfortunate if I didn't figure out a way around it.. 
+     * 
+     * To do this (after applying the objects to the screen) you need to change the _zOrder:number 
+     * within some/all of the series applied to the tv 'Pane' (not this lib's pane) which displays 
+     * the series objects. To get a reference to this pane's series objects call 
+     * chart._chartWidget._model._panes[0]._dataSources: (chart.lw.$i.kc[0].vo)** for lwc v4.2.0
+     * 
+     * With this array, you can set _dataSources[i]._zOrder to the desired value. (chart.lw.$i.kc[0].vo[i].Zi)**
+     * The _zOrder value can be a duplicate, negative, and have gaps between other series values.
+     * From here the pane._cachedOrderedSources needs to be set to null (chart.lw.$i.kc[0].po = null)** 
+     * Then a redraw of the chart invoked. chart._chartWidget._model.lightUpdate() ( chart.lw.$i.$h() )**
      */
     protected change_series_type(_id: string, series_type: u.Series_Type, data: u.AnySeriesData[]) {
         let series = this.series.get(_id)
