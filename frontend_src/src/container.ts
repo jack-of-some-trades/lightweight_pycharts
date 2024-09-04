@@ -53,19 +53,25 @@ export class container{
     /**
      * Resize all the child Elements based on the size of the container's Div. 
      */
-    resize() {
+    resize(container_rect?:DOMRect) {
         // Calculate the new sizes of all the frames
-        resize_sections(this.divRect, this.flex_frames)
+        resize_sections(container_rect? ()=>container_rect : this.divRect, this.flex_frames)
 
         // Put all the resizing info into a style tag. Long-story short, putting this info into
         // a reactive 'style' tag for each JSX.Element div is a damn pain.
-        let style = ""
+        let style = "", frame_num = 0
         this.flex_frames.forEach((frame, i)=>{
             style += `
             div.frame:nth-child(${i+2})${frame.style}`
         })
         this.setStyle(style)
 
+        //The literal 1ms delay allows the setStyle() call to take effect. 
+        //Without it, the frames update prematurely
+        setTimeout(this.resize_frames.bind(this), 1)
+    }
+
+    private resize_frames(){
         // Resize all contents of each *visible* Frames
         for (let i = 0; i < num_frames(this.layout); i++)
             this.frames[i].resize()

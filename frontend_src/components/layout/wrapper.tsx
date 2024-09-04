@@ -3,7 +3,7 @@
  * and construction of the entire SolidJS Component tree is initiated.
  */
 
-import { JSX, createEffect, onMount } from 'solid-js'
+import { JSX, createEffect, createSignal, on, onMount } from 'solid-js'
 import { SetStoreFunction, createStore } from 'solid-js/store'
 import { OverlayContextProvider } from './overlay_manager'
 import { TitleBar } from './titlebar'
@@ -14,11 +14,14 @@ import "../../css/layout/wrapper.css"
 import "../../css/style_default.css"
 import { ColorContext } from '../color_picker'
 import { Container } from './container'
+import { WidgetBar, WidgetPanel } from './widgetbar/widgetbar'
 
 const MARGIN = 5
 const TOP_HEIGHT = 38
 const TITLE_HEIGHT = 38
-const NAVBAR_WIDTH = 52
+export const WIDGET_BAR_WIDTH = 52
+const [WIDGET_PANEL_WIDTH, setWidgetPanelWidth] = createSignal(208)
+export const WIDGET_PANEL_MARGIN = 2
 const TOOLBAR_WIDTH = 46
 const UTILBAR_WIDTH = 38
 
@@ -31,7 +34,8 @@ interface layout_struct {
     titlebar:{width:string, height:string, top:string, left:string},
     topbar:{display:string, width:string, height:string, top:string, left:string},
     toolbar:{display:string, width:string, height:string, top:string, left:string},
-    navbar:{display:string, width:string, height:string, top:string, right:string},
+    widgetbar:{display:string, width:string, height:string, top:string, right:string},
+    widgetpanel:{display:string, width:string, height:string, top:string, right:string},
     utilbar:{display:string, width:string, height:string, bottom:string, left:string},
 }
 
@@ -41,17 +45,19 @@ const layout_default:layout_struct = {
     titlebar:{width:'100vw', height:'38px', top:'0px', left:'0px'},
     topbar:{display:'flex', width:'100vw', height:'38px', top:`${TITLE_HEIGHT}px`, left:'0px'},
     toolbar:{display:'flex', width:`${TOOLBAR_WIDTH}px`, height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, left:'0px'},
-    navbar:{display:'flex', width:`${NAVBAR_WIDTH}px`, height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, right:'0px'},
+    widgetbar:{display:'flex', width:`${WIDGET_BAR_WIDTH}px`, height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, right:'0px'},
+    widgetpanel:{display:'none', width:'-1px', height:'-1px', top:`${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`, right:`${WIDGET_BAR_WIDTH + WIDGET_PANEL_MARGIN}px`},
     utilbar:{display:'flex', width:'-1px', height:`${UTILBAR_WIDTH}px`, bottom:'0px', left:`${TOOLBAR_WIDTH + MARGIN}px`},
 }
 
 export enum LAYOUT_SECTIONS {
-    TITLE_BAR = 'div_title',
-    TOP_BAR = 'div_top',
-    TOOL_BAR = 'div_left',
-    NAV_BAR = 'div_right',
-    UTIL_BAR = 'div_bottom',
-    CENTER = 'div_center'
+    TITLE_BAR = 0,
+    TOP_BAR = 1,
+    TOOL_BAR = 2,
+    WIDGET_BAR = 3,
+    WIDGET_PANEL = 4,
+    UTIL_BAR = 5,
+    CENTER = 6
 }
 
 /**
@@ -65,14 +71,23 @@ export function Wrapper(){
         window.addEventListener('resize', () => resize(window.innerWidth, window.innerHeight, layout, set_layout))
         resize(window.innerWidth, window.innerHeight, layout, set_layout) //Set initial size
     });
-    //createEffect adds a section visibility listener
-    createEffect(() => resize(window.innerWidth, window.innerHeight, layout, set_layout))
+
+    //Resize when visibility changes & when Widget_Panel changes size
+    createEffect(() => {resize(window.innerWidth, window.innerHeight, layout, set_layout)})
+    createEffect(on(WIDGET_PANEL_WIDTH, () => {resize(window.innerWidth, window.innerHeight, layout, set_layout)}))
 
     //Functions to be passed to the Titlebar
     const title_bar_props = {
         show_section:show_section_unbound.bind(undefined, set_layout),
         hide_section:hide_section_unbound.bind(undefined, set_layout),
     }
+
+    //Functions to be passed to the WidgetBar
+    const widget_bar_props = {
+        showWidgetPanel:show_section_unbound.bind(undefined, set_layout, LAYOUT_SECTIONS.WIDGET_PANEL),
+        hideWidgetPanel:hide_section_unbound.bind(undefined, set_layout, LAYOUT_SECTIONS.WIDGET_PANEL),
+    }
+
 
     //Important Note: You cannot use <Show/> to control visibility here. <Show/> completely recreates
     //The element in question which removes the state information held by sub elements. To use <Show/>
@@ -84,7 +99,8 @@ export function Wrapper(){
                 <TitleBar style={layout.titlebar} {...title_bar_props}/>
                 <TopBar style={layout.topbar}/>
                 <ToolBar style={layout.toolbar}/>
-                <div class='layout_main layout_flex flex_col' style={layout.navbar}/>
+                <WidgetBar style={layout.widgetbar} {...widget_bar_props}/>
+                <WidgetPanel style={layout.widgetpanel} resizePanel={setWidgetPanelWidth}/>
                 <div class='layout_main' style={layout.utilbar}/>
             </div>
         </GlobalContexts>
@@ -117,22 +133,25 @@ function resize(width:number, height:number, layout:layout_struct, set_layout:Se
     }
     if (layout.toolbar.display === 'flex')
         center_width -= (TOOLBAR_WIDTH + MARGIN)
-    if (layout.navbar.display === 'flex')
-        center_width -= (NAVBAR_WIDTH + MARGIN)
+    if (layout.widgetbar.display === 'flex')
+        center_width -= (WIDGET_BAR_WIDTH + MARGIN)
+    if (layout.widgetpanel.display === 'flex')
+        center_width -= (WIDGET_PANEL_WIDTH()) + WIDGET_PANEL_MARGIN
     if (layout.utilbar.display === 'flex')
         center_height -= (UTILBAR_WIDTH + MARGIN)
 
     //Top Bar automatically resizes, no adjustment needed
     set_layout('toolbar', 'height', `${side_bar_height}px`)
-    set_layout('navbar', 'height', `${side_bar_height}px`)
+    set_layout('widgetbar', 'height', `${side_bar_height}px`)
+    set_layout('widgetpanel', 'height', `${side_bar_height}px`)
+    set_layout('widgetpanel', 'width', `${WIDGET_PANEL_WIDTH()}px`)
     set_layout('center', 'height', `${center_height}px`)
     set_layout('center', 'width', `${center_width}px`)
     set_layout('utilbar', 'width', `${center_width}px`)
 
-    //Resize Active Charting window (Ensures proper resize execution)
-    if (window.active_container) {
-        window.active_container.resize()
-    }
+    //Resize Active Center Display, A DOMRect is given so that the dimensions are accurate. 
+    // w/o it, the container retrieves the size of the center panel prior to the set_layout calls taking effect.
+    if (window.active_container) window.active_container.resize(new DOMRect(0, 0, center_width, center_height))
 }
 
 function show_section_unbound(set_layout:SetStoreFunction<layout_struct>, section: LAYOUT_SECTIONS) {
@@ -142,19 +161,23 @@ function show_section_unbound(set_layout:SetStoreFunction<layout_struct>, sectio
             set_layout('utilbar', 'left', `${TOOLBAR_WIDTH + MARGIN}px`)
             set_layout('toolbar', 'display', 'flex')
             break;
-        case (LAYOUT_SECTIONS.NAV_BAR):
-            set_layout('navbar', 'display', 'flex')
+        case (LAYOUT_SECTIONS.WIDGET_BAR):
+            set_layout('widgetbar', 'display', 'flex')
+            break;
+        case (LAYOUT_SECTIONS.WIDGET_PANEL):
+            set_layout('widgetpanel', 'display', 'flex')
             break;
         case (LAYOUT_SECTIONS.TOP_BAR):
             set_layout('toolbar', 'top', `${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`)
-            set_layout('navbar', 'top', `${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`)
+            set_layout('widgetbar', 'top', `${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`)
             set_layout('center', 'top', `${TITLE_HEIGHT + TOP_HEIGHT + MARGIN}px`)
             set_layout('topbar', 'display', 'flex')
             break;
         case (LAYOUT_SECTIONS.UTIL_BAR):
             set_layout('utilbar', 'display', 'flex')
     }
-    if (window.active_container) { window.active_container.resize() }
+
+    if (window.active_container) window.active_container.resize()
 }
 
 function hide_section_unbound(set_layout:SetStoreFunction<layout_struct>, section: LAYOUT_SECTIONS) {
@@ -164,17 +187,22 @@ function hide_section_unbound(set_layout:SetStoreFunction<layout_struct>, sectio
             set_layout('utilbar', 'left', `0px`)
             set_layout('toolbar', 'display', 'none')
             break;
-        case (LAYOUT_SECTIONS.NAV_BAR):
-            set_layout('navbar', 'display', 'none')
+        case (LAYOUT_SECTIONS.WIDGET_BAR):
+            set_layout('widgetbar', 'display', 'none')
+            set_layout('widgetpanel', 'display', 'none')
+            break;
+        case (LAYOUT_SECTIONS.WIDGET_PANEL):
+            set_layout('widgetpanel', 'display', 'none')
             break;
         case (LAYOUT_SECTIONS.TOP_BAR):
             set_layout('toolbar', 'top', `${TITLE_HEIGHT}px`)
-            set_layout('navbar', 'top', `${TITLE_HEIGHT}px`)
+            set_layout('widgetbar', 'top', `${TITLE_HEIGHT}px`)
             set_layout('center', 'top', `${TITLE_HEIGHT}px`)
             set_layout('topbar', 'display', 'none')
             break;
         case (LAYOUT_SECTIONS.UTIL_BAR):
             set_layout('utilbar', 'display', 'none')
     }
-    if (window.active_container) { window.active_container.resize() }
+
+    if (window.active_container) window.active_container.resize()
 }
