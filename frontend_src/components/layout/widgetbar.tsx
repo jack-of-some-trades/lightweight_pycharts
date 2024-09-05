@@ -1,8 +1,9 @@
 import { createEffect, createSignal, JSX, Match, Setter, splitProps, Switch } from "solid-js";
-import { Icon, icons } from "../../icons";
+import { Icon, icons } from "../icons";
 
-import "../../../css/layout/widget_panel/widget_panel.css";
-import { WIDGET_BAR_WIDTH, WIDGET_PANEL_MARGIN } from "../wrapper";
+import "../../css/layout/widget_panel.css";
+import { FrameViewer } from "../widget_panels/frame_viewer";
+import { WIDGET_BAR_WIDTH, WIDGET_PANEL_MARGIN } from "./wrapper";
 
 const [selectedWidget, setSelectedWidget] = createSignal<icons | undefined>()
 
@@ -19,8 +20,8 @@ export function WidgetBar(props:widget_bar_props){
     })
 
     return <div class='layout_main layout_flex flex_col' style={props.style}>
+        <WidgetIcon icon={icons.frame_editor}/>
         <WidgetIcon icon={icons.object_tree}/>
-        <WidgetIcon icon={icons.data_window}/>
     </div>
 }
 
@@ -45,6 +46,9 @@ function WidgetIcon(props:{icon:icons} & JSX.SvgSVGAttributes<SVGSVGElement> ){
 const MIN_PANEL_WIDTH = 156
 const MAX_PANEL_WIDTH = 468
 
+export interface PanelProps {
+    resizePanel: (size:number) => void
+}
 
 interface widget_panel_props extends JSX.HTMLAttributes<HTMLDivElement> {
     resizePanel: Setter<number>
@@ -57,6 +61,11 @@ export function WidgetPanel(props:widget_panel_props){
         props.resizePanel(Math.max(Math.min(width, MAX_PANEL_WIDTH), MIN_PANEL_WIDTH))
     }
 
+    //Allows each panel to set their own base size when shown.
+    const PanelProps:PanelProps = {
+        resizePanel: (size:number) => {props.resizePanel(Math.max(Math.min(size, MAX_PANEL_WIDTH), MIN_PANEL_WIDTH))}
+    }
+
     const onMouseDown = (e:MouseEvent) => {
         if (e.offsetX > 6) return
         // These do still cleanup when the move event sticks to the window despite lifting the mouse button
@@ -66,8 +75,8 @@ export function WidgetPanel(props:widget_panel_props){
 
     return <div class='layout_main widget_panel' {...divProps} onMouseDown={onMouseDown}>
         <Switch>
+            <Match when={selectedWidget() === icons.frame_editor}><FrameViewer {...PanelProps}/></Match>
             <Match when={selectedWidget() === icons.object_tree}><div innerHTML="Object Tree"/></Match>
-            <Match when={selectedWidget() === icons.data_window}><div innerHTML="Data Window"/></Match>
         </Switch>
     </div>
 }

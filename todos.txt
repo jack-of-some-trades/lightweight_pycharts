@@ -6,15 +6,19 @@
 
 
 - Python Separation of Frames and Charting Frames
-- Util Side Window
 
 
-- Refactor Types.ts to be a lightweight-chart.d.typings extension
-- Primitive Series Base Class?
-
-
+- Refactor Tools.ts to be a lightweight-chart.d.typings extension
+- Primitive Series Class?
 - Additional primitive Tools
 
 
 - Chart Mouse Event/Keyboard Listener to open menus / delete objects
 	- Window Wide Keyboard Listener?
+
+
+
+Minor Stuffs:
+
+- Refactor the Tabs Manager to use @solid-dnd now that it is included
+in node_modules. Remove Dragabillies from node_modules

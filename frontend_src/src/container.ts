@@ -65,16 +65,16 @@ export class container{
             div.frame:nth-child(${i+2})${frame.style}`
         })
         this.setStyle(style)
-
-        //The literal 1ms delay allows the setStyle() call to take effect. 
-        //Without it, the frames update prematurely
-        setTimeout(this.resize_frames.bind(this), 1)
+        this.resize_frames()
     }
 
     private resize_frames(){
-        // Resize all contents of each *visible* Frames
-        for (let i = 0; i < num_frames(this.layout); i++)
-            this.frames[i].resize()
+        // Resize all contents of each *visible* Frames. 
+        // This is on a 1ms Timeout to ensure whatever Style Change Invoked the resize takes effect first
+        setTimeout(()=>{
+            for (let i = 0; i < num_frames(this.layout); i++)
+                this.frames[i].resize()
+        }, 1)
     }
 
     /**
@@ -94,7 +94,6 @@ export class container{
      * protected => should only be called from python
      */
     protected set_layout(layout: Container_Layouts) {
-
         // ------------ Create Layout Template ------------
         this.flex_frames = layout_switch(layout, this.divRect, this.resize.bind(this))
         let layout_displays:layout_display[] = []
@@ -140,14 +139,33 @@ export class container{
         this.display = layout_displays
         this.layout = layout
 
-        //Delay on executing this is to make it so the Frame has time to create it's Pane
-        //So that too can be made active
-        setTimeout(() => window.container_manager.set_active_container(this.id), 50)
-
         //Calculate the flex_frame rect sizes, and set them to the Display Signal
         this.resize()
 
         //If succsessful, update container variable and UI
         window.topbar.setLayout(layout)
     }
+
+    reorder_frames(from:number, to:number){
+        this.frames.splice(to, 0, ...this.frames.splice(from, 1))
+
+        //Construct new layout_displays for the moved frames
+        //(i*2) only works because the display[] is ordered and alternates frames/Separators
+        for(let i = Math.min(from, to); i*2 < this.display.length; i++){
+            let frame = this.frames[i]
+            this.display[i*2] = {
+                orientation:Orientation.null, 
+                mouseDown:frame.assign_active_frame.bind(frame),
+                element:frame.element,
+                el_active:frame.active, 
+                el_target:frame.target
+            }
+        }
+
+        //Layout <for/> is keyed to the array, not the elements. The first call ensures the display is re-rendered
+        this.setDisplay([])
+        this.setDisplay(this.display)
+        this.resize_frames()
+    }
 }
+

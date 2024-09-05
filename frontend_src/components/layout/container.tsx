@@ -24,6 +24,7 @@ export function Container(props : {style: JSX.CSSProperties}){
     const ctx_args = {
         getSize: getSize,
         setStyle: setStyle,
+        displays: displays,
         setDisplay: setDisplays,
     }
 

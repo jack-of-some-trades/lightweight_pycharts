@@ -16,7 +16,12 @@ export interface data_src {
     source_type:string
 }
 
+const TYPE_STR = 'charting_frame'
+export const isChartingFrame = (frame: frame): frame is chart_frame => frame.type === TYPE_STR
+
 export class chart_frame extends frame {
+    type:string = TYPE_STR
+
     div: Accessor<HTMLDivElement>
     element: JSX.Element
 

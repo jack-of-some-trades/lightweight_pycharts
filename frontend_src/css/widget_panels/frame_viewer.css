@@ -1,0 +1,31 @@
+.frame_tag_column {
+    display: grid;
+    row-gap: 10px;
+    grid-auto-rows: min-content;
+    width: -webkit-fill-available;
+}
+
+.frame_tag,
+.frame_tag_overlay {
+    color: var(--text-color);
+    font: var(--font);
+
+    cursor: grab;
+    font-weight: bold;
+    padding: 6px;
+    text-align: left;
+}
+.frame_tag:active { cursor: grabbing; }
+.frame_tag_overlay { cursor: grabbing; }
+
+.frame_tag_bottom_border {
+    margin-top: 6px;
+    margin-left: 40%;
+    width: 60%;
+    border-bottom: 1px solid var(--text-dark-color);
+
+    color: var(--text-dark-color);
+    font: var(--font);
+    text-align: right;
+    font-size: xx-small;
+}

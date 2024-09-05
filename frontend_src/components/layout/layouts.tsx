@@ -24,12 +24,14 @@ export interface layout_display {
 type LayoutContextProps = {
     getSize:Accessor<DOMRect>,
     setStyle: Setter<string>,
+    displays:Accessor<layout_display[]>,
     setDisplay: Setter<layout_display[]>,
 }
 
 export const default_layout_ctx_args:LayoutContextProps = {
     getSize:() => {return new DOMRect(0,0,-1,-1)},
     setStyle: () => {},
+    displays: () => [],
     setDisplay: () => {},
 }
 

@@ -3,6 +3,8 @@ import { update_tab_func } from "./container"
 import { symbol_item, tf } from "./types"
 
 export abstract class frame {
+    type:string = 'abstract'
+
     id: string
     update_tab: update_tab_func
     element: HTMLDivElement | JSX.Element | undefined

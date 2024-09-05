@@ -92,6 +92,8 @@ export class tf {
 
 // #region ---------------- Util Functions ---------------- //
 
+export function arraySwap<T>(array:T[], from:number, to:number){ array[from] = [array[to], array[to] = array[from]][0] }
+
 const ID_LEN = 4
 /**
  * Generate a unique ID of Random characters that is not present in the given list.

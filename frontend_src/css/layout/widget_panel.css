@@ -38,3 +38,21 @@
     height: 100%;
     cursor: ew-resize;
 }
+
+
+/* ------- Widget Panel Title Element ------- */
+
+.widget_panel .panel_title {
+    color: var(--text-color);
+    font-family: var(--font);
+    text-align: left;
+    text-wrap: nowrap;
+    user-select: none;
+
+    width: -webkit-fill-available;
+    margin: 5px 10px;
+    border-bottom: 1px solid var(--accent-color);
+    padding: 0px 6px 6px 6px;
+    font-weight: bolder;
+
+}

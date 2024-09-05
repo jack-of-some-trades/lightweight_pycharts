@@ -14,7 +14,7 @@ import "../../css/layout/wrapper.css"
 import "../../css/style_default.css"
 import { ColorContext } from '../color_picker'
 import { Container } from './container'
-import { WidgetBar, WidgetPanel } from './widgetbar/widgetbar'
+import { WidgetBar, WidgetPanel } from './widgetbar'
 
 const MARGIN = 5
 const TOP_HEIGHT = 38
