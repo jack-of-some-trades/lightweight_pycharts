@@ -49,7 +49,6 @@ function onSubmit(series:AnySeries, e:SubmitEvent){
 
         series.applyOptions(Object.fromEntries(
             Array.from(nodes as HTMLInputElement[], (node) => {
-                console.log(node.getAttribute('type'))
                 switch(node.getAttribute('type')){
                     case ("checkbox"): return [node.id, node.checked]
                     case (null): return [node.id, parseInt(node.value)] // <select/> tag

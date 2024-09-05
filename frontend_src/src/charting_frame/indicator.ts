@@ -162,6 +162,9 @@ export class indicator {
      * The _zOrder value can be a duplicate, negative, and have gaps between other series values.
      * From here the pane._cachedOrderedSources needs to be set to null (chart.lw.$i.kc[0].po = null)** 
      * Then a redraw of the chart invoked. chart._chartWidget._model.lightUpdate() ( chart.lw.$i.$h() )**
+     * 
+     * To Re-order primitives you need to re-order the series' _primitives array.
+     * chart._chartWidget._model._serieses[i]._primitives (chart.lw.$i.yc[i].jl)
      */
     protected change_series_type(_id: string, series_type: u.Series_Type, data: u.AnySeriesData[]) {
         let series = this.series.get(_id)

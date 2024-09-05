@@ -249,7 +249,7 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 
 	//This is only called about 1/4 the amount that update() is
 	renderer() {
-		this._renderer._update(this._p1, this._p2, this._hovered, this._selected)
+		this._renderer._update(this._p1, this._p2, this._hovered, this._selected, this._source._options)
 		return this._renderer
 	}
 
@@ -348,9 +348,10 @@ class TrendLinePaneRenderer implements ISeriesPrimitivePaneRenderer {
 		});
 	}
 
-	_update(p1: Point | null, p2: Point | null, hovered: boolean, selected: boolean) {
+	_update(p1: Point | null, p2: Point | null, hovered: boolean, selected: boolean, options:TrendLineOptions) {
 		this._p1 = p1
 		this._p2 = p2
+		this._options = options
 		this._hovered = hovered
 		this._selected = selected
 	}
