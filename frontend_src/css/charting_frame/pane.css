@@ -55,24 +55,6 @@
     background-color: var(--legend-bg-color-hover);
 }
 
-/* ---------------- Scale Toggle ---------------- */
-
-.scale_toggle_right {
-    pointer-events: none;
-    position: absolute;
-    right: 0px;
-    bottom: 0px;
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    color: var(--chart-text-color);
-    margin: 3px 20px;
-}
-
-/* .scale_toggle_right[active] {
-    background-color: var(--accent-color);
-} */
-
 /* ---------------- Charts / Panes ---------------- */
 
 .tv-lightweight-charts { 
@@ -108,9 +90,9 @@
 
 .scale_buttons_left,
 .scale_buttons_right {
-    top: 0px;
+    top: 8px;
     z-index: 3;
-    margin: 4px;
+    width: 28px;
     position: absolute;
 
     display: grid;
@@ -119,8 +101,8 @@
 }
 
 /* accounts for the pane's border  */
-.scale_buttons_left { left: 0px; }
-.scale_buttons_right { right: 0px; }
+.scale_buttons_left { left: 8px; }
+.scale_buttons_right { right: 8px; }
 
 .scale_buttons_left .scale_icon_text,
 .scale_buttons_right .scale_icon_text {
