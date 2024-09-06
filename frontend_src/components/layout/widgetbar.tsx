@@ -3,6 +3,7 @@ import { Icon, icons } from "../icons";
 
 import "../../css/layout/widget_panel.css";
 import { FrameViewer } from "../widget_panels/frame_viewer";
+import { ObjectTree } from "../widget_panels/object_tree";
 import { WIDGET_BAR_WIDTH, WIDGET_PANEL_MARGIN } from "./wrapper";
 
 const [selectedWidget, setSelectedWidget] = createSignal<icons | undefined>()
@@ -32,7 +33,7 @@ function WidgetIcon(props:{icon:icons} & JSX.SvgSVGAttributes<SVGSVGElement> ){
             width={34} height={34}
             classList={{icon:false, widget_bar_icon:true}}
             style={{margin:'4px', padding:'2px'}}
-            onClick={() => setSelectedWidget(setSelectedWidget(selectedWidget() !== props.icon? props.icon : undefined))} 
+            onClick={() => setSelectedWidget(selectedWidget() !== props.icon? props.icon : undefined)} 
             attr:active={selectedWidget() === props.icon? "": undefined}
             {...props}
         />
@@ -77,7 +78,7 @@ export function WidgetPanel(props:widget_panel_props){
     return <div class='layout_main widget_panel' {...divProps} onMouseDown={onMouseDown}>
         <Switch>
             <Match when={selectedWidget() === icons.frame_editor}><FrameViewer {...PanelProps}/></Match>
-            <Match when={selectedWidget() === icons.object_tree}><div innerHTML="Object Tree"/></Match>
+            <Match when={selectedWidget() === icons.object_tree}><ObjectTree {...PanelProps}/></Match>
         </Switch>
     </div>
 }

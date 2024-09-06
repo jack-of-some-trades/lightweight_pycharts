@@ -42,7 +42,7 @@
 
 /* ------- Widget Panel Title Element ------- */
 
-.widget_panel .panel_title {
+.widget_panel .widget_panel_title {
     color: var(--text-color);
     font-family: var(--font);
     text-align: left;
