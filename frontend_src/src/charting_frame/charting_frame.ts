@@ -79,6 +79,15 @@ export class chart_frame extends frame {
         window.topbar.setSeries(this.series_type)
         window.topbar.setTimeframe(this.timeframe)
         window.topbar.setTicker(this.symbol.ticker)
+
+        if (window.active_pane === undefined) this.panes[0].assign_active_pane()
+    }
+
+    onDeactivation() {
+        if (window.active_pane && this.panes.includes(window.active_pane)){
+            window.active_pane.setActive(false)
+            window.active_pane = undefined
+        }
     }
 
     // #region -------------- Python API Functions ------------------ //

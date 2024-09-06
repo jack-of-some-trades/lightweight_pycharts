@@ -60,6 +60,7 @@ class PY_CMD(IntEnum):
     ADD_CONTAINER = auto()
     REMOVE_CONTAINER = auto()
     REORDER_CONTAINERS = auto()
+    REMOVE_FRAME = auto()
     # ADD_PANE = auto()
     # REMOVE_PANE = auto()
 
@@ -92,6 +93,7 @@ class JS_CMD(IntEnum):
     # Container Commands
     SET_LAYOUT = auto()
     ADD_FRAME = auto()
+    REMOVE_FRAME = auto()
 
     # Frame Commands
     ADD_PANE = auto()
@@ -150,7 +152,7 @@ def add_container(_id: str) -> str:
 
 
 def remove_container(_id: str) -> str:
-    return f"var {_id} = container_manager.remove_container('{_id}');"
+    return f"container_manager.remove_container('{_id}');"
 
 
 # ** Crucial Step ** Without this there would be a massive memory leak
@@ -159,7 +161,7 @@ def remove_container(_id: str) -> str:
 def remove_reference(*_ids: str) -> str:
     cmd = ""
     for _id in _ids:
-        cmd += f"{_id} = undefined;"
+        cmd += f"delete window.{_id};"
     return cmd
 
 
@@ -196,11 +198,15 @@ def set_layout(container_id: str, layout: layouts) -> str:
     return f"{container_id}.set_layout({layout});"
 
 
-def add_frame(frame_id: str, container_id: str) -> str:
+def add_frame(container_id: str, frame_id: str) -> str:
     return f"var {frame_id} = {container_id}.add_frame('{frame_id}');"
 
 
-def add_pane(pane_id: str, frame_id: str) -> str:
+def remove_frame(container_id: str, frame_id: str) -> str:
+    return f"{container_id}.remove_frame('{frame_id}');"
+
+
+def add_pane(frame_id: str, pane_id: str) -> str:
     return f"var {pane_id} = {frame_id}.add_pane('{pane_id}');"
 
 
@@ -445,6 +451,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str | None]] = {
     # ---- Container Commands ----
     JS_CMD.SET_LAYOUT: set_layout,
     JS_CMD.ADD_FRAME: add_frame,
+    JS_CMD.REMOVE_FRAME: remove_frame,
     # ---- Frame Commands ----
     JS_CMD.ADD_PANE: add_pane,
     JS_CMD.SET_WHITESPACE_DATA: set_whitespace_data,

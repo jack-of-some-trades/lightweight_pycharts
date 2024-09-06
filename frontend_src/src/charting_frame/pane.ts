@@ -103,8 +103,6 @@ export class pane {
             })
         })
 
-        this.assign_active_pane = this.assign_active_pane.bind(this)
-
         // These listeners allow smooth chart dragging in a replay like mode
         this.chart_div.addEventListener('mousedown', () => {
             this.chart.timeScale().applyOptions({

@@ -16,7 +16,6 @@ import logging
 from lightweight_pycharts import orm
 from lightweight_pycharts import indicators
 
-from .indicator import Indicator
 from .window import Window, Container, Frame, Pane
 from .orm.types import TF, Color, Symbol
 from .orm.enum import layouts, ColorLiteral
@@ -37,9 +36,6 @@ __all__ = (
     "ColorLiteral",
     "layouts",
     "SeriesType",
-    # Indicators
-    "Indicator",
-    "Indicators",  # type: ignore - False Alarm
 )
 
 _LOG_LVL = logging.WARNING

@@ -141,6 +141,9 @@ class Window:
             case PY_CMD.REMOVE_CONTAINER, str():
                 self.del_tab(args[0])
 
+            case PY_CMD.REMOVE_FRAME, str(), str():
+                self.get_container(args[0]).remove_frame(args[1])
+
             case PY_CMD.REORDER_CONTAINERS, int(), int():
                 # This keeps the Window Obj Tab order identical to what is displayed
                 self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
@@ -318,11 +321,11 @@ class Container:
         self._fwd_queue = fwd_queue
         self._window = window
         self._js_id = _js_id
-        self.layout_type = layouts.SINGLE
+        self._layout = layouts.SINGLE
         self.frames = util.ID_Dict[Frame](f"{_js_id}_f")
 
         self._fwd_queue.put((JS_CMD.ADD_CONTAINER, self._js_id))
-        self.set_layout(self.layout_type)  # Adds First Frame
+        self.set_layout(self._layout)  # Adds First Frame
 
     def __del__(self):
         logger.debug("Deleteing Container: %s", self._js_id)
@@ -346,7 +349,7 @@ class Container:
                 self.add_frame()
 
         self._fwd_queue.put((JS_CMD.SET_LAYOUT, self._js_id, layout))
-        self.layout_type = layout
+        self._layout = layout
 
     def all_ids(self) -> list[str]:
         "Return a List of all Ids of this object and sub-objects"
@@ -354,6 +357,18 @@ class Container:
         for _, frame in self.frames.items():
             _ids += frame.all_ids()
         return _ids
+
+    def remove_frame(self, frame_id: str):
+        "Delete a frame given the frame's js_id if the container has more frames than needed"
+        if frame_id not in self.frames or len(self.frames) <= self._layout.num_frames:
+            return
+
+        frame = self.frames.pop(frame_id)
+        frame_ids = frame.all_ids()
+        del frame
+
+        self._fwd_queue.put((JS_CMD.REMOVE_FRAME, self._js_id, frame_id))
+        self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *frame_ids))
 
 
 class Frame:
@@ -379,7 +394,7 @@ class Frame:
         self.indicators = util.ID_Dict[ind.Indicator]("i")
         # Indicators append themselves to this ID_Dict. See Indicator DocString for reasoning.
 
-        self._fwd_queue.put((JS_CMD.ADD_FRAME, self._js_id, parent._js_id))
+        self._fwd_queue.put((JS_CMD.ADD_FRAME, parent._js_id, self._js_id))
 
         # Add main pane and Series, neither should ever be deleted
         self.add_pane(Pane.__special_id__)
@@ -488,7 +503,7 @@ class Pane:
         self._fwd_queue = parent._fwd_queue
         self.__main_pane__ = self._js_id == Pane.__special_id__
 
-        self._fwd_queue.put((JS_CMD.ADD_PANE, self._js_id, parent._js_id))
+        self._fwd_queue.put((JS_CMD.ADD_PANE, parent._js_id, self._js_id))
 
     @property
     def js_id(self) -> str:

@@ -64,6 +64,9 @@ class js_api:
     def remove_container(self, _id: str) -> None:
         self.rtn_queue.put((PY_CMD.REMOVE_CONTAINER, _id))
 
+    def remove_frame(self, container_id: str, frame_id: str) -> None:
+        self.rtn_queue.put((PY_CMD.REMOVE_FRAME, container_id, frame_id))
+
     def reorder_containers(self, _from: int, _to: int) -> None:
         self.rtn_queue.put((PY_CMD.REORDER_CONTAINERS, _from, _to))
 

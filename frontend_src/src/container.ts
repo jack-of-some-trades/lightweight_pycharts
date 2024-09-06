@@ -89,6 +89,24 @@ export class container{
         return new_frame
     }
 
+    /**
+     * Delete a frame from this container. This function assumes that python has already checked that
+     * the current layout needs fewer frames than the current number of frames that exist. It also
+     * assumes that python will remove the global reference to this frame so it can be garbage collected.
+     */
+    protected remove_frame(frame_id:string){
+        let frame_index = this.frames.findIndex((f) => f.id === frame_id)
+        if (frame_index === -1) return
+        this.reorder_frames(frame_index, this.frames.length - 1)
+
+        //@ts-ignore
+        this.frames[this.frames.length - 1] = undefined
+        this.frames.length = this.frames.length - 1
+        //This is done again so that the Frame_Viewer Widget panel updates to reflect the deleted frame.
+        this.setDisplay([])
+        this.setDisplay(this.display)
+    }
+
     /** 
      * Create and configure all the necessary frames & separators for a given layout.
      * protected => should only be called from python
@@ -135,9 +153,9 @@ export class container{
         })
         
         // ------------ Apply the new Display to the <Container/> ------------
+        this.layout = layout
         this.setDisplay(layout_displays)
         this.display = layout_displays
-        this.layout = layout
 
         //Calculate the flex_frame rect sizes, and set them to the Display Signal
         this.resize()

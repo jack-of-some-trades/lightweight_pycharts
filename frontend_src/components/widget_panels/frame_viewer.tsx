@@ -9,7 +9,7 @@ import {
     Transformer,
     useDragDropContext
 } from "@thisbeyond/solid-dnd";
-import { createEffect, createSignal, For, Match, on, onMount, Show, Switch } from "solid-js";
+import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import { ContainerCTX } from "../layout/container";
 import { PanelProps } from "../layout/widgetbar";
 
@@ -17,6 +17,8 @@ import { Accessor } from "solid-js";
 import "../../css/widget_panels/frame_viewer.css";
 import { chart_frame } from "../../src/charting_frame/charting_frame";
 import { frame } from "../../src/frame";
+import { num_frames } from "../../src/layouts";
+import { Icon, icons } from "../icons";
 
 const DEFAULT_WIDTH = 200
 
@@ -91,7 +93,8 @@ function SelectableFrameTag(props:{frame_id:string}){
     const state = useDragDropContext()?.[0]
     
     //@ts-ignore
-    return <div use:sortable class="frame_tag" 
+    return <div use:sortable class="frame_tag"
+        onClick={()=>frame?.assign_active_frame()}
         style={{
             "opacity": sortable.isActiveDraggable ? '25%' : '100%',
             "transition": state?.active.draggable ? "transform .15s ease-in-out" : undefined
@@ -114,23 +117,35 @@ function OverlayFrameTag(props:{frame_id:Accessor<string>}){
 function FrameTag(props:{frame:frame|undefined}){
     if (!props.frame) return
     return <>
-        <Switch>
+        <span innerText={FRAME_NAME_MAP.get(props.frame.type)}/>
+        <FrameDeleteBtn frame_id={props.frame.id}/>
+        {/* <Switch>
             <Match when={props.frame.type === 'abstract'}><AbstractFrameTag frame={props.frame}/></Match>
             <Match when={props.frame.type === 'charting_frame'}><ChartingFrameTag frame={props.frame as chart_frame}/></Match>
-        </Switch>
+        </Switch> */}
         <div class='frame_tag_bottom_border' innerText={'id: ' + props.frame.id}/>
     </>
+}
+
+function FrameDeleteBtn(props:{frame_id:string}){
+    //Don't allow the frame to be deleted if the layout would no longer have enough supporting frames
+    if ( active_container.frames.length <= num_frames(active_container.layout) ) return
+    return <Icon icon={icons.close} onClick={() => window.api.remove_frame(active_container.id, props.frame_id)}/>
 }
 
 //#endregion
 
 //#region ------------------ Specific Frame Tags ------------------
 
+const FRAME_NAME_MAP = new Map<string,string>([
+    ['abstract', 'Abstract Frame'],
+    ['charting_frame', 'Charting Frame']
+])
 
 function AbstractFrameTag(props:{frame:frame}){
-    return <span innerText={'Abstract Frame'}/>
+    return undefined
 }
 
 function ChartingFrameTag(props:{frame:chart_frame}){
-    return <span innerText={'Charting Frame'}/>
+    return undefined
 }

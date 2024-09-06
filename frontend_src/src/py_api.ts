@@ -20,6 +20,8 @@ export class py_api {
     add_container = () => window.container_manager.add_container(makeid(Array.from(container_manager.containers.keys()), 'c_'));
     // @ts-ignore
     remove_container = (id: string) => window.container_manager.remove_container(id);
+    // @ts-ignore
+    remove_frame = (container_id: string, frame_id:string) => active_container.remove_frame(frame_id)
     reorder_containers = (from: number, to: number) => {
         console.log(`reorder containers from: ${from} to: ${to} `)
     }

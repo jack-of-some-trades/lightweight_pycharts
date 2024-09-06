@@ -7,6 +7,7 @@
 
 .frame_tag,
 .frame_tag_overlay {
+    position:relative; /* Redefine the internal positioning  */
     color: var(--text-color);
     font: var(--font);
 
@@ -17,6 +18,17 @@
 }
 .frame_tag:active { cursor: grabbing; }
 .frame_tag_overlay { cursor: grabbing; }
+
+.frame_tag svg#close,
+.frame_tag_overlay svg#close {
+    top: 9px;
+    right: 9px;
+    width: 12px;
+    height: 12px;
+    padding: 3px;
+    cursor: pointer;
+    position: absolute;
+}
 
 .frame_tag_bottom_border {
     margin-top: 6px;

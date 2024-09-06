@@ -22,8 +22,8 @@ declare global {
         setTicker : (_:string) => void,
     }
 
-    var active_pane: pane
-    var active_frame: frame
+    var active_pane: pane | undefined
+    var active_frame: frame | undefined
     var active_container: container
     // Technically Pane, Frame & Container can refer to deleted objects 
     // if they have been removed, but where the active element at the time of deletion.
