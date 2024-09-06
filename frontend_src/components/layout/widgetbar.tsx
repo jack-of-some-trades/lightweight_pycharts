@@ -10,13 +10,14 @@ const [selectedWidget, setSelectedWidget] = createSignal<icons | undefined>()
 // #region --------------------- Widget Bar Selector ----------------------- */
 
 interface widget_bar_props extends JSX.HTMLAttributes<HTMLDivElement> {
+    panelDisplay: JSX.CSSProperties
     showWidgetPanel: ()=>void
     hideWidgetPanel: ()=>void
 }
 export function WidgetBar(props:widget_bar_props){
 
     createEffect(() => {
-        selectedWidget() === undefined ? props.hideWidgetPanel() : props.showWidgetPanel()
+        props.panelDisplay.display === 'flex' && selectedWidget()? props.showWidgetPanel() : props.hideWidgetPanel()
     })
 
     return <div class='layout_main layout_flex flex_col' style={props.style}>

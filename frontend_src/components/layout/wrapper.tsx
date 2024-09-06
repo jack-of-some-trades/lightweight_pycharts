@@ -84,6 +84,7 @@ export function Wrapper(){
 
     //Functions to be passed to the WidgetBar
     const widget_bar_props = {
+        panelDisplay: layout.widgetbar,
         showWidgetPanel:show_section_unbound.bind(undefined, set_layout, LAYOUT_SECTIONS.WIDGET_PANEL),
         hideWidgetPanel:hide_section_unbound.bind(undefined, set_layout, LAYOUT_SECTIONS.WIDGET_PANEL),
     }
