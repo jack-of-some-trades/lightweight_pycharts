@@ -3,16 +3,15 @@
  */
 import { AreaSeriesOptions, LineStyle, LineStyleOptions, LineType, PriceLineSource, SeriesOptionsCommon } from "lightweight-charts"
 import { createEffect, createSignal, For, Match, on, Show, Signal, Switch } from "solid-js"
-import { AnySeries, LineSeries, Series_Type } from "../../src/types"
 import { ColorInput } from "../color_picker"
 import { Icon, icons } from "../icons"
 
 import "../../css/charting_frame/series_style_editor.css"
+import * as s from "../../src/charting_frame/series-plugins/series-base"
 
 interface series_style_editor_props{
     name: string
-    series: AnySeries
-    series_type: Series_Type
+    series: s.SeriesBase_T
 }
 
 /**
@@ -26,9 +25,9 @@ export function SeriesStyleEditor(props:series_style_editor_props){
     return (
         <form ref={form} class='style_form' onSubmit={onSubmit.bind(undefined, props.series)}>
             <Switch>
-                <Match when={props.series_type===Series_Type.LINE}>
-                    <LineSeriesEditor series={props.series as LineSeries} name={props.name} submit={submit}/></Match>
-                <Match when={props.series_type===Series_Type.AREA}>
+                <Match when={props.series.Type===s.Series_Type.LINE}>
+                    <LineSeriesEditor series={props.series as s.LineSeries} name={props.name} submit={submit}/></Match>
+                <Match when={props.series.Type===s.Series_Type.AREA}>
                     <AreaSeriesEditor {...(options as any)} name={props.name} submit={submit}/></Match>
             </Switch>
         </form>
@@ -40,7 +39,7 @@ export function SeriesStyleEditor(props:series_style_editor_props){
  * The function packages all of the <input/> Tag values into a partial object that is applied
  * directly to the ISeriesAPI Options.
  */
-function onSubmit(series:AnySeries, e:SubmitEvent){
+function onSubmit(series:s.SeriesBase_T, e:SubmitEvent){
     e.preventDefault();
     if (e.target !== null){
         let nodes = Array.from((e.target as HTMLFormElement).querySelectorAll("input, select"))
@@ -71,7 +70,7 @@ function onSubmit(series:AnySeries, e:SubmitEvent){
 
 interface editor_props { submit:()=>void, name:string }
 
-function LineSeriesEditor(props:{series:LineSeries} & editor_props){
+function LineSeriesEditor(props:{series:s.LineSeries} & editor_props){
     let options = props.series.options()
     const adv_settings = createSignal(false)
 

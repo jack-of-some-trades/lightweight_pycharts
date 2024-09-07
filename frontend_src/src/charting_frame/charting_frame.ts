@@ -5,9 +5,10 @@ import { layout_display } from "../../components/layout/layouts";
 import { update_tab_func } from "../container";
 import { frame } from "../frame";
 import { Container_Layouts, flex_frame, layout_switch, num_frames, Orientation, resize_sections } from "../layouts";
-import { Series_Type, symbol_item, tf } from "../types";
+import { symbol_item, tf } from "../types";
 import { indicator } from "./indicator";
 import { pane } from "./pane";
+import { Series_Type } from "./series-plugins/series-base";
 
 
 export interface data_src {

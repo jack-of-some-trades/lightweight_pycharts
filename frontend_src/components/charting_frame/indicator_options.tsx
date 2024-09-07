@@ -6,7 +6,6 @@
 import { Accessor, createSignal, For, Match, Show, splitProps, Switch } from "solid-js"
 import { data_src } from "../../src/charting_frame/charting_frame"
 import { indicator } from "../../src/charting_frame/indicator"
-import { AnySeries, Series_Type } from "../../src/types"
 import { ColorInput } from "../color_picker"
 import { Icon, icons, TextIcon } from "../icons"
 import { location_reference, overlay_div_props, OverlayDiv, point } from "../layout/overlay_manager"
@@ -14,6 +13,7 @@ import { NavigatorMenu } from "../navigator_menu"
 import { SeriesStyleEditor } from "./series_style_editor"
 
 import "../../css/charting_frame/indicator_options.css"
+import { SeriesBase_T } from "../../src/charting_frame/series-plugins/series-base"
 
 /**
  * @close_menu : Callable to the close Options Menu
@@ -46,8 +46,6 @@ export function IndicatorOpts(props:indicator_option_props){
 
     const StyleFormProps = {
         series:props.parent_ind.series, 
-        series_types:props.parent_ind.series_types, 
-        series_names:props.parent_ind.series_names
     }
     const [InputFormProps,] = splitProps(props, ['id', 'parent_ind', 'menu_struct', 'options', 'sources', 'container_id', 'frame_id', 'indicator_id', 'parent_ind'])
     
@@ -391,9 +389,7 @@ function SourceInput(props: input_props){
  */
 
 interface series_editor_props {
-    series: Map<string, AnySeries>
-    series_types: Map<string, Series_Type>
-    series_names: Map<string, string | undefined>
+    series: Map<string, SeriesBase_T>
 }
 
 function SeriesEditor(props: series_editor_props){
@@ -404,16 +400,10 @@ function SeriesEditor(props: series_editor_props){
     }
 
     return <div ref={style_wrapper} class="form_wrapper">
-        <For each={Array.from(props.series_types.entries())}>{([_id, type], i) => {
+        <For each={Array.from(props.series.entries())}>{([_id, type], i) => {
             let series = props.series.get(_id)
             if (series === undefined) return
-            return ( 
-                <SeriesStyleEditor 
-                    name={props.series_names.get(_id) ?? `Series #${i() + 1}`}
-                    series={series} 
-                    series_type={type} 
-                />
-            )
+            return <SeriesStyleEditor series={series} name={series.Name ?? `Series #${i() + 1}`}/>
         }}</For>
         <div class="footer">
             <input type="submit" value={"Apply"} onClick={submitAll}/>

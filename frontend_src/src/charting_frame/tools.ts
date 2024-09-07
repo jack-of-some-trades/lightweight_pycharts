@@ -1,8 +1,8 @@
 import { Signal } from "solid-js"
 import { icons } from "../../components/icons"
-import { setArrow, setCrosshair, setDot } from "./lwpc-plugins/cursors"
-import { creatingTrendLine, trendline_user_interface } from "./lwpc-plugins/trend-line/trend-line-ui"
 import { pane } from "./pane"
+import { setArrow, setCrosshair, setDot } from "./primitive-plugins/cursors"
+import { creatingTrendLine, trendline_user_interface } from "./primitive-plugins/trend-line/trend-line-ui"
 
 /**
  * An 'abstract' function that ensures only one tool is active at a time, and places the neccessary

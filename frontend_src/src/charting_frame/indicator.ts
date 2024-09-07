@@ -3,12 +3,11 @@ import { Accessor, createSignal, Setter, Signal } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import { IndicatorOpts } from "../../components/charting_frame/indicator_options";
 import { OverlayCTX } from "../../components/layout/overlay_manager";
-import * as u from "../types";
 import { data_src } from "./charting_frame";
-import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
-import { primitives } from "./lwpc-plugins/primitives";
 import { pane } from "./pane";
-import { RoundedCandleSeries } from "./plugins/rounded-candles-series/rounded-candles-series";
+import { PrimitiveBase } from "./primitive-plugins/primitive-base";
+import { primitives } from "./primitive-plugins/primitives";
+import * as s from "./series-plugins/series-base";
 
 export class indicator {
     id: string
@@ -28,9 +27,7 @@ export class indicator {
     menuVisibility: Accessor<boolean> | undefined
     setMenuVisibility: Setter<boolean> | undefined
 
-    series = new Map<string, u.AnySeries>()
-    series_types = new Map<string, u.Series_Type>()
-    series_names = new Map<string, string | undefined>()
+    series = new Map<string, s.SeriesBase_T>()
     private visiblity = new Map<string, boolean>()
     private primitives_left = new Map<string, PrimitiveBase>()
     private primitives_right = new Map<string, PrimitiveBase>()
@@ -62,7 +59,7 @@ export class indicator {
     delete() {
         //Clear All Sub-objects
         this.series.forEach((ser, key) => {
-            this.pane.chart.removeSeries(ser)
+            ser.remove()
         })
         this.primitives_left.forEach((prim, key) => {
             this.pane.primitive_left.detachPrimitive(prim)
@@ -91,58 +88,31 @@ export class indicator {
             }
     }
 
-
-    private _create_series_(series_type: u.Series_Type): u.AnySeries {
-        switch (series_type) {
-            case (u.Series_Type.LINE):
-                return this.pane.chart.addLineSeries()
-            case (u.Series_Type.AREA):
-                return this.pane.chart.addAreaSeries()
-            case (u.Series_Type.HISTOGRAM):
-                return this.pane.chart.addHistogramSeries()
-            case (u.Series_Type.BASELINE):
-                return this.pane.chart.addBaselineSeries()
-            case (u.Series_Type.BAR):
-                return this.pane.chart.addBarSeries()
-            case (u.Series_Type.CANDLESTICK):
-                return this.pane.chart.addCandlestickSeries()
-            case (u.Series_Type.ROUNDED_CANDLE):
-                //Ideally custom series objects will get baked directly into the TS Code
-                //So accomodations don't need to be made on the Python side
-                return this.pane.chart.addCustomSeries(new RoundedCandleSeries())
-            default: //Catch-all, primarily reached by WhitespaceSeries'
-                return this.pane.chart.addLineSeries()
-        }
-    }
-
     //#region ------------------------ Python Interface ------------------------ //
 
     //Functions marked as protected are done so it indicate the original intent
     //only encompassed being called from python, not from within JS.
 
-    protected add_series(_id: string, series_type: u.Series_Type, series_name:string|undefined = undefined) {
-        this.series_types.set(_id, series_type)
-        this.series_names.set(_id, series_name)
-        this.series.set(_id, this._create_series_(series_type))
+    protected add_series(_id: string, _type: s.Series_Type, _name:string|undefined = undefined) {
+        this.series.set(_id, new s.SeriesBase(_id, _name, _type, this.pane.chart))
     }
 
     protected remove_series(_id: string) {
         let series = this.series.get(_id)
         if (series === undefined) return
 
-        this.pane.chart.removeSeries(series)
-        this.series_names.delete(_id)
-        this.series_types.delete(_id)
+        series.remove()
         this.series.delete(_id)
     }
 
-    protected set_series_data(_id: string, data: u.AnySeriesData[]) {
+    protected set_series_data(_id: string, data: s.SeriesData[]) {
         let series = this.series.get(_id)
         if (series === undefined) return
         series.setData(data)
+        console.log(data, series.data())
     }
 
-    protected update_series_data(_id: string, data: u.AnySeriesData) {
+    protected update_series_data(_id: string, data: s.SeriesData) {
         let series = this.series.get(_id)
         if (series === undefined) return
         series.update(data)
@@ -166,31 +136,30 @@ export class indicator {
      * To Re-order primitives you need to re-order the series' _primitives array.
      * chart._chartWidget._model._serieses[i]._primitives (chart.lw.$i.yc[i].jl)
      */
-    protected change_series_type(_id: string, series_type: u.Series_Type, data: u.AnySeriesData[]) {
-        let series = this.series.get(_id)
-        if (series === undefined) {
+    protected change_series_type(_id: string, series_type: s.Series_Type, data: s.SeriesData[]) {
+        let old_series = this.series.get(_id)
+        if (old_series === undefined) {
             //Create Series and return if it doesn't exist
             this.add_series(_id, series_type)
             this.series.get(_id)?.setData(data)
             return
         }
 
-        let new_series = this._create_series_(series_type)
+        let new_series = new s.SeriesBase(_id, old_series.Name, series_type, this.pane.chart)
         let timescale = this.pane.chart.timeScale()
         let current_range = timescale.getVisibleRange()
 
         //@ts-ignore (Type Checking Done in Python, Data should already be updated if it needed to be)
         new_series.setData(data)
         this.series.set(_id, new_series)
-        this.series_types.set(_id, series_type)
-        this.pane.chart.removeSeries(series)
 
+        old_series.remove()
         //Setting Data Changes Visible Range, set it back.
         if (current_range !== null)
             timescale.setVisibleRange(current_range)
     }
 
-    protected update_series_opts(_id: string, opts: u.AnySeriesOptions) {
+    protected update_series_opts(_id: string, opts: s.SeriesOptions) {
         let series = this.series.get(_id)
         if (series === undefined) return
         series.applyOptions(opts)

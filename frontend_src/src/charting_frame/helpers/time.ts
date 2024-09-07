@@ -1,4 +1,4 @@
-import { Time, isBusinessDay, isUTCTimestamp } from '../lib/pkg.js';
+import { Time, isBusinessDay, isUTCTimestamp } from 'lightweight-charts';
 
 export function convertTime(t: Time): number {
 	if (isUTCTimestamp(t)) return t * 1000;

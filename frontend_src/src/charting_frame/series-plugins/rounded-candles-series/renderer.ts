@@ -1,21 +1,9 @@
-import {
-    ICustomSeriesPaneRenderer,
-    PaneRendererCustomData,
-    PriceToCoordinateConverter,
-    Range,
-    Time,
-} from 'lightweight-charts';
+import { BitmapCoordinatesRenderingScope, CanvasRenderingTarget2D } from 'fancy-canvas';
+import { ICustomSeriesPaneRenderer, PaneRendererCustomData, PriceToCoordinateConverter, Range, Time } from 'lightweight-charts';
 import { candlestickWidth } from '../../helpers/dimensions/candles.js';
 import { gridAndCrosshairMediaWidth } from '../../helpers/dimensions/crosshair-width.js';
 import { positionsBox, positionsLine } from '../../helpers/dimensions/positions.js';
-import {
-    BitmapCoordinatesRenderingScope,
-    CanvasRenderingTarget2D,
-} from '../../lib/fancy-canvas.js';
-import { RoundedCandleSeriesData } from './data.js';
-import {
-    RoundedCandleSeriesOptions,
-} from './rounded-candles-series.js';
+import { RoundedCandleSeriesData, RoundedCandleSeriesOptions } from './rounded-candles-series.js';
 
 interface BarItem {
 	openY: number;

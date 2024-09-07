@@ -1,23 +1,6 @@
-import * as lwc from "lightweight-charts";
-import { DeepPartial as DP, Time } from "lightweight-charts";
-import { RoundedCandleSeriesOptions } from "./charting_frame/plugins/rounded-candles-series/rounded-candles-series";
+import { Series_Type } from "./charting_frame/series-plugins/series-base";
 
-// #region ---------------- Enums & Interfaces ---------------- //
-
-/* This must match the orm.enum.SeriesType. */
-export enum Series_Type {
-    WhitespaceData,
-    SingleValueData,
-    LINE,
-    AREA,
-    BASELINE,
-    HISTOGRAM,
-    OHLC,
-    BAR,
-    CANDLESTICK,
-    // HLC_AREA,
-    ROUNDED_CANDLE
-}
+// #region ---------------- Classes & Interfaces ---------------- //
 
 /* Represents information about a specific symbol */
 export interface symbol_item {
@@ -27,9 +10,6 @@ export interface symbol_item {
     sec_type?: Series_Type
     exchange?: string
 }
-// #endregion
-
-// #region ---------------- Timeframe Object ---------------- //
 
 const interval_list: interval[] = ["s", "m", "h", "D", "W", "M", "Y"]
 const interval_val_map = { "s": 1, "m": 60, "h": 3600, "D": 86400, "W": 604800, "M": 18396000, "Y": 220752000, "E": 1 }
@@ -141,114 +121,3 @@ export function binarySearch(arr:Array<any>, el:any, compare_fn:(a:any, b:any) =
 
 //#endregion
 
-
-// #region --------------------- Additional Lightweight Chart Types ----------------------- */
-
-//The main functions of this library, like createCandlestick Series, return some complicated types.
-//Those types are defined below so even though the functions return a type of any, the assigned variable and be typed.
-
-/* --------------------- Generic Types ----------------------- */
-
-/**
- * Represents A Generic Series Type.
- */
-export type AnySeries = CandlestickSeries | BarSeries | HistogramSeries | AreaSeries | LineSeries | BaselineSeries | CustomSeries | RoundedCandleSeries
-
-/**
- * Represents any type of Data that could be sent to, or retrieved from, a data series
- */
-export type AnySeriesData<HorzScaleItem = Time> = lwc.SingleValueData<HorzScaleItem> | lwc.OhlcData<HorzScaleItem> | lwc.CandlestickData<HorzScaleItem> | lwc.BarData<HorzScaleItem> | lwc.HistogramData<HorzScaleItem> | lwc.LineData<HorzScaleItem> | lwc.BaselineData<HorzScaleItem> | lwc.AreaData<HorzScaleItem> | lwc.CustomData<HorzScaleItem>
-
-/**
- * Represents any type of Series Options
- */
-export type AnySeriesOptions = lwc.SeriesOptionsCommon | lwc.CandlestickSeriesOptions | lwc.BarSeriesOptions | lwc.HistogramSeriesOptions | lwc.LineSeriesOptions | lwc.BaselineSeriesOptions | lwc.AreaSeriesOptions
-
-/* --------------------- SeriesAPI Types ----------------------- */
-
-/**
- * Represents Candlestick Series.
- */
-export type CandlestickSeries = lwc.ISeriesApi<"Candlestick", Time, lwc.WhitespaceData<Time> | lwc.CandlestickData<Time>, lwc.CandlestickSeriesOptions, DP<lwc.CandlestickStyleOptions & lwc.SeriesOptionsCommon>>
-
-/**
- * Represents a Bar Series.
- */
-export type BarSeries = lwc.ISeriesApi<"Bar", Time, lwc.WhitespaceData<Time> | lwc.BarData<Time>, lwc.BarSeriesOptions, DP<lwc.BarStyleOptions & lwc.SeriesOptionsCommon>>
-
-/**
- * Represents A Histogram Series.
- */
-export type HistogramSeries = lwc.ISeriesApi<"Histogram", Time, lwc.WhitespaceData<Time> | lwc.HistogramData<Time>, lwc.HistogramSeriesOptions, DP<lwc.HistogramStyleOptions & lwc.SeriesOptionsCommon>>
-
-/**
- * Represents a Line Series.
- */
-export type LineSeries = lwc.ISeriesApi<"Line", Time, lwc.WhitespaceData<Time> | lwc.LineData<Time>, lwc.LineSeriesOptions, DP<lwc.LineStyleOptions & lwc.SeriesOptionsCommon>>
-
-/**
- * Represents a Baseline Series.
- */
-export type BaselineSeries = lwc.ISeriesApi<"Baseline", Time, lwc.WhitespaceData<Time> | lwc.BaselineData<Time>, lwc.BaselineSeriesOptions, DP<lwc.BaselineStyleOptions & lwc.SeriesOptionsCommon>>
-
-/**
- * Represents an Area Series.
- */
-export type AreaSeries = lwc.ISeriesApi<"Area", Time, lwc.WhitespaceData<Time> | lwc.AreaData<Time>, lwc.AreaSeriesOptions, DP<lwc.AreaStyleOptions & lwc.SeriesOptionsCommon>>
-
-/**
- * Represents A Custom Series.
- */
-export type CustomSeries<TData extends lwc.CustomData<Time> = lwc.CustomData<Time>> = lwc.ISeriesApi<"Custom", Time, lwc.WhitespaceData<Time> | TData, lwc.CustomSeriesOptions, DP<lwc.CustomStyleOptions & lwc.SeriesOptionsCommon>>
-
-
-/**
- * Represents A Custom Rounded Candle Series.
- */
-export type RoundedCandleSeries<TData extends lwc.CustomData<Time> = lwc.CustomData<Time>> = lwc.ISeriesApi<"Custom", Time, lwc.WhitespaceData<Time> | TData, lwc.CustomSeriesOptions, DP<lwc.CustomStyleOptions & lwc.SeriesOptionsCommon>>
-
-/* --------------------- ----------------------- Series Interface Expantions Types ----------------------- ----------------------- */
-/*
- * These Interfaces Redefine the Standard SeriesOptionsMap, SeriesDataItemTypeMap, SeriesPartialOptionsMaps that come with the Lightweight Charts Package.
- * This is done so that each interface can be expanded to include more standardized Custom Series Types
- */
-
-/**
- * Represents the type of options for each series type.
- *
- * For example a bar series has options represented by {@link BarSeriesOptions}.
- * 
- */
-export interface SeriesOptionsMap extends lwc.SeriesOptionsMap {
-    /**
-     * The type of a custom series options.
-     */
-    Rounded_Candle: RoundedCandleSeriesOptions;
-}
-
-/**
- * Represents the type of data that a series contains.
- *
- * For example a bar series contains {@link BarData} or {@link WhitespaceData}.
- */
-export interface SeriesDataItemTypeMap<HorzScaleItem = lwc.Time> extends lwc.SeriesDataItemTypeMap {
-    /**
-     * The type of a custom series options.
-     */
-    Rounded_Candle: lwc.CandlestickData<HorzScaleItem> | lwc.WhitespaceData<HorzScaleItem>;
-}
-
-/**
- * Represents the type of partial options for each series type.
- *
- * For example a bar series has options represented by {@link BarSeriesPartialOptions}.
- */
-export interface SeriesPartialOptionsMap extends lwc.SeriesPartialOptionsMap {
-    /**
-     * The type of a custom series options.
-     */
-    Rounded_Candle: lwc.CandlestickSeriesPartialOptions;
-}
-
-
-//#endregion

@@ -2,10 +2,11 @@ import * as lwc from "lightweight-charts";
 import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createEffect, createSignal, JSX, on, Setter, Signal } from "solid-js";
 import { ChartPane } from "../../components/charting_frame/chart_elements";
-import * as u from "../types";
+import { makeid } from "../types";
 import { indicator } from "./indicator";
-import { PrimitiveBase } from "./lwpc-plugins/primitive-base";
-import { primitives } from "./lwpc-plugins/primitives";
+import { PrimitiveBase } from "./primitive-plugins/primitive-base";
+import { primitives } from "./primitive-plugins/primitives";
+import { Series_Type, SeriesBase, SeriesBase_T } from "./series-plugins/series-base";
 
 
 //The portion of a chart where things are actually drawn
@@ -24,10 +25,10 @@ export class pane {
     private primitives_right = new Map<string, PrimitiveBase>()
     private primitives_overlay = new Map<string, PrimitiveBase>()
 
-    primitive_left: u.LineSeries
-    primitive_right: u.LineSeries
-    primitive_overlay: u.LineSeries
-    whitespace_series: u.LineSeries
+    primitive_left: SeriesBase_T
+    primitive_right: SeriesBase_T
+    primitive_overlay: SeriesBase_T
+    whitespace_series: SeriesBase_T
     private chart_div: HTMLDivElement
 
     private leftScaleMode: Signal<number>
@@ -88,11 +89,14 @@ export class pane {
 
 
         //Create Scale Control Buttons
-        this.whitespace_series = this.chart.addLineSeries()
+        this.whitespace_series = new SeriesBase("", "Pane_Whitespace", Series_Type.LINE, this.chart)
         //Add Blank Series that primtives can be attached to
-        this.primitive_left = this.chart.addLineSeries({ priceScaleId: 'left', visible: false, autoscaleInfoProvider: undefined })
-        this.primitive_right = this.chart.addLineSeries({ priceScaleId: 'right', visible: false, autoscaleInfoProvider: undefined })
-        this.primitive_overlay = this.chart.addLineSeries({
+        this.primitive_left = new SeriesBase("", "Left_Scale_Primitives", Series_Type.LINE, this.chart)
+        this.primitive_left.applyOptions({ priceScaleId: 'left', visible: false, autoscaleInfoProvider: undefined })
+        this.primitive_right = new SeriesBase("", "Right_Scale_Primitives", Series_Type.LINE, this.chart)
+        this.primitive_right.applyOptions({ priceScaleId: 'right', visible: false, autoscaleInfoProvider: undefined })
+        this.primitive_overlay = new SeriesBase("", "Left_Scale_Primitives", Series_Type.LINE, this.chart)
+        this.primitive_overlay.applyOptions({
             visible: false,
             priceScaleId: '',
             autoscaleInfoProvider: () => ({
@@ -176,7 +180,7 @@ export class pane {
     /* Attach a primitive that is already constructed. */
     attach_primitive(obj:PrimitiveBase){
         const primitive_ids = Object.keys(this.primitives_right)
-        const new_id = u.makeid(primitive_ids, 'p_')
+        const new_id = makeid(primitive_ids, 'p_')
 
         // TODO : Reassess the fact that the js_id is not constant here. This is the only location (currently)
         // where it isn't constant. That breaks an unspoken rule to allow primitives to easily transfer

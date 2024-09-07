@@ -24,11 +24,13 @@ export interface primitiveOptions {
 }
 
 /**
- * This is a near identical implementation of the plugin-base that comes with 
+ * This is a near implementation to the plugin-base class that is in (but not exported from)
  * the lightweight charts library. This was made so some extentions can be added
- * that will be used by the LWPC Module. This should be the standard implementation
+ * that will be used by the LWPC Module. All primitives should inherit from this class
  * so that plugins can integrate into the base features of the GUI. 
  * (e.g. Object tree, Overlay Style Menus, ...)
+ * 
+ * This is a sister class to the SeriesBase class defined by this module.
  * 
  * Docs: https://tradingview.github.io/lightweight-charts/docs/plugins/series-primitives
  */

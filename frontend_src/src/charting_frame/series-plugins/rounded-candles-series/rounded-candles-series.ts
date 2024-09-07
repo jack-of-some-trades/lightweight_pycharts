@@ -1,22 +1,25 @@
 import {
+	CandlestickData,
 	CandlestickSeriesOptions,
+	CustomData,
 	CustomSeriesOptions,
 	CustomSeriesPricePlotValues,
 	ICustomSeriesPaneView,
 	PaneRendererCustomData,
+	SeriesPartialOptions,
 	Time,
 	WhitespaceData,
 	customSeriesDefaultOptions,
 } from 'lightweight-charts';
-import { RoundedCandleSeriesData, /* isRoundedCandleData */ } from './data';
 import { RoundedCandleSeriesRenderer } from './renderer';
 
-export interface RoundedCandleSeriesOptions
-	extends CustomSeriesOptions,
-	Exclude<
-		CandlestickSeriesOptions,
-		'borderVisible' | 'borderColor' | 'borderUpColor' | 'borderDownColor'
-	> {
+export interface RoundedCandleSeriesData extends CandlestickData, CustomData {
+	rounded?: boolean;
+}
+
+export type RoundedCandleSeriesPartialOptions = SeriesPartialOptions<RoundedCandleSeriesOptions>;
+
+export interface RoundedCandleSeriesOptions extends CustomSeriesOptions, Exclude<CandlestickSeriesOptions, 'borderVisible' | 'borderColor' | 'borderUpColor' | 'borderDownColor'> {
 	radius: (barSpacing: number) => number;
 }
 

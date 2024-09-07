@@ -4,7 +4,8 @@
 
 import { createSignal, For, Show, splitProps } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { interval, Series_Type } from "../../../src/types";
+import { Series_Type } from "../../../src/charting_frame/series-plugins/series-base";
+import { interval } from "../../../src/types";
 import { Icon, icons } from "../../icons";
 import { MenuItem, ShowMenuButton } from "../../simple_menu";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../overlay_manager";
