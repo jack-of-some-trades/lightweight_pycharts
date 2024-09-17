@@ -1,6 +1,15 @@
+/**
+ * File that defines types and Interfaces associated with the Series Objects used in lightweight-charts
+ * This also defines a class that wraps around the SeriesAPI instances created to extend their behavior.
+ */
 import * as lwc from "lightweight-charts";
+import { ObjTree_Item } from "../../../components/widget_panels/object_tree";
+import { pane } from "../pane";
+import { PrimitiveBase } from "../primitive-plugins/primitive-base";
 import { RoundedCandleSeries, RoundedCandleSeriesData, RoundedCandleSeriesOptions, RoundedCandleSeriesPartialOptions } from "./rounded-candles-series/rounded-candles-series";
 
+
+// #region --------------------- Type Definitions & Interface Extensions ----------------------- */
 
 /* This must match the orm.enum.SeriesType. The value, [0-9], is what is actually compared*/
 export enum Series_Type {
@@ -17,6 +26,70 @@ export enum Series_Type {
     ROUNDED_CANDLE
 }
 
+const SERIES_NAME_MAP = new Map<Series_Type, string>([
+    [Series_Type.WhitespaceData,'Whitespace'],
+    [Series_Type.SingleValueData,'Single-Value'],
+    [Series_Type.LINE,'Line'],
+    [Series_Type.AREA,'Area'],
+    [Series_Type.BASELINE,'Baseline'],
+    [Series_Type.HISTOGRAM,'Histogram'],
+    [Series_Type.OHLC,'OHLC'],
+    [Series_Type.BAR,'Bar'],
+    [Series_Type.CANDLESTICK,'Candlestick'],
+    // [Series_Type.HLC_AREA:'High-Low Area'],
+    [Series_Type.ROUNDED_CANDLE,'Rounded-Candle']
+])
+
+export type BarSeries = SeriesBase<'Bar'>
+export type LineSeries = SeriesBase<"Line">
+export type AreaSeries = SeriesBase<"Area">
+export type BaselineSeries = SeriesBase<"Baseline">
+export type HistogramSeries = SeriesBase<'Histogram'>
+export type CandleStickSeriesBase = SeriesBase<'Candlestick'>
+export type RoundedCandleSeriesBase = SeriesBase<"Rounded_Candle">
+export type SeriesBase_T = SeriesBase<Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
+
+// Meant to represent the 'Series' in lwc that isn't exported. (the class owned by 'SeriesApi')
+export type Series = lwc.ISeriesApi<keyof lwc.SeriesOptionsMap>
+// Meant to represent the 'SeriesApi' in lwc that isn't exported. (the class that implements 'ISeriesApi')
+export type SeriesApi = lwc.ISeriesApi<keyof lwc.SeriesOptionsMap>
+
+/* --------------------- Generic Types ----------------------- */
+
+type ValueOf<T> = T[keyof T];
+
+/* Represents any type of Data that could be sent to, or retrieved from, a series */
+export type SeriesData = ValueOf<SeriesDataTypeMap_EXT>
+/* Represents any type of Series Options */
+export type SeriesOptions = ValueOf<SeriesOptionsMap_EXT>
+
+
+/* ----------------------- Series Interface Expansions ----------------------- */
+
+/*
+ * These Interfaces / Types extend the Standard Options & Data Type Maps that come with the Lightweight Charts Package.
+ * This is done so that each interface can be expanded to include more standardized Custom Series Types for this module
+ */
+
+/* Represents the type of options for each series type. */
+export interface SeriesOptionsMap_EXT extends Exclude<lwc.SeriesOptionsMap, 'Custom'> {
+    Rounded_Candle: RoundedCandleSeriesOptions;
+}
+
+/* Represents the type of data that a series contains. */
+export interface SeriesDataTypeMap_EXT<HorzScaleItem = lwc.Time> extends Exclude<lwc.SeriesDataItemTypeMap, 'Custom'> {
+    Rounded_Candle: RoundedCandleSeriesData | lwc.WhitespaceData<HorzScaleItem>;
+}
+
+/* Represents the type of partial options for each series type. */
+export interface SeriesPartialOptionsMap_EXT extends Exclude<lwc.SeriesPartialOptionsMap, 'Custom'>  {
+    Rounded_Candle: RoundedCandleSeriesPartialOptions;
+}
+
+
+//#endregion
+
+
 /**
  * This class is a thin shell wrapper around lightweight-charts' ISeriesApi.
  * The wrapper serves to add a couple parameters and functions that are closely tied
@@ -29,54 +102,113 @@ export enum Series_Type {
  * 
  * This is a sister class to the PrimitiveBase class defined by this module.
  * 
+ * This generic class also serves to remove the 'Custom' Series Type. Instead any series types that
+ * would have been defined as custom should be explicit extensions of this class's type parameter.
+ * Thus should be added to the Options, Partial_Options, and Data Type Maps below.
+ * 
  * Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeriesApi
  */
 export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>> {
-    _chart: lwc.IChartApi
+    _pane: pane
     _series: lwc.ISeriesApi<lwc.SeriesType>
 
     _id: string
-    Name: string | undefined
-    Type: Series_Type
+    parent_name: string | undefined
+    name: string | undefined
+    s_type: Series_Type
+    element: Element | undefined
 
-    constructor(_id:string, _name:string | undefined, _type:Series_Type, _chart:lwc.IChartApi){
+    constructor(
+        _id:string, 
+        _name:string | undefined,
+        _parent_name: string | undefined,
+        _type:Series_Type, 
+        _pane:pane
+    ){
         this._id = _id
-        this.Name = _name
-        this.Type = _type
-        this._chart = _chart
+        this.name = _name
+        this.parent_name = _parent_name
+        this.s_type = _type
+        this._pane = _pane
         this._series = this._create_series(_type)
+
+        //Having seriesBase Objs populate a map owned by the pane they are attached
+        //to IS stupid. I don't like it. Thing is, this is the only way to keep _create_series
+        //in SeriesBase where it should be.
+        this._pane.series_map.set(this._series, this)
     }
     
     private _create_series(series_type: Series_Type): lwc.ISeriesApi<lwc.SeriesType> {
         switch (series_type) {
             // ---- Base Series Types ---- //
             case (Series_Type.LINE):
-                return this._chart.addLineSeries()
+                return this._pane.chart.addLineSeries()
             case (Series_Type.AREA):
-                return this._chart.addAreaSeries()
+                return this._pane.chart.addAreaSeries()
             case (Series_Type.HISTOGRAM):
-                return this._chart.addHistogramSeries()
+                return this._pane.chart.addHistogramSeries()
             case (Series_Type.BASELINE):
-                return this._chart.addBaselineSeries()
+                return this._pane.chart.addBaselineSeries()
             case (Series_Type.BAR):
-                return this._chart.addBarSeries()
+                return this._pane.chart.addBarSeries()
             case (Series_Type.OHLC):
             case (Series_Type.CANDLESTICK):
-                return this._chart.addCandlestickSeries()
+                return this._pane.chart.addCandlestickSeries()
             // ---- Custom Series Types ---- //
             case (Series_Type.ROUNDED_CANDLE):
                 //Ideally custom series objects will get baked directly into the TS Code like this
                 //So accomodations don't need to be made on the Python side
-                return this._chart.addCustomSeries(new RoundedCandleSeries())
+                return this._pane.chart.addCustomSeries(new RoundedCandleSeries())
             default: //Catch-all, primarily reached by WhitespaceSeries'
-                return this._chart.addLineSeries()
+                return this._pane.chart.addLineSeries()
         }
     }
 
-    /**
-     * Removes this series and all it's sub components from the chart. This process is not reversible and the object becomes useless.
-     */
-    remove(){ this._chart.removeSeries(this._series)}
+    get ObjTree_interface():ObjTree_Item{ 
+        let display_name = this.parent_name? this.parent_name + ' : ' : ''
+        display_name += this.name? this.name : SERIES_NAME_MAP.get(this.s_type)
+        return { id: this._id, name:display_name, element:this.element }
+    }
+
+    //@ts-ignore : _seriesApi._series.Zindex : only valid for Lightweight-Charts v4.2.0
+    get Zindex():number{ return this._series.Ls.Zi }
+    //@ts-ignore
+    set Zindex(index:number){ this._series.Ls.Zi = index }
+
+    reorderPrimitives(from:number, to:number){ 
+        this.primitives.splice(to, 0, ...this.primitives.splice(from, 1))
+    }
+
+    /* Removes this series and all it's sub components from the chart. This is irreversible */
+    remove(){ 
+        this._pane.series_map.delete(this._series)
+        this._pane.chart.removeSeries(this._series)
+    }
+
+    /* Changes the type of series that is displayed. Data must be given since the DataType may change */
+    change_series_type(series_type:Series_Type, data:SeriesData[]){
+        if (series_type === this.s_type) return
+
+        const current_zindex = this.Zindex
+        const current_range = this._pane.chart.timeScale().getVisibleRange()
+        
+        this.remove()
+        this._series = this._create_series(series_type)
+        this._series.setData(data) // Type Checking presumed to have been done in python
+        this.s_type = series_type
+        this._pane.series_map.set(this._series, this)
+
+        //Reset the draw order to what is was before the change. 
+        //Requires ZOrder to be zero indexed.
+        this._pane.reorderSeries(-1, current_zindex)
+
+        //Setting Data Changes Visible Range, set it back.
+        if (current_range !== null)
+            this._pane.chart.timeScale().setVisibleRange(current_range)
+    }
+
+    // TODO: Implement
+    move_to_pane(pane:pane){}
 
     // #region -------- lightweight-chart ISeriesAPI functions --------
 
@@ -97,8 +229,10 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
     removePriceLine(line: lwc.IPriceLine){this._series.removePriceLine(line)}
     createPriceLine(options: lwc.CreatePriceLineOptions): lwc.IPriceLine {return this._series.createPriceLine(options)}
 
-    attachPrimitive(primitive: lwc.ISeriesPrimitive<lwc.Time>) {this._series.attachPrimitive(primitive)}
-    detachPrimitive(primitive: lwc.ISeriesPrimitive<lwc.Time>) {this._series.detachPrimitive(primitive)}
+    //@ts-ignore: _series.jl === series._primitives array for Lightweight-Charts v4.2.0
+    get primitives(): PrimitiveBase[] { return this._series.jl }
+    attachPrimitive(primitive: PrimitiveBase) {this._series.attachPrimitive(primitive)}
+    detachPrimitive(primitive: PrimitiveBase) {this._series.detachPrimitive(primitive)}
 
     /* 
      * These can be uncommented to be used. Currently they are commented out since they are 
@@ -115,69 +249,19 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
 }
 
 
-// #region --------------------- Lightweight Chart Type / Interface extensions ----------------------- */
-
-export type BarSeries = SeriesBase<'Bar'>
-export type LineSeries = SeriesBase<"Line">
-export type AreaSeries = SeriesBase<"Area">
-export type BaselineSeries = SeriesBase<"Baseline">
-export type HistogramSeries = SeriesBase<'Histogram'>
-export type CandleStickSeriesBase = SeriesBase<'Candlestick'>
-export type RoundedCandleSeriesBase = SeriesBase<"Rounded_Candle">
-export type SeriesBase_T = SeriesBase<Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
-
-/*
- * These Interfaces / Types extend the Standard Options & Data Type Maps that come with the Lightweight Charts Package.
- * This is done so that each interface can be expanded to include more standardized Custom Series Types for this module
- */
-
-/* --------------------- Generic Types ----------------------- */
-
-type ValueOf<T> = T[keyof T];
-
 /**
- * Represents any type of Data that could be sent to, or retrieved from, a series
- */
-export type SeriesData = ValueOf<SeriesDataTypeMap_EXT>
-
-/**
- * Represents any type of Series Options
- */
-export type SeriesOptions = ValueOf<SeriesOptionsMap_EXT>
-
-
-/* ----------------------- Series Interface Expansions ----------------------- */
-
-/**
- * Represents the type of options for each series type.
- *
- * For example a bar series has options represented by {@link BarSeriesOptions}.
+ * Dead Notes on Draw order of Series and Primitive objects for the Lightweight-Charts Library
  * 
+ * To reorder Series (after applying them to the screen) you need to change the _zOrder:number 
+ * within some/all of the series applied to the lwc 'Pane' (not this lib's pane) which displays 
+ * the series objects. To get a reference to this pane's series objects call 
+ * chart._chartWidget._model._panes[0]._dataSources: (chart.lw.$i.kc[0].vo)** for lwc v4.2.0
+ * 
+ * With this array, you can set _dataSources[i]._zOrder to the desired value. (chart.lw.$i.kc[0].vo[i].Zi)**
+ * The _zOrder value can be a duplicate, negative, and have gaps between other series values.
+ * From here the pane._cachedOrderedSources needs to be set to null (chart.lw.$i.kc[0].po = null)** 
+ * Then a redraw of the chart invoked. chart._chartWidget._model.lightUpdate() ( chart.lw.$i.$h() )**
+ * 
+ * To Re-order primitives you need to re-order the series' _primitives array That's Part of the Series Object.
+ * chart._chartWidget._model._serieses[i]._primitives (chart.lw.$i.yc[i].jl)
  */
-export interface SeriesOptionsMap_EXT extends Exclude<lwc.SeriesOptionsMap, 'Custom'> {
-
-    Rounded_Candle: RoundedCandleSeriesOptions;
-}
-
-/**
- * Represents the type of data that a series contains.
- *
- * For example a bar series contains {@link BarData} or {@link WhitespaceData}.
- */
-export interface SeriesDataTypeMap_EXT<HorzScaleItem = lwc.Time> extends Exclude<lwc.SeriesDataItemTypeMap, 'Custom'> {
-
-    Rounded_Candle: RoundedCandleSeriesData | lwc.WhitespaceData<HorzScaleItem>;
-}
-
-/**
- * Represents the type of partial options for each series type.
- *
- * For example a bar series has options represented by {@link BarSeriesPartialOptions}.
- */
-export interface SeriesPartialOptionsMap_EXT extends Exclude<lwc.SeriesPartialOptionsMap, 'Custom'>  {
-
-    Rounded_Candle: RoundedCandleSeriesPartialOptions;
-}
-
-
-//#endregion

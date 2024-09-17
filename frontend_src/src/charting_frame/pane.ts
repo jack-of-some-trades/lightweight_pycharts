@@ -1,12 +1,14 @@
 import * as lwc from "lightweight-charts";
 import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createEffect, createSignal, JSX, on, Setter, Signal } from "solid-js";
+import { SetStoreFunction } from "solid-js/store";
 import { ChartPane } from "../../components/charting_frame/chart_elements";
+import { ObjectTreeCTX, ObjTree_Item } from "../../components/widget_panels/object_tree";
 import { makeid } from "../types";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./primitive-plugins/primitive-base";
 import { primitives } from "./primitive-plugins/primitives";
-import { Series_Type, SeriesBase, SeriesBase_T } from "./series-plugins/series-base";
+import { Series, Series_Type, SeriesApi, SeriesBase, SeriesBase_T } from "./series-plugins/series-base";
 
 
 //The portion of a chart where things are actually drawn
@@ -21,13 +23,9 @@ export class pane {
     setActive: Setter<boolean>
 
     chart: IChartApi
-    private primitives_left = new Map<string, PrimitiveBase>()
-    private primitives_right = new Map<string, PrimitiveBase>()
-    private primitives_overlay = new Map<string, PrimitiveBase>()
+    private primitives = new Map<string, PrimitiveBase>()
+    private primitive_serieses = new Map<string, SeriesBase_T>()
 
-    primitive_left: SeriesBase_T
-    primitive_right: SeriesBase_T
-    primitive_overlay: SeriesBase_T
     whitespace_series: SeriesBase_T
     private chart_div: HTMLDivElement
 
@@ -35,6 +33,13 @@ export class pane {
     private leftScaleInvert: Signal<boolean>
     private rightScaleMode: Signal<number>
     private rightScaleInvert: Signal<boolean>
+
+    //State variables & Setters to Track & Control the Object Tree
+    //The population of series_map controlled by the SeriesBase class.
+    series_map = new Map<SeriesApi, SeriesBase_T>()
+    private setObjTreeIds: Setter<string[]>
+    private setObjTreeItems: SetStoreFunction<ObjTree_Item[]>
+    private setObjTreeReorderFunc: Setter<(from:number,to:number)=>void>
 
     // Reference to Indicators on the Pane used to construct the Pane's Legend
     private indicators: Accessor<indicator[]>
@@ -50,8 +55,8 @@ export class pane {
         this.div = div
 
         let tmp_div = document.createElement('div')
-        //Only One Chart per pane, so this is the only definition needed
         const OPTS = DEFAULT_PYCHART_OPTS()
+        //Only One Chart per pane, so this is the only definition needed
         this.chart = createChart(tmp_div, OPTS);
         this.chart_div = this.chart.chartElement()
 
@@ -87,27 +92,19 @@ export class pane {
             leftScaleInvert: this.leftScaleInvert,
         })
 
+        //Whitespace series to allow consistent timescale across panes that extends into the future.
+        this.whitespace_series = new SeriesBase("na", "Whitespace", undefined, Series_Type.LINE, this)
+        //@ts-ignore : Make sure Series Z-index is 0 indexed... normally index starts at 1. only valid for Lightweight-Charts v4.2.0
+        this.serieses.forEach((series, i) => series.Zi = i)
 
-        //Create Scale Control Buttons
-        this.whitespace_series = new SeriesBase("", "Pane_Whitespace", Series_Type.LINE, this.chart)
-        //Add Blank Series that primtives can be attached to
-        this.primitive_left = new SeriesBase("", "Left_Scale_Primitives", Series_Type.LINE, this.chart)
-        this.primitive_left.applyOptions({ priceScaleId: 'left', visible: false, autoscaleInfoProvider: undefined })
-        this.primitive_right = new SeriesBase("", "Right_Scale_Primitives", Series_Type.LINE, this.chart)
-        this.primitive_right.applyOptions({ priceScaleId: 'right', visible: false, autoscaleInfoProvider: undefined })
-        this.primitive_overlay = new SeriesBase("", "Left_Scale_Primitives", Series_Type.LINE, this.chart)
-        this.primitive_overlay.applyOptions({
-            visible: false,
-            priceScaleId: '',
-            autoscaleInfoProvider: () => ({
-                priceRange: { //Set visible range regardless of data
-                    minValue: 0,
-                    maxValue: 100,
-                },
-            })
-        })
+        
+        //Setters from the Object Tree so this pane can change the Object Tree when it is selected
+        this.setObjTreeIds = ObjectTreeCTX().setIds
+        this.setObjTreeItems = ObjectTreeCTX().setItems
+        this.setObjTreeReorderFunc = ObjectTreeCTX().setReorderFunc 
+        this.reorderSeries = this.reorderSeries.bind(this) // Bind now so binding doesn't need to happen later
 
-        // These listeners allow smooth chart dragging in a replay like mode
+        // The Following listeners allow smooth chart dragging while bars are actively updating.
         this.chart_div.addEventListener('mousedown', () => {
             this.chart.timeScale().applyOptions({
                 'shiftVisibleRangeOnNewBar': false,
@@ -124,33 +121,71 @@ export class pane {
         })
     }
 
+    /** Retrieves all Series Objects drawn onto the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
+    //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._dataSources
+    private get serieses():Series[] { return this.chart.lw.$i.kc[0].vo }
+
+    /** Retrieves all SeriesAPI Objects drawn onto the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
+    //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._dataSources => chart._seriesMapReversed.get()
+    private get seriesAPIs():SeriesApi[] { return Array.from(this.chart.lw.$i.kc[0].vo, (series) => this.chart.Sw.get(series)) }
+
+    /** Re-orderes then Re-draws the Series Objects attached to the chart : Valid only for Lightweight-Charts v4.2.0 */
+    reorderSeries(from:number, to:number){
+        if (from < 0) from = this.serieses.length + from
+        if (to < 0) to = this.serieses.length + to
+
+        this.serieses.splice(to, 0, ...this.serieses.splice(from, 1))
+        //@ts-ignore : Zi === Z-index. Re-setting Each so that they are drawn in the new order of the array
+        this.serieses.forEach((series, i) => series.Zi = i)
+
+        //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._cachedDataSources
+        this.chart.lw.$i.kc[0].po = null
+        //@ts-ignore : Stands for : chart._chartWidget._model.lightUpdate()
+        this.chart.lw.$i.$h()
+
+        //Make sure Object Tree Reflects the series Reorder
+        this.setObjTreeIds(
+            Array.from(this.seriesAPIs, (series) => this.series_map.get(series)?._id ?? "")
+        )
+    }
+
     /**
      * Update Global 'active_pane' reference to this instance. 
      */
     assign_active_pane() {
+        if (window.active_pane === this) return
+
         if (window.active_pane)
             window.active_pane.setActive(false)
 
         window.active_pane = this
         this.setActive(true)
+
+        //Update the Object Tree.
+        const nullTreeItem:ObjTree_Item = {id:'', name:'', element:undefined}
+        const ObjTreeItems = Array.from(this.seriesAPIs, (series) => this.series_map.get(series)?.ObjTree_interface ?? nullTreeItem)
+        this.setObjTreeItems(ObjTreeItems)
+        this.setObjTreeReorderFunc(()=>this.reorderSeries)
+        //Set Ids last since this will trigger the re-render
+        this.setObjTreeIds(Array.from(ObjTreeItems, (item)=> item.id))
     }
 
     set_whitespace_data(data: WhitespaceData[], primitive_data:SingleValueData) {
         this.whitespace_series.setData(data)
-        this.primitive_left.setData([primitive_data])
-        this.primitive_right.setData([primitive_data])
-        this.primitive_overlay.setData([primitive_data])
+        this.primitive_serieses.forEach((series) =>
+            // Only set to the last visible data point to limit data redundancy.
+            // See note near EoF for further explanation. 
+            series.setData([primitive_data])
+        )
     }
 
     update_whitespace_data(data: WhitespaceData, primitive_data:SingleValueData) {
         this.whitespace_series.update(data)
-        this.primitive_left.setData([primitive_data])
-        this.primitive_right.setData([primitive_data])
-        this.primitive_overlay.setData([primitive_data])
+        this.primitive_serieses.forEach((s) => s.setData([primitive_data]))
     }
 
     attach_indicator_to_legend(indicator:indicator) {
-        if (!this.indicators().includes(indicator)) 
+        if (!this.indicators().includes(indicator))
             this.setIndicators([...this.indicators(), indicator])
     }
 
@@ -167,19 +202,19 @@ export class pane {
         let new_obj = new primitive_type(_id, params)
 
         new_obj._pane = this
-        this.primitives_right.set(_id, new_obj)
-        this.primitive_right.attachPrimitive(new_obj)
+        this.primitives.set(_id, new_obj)
+        this.whitespace_series.attachPrimitive(new_obj)
     }
 
     protected update_primitive(_id: string, params:object) {
-        let _obj = this.primitives_right.get(_id)
+        let _obj = this.primitives.get(_id)
         if (_obj === undefined) return
         _obj.updateData(params)
     }
 
     /* Attach a primitive that is already constructed. */
     attach_primitive(obj:PrimitiveBase){
-        const primitive_ids = Object.keys(this.primitives_right)
+        const primitive_ids = Object.keys(this.primitives)
         const new_id = makeid(primitive_ids, 'p_')
 
         // TODO : Reassess the fact that the js_id is not constant here. This is the only location (currently)
@@ -188,16 +223,16 @@ export class pane {
         // new Primititive with the same options should be created
         obj._id = new_id
         obj._pane = this
-        this.primitives_right.set(new_id, obj)
-        this.primitive_right.attachPrimitive(obj)
+        this.primitives.set(new_id, obj)
+        this.whitespace_series.attachPrimitive(obj)
     }
 
     remove_primitive(_id: string) {
-        let _obj = this.primitives_right.get(_id)
+        let _obj = this.primitives.get(_id)
         if (_obj === undefined) return
 
-        this.primitive_right.detachPrimitive(_obj) 
-        this.primitives_right.delete(_id)
+        this.whitespace_series.detachPrimitive(_obj) 
+        this.primitives.delete(_id)
     }
 
     update_opts(newOpts: DP<lwc.TimeChartOptions>) {

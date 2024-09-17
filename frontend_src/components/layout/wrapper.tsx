@@ -13,6 +13,7 @@ import { TopBar } from './topbar/topbar'
 import "../../css/layout/wrapper.css"
 import "../../css/style_default.css"
 import { ColorContext } from '../color_picker'
+import { ObjTreeContext } from '../widget_panels/object_tree'
 import { Container } from './container'
 import { WidgetBar, WidgetPanel } from './widgetbar'
 
@@ -115,9 +116,11 @@ function GlobalContexts(props:JSX.HTMLAttributes<HTMLElement>){
     return <>
         <ColorContext>
         <ToolBoxContext>
+        <ObjTreeContext>
         <OverlayContextProvider>
         {props.children}
         </OverlayContextProvider>
+        </ObjTreeContext>
         </ToolBoxContext>
         </ColorContext>
     </>

@@ -7,9 +7,6 @@
 
 - Python Separation of Frames and Charting Frames
 
-
-- Refactor Tools.ts to be a lightweight-chart.d.typings extension
-- Primitive Series Class?
 - Additional primitive Tools
 
 

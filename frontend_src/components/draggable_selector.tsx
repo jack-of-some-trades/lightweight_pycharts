@@ -5,14 +5,14 @@
  */
 
 import { closestCenter, createSortable, DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, Transformer, useDragDropContext } from "@thisbeyond/solid-dnd";
-import { Accessor, Component, createSignal, For, JSX, Show, splitProps } from "solid-js";
+import { Accessor, Component, createSignal, JSX, Show, splitProps } from "solid-js";
 
 import "../css/draggable_selector.css";
 
 interface drag_section_props {
     ids: Accessor<string[]>
-    tag_name: (id:string) => string
-    children?: Component<{id:string}>
+    children?: JSX.Element
+    overlay_child?: Component<{id:string}>
     reorder_function: (from:number, to:number)=>void
 }
 export function DraggableSelection(props:drag_section_props){
@@ -36,21 +36,14 @@ export function DraggableSelection(props:drag_section_props){
             <ConstrainDragAxis/>
             <div class="drag_tag_column">
                 <SortableProvider ids={props.ids()}>
-                    <For each={props.ids()}>{(tag_id)=>{
-                        let frame = active_container.frames.find((f) => f.id === tag_id)
-                        return <SelectableItemTag 
-                            tag_id={()=>tag_id}
-                            tag_name={() => props.tag_name(tag_id)}
-                            onClick={()=>frame?.assign_active_frame()}
-                        >
-                            {props.children?.({id:tag_id}) ?? undefined}
-                        </SelectableItemTag>
-                    }}</For>
+                    {props.children}
                 </SortableProvider>
             </div>
-            <OverlayItemTag tag_id={activeItem} tag_name={() => props.tag_name(activeItem())}>
-                {props.children?.({id:activeItem()}) ?? undefined}
-            </OverlayItemTag>
+            <DragOverlay>
+                <Show when={activeItem()} keyed>
+                    {props.overlay_child?.({id:activeItem()}) ?? undefined}
+                </Show>
+            </DragOverlay>
         </DragDropProvider>
     )
 }
@@ -78,11 +71,14 @@ function ConstrainDragAxis(){
 }
 
 
+/**
+ * Optional Use Standardized Draggable Tag
+ */
 interface tag_props extends JSX.HTMLAttributes<HTMLDivElement> {
     tag_id: Accessor<string>
     tag_name: Accessor<string>
 }
-function SelectableItemTag(props:tag_props){
+export function SelectableItemTag(props:tag_props){
     const sortable = createSortable(props.tag_id());
     const state = useDragDropContext()?.[0]
 
@@ -101,17 +97,17 @@ function SelectableItemTag(props:tag_props){
     </div>
 };
 
-function OverlayItemTag(props:tag_props){
+
+/**
+ * Optional Use Standardized Draggable Tag Overlay Element
+ */
+export function OverlayItemTag(props:tag_props){
     const [,divProps] = splitProps(props, ['tag_id', 'tag_name'])
-    return <DragOverlay>
-        <Show when={props.tag_id()} keyed>
-            <div class="drag_tag_overlay" {...divProps}>
-                <span innerText={props.tag_name()}/>
-                {props.children}
-                <div class='drag_tag_bottom_border' innerText={'id: ' + props.tag_id()}/>
-            </div>
-        </Show>
-    </DragOverlay>
+    return <div class="drag_tag_overlay" {...divProps}>
+        <span innerText={props.tag_name()}/>
+        {props.children}
+        <div class='drag_tag_bottom_border' innerText={'id: ' + props.tag_id()}/>
+    </div>
 };
 
 //#endregion

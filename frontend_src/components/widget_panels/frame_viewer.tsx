@@ -1,12 +1,12 @@
 
-import { createEffect, createSignal, on, onMount, Show } from "solid-js";
+import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import { ContainerCTX } from "../layout/container";
 import { PanelProps } from "../layout/widgetbar";
 
 import { chart_frame } from "../../src/charting_frame/charting_frame";
 import { frame } from "../../src/frame";
 import { num_frames } from "../../src/layouts";
-import { DraggableSelection } from "../draggable_selector";
+import { DraggableSelection, OverlayItemTag, SelectableItemTag } from "../draggable_selector";
 import { Icon, icons } from "../icons";
 
 const DEFAULT_WIDTH = 200
@@ -27,10 +27,24 @@ export function FrameViewer(props:PanelProps){
         <Show when={displays()} keyed>
             <DraggableSelection
                 ids={ids}
-                tag_name={getTagName}
+                overlay_child={
+                    ({id}) => OverlayItemTag({
+                        tag_id:()=>id, 
+                        tag_name:()=>getTagName(id)
+                    })
+                }
                 reorder_function={active_container.reorder_frames.bind(active_container)}
             >
-                {FrameDeleteBtn}
+                <For each={ids()}>{(tag_id)=>{
+                    let frame = active_container.frames.find((f) => f.id === tag_id)
+                    return <SelectableItemTag 
+                        tag_id={()=>tag_id}
+                        tag_name={() => getTagName(tag_id)}
+                        onClick={()=>frame?.assign_active_frame()}
+                    >
+                        <FrameDeleteBtn id={tag_id}/>
+                    </SelectableItemTag>
+                }}</For>
             </DraggableSelection>
         </Show>
     </>

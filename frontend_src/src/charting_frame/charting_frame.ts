@@ -46,13 +46,10 @@ export class chart_frame extends frame {
     constructor(id: string, tab_update_func: update_tab_func) {
         super(id, tab_update_func)
         
+        // Inner Layout Signals for resiable panes (Layout defined in TSX ChartFrame)
         const [style, setStyle] = createSignal<string>('')
         const [displays, setDisplays] = createSignal<layout_display[]>([])
         const [div, setDiv] = createSignal<HTMLDivElement>(document.createElement('div'))
-
-        const sourceSignal = createSignal<data_src[]>([])
-        this.sources = sourceSignal[0]
-        this.setSources = sourceSignal[1]
 
         this.div = div
         this.setStyle = setStyle
@@ -65,6 +62,11 @@ export class chart_frame extends frame {
             displays: displays,
             style_sel:this.style_sel,
         })
+
+        //Sources Signal for indicator Options 'Source' input selectable tag
+        const sourceSignal = createSignal<data_src[]>([])
+        this.sources = sourceSignal[0]
+        this.setSources = sourceSignal[1]
 
         // The following 3 variables are actually properties of a frame's primary Series(Indicator) obj.
         // While these really should be owned by that Series indicator and not a frame, this is how the 
@@ -81,7 +83,8 @@ export class chart_frame extends frame {
         window.topbar.setTimeframe(this.timeframe)
         window.topbar.setTicker(this.symbol.ticker)
 
-        if (window.active_pane === undefined) this.panes[0].assign_active_pane()
+        if (window.active_pane === undefined || !this.panes.includes(window.active_pane))
+            this.panes[0].assign_active_pane()
     }
 
     onDeactivation() {

@@ -403,7 +403,7 @@ function SeriesEditor(props: series_editor_props){
         <For each={Array.from(props.series.entries())}>{([_id, type], i) => {
             let series = props.series.get(_id)
             if (series === undefined) return
-            return <SeriesStyleEditor series={series} name={series.Name ?? `Series #${i() + 1}`}/>
+            return <SeriesStyleEditor series={series} name={series.name ?? `Series #${i() + 1}`}/>
         }}</For>
         <div class="footer">
             <input type="submit" value={"Apply"} onClick={submitAll}/>

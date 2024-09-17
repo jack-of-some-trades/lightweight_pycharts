@@ -1,12 +1,13 @@
 import { render } from 'solid-js/web';
 import { Wrapper } from "../components/layout/wrapper";
 import { pane } from "./charting_frame/pane";
+import { Series_Type } from './charting_frame/series-plugins/series-base';
 import { container } from "./container";
 import { container_manager } from './container_manager';
 import { frame } from './frame';
 import { Container_Layouts } from './layouts';
 import { py_api } from "./py_api";
-import { Series_Type, tf } from './types';
+import { tf } from './types';
 
 //Declare Global interface. All Following declarations will be accessable to the python run_script() function
 declare global {
@@ -56,6 +57,7 @@ window.topbar = {
 }
 // Global Workspace Var used by Injected JS Commands
 var _ind = undefined
+var _ser = undefined
 
 
 render(Wrapper, document.body)

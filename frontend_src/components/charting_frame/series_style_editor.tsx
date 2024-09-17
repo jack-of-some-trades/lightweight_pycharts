@@ -25,9 +25,9 @@ export function SeriesStyleEditor(props:series_style_editor_props){
     return (
         <form ref={form} class='style_form' onSubmit={onSubmit.bind(undefined, props.series)}>
             <Switch>
-                <Match when={props.series.Type===s.Series_Type.LINE}>
+                <Match when={props.series.s_type===s.Series_Type.LINE}>
                     <LineSeriesEditor series={props.series as s.LineSeries} name={props.name} submit={submit}/></Match>
-                <Match when={props.series.Type===s.Series_Type.AREA}>
+                <Match when={props.series.s_type===s.Series_Type.AREA}>
                     <AreaSeriesEditor {...(options as any)} name={props.name} submit={submit}/></Match>
             </Switch>
         </form>

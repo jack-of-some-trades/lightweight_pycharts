@@ -272,10 +272,18 @@ def update_primitive(pane_id: str, primitive_id: str, args: dict[str, Any]) -> s
     return f"{pane_id}.update_primitive('{primitive_id}', {dump(args)});"
 
 
-# Retreives an indicator object from a pane to manipulate
+# Retreives an indicator object from a frame to manipulate
 def indicator_preamble(frame_id: str, indicator_id: str) -> str:
     # _ind is a workspace var defined at the window level in index.ts for use here
     return f"_ind = {frame_id}.indicators.get('{indicator_id}');"
+
+
+# Retreives a series object from an indicator to manipulate
+def series_preamble(frame_id: str, indicator_id: str, series_id: str) -> str:
+    # _ind is a workspace var defined at the window level in index.ts for use here
+    return (
+        f"_ser = {frame_id}.indicators.get('{indicator_id}').series.get('{series_id}');"
+    )
 
 
 def indicator_set_menu(frame_id: str, indicator_id: str, menu_struct, options) -> str:
@@ -290,6 +298,10 @@ def indicator_set_options(frame_id: str, indicator_id: str, options) -> str:
         indicator_preamble(frame_id, indicator_id)
         + f"_ind.applyOptions({dump(options)});"
     )
+
+
+def set_legend_label(frame_id: str, indicator_id: str, label: str) -> str:
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.setLabel('{label}');"
 
 
 # region ------------------------ Indicator Series ------------------------ #
@@ -320,28 +332,21 @@ def set_series_data(
     frame_id: str, indicator_id: str, series_id: str, data: DataFrame
 ) -> str:
     return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.set_series_data('{series_id}', {dump(data)});"
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.setData({dump(data)});"
     )
-
-
-def set_legend_label(frame_id: str, indicator_id: str, label: str) -> str:
-    return indicator_preamble(frame_id, indicator_id) + f"_ind.setLabel('{label}');"
 
 
 def clear_series_data(frame_id: str, indicator_id: str, series_id: str) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.set_series_data('{series_id}', []);"
-    )
+    return series_preamble(frame_id, indicator_id, series_id) + "_ser.setData([]);"
 
 
 def update_series_data(
     frame_id: str, indicator_id: str, series_id: str, data: AnySeriesData
 ) -> str:
     return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.update_series_data('{series_id}', {dump(data)});"
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.update({dump(data)});"
     )
 
 
@@ -353,8 +358,8 @@ def change_series_type(
     data: DataFrame,
 ) -> str:
     return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.change_series_type('{series_id}', {series_type}, {dump(data)});"
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.change_series_type({series_type}, {dump(data)});"
     )
 
 
@@ -362,8 +367,8 @@ def update_series_opts(
     frame_id: str, indicator_id: str, series_id: str, opts: AnySeriesOptions
 ) -> str:
     rtn_str = (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.update_series_opts('{series_id}', {dump(opts)});"
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.applyOptions({dump(opts)});"
     )
 
     if opts.autoscaleInfoProvider is not None:
@@ -380,8 +385,8 @@ def update_scale_opts(
     frame_id: str, indicator_id: str, series_id: str, opts: PriceScaleOptions
 ):
     return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.update_scale_opts('{series_id}', {dump(opts)});"
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.priceScale().applyOptions({dump(opts)});"
     )
 
 
