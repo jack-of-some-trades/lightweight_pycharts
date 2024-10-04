@@ -47,8 +47,9 @@ function createTrendLine(e:MouseEvent){
     //Set First TrendLine point where this click originated
     let p = new_line.series.coordinateToPrice(e.offsetY)
     let t = new_line.chart.timeScale().coordinateToTime(e.offsetX)
+    
     if (t === null || p === null){
-        console.log('Failed to create TrendLine, Price or Time invalid')
+        console.error('Failed to create TrendLine, Price or Time invalid')
         new_line._pane?.remove_primitive(new_line._id)
         creatingTrendLine[1](false)
         return

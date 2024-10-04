@@ -43,6 +43,9 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
     _type: string = "null"
     _options: primitiveOptions
 
+    //Optional Element to populate the Object Tree Listing with.
+    obj_tree_el: Element | undefined
+
     private _requestUpdate?: () => void;
     protected requestUpdate(): void { if (this._requestUpdate) this._requestUpdate(); }
     //Any of the methods below can be defined by a sub-class. In doing so they will be added as listeners
@@ -59,6 +62,7 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
         this._options = _opts
     }
 
+    get id(): string {return this._id}
     options():primitiveOptions {return structuredClone(this._options)}
     applyOptions(opts:Partial<primitiveOptions> | undefined){
         if (opts !== undefined)

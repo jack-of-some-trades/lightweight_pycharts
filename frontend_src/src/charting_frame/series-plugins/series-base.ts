@@ -3,7 +3,7 @@
  * This also defines a class that wraps around the SeriesAPI instances created to extend their behavior.
  */
 import * as lwc from "lightweight-charts";
-import { ObjTree_Item } from "../../../components/widget_panels/object_tree";
+import { Accessor, createSignal, Setter } from "solid-js";
 import { pane } from "../pane";
 import { PrimitiveBase } from "../primitive-plugins/primitive-base";
 import { RoundedCandleSeries, RoundedCandleSeriesData, RoundedCandleSeriesOptions, RoundedCandleSeriesPartialOptions } from "./rounded-candles-series/rounded-candles-series";
@@ -113,10 +113,11 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
     _series: lwc.ISeriesApi<lwc.SeriesType>
 
     _id: string
-    parent_name: string | undefined
-    name: string | undefined
+    primitiveIds: Accessor<string[]>
+    setPrimitiveIds: Setter<string[]>
+    _parent_name: string | undefined
+    _name: string | undefined
     s_type: Series_Type
-    element: Element | undefined
 
     constructor(
         _id:string, 
@@ -126,11 +127,14 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
         _pane:pane
     ){
         this._id = _id
-        this.name = _name
-        this.parent_name = _parent_name
+        this._name = _name
+        this._parent_name = _parent_name
         this.s_type = _type
         this._pane = _pane
         this._series = this._create_series(_type)
+
+        const sig = createSignal<string[]>([])
+        this.primitiveIds = sig[0]; this.setPrimitiveIds = sig[1]; 
 
         //Having seriesBase Objs populate a map owned by the pane they are attached
         //to IS stupid. I don't like it. Thing is, this is the only way to keep _create_series
@@ -164,19 +168,17 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
         }
     }
 
-    get ObjTree_interface():ObjTree_Item{ 
-        let display_name = this.parent_name? this.parent_name + ' : ' : ''
-        display_name += this.name? this.name : SERIES_NAME_MAP.get(this.s_type)
-        return { id: this._id, name:display_name, element:this.element }
+    get id(): string {return this._id}
+    get name():string { 
+        let display_name = this._parent_name? this._parent_name + ' : ' : ''
+        display_name += this._name? this._name : SERIES_NAME_MAP.get(this.s_type)
+        return display_name
     }
 
-    //@ts-ignore : _seriesApi._series.Zindex : only valid for Lightweight-Charts v4.2.0
-    get Zindex():number{ return this._series.Ls.Zi }
-    //@ts-ignore
-    set Zindex(index:number){ this._series.Ls.Zi = index }
-
     reorderPrimitives(from:number, to:number){ 
-        this.primitives.splice(to, 0, ...this.primitives.splice(from, 1))
+        this.primitiveWrapperArray.splice(to, 0, ...this.primitiveWrapperArray.splice(from, 1))
+        //Update the order of Primitive IDs to propogate the Update Back to the Object Tree
+        this.setPrimitiveIds(Array.from(this.primitives, (prim) => prim.id))
     }
 
     /* Removes this series and all it's sub components from the chart. This is irreversible */
@@ -189,7 +191,7 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
     change_series_type(series_type:Series_Type, data:SeriesData[]){
         if (series_type === this.s_type) return
 
-        const current_zindex = this.Zindex
+        const current_zindex = this._pane.get_series_index(this._series)
         const current_range = this._pane.chart.timeScale().getVisibleRange()
         
         this.remove()
@@ -198,9 +200,8 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
         this.s_type = series_type
         this._pane.series_map.set(this._series, this)
 
-        //Reset the draw order to what is was before the change. 
-        //Requires ZOrder to be zero indexed.
-        this._pane.reorderSeries(-1, current_zindex)
+        //Reset the draw order to what is was before the change.
+        this._pane.reorderSeries(-1, current_zindex, false)
 
         //Setting Data Changes Visible Range, set it back.
         if (current_range !== null)
@@ -228,19 +229,28 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
 
     removePriceLine(line: lwc.IPriceLine){this._series.removePriceLine(line)}
     createPriceLine(options: lwc.CreatePriceLineOptions): lwc.IPriceLine {return this._series.createPriceLine(options)}
+    
+    //@ts-ignore: _series.Ls.jl === seriesAPI.serieses._primitives array for Lightweight-Charts v4.2.0
+    get primitiveWrapperArray(): PrimitiveBase[] { return this._series.Ls.jl }
+    //@ts-ignore: _series.Ls.jl[].Dl === seriesAPI.serieses._primitives[].PrimitiveBase Array for Lightweight-Charts v4.2.0
+    get primitives(): PrimitiveBase[] { return Array.from(this.primitiveWrapperArray, (wrap) => wrap.Dl)}
 
-    //@ts-ignore: _series.jl === series._primitives array for Lightweight-Charts v4.2.0
-    get primitives(): PrimitiveBase[] { return this._series.jl }
-    attachPrimitive(primitive: PrimitiveBase) {this._series.attachPrimitive(primitive)}
-    detachPrimitive(primitive: PrimitiveBase) {this._series.detachPrimitive(primitive)}
+    attachPrimitive(primitive: PrimitiveBase) {
+        this._series.attachPrimitive(primitive)
+        this.setPrimitiveIds([...this.primitiveIds(), primitive._id])
+    }
+    detachPrimitive(primitive: PrimitiveBase) {
+        this._series.detachPrimitive(primitive)
+        this.setPrimitiveIds(this.primitiveIds().filter(prim_id => prim_id !== primitive._id))
+    }
 
     /* 
      * These can be uncommented to be used. Currently they are commented out since they are 
      * not SeriesAPI features that are used, or planned to be used, by this module currently
      */
     // priceFormatter(): lwc.IPriceFormatter {return this._series.priceFormatter()}
-    // priceToCoordinate(price: number): lwc.Coordinate | null {return this._series.priceToCoordinate(price)}
-    // coordinateToPrice(coordinate: number): lwc.BarPrice | null {return this._series.coordinateToPrice(coordinate)}
+    priceToCoordinate(price: number): lwc.Coordinate | null {return this._series.priceToCoordinate(price)}
+    coordinateToPrice(coordinate: number): lwc.BarPrice | null {return this._series.coordinateToPrice(coordinate)}
     // barsInLogicalRange(range: lwc.Range<number>): lwc.BarsInfo<lwc.Time> | null {return this._series.barsInLogicalRange(range)}
     // dataByIndex(logicalIndex: number, mismatchDirection?: lwc.MismatchDirection): SeriesDataTypeMap_EXT[T] | null {return this._series.dataByIndex(logicalIndex, mismatchDirection)}
     // subscribeDataChanged(handler: lwc.DataChangedHandler) {this._series.subscribeDataChanged(handler)}

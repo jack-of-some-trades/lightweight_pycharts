@@ -3,7 +3,7 @@ import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceD
 import { Accessor, createEffect, createSignal, JSX, on, Setter, Signal } from "solid-js";
 import { SetStoreFunction } from "solid-js/store";
 import { ChartPane } from "../../components/charting_frame/chart_elements";
-import { ObjectTreeCTX, ObjTree_Item } from "../../components/widget_panels/object_tree";
+import { ObjectTreeCTX } from "../../components/widget_panels/object_tree";
 import { makeid } from "../types";
 import { indicator } from "./indicator";
 import { PrimitiveBase } from "./primitive-plugins/primitive-base";
@@ -24,9 +24,9 @@ export class pane {
 
     chart: IChartApi
     private primitives = new Map<string, PrimitiveBase>()
-    private primitive_serieses = new Map<string, SeriesBase_T>()
+    private primitive_serieses: SeriesBase_T[] = []
 
-    whitespace_series: SeriesBase_T
+    whitespace_series: lwc.ISeriesApi<'Line'>
     private chart_div: HTMLDivElement
 
     private leftScaleMode: Signal<number>
@@ -38,7 +38,7 @@ export class pane {
     //The population of series_map controlled by the SeriesBase class.
     series_map = new Map<SeriesApi, SeriesBase_T>()
     private setObjTreeIds: Setter<string[]>
-    private setObjTreeItems: SetStoreFunction<ObjTree_Item[]>
+    private setObjTreeItems: SetStoreFunction<SeriesBase_T[]>
     private setObjTreeReorderFunc: Setter<(from:number,to:number)=>void>
 
     // Reference to Indicators on the Pane used to construct the Pane's Legend
@@ -93,15 +93,13 @@ export class pane {
         })
 
         //Whitespace series to allow consistent timescale across panes that extends into the future.
-        this.whitespace_series = new SeriesBase("na", "Whitespace", undefined, Series_Type.LINE, this)
-        //@ts-ignore : Make sure Series Z-index is 0 indexed... normally index starts at 1. only valid for Lightweight-Charts v4.2.0
-        this.serieses.forEach((series, i) => series.Zi = i)
-
+        this.whitespace_series = this.chart.addLineSeries()
+        this.add_primitive_group()
         
         //Setters from the Object Tree so this pane can change the Object Tree when it is selected
         this.setObjTreeIds = ObjectTreeCTX().setIds
-        this.setObjTreeItems = ObjectTreeCTX().setItems
-        this.setObjTreeReorderFunc = ObjectTreeCTX().setReorderFunc 
+        this.setObjTreeItems = ObjectTreeCTX().setSerieses
+        this.setObjTreeReorderFunc = ObjectTreeCTX().setSeriesReorderFunc 
         this.reorderSeries = this.reorderSeries.bind(this) // Bind now so binding doesn't need to happen later
 
         // The Following listeners allow smooth chart dragging while bars are actively updating.
@@ -121,18 +119,30 @@ export class pane {
         })
     }
 
-    /** Retrieves all Series Objects drawn onto the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
-    //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._dataSources
+    /** Retrieves a Mutable Array of Series Objects in the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
+    //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._dataSources.filter(**Remove Whitespace Serieswhich is index 0**)
     private get serieses():Series[] { return this.chart.lw.$i.kc[0].vo }
 
-    /** Retrieves all SeriesAPI Objects drawn onto the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
+    /** Retrieves all Series Objects (Minus the Whitespace Series) in the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
+    //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._dataSources.filter(**Remove Whitespace Serieswhich is index 0**)
+    private get vis_serieses():Series[] { return this.chart.lw.$i.kc[0].vo.filter((val, ind) => ind !== 0) }
+
+    /** Retrieves all SeriesAPI Objects (Minus the Whitespace Series) drawn onto the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
     //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._dataSources => chart._seriesMapReversed.get()
-    private get seriesAPIs():SeriesApi[] { return Array.from(this.chart.lw.$i.kc[0].vo, (series) => this.chart.Sw.get(series)) }
+    private get seriesAPIs():SeriesApi[] { return Array.from(this.vis_serieses, (series) => this.chart.Sw.get(series)) }
+    
+    //@ts-ignore
+    get_series_index(given_series:Series):number { return this.serieses.findIndex((series)=>this.chart.Sw.get(series) === given_series)}
 
     /** Re-orderes then Re-draws the Series Objects attached to the chart : Valid only for Lightweight-Charts v4.2.0 */
-    reorderSeries(from:number, to:number){
+    reorderSeries(from:number, to:number, adjust_by_1 = true){
+        // Adjust for negative indecies
         if (from < 0) from = this.serieses.length + from
         if (to < 0) to = this.serieses.length + to
+
+        //This function is called by the Object Tree which doesn't know about the whitespace series
+        // => add 1 to Accounts for the index 0 whitespace series.
+        if (adjust_by_1) {from += 1; to += 1;}
 
         this.serieses.splice(to, 0, ...this.serieses.splice(from, 1))
         //@ts-ignore : Zi === Z-index. Re-setting Each so that they are drawn in the new order of the array
@@ -162,8 +172,8 @@ export class pane {
         this.setActive(true)
 
         //Update the Object Tree.
-        const nullTreeItem:ObjTree_Item = {id:'', name:'', element:undefined}
-        const ObjTreeItems = Array.from(this.seriesAPIs, (series) => this.series_map.get(series)?.ObjTree_interface ?? nullTreeItem)
+        //Type Casting as SeriesBase_T to ignore Errors of series being undefined since it should always be defined.
+        const ObjTreeItems = Array.from(this.seriesAPIs, (series) => this.series_map.get(series) as SeriesBase_T)
         this.setObjTreeItems(ObjTreeItems)
         this.setObjTreeReorderFunc(()=>this.reorderSeries)
         //Set Ids last since this will trigger the re-render
@@ -195,6 +205,13 @@ export class pane {
         )
     }
 
+    add_primitive_group(){
+        const group = new SeriesBase('primitives', 'Primitives', undefined, Series_Type.LINE, this)
+        //Set Visibility to False so the Series itself doesn't display anything, only the primitives are visible.
+        group.applyOptions({visible:false})
+        this.primitive_serieses.push(group)
+    }
+
     /* Create then add a primitive from known object parameters */
     protected add_primitive(_id: string, _type: string, params:object) {
         let primitive_type = primitives.get(_type)
@@ -224,7 +241,7 @@ export class pane {
         obj._id = new_id
         obj._pane = this
         this.primitives.set(new_id, obj)
-        this.whitespace_series.attachPrimitive(obj)
+        this.primitive_serieses[0].attachPrimitive(obj)
     }
 
     remove_primitive(_id: string) {

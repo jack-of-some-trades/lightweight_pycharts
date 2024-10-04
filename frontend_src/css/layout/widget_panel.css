@@ -28,6 +28,7 @@
     align-items: center;
     flex-direction: column;
     justify-content: flex-start;
+    scrollbar-color: var(--accent-color) transparent;
 }
 
 .widget_panel::after {
@@ -54,5 +55,4 @@
     border-bottom: 1px solid var(--accent-color);
     padding: 0px 6px 6px 6px;
     font-weight: bolder;
-
 }

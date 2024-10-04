@@ -9,20 +9,26 @@ import { Accessor, Component, createSignal, JSX, Show, splitProps } from "solid-
 
 import "../css/draggable_selector.css";
 
-interface drag_section_props {
-    ids: Accessor<string[]>
+interface drag_section_props extends JSX.HTMLAttributes<HTMLDivElement> {
+    ids: Accessor<string[]> | undefined
     children?: JSX.Element
     overlay_child?: Component<{id:string}>
     reorder_function: (from:number, to:number)=>void
 }
 export function DraggableSelection(props:drag_section_props){
     //Displays used in a keyed show tag so the <For/> tag updates when the container does.
+    const [, div_props] = splitProps(props, ['ids', 'children', 'overlay_child', 'reorder_function'])
+
+    //Append on this El's Class
+    if (div_props.classList) div_props.classList['drag_tag_column'] = true
+    else div_props['classList'] = {'drag_tag_column' : true}
+
     const [activeItem, setActiveItem] = createSignal<string>("");
-  
+
     const onDragStart = ({ draggable }:any) => {setActiveItem(draggable.id);}
     const onDragEnd = ({ draggable, droppable }:any) => {
         if (draggable && droppable) {
-            const currentItems = props.ids();
+            const currentItems = props.ids?.() ?? [];
             const fromIndex = currentItems.indexOf(draggable.id);
             const toIndex = currentItems.indexOf(droppable.id);
 
@@ -34,16 +40,15 @@ export function DraggableSelection(props:drag_section_props){
         <DragDropProvider onDragStart={onDragStart} onDragEnd={onDragEnd} collisionDetector={closestCenter}>
             <DragDropSensors/>
             <ConstrainDragAxis/>
-            <div class="drag_tag_column">
-                <SortableProvider ids={props.ids()}>
+            <div {...div_props}>
+                <SortableProvider ids={props.ids?.() ?? []}>
                     {props.children}
                 </SortableProvider>
             </div>
-            <DragOverlay>
-                <Show when={activeItem()} keyed>
-                    {props.overlay_child?.({id:activeItem()}) ?? undefined}
-                </Show>
-            </DragOverlay>
+            <Show when={activeItem()} keyed>
+                {/* This Drag Overlay Drops an Anonymous Div onto the Body.. Ugh. I tried to keep the El Tree Clean.. */}
+                <DragOverlay>{props.overlay_child?.({id:activeItem()}) ?? undefined}</DragOverlay>
+            </Show>
         </DragDropProvider>
     )
 }
