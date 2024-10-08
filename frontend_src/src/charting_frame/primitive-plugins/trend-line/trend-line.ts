@@ -100,7 +100,7 @@ export class TrendLine extends PrimitiveBase {
 	onMouseDown(param: MouseEventParams<Time>) {
 		if (!this._options.visible || !this._options.tangible) return
 		const id = param.hoveredObjectId as string
-		if (!id || !id.startsWith(this._id) || !param.sourceEvent || !param.logical) {
+		if (!id || !id.startsWith(this.id) || !param.sourceEvent || !param.logical) {
 			this._paneView._selected = false
 			return
 		}
@@ -306,7 +306,7 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 			return {
 				cursorStyle: 'grab',
 				externalId: this._source._id,
-				zOrder: 'normal'
+				zOrder: 'normal',
 			}
 		}
 		return null

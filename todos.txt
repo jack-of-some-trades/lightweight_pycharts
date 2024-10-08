@@ -13,7 +13,7 @@
 - Chart Mouse Event/Keyboard Listener to open menus / delete objects
 	- Window Wide Keyboard Listener?
 
-
+- Update the Pane 'make_event_params' to have better Series Hit Registration
 
 Minor Stuffs:
 

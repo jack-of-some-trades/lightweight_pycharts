@@ -1,5 +1,4 @@
 import * as lwc from "lightweight-charts";
-import { createChart, DeepPartial as DP, IChartApi, SingleValueData, WhitespaceData } from "lightweight-charts";
 import { Accessor, createEffect, createSignal, JSX, on, Setter, Signal } from "solid-js";
 import { SetStoreFunction } from "solid-js/store";
 import { ChartPane } from "../../components/charting_frame/chart_elements";
@@ -10,8 +9,22 @@ import { PrimitiveBase } from "./primitive-plugins/primitive-base";
 import { primitives } from "./primitive-plugins/primitives";
 import { Series, Series_Type, SeriesApi, SeriesBase, SeriesBase_T } from "./series-plugins/series-base";
 
+//** Key Map for Lightweight Charts MouseEvent Params: Valid only for Lightweight-Charts v4.2.0  */
+const MouseEventKeyMap: {[key:string]: keyof lwc.MouseEventParams} = {
+    Ib: 'time',
+    se: 'logical',
+    zb: 'point',
+    Eb: 'seriesData', 
+    Lb: 'hoveredSeries',
+    Nb: 'hoveredObjectId', 
+    Fb: 'sourceEvent'
+}
 
-//The portion of a chart where things are actually drawn
+/** The portion of a chart where things are actually drawn.
+ * This Class is responsible for creating all of the necessary Chart TSX Elements.
+ * It also owns the lightweight charts chartAPI object. As a result it has high coupling
+ * with both the UI and Lightweight Charts Library.
+ */
 export class pane {
     static _special_id_ = 'main' // Must match Python Pane Special ID
 
@@ -22,7 +35,7 @@ export class pane {
     active: Accessor<boolean>
     setActive: Setter<boolean>
 
-    chart: IChartApi
+    chart: lwc.IChartApi
     private primitives = new Map<string, PrimitiveBase>()
     private primitive_serieses: SeriesBase_T[] = []
 
@@ -57,7 +70,7 @@ export class pane {
         let tmp_div = document.createElement('div')
         const OPTS = DEFAULT_PYCHART_OPTS()
         //Only One Chart per pane, so this is the only definition needed
-        this.chart = createChart(tmp_div, OPTS);
+        this.chart = lwc.createChart(tmp_div, OPTS);
         this.chart_div = this.chart.chartElement()
 
         //A List of Ids is redundant, but it genereates a reactive update to be used by the pane Legend
@@ -100,7 +113,7 @@ export class pane {
         this.setObjTreeIds = ObjectTreeCTX().setIds
         this.setObjTreeItems = ObjectTreeCTX().setSerieses
         this.setObjTreeReorderFunc = ObjectTreeCTX().setSeriesReorderFunc 
-        this.reorderSeries = this.reorderSeries.bind(this) // Bind now so binding doesn't need to happen later
+        this.reorder_series = this.reorder_series.bind(this) // Bind now so binding doesn't need to happen later
 
         // The Following listeners allow smooth chart dragging while bars are actively updating.
         this.chart_div.addEventListener('mousedown', () => {
@@ -130,12 +143,46 @@ export class pane {
     /** Retrieves all SeriesAPI Objects (Minus the Whitespace Series) drawn onto the pane in draw order : Valid only for Lightweight-Charts v4.2.0 */
     //@ts-ignore : Stands for : chart._chartWidget._model._panes[0]._dataSources => chart._seriesMapReversed.get()
     private get seriesAPIs():SeriesApi[] { return Array.from(this.vis_serieses, (series) => this.chart.Sw.get(series)) }
-    
+
+    /** Get the Index of a Series as it is *applied* to the chart. This is 0 indexed and includes the whitespace series. */
     //@ts-ignore
     get_series_index(given_series:Series):number { return this.serieses.findIndex((series)=>this.chart.Sw.get(series) === given_series)}
 
+    //** Takes a normal MouseEvent and Returns the Lightweight-Charts Style Mouse Event. */
+    make_event_params(e: MouseEvent): lwc.MouseEventParams<lwc.Time> {
+        let index = this.chart.timeScale().coordinateToLogical(e.offsetX)
+        let sourceEvent = {
+            clientX: e.clientX as lwc.Coordinate,
+            clientY: e.clientY as lwc.Coordinate,
+            pageX: e.pageX as lwc.Coordinate,
+            pageY: e.pageY as lwc.Coordinate,
+            screenX: e.screenX as lwc.Coordinate,
+            screenY: e.screenY as lwc.Coordinate,
+            localX: e.offsetX as lwc.Coordinate,
+            localY: e.offsetY as lwc.Coordinate,
+            ctrlKey: e.ctrlKey,
+            altKey: e.altKey,
+            shiftKey: e.shiftKey,
+            metaKey: e.metaKey
+        }
+
+        const rect = this.chart.chartElement().getBoundingClientRect()
+        let pt = (rect && (e.clientX - rect.left < rect.width) && (e.clientY - rect.top < rect.height))
+            ? { x: e.clientX - rect.left as lwc.Coordinate, y: e.clientY - rect.top as lwc.Coordinate }
+            : null
+
+        //@ts-ignore declare Object that will recieve the Event Params after name mapping.
+        let renamedParams:lwc.MouseEventParams = {}
+        //@ts-ignore this.chart.lw.Ab Stands for Chart._chartWidget._getMouseEventParamsImpl() : Valid only for Lightweight-Charts v4.2.0
+        Object.entries(this.chart.lw.Ab(index, pt, sourceEvent)).forEach(([k,v]) => renamedParams[MouseEventKeyMap[k]] = v)
+
+        return renamedParams
+
+        //TODO : Update this to make hoveredSeries Better. See Comment at EoF.
+    }
+
     /** Re-orderes then Re-draws the Series Objects attached to the chart : Valid only for Lightweight-Charts v4.2.0 */
-    reorderSeries(from:number, to:number, adjust_by_1 = true){
+    reorder_series(from:number, to:number, adjust_by_1 = true){
         // Adjust for negative indecies
         if (from < 0) from = this.serieses.length + from
         if (to < 0) to = this.serieses.length + to
@@ -175,12 +222,12 @@ export class pane {
         //Type Casting as SeriesBase_T to ignore Errors of series being undefined since it should always be defined.
         const ObjTreeItems = Array.from(this.seriesAPIs, (series) => this.series_map.get(series) as SeriesBase_T)
         this.setObjTreeItems(ObjTreeItems)
-        this.setObjTreeReorderFunc(()=>this.reorderSeries)
+        this.setObjTreeReorderFunc(()=>this.reorder_series)
         //Set Ids last since this will trigger the re-render
         this.setObjTreeIds(Array.from(ObjTreeItems, (item)=> item.id))
     }
 
-    set_whitespace_data(data: WhitespaceData[], primitive_data:SingleValueData) {
+    set_whitespace_data(data: lwc.WhitespaceData[], primitive_data:lwc.SingleValueData) {
         this.whitespace_series.setData(data)
         this.primitive_serieses.forEach((series) =>
             // Only set to the last visible data point to limit data redundancy.
@@ -189,7 +236,7 @@ export class pane {
         )
     }
 
-    update_whitespace_data(data: WhitespaceData, primitive_data:SingleValueData) {
+    update_whitespace_data(data: lwc.WhitespaceData, primitive_data:lwc.SingleValueData) {
         this.whitespace_series.update(data)
         this.primitive_serieses.forEach((s) => s.setData([primitive_data]))
     }
@@ -252,7 +299,7 @@ export class pane {
         this.primitives.delete(_id)
     }
 
-    update_opts(newOpts: DP<lwc.TimeChartOptions>) {
+    update_opts(newOpts: lwc.DeepPartial<lwc.TimeChartOptions>) {
         //Splice in the priceScale options overwritting/updating signals as needed
         optionsSplice(newOpts, 'leftPriceScale', 'mode', this.leftScaleMode)
         optionsSplice(newOpts, 'leftPriceScale', 'invertScale', this.leftScaleInvert)
@@ -265,7 +312,7 @@ export class pane {
 
     fitcontent() { this.chart.timeScale().fitContent() }
     autoscale_time_axis() { this.chart.timeScale().resetTimeScale() }
-    update_timescale_opts(newOpts: DP<lwc.HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
+    update_timescale_opts(newOpts: lwc.DeepPartial<lwc.HorzScaleOptions>) { this.chart.timeScale().applyOptions(newOpts) }
 }
 
 function optionsSplice(opts:any, group:string, object:string, signal:any){
@@ -279,7 +326,9 @@ function optionsSplice(opts:any, group:string, object:string, signal:any){
 }
 
 
-/** Important Note about the Primitive [Left / Right / Overlay] Series
+/** Important Notes **/
+
+/** Primitive_Serieses
  * 
  * These are blank series that only contain Primitives as the name would imply. For them to display anything
  * they need at least 1 data-point with a value and a time that is either on screen or in the future. 
@@ -289,11 +338,24 @@ function optionsSplice(opts:any, group:string, object:string, signal:any){
  * de-render. Any further in the Future and it will mess up auto-scroll on new data.
  */
 
+/** Mouse Event Params
+ * 
+ * The Mouse Event Parameters that are returned are largely what you'd expect aside from the hoveredSeries. This isn't the Series
+ * Object that is drawn on the screen, but the series object a primitive is attached to. Rather annoying Tbh. Although, since the
+ * seriesData is accurate you could, if you found a way to work out the thickness of line plots, use the series data and the
+ * Y Coordinate to work back to which series your cursor is over. Would actually be beneficial to do this then overwrite
+ * 'hoveredSeries' into the expected series object. Not even just the seriesAPI Object but the Series-Base object defined by this lib.
+ * 
+ * Hell maybe instead of baking this feature directly into the make_event_params function you make it a public function that takes
+ * a Lightweight-Charts MouseEventParam object so it only gets invoked when needed to save on computation. This has the added benefit
+ * that anything that wants to subscribe to a native lwc CrosshairMove, Click, or DblClick can get the hovered series as needed.
+ */
+
 
 /* Default TimeChart Options. It's a Function so the style is Evaluated at pane construction */
 function DEFAULT_PYCHART_OPTS(){
     const style = getComputedStyle(document.documentElement)
-    const OPTS: DP<lwc.TimeChartOptions> = {
+    const OPTS: lwc.DeepPartial<lwc.TimeChartOptions> = {
         layout: {                   // ---- Layout Options ----
             background: {
                 type: lwc.ColorType.VerticalGradient,

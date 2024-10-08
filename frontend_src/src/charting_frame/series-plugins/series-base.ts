@@ -68,7 +68,8 @@ export type SeriesOptions = ValueOf<SeriesOptionsMap_EXT>
 
 /*
  * These Interfaces / Types extend the Standard Options & Data Type Maps that come with the Lightweight Charts Package.
- * This is done so that each interface can be expanded to include more standardized Custom Series Types for this module
+ * This is done so that each interface can be expanded to include more standardized Custom Series Types for this module.
+ * As a result, the 'Custom' Type has been excluded since custom types should be explicitly defined here.
  */
 
 /* Represents the type of options for each series type. */
@@ -201,7 +202,7 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
         this._pane.series_map.set(this._series, this)
 
         //Reset the draw order to what is was before the change.
-        this._pane.reorderSeries(-1, current_zindex, false)
+        this._pane.reorder_series(-1, current_zindex, false)
 
         //Setting Data Changes Visible Range, set it back.
         if (current_range !== null)
