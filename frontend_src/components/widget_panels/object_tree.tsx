@@ -1,5 +1,5 @@
 
-import { Accessor, createContext, createSignal, For, JSX, onMount, Setter, Show, useContext } from "solid-js";
+import { Accessor, createContext, createEffect, createSignal, For, JSX, on, onMount, Setter, Show, useContext } from "solid-js";
 import { PanelProps } from "../layout/widgetbar";
 
 import { createStore, SetStoreFunction } from "solid-js/store";
@@ -80,10 +80,9 @@ export function ObjTreeContext(props:JSX.HTMLAttributes<HTMLElement>){
 const MIN_TREE_HEIGHT = 50
 
 export function ObjectTree(props:PanelProps){
-    const seriesTitleDiv = createSignal<HTMLDivElement>()
-    const seriesTreeDiv = createSignal<HTMLDivElement>()
+    onMount(()=>{props.resizePanel(DEFAULT_WIDTH)})
     const primTitleDiv = createSignal<HTMLDivElement>()
-    const primTreeDiv = createSignal<HTMLDivElement>()
+    const seriesTitleDiv = createSignal<HTMLDivElement>()
 
     const getHeight = (el:Element | undefined) => Math.ceil(el?.getBoundingClientRect().height ?? 0)
     const widgetPanelHeight = () => getHeight(document.querySelector('.layout_main.widget_panel') ?? undefined)
@@ -91,6 +90,7 @@ export function ObjectTree(props:PanelProps){
     const seriesTreeStyle = createSignal<JSX.CSSProperties>({height:`${seriesTreeHeight}px`})
     const primTreeStyle = createSignal<JSX.CSSProperties>({height:`${seriesTreeHeight}px`})
 
+    // Resize Trees when dragging the divider.
     const resizeSeriesTree = (e:MouseEvent) => {
         let free_space = widgetPanelHeight() - getHeight(primTitleDiv[0]()) - getHeight(seriesTitleDiv[0]())
         // Bound the new setting to keep the Series and Primitive Trees above their minimums
@@ -103,29 +103,22 @@ export function ObjectTree(props:PanelProps){
         document.addEventListener('mouseup', () => document.removeEventListener('mousemove', resizeSeriesTree), {once:true})
     }
 
-    onMount(()=>{
-        props.resizePanel(DEFAULT_WIDTH)
-        
-        // Set initial Size of the two Trees
+    // Resize the Trees to 50/50 when the series objects change.
+    createEffect(on(ObjectTreeCTX().ids, () => {
         let free_space = widgetPanelHeight() - getHeight(primTitleDiv[0]()) - getHeight(seriesTitleDiv[0]())
         seriesTreeHeight = Math.floor(free_space/2)
         seriesTreeStyle[1]({height:`${seriesTreeHeight}px`})
         primTreeStyle[1]({height:`${free_space - seriesTreeHeight}px`})
-    })
+    }))
+
     return <>
         <div ref={seriesTitleDiv[1]} class='widget_panel_title'>Series Object Tree</div>
-        <SeriesTree 
-            ref={seriesTreeDiv[1]} 
-            style={seriesTreeStyle[0]()}
-        />
+        <SeriesTree style={seriesTreeStyle[0]()}/>
 
         <div class='obj_tree_resize_handle' onMouseDown={onMouseDown}/>
 
         <div ref={primTitleDiv[1]} class='widget_panel_title'>Primitive Object Tree</div>
-        <PrimitiveTree 
-            ref={primTreeDiv[1]} 
-            style={primTreeStyle[0]()}
-        />
+        <PrimitiveTree style={primTreeStyle[0]()}/>
     </>
 }
 
@@ -140,7 +133,7 @@ function SeriesTree(props:JSX.HTMLAttributes<HTMLDivElement>){
             ids={ids}
             ref={props.ref}
             style={props.style}
-            class='obj_tree'
+            classList={{'obj_tree':true}}
             overlay_child={
                 ({id}) => OverlayItemTag({
                     tag_id:()=>id, 
