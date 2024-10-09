@@ -219,8 +219,8 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
     applyOptions(options: SeriesPartialOptionsMap_EXT[T]) {this._series.applyOptions(options)}
     options(): Readonly<SeriesOptionsMap_EXT[T]> {return this._series.options() as SeriesOptionsMap_EXT[T]}
 
-    // data() may not work as intended. Its possible that extra parameters of custom
-    // data types are deleted when applied to the series object.. need to test that at somepoint
+    // data() may not work as intended. Extra parameters of data that don't match the series type are deleted
+    // e.g. High/Low/Close/Open values are deleted when the struct is applied to a single_value series type
     data(): readonly SeriesDataTypeMap_EXT[T][] {return this._series.data()} 
     update(bar: SeriesDataTypeMap_EXT[T]) {this._series.update(bar)}
     setData(data: SeriesDataTypeMap_EXT[T][]) {this._series.setData(data)}

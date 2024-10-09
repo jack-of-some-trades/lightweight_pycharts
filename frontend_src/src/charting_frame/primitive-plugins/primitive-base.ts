@@ -67,7 +67,7 @@ export abstract class PrimitiveBase implements ISeriesPrimitive<Time> {
     get id(): string {return this._id}
     get chart(): IChartApi { return ensureDefined(this._chart); }
     get series(): ISeriesApi<keyof SeriesOptionsMap> { return ensureDefined(this._series); }
-    get options(): primitiveOptions {return structuredClone(this._options)}
+    options(): primitiveOptions {return structuredClone(this._options)}
 
     applyOptions(opts:Partial<primitiveOptions> | undefined){
         if (opts !== undefined)

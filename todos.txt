@@ -1,21 +1,78 @@
-- Indicators Search Menu + Python Import-Lib
+Frontend (TSX / UI) :
+	- Primitves: Add a Menu system for editing options
+	- Object-Tree: Add Buttons to create Primitive Groups
+	- Indicators: Widget Panel for displaying internal information similar to TV's 'DataWindow'
+	- Frame Selection: Allow for Frames to be targeted (Ctrl-Clicked in Frame Viewer) and prioritize these frames as
+						when the layout changes. (Also Alt Clicking A frame to display only that frame)
+
+	- Low Priority : Refactor the Tabs Manager to use @solid-dnd now that it is included
+				in node_modules. Remove Dragabillies from node_modules
 
 
-- Series(Indicator) + Volume Refactor
-- Series Common Additions (Markers, H-lines, Sub-class Typing extensions)
+Frontend-Backend (Typescript):
+	- Chart Mouse Event/Keyboard Listener to open menus / delete objects
+		- Window Wide Keyboard Listener?
+
+	- Indicators: Make Indicator Menus auto-generate a Style Menu in the event set_menu_struct is never called 
+
+	- Update the Pane 'make_event_params' to have better Series Hit Registration
+
+	-- Primitives: 
+		- Additional Primitive Tools
+
+		- Reasses how a TrendLine ensures it is visible in update(). This could require a
+				primitive-renderer base-class that takes raw data points and ensures the points are
+				drawn at always drawn at visible locations. (could incorperate a cache system for this)
+
+		- Options + Style Menu System
+
+	-- Multi-Pane Layouts:
+		- Charting Frame + Pane: Integrate a Method for changing a Charting Frame's internal layout so
+								Multiple Panes can be displayed per Frame. (Multi-layout already supported.) 
+
+		- Primitives: Re-assess Method for generating IDs when adding Primitives to a Pane. Should this ping python
+						for a name? Should it generate a random string of chars. Should the length be 4 chars or less
+						to signify it wasn't make by python? What are the ramifications on ID collision when drawings
+						are (potentially) moved/shared across frames?
+
+		- Primitives, Series, Indicators: Implement Move-To-Pane Methods
 
 
-- Python Separation of Frames and Charting Frames
+Backend-Backend (Python):
+	- Series(Indicator) + Volume Refactor
+	- Series Common Additions (Markers, H-lines, Sub-class Typing extensions)
+	- Separation of Frames and Charting Frames
 
-- Additional primitive Tools
+	- Primitves : Re-assess the parent of a primitive and from which pool their IDs are generated against. 
+					Should Ideally allow for primitives to be created under one constant ID in python, but still allow
+					traversal of panes..... or maybe they break the constant ID rule and when they shift panes a new id is
+					generated and the python primitive object ID is updated?
+
+	- Emitter : Allow the class to track async tasks it has launched and ensure async tasks launch properly before shutdown. 
+				Currently, There is a small bug on shutdown where things like the Python Series Indicator throw an error
+				as they try to trigger the socket_switch_close() async request, but this comes after the main asyncio.run()
+				have already completed so the event loop is no longer valid.. or something like that.... 
+
+	- Series_DF : Implement a 'Time is EXT Trade Hours' check.
+				: Incorperate Calendar information into 'next_bar_time()'
+				: Optimize this class... by optimizing Pandas_Market_Calendars :( PMC is by far the slowest piece of code
+					involved in this entire library. Optimizing it will be the biggest bang-for-buck performance optimization
+
+Cross-Architecture:
+	- Indicators: Search Menu + Python Import-Lib
+
+	- Replay : Incorperate a Replay like mode. This really would be a tool to test other systems/Indicators
+			   as they are developed.
+
+	- Series Objects / Series_DFs : Create an 'infinite-history' system as described by :
+			https://tradingview.github.io/lightweight-charts/tutorials/demos/infinite-history
+			This would help lighten the load on the fwd_queue preventing future bottlenecks
 
 
-- Chart Mouse Event/Keyboard Listener to open menus / delete objects
-	- Window Wide Keyboard Listener?
+	- Trade-Execution: Add support for trade buy/sell execution events to the window event manager. 
+						Indicators already have access to the Event system for this reason.
+						Potentially incorperate this into a strategy tester located into the util bar
 
-- Update the Pane 'make_event_params' to have better Series Hit Registration
+	- Watchlists: Create a Watchlist Side-bar Widget. Could require open sockets for price updates.
 
-Minor Stuffs:
-
-- Refactor the Tabs Manager to use @solid-dnd now that it is included
-in node_modules. Remove Dragabillies from node_modules
+	- Timezones: Add timezone control support (likely to the bottom util control bar)

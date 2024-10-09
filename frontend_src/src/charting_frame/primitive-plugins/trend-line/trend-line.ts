@@ -220,9 +220,12 @@ class TrendLinePaneView implements ISeriesPrimitivePaneView {
 		let x1 = timeScale.timeToCoordinate(this._source._p1.time);
 		let x2 = timeScale.timeToCoordinate(this._source._p2.time);
 
-		// TODO : Reassess this.. it overwrites the data given in order to make the primitive
-		// visible. Should there be a way to revert this edit?
-		if (x1 === null){
+		// Note: This overwrites the given data to make the object visible hiding a minor error.
+		// This will change the TrendLine's draw location when moving to higher timeframes but wont revert this
+		// change when the timeframe lowers again.
+		// TODO : Reassess this behavior and potentially bake in a get_closest_visible_time() method into primitive-base so
+		// Other Primtives don't need to handle this edge case
+ 		if (x1 === null){
 			let new_time = this._source.nearestBarTime(this._source._p1.time)
 			if (new_time !== null){
 				x1 = timeScale.timeToCoordinate(new_time)

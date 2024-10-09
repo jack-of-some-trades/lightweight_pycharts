@@ -143,8 +143,6 @@ function separator_section(
         resize_pos: [],
         resize_neg: [],
     }
-    // TODO: Add Some Alternative Resize Functions here that allow for setting of a particular
-    // Flex_frame's Width/Height as opposed to just mousemove listener resize events
 
     //Bind Resize Args
     let resize_partial_func;

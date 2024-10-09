@@ -178,7 +178,7 @@ export class pane {
 
         return renamedParams
 
-        //TODO : Update this to make hoveredSeries Better. See Comment at EoF.
+        //TODO : Update this to make hoveredSeries hit registration better. See Comment at EoF.
     }
 
     /** Re-orderes then Re-draws the Series Objects attached to the chart : Valid only for Lightweight-Charts v4.2.0 */
