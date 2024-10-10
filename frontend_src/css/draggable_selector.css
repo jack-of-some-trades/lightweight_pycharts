@@ -13,14 +13,15 @@
 
     cursor: grab;
     font-weight: bold;
-    padding: 6px;
+    font-size: smaller;
+    padding: 0px 6px;
     text-align: left;
 }
 .drag_tag:active { cursor: grabbing; }
 .drag_tag_overlay { cursor: grabbing; }
 
 .drag_tag_bottom_border {
-    margin-top: 6px;
+    margin-top: 3px;
     margin-left: 40%;
     width: 60%;
     border-bottom: 1px solid var(--text-dark-color);
