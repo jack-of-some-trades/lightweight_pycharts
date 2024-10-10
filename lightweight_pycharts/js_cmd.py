@@ -198,8 +198,8 @@ def set_layout(container_id: str, layout: layouts) -> str:
     return f"{container_id}.set_layout({layout});"
 
 
-def add_frame(container_id: str, frame_id: str) -> str:
-    return f"var {frame_id} = {container_id}.add_frame('{frame_id}');"
+def add_frame(container_id: str, frame_id: str, _type: Enum) -> str:
+    return f"var {frame_id} = {container_id}.add_frame('{frame_id}', {_type.value});"
 
 
 def remove_frame(container_id: str, frame_id: str) -> str:

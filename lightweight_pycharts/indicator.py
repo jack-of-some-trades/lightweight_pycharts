@@ -244,13 +244,13 @@ class Indicator(metaclass=IndicatorMeta):
 
     def __init__(
         self,
-        parent: "win.Frame | Indicator",
+        parent: "win.ChartingFrame | Indicator",
         *,
         display_name: str = "",
         js_id: Optional[str] = None,
         display_pane_id: Optional[str] = None,
     ) -> None:
-        if isinstance(parent, win.Frame):
+        if isinstance(parent, win.ChartingFrame):
             self.parent_frame = parent
         else:
             self.parent_frame = parent.parent_frame
@@ -645,6 +645,6 @@ class Indicator(metaclass=IndicatorMeta):
         return self.parent_frame.main_series.bar_time(index)
 
 
-IndParentType: TypeAlias = win.Frame | Indicator
+IndParent_T: TypeAlias = win.ChartingFrame | Indicator
 
 # endregion

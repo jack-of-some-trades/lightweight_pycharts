@@ -1,6 +1,8 @@
-""" Python Classes that handle the various GUI Widgets """
+""" Python Classes that are analogs of, and control, the Main Window Components """
 
 from __future__ import annotations
+from abc import abstractmethod, ABC
+from enum import Enum, auto
 import logging
 import asyncio
 import multiprocessing as mp
@@ -10,20 +12,29 @@ from typing import Literal, Optional
 
 import pandas as pd
 
-from lightweight_pycharts.orm.types import TF, Color
+from lightweight_pycharts.orm.series import SeriesType
 
 from . import orm
 from . import util
 from . import indicators
-from . import indicator as ind
-from .orm import layouts, Symbol
+from .orm.types import TF, Color, Symbol
+
+from .orm import layouts
 from .events import Events, Emitter, Socket_Switch_Protocol
 from .js_api import PyWv, MpHooks
 from .js_cmd import JS_CMD, PY_CMD
-from .orm.series import AnyBasicData, SeriesType, SingleValueData
-
 
 logger = logging.getLogger("lightweight-pycharts")
+
+
+class FrameTypes(Enum):
+    """
+    Enum to define implemented subclasses of Frame.
+    This must match the Const Object Definition in container.ts
+    """
+
+    ABSTRACT = auto()
+    CHART = auto()
 
 
 class Window:
@@ -114,6 +125,9 @@ class Window:
 
             case PY_CMD.DATA_REQUEST, str(), str(), orm.Symbol(), orm.TF():
                 frame = self.get_container(args[0]).frames[args[1]]
+                if not isinstance(frame, ChartingFrame):
+                    return
+
                 kwargs = {
                     "series": frame.main_series,
                     "symbol": args[2],
@@ -127,13 +141,13 @@ class Window:
 
             case PY_CMD.SERIES_CHANGE, str(), str(), orm.series.SeriesType():
                 frame = self.get_container(args[0]).frames[args[1]]
-                frame.main_series.change_series_type(args[2])
+                if isinstance(frame, ChartingFrame):
+                    frame.main_series.change_series_type(args[2])
 
             case PY_CMD.SET_INDICATOR_OPTS, str(), str(), str(), dict():
-                indicator = (
-                    self.get_container(args[0]).frames[args[1]].indicators[args[2]]
-                )
-                indicator.__parse_options_dict__(args[3])
+                frame = self.get_container(args[0]).frames[args[1]]
+                if isinstance(frame, ChartingFrame):
+                    frame.indicators[args[2]].__parse_options_dict__(args[3])
 
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
@@ -243,18 +257,18 @@ class Window:
     def del_tab(self, _id: str | int):
         "Deletes a Tab. Id can be either the js_id or tab #."
         container = self.get_container(_id)
+        ids = container.all_ids()
 
-        # Be sure to allow indicators to clear themselves
+        # Be sure to allow frames to clear up any assets before parent objs are deleted
         # This ensures web-sockets and other assets are closed.
         for frame in container.frames.values():
-            for indicator in frame.indicators.copy().values():
-                indicator.delete()
+            del frame
 
-        # Remove the Objects from local storable and erase their JS global references
+        # Remove the Objects from local storage and erase their JS global references
         self._container_ids.remove(container.js_id)
         self.containers.remove(container)
         self._fwd_queue.put((JS_CMD.REMOVE_CONTAINER, container.js_id))
-        self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *container.all_ids()))
+        self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *ids))
 
     def get_container(self, _id: int | str) -> Container:
         "Return the container that matches either the given js_id, or the tab #"
@@ -335,9 +349,15 @@ class Container:
         "Immutable Copy of the Object's Javascript_ID"
         return self._js_id
 
-    def add_frame(self, _js_id: Optional[str] = None) -> Frame:
+    def add_frame(
+        self, _js_id: Optional[str] = None, _type: FrameTypes = FrameTypes.CHART
+    ) -> Frame:
         "Creates a new Frame. Frame will only be displayed once the layout supports a new frame."
-        return Frame(self, _js_id)
+        match _type:
+            case FrameTypes.CHART:
+                return ChartingFrame(self, _js_id)
+            case FrameTypes.ABSTRACT:
+                raise TypeError("Cannot Initilize an Abstract Frame Type")
 
     def set_layout(self, layout: layouts):
         "Set the layout of the Container creating Frames as needed"
@@ -371,16 +391,14 @@ class Container:
         self._fwd_queue.put((JS_CMD.REMOVE_REFERENCE, *frame_ids))
 
 
-class Frame:
+class Frame(ABC):
     """
-    Frame Objects primarily hold information about the timeseries that is being displayed. They
-    retain a copy of data that is used across all sub-panes as well as the references to said panes.
+    Abstract Class that represents one segment of a Container's Layout. This class can be inherited
+    from to create different types of displays that natively work with the layout configurations
+    and resize functionality.
+    """
 
-    ** ATM this class translates to a Chart_Frame in the Frontend. At some point in the future this
-    will become a Chart_Frame that inherits from an Abstract Frame class. That implementation will
-    match the current Frontend implementation and allow for 'Frame' to be an abstract re-sizeable
-    viewport in the window. Broker integration, Bid/Ask Tables, Stock Screeners... Sky's the limit.
-    """
+    Frame_Type = FrameTypes.ABSTRACT
 
     def __init__(self, parent: Container, _js_id: Optional[str] = None) -> None:
         if _js_id is None:
@@ -390,126 +408,46 @@ class Frame:
 
         self._window = parent._window
         self._fwd_queue = parent._fwd_queue
-        self.panes = util.ID_Dict[Pane](f"{self._js_id}_p")
-        self.indicators = util.ID_Dict[ind.Indicator]("i")
-        # Indicators append themselves to this ID_Dict. See Indicator DocString for reasoning.
 
-        self._fwd_queue.put((JS_CMD.ADD_FRAME, parent._js_id, self._js_id))
+        self._fwd_queue.put(
+            (JS_CMD.ADD_FRAME, parent._js_id, self._js_id, self.Frame_Type)
+        )
 
-        # Add main pane and Series, neither should ever be deleted
-        self.add_pane(Pane.__special_id__)
-        indicators.Series(self, js_id=indicators.Series.__special_id__)
+    @property
+    def js_id(self) -> str:
+        "Immutable Copy of the Object's Javascript_ID"
+        return self._js_id
 
+    @abstractmethod
+    def all_ids(self) -> list[str]:
+        "Returns a List of all JS Ids this obj (and Sub-objs) placed into the JS Global namespace"
+
+    @abstractmethod
     def __del__(self):
-        for indicator in self.indicators.copy().values():
-            indicator.delete()
-        logger.debug("Deleteing Frame: %s", self._js_id)
+        "Ensure Clean up of all interally created objects."
 
     # region ------------- Dunder Control Functions ------------- #
 
+    # Little bit awkward that these exist on the Base Class an not on just the Charting Frames
+    # This is because these are displayed by the window so all frames should define them
+    # though this may change in the future.
+
     def __set_displayed_symbol__(self, symbol: Symbol):
-        "*Does not change underlying data*"
+        "*Does not change underlying data Symbol*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_SYMBOL, self._js_id, symbol))
 
     def __set_displayed_timeframe__(self, timeframe: TF):
-        "*Does not change underlying data*"
+        "*Does not change underlying data TF*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_TIMEFRAME, self._js_id, timeframe))
 
     def __set_displayed_series_type__(self, series_type: SeriesType):
-        "*Does not change underlying data*"
+        "*Does not change underlying data Type*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_SERIES_TYPE, self._js_id, series_type))
 
-    def __set_whitespace__(self, data: pd.DataFrame, p_data: SingleValueData):
-        self._fwd_queue.put((JS_CMD.SET_WHITESPACE_DATA, self._js_id, data, p_data))
-
-    def __clear_whitespace__(self):
-        self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self._js_id))
-
-    def __update_whitespace__(self, data: AnyBasicData, p_data: SingleValueData):
-        self._fwd_queue.put((JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data, p_data))
-
-    # endregion
-
-    def add_pane(self, js_id: Optional[str] = None) -> Pane:
-        "Add a Pane to the Current Frame"
-        return Pane(self, js_id)  # Pane Appends itself to Frame.panes
-
-    def all_ids(self) -> list[str]:
-        "Return a List of all Ids of this object and sub-objects"
-        return [self._js_id] + self.all_pane_ids()
-
-    def all_pane_ids(self) -> list[str]:
-        "Return a List of all Panes Ids of this object"
-        return list(self.panes.keys())
-
-    @property
-    def js_id(self) -> str:
-        "Immutable Copy of the Object's Javascript_ID"
-        return self._js_id
-
-    @property
-    def main_pane(self) -> Pane:
-        "Main Display Pane of the Frame"
-        return self.panes[self.panes.prefix + Pane.__special_id__]
-
-    @property
-    def main_series(self) -> indicators.Series:
-        "Series Indicator that contain's the Frame's main symbol data"
-        main_series = self.indicators[
-            self.indicators.prefix + indicators.Series.__special_id__
-        ]
-        if isinstance(main_series, indicators.Series):
-            return main_series
-        raise AttributeError(f"Cannot find Main Series for Frame {self._js_id}")
-
-    # region ------------- Indicator Functions ------------- #
-
-    def get_indicators_of_type[T: ind.Indicator](self, _type: type[T]) -> dict[str, T]:
-        "Returns a Dictionary of Indicators applied to this Frame that are of the Given Type"
-        rtn_dict = {}
-        for _key, _ind in self.indicators.items():
-            if isinstance(_ind, _type):
-                rtn_dict[_key] = _ind
-        return rtn_dict
-
-    def remove_indicator(self, _id: str | int):
-        "Remove and Delete an Indicator"
-        try:
-            self.indicators[_id].delete()
-        except (KeyError, IndexError):
-            logger.warning(
-                "Could not delete Indicator '%s'. It does not exist on frame '%s'",
-                _id,
-                self._js_id,
-            )
-
     # endregion
 
 
-class Pane:
-    """
-    An individual charting window, can contain seriesCommon objects and indicators.
-    """
-
-    __special_id__ = "main"  # Must match Pane.ts Special ID
-
-    def __init__(self, parent: Frame, js_id: Optional[str] = None) -> None:
-        if js_id is None:
-            self._js_id = parent.panes.generate_id(self)
-        else:
-            self._js_id = parent.panes.affix_id(js_id, self)
-
-        self._window = parent._window
-        self._fwd_queue = parent._fwd_queue
-        self.__main_pane__ = self._js_id == Pane.__special_id__
-
-        self._fwd_queue.put((JS_CMD.ADD_PANE, parent._js_id, self._js_id))
-
-    @property
-    def js_id(self) -> str:
-        "Immutable Copy of the Object's Javascript_ID"
-        return self._js_id
-
-    def add_primitive(self):
-        """TBD?"""
-        raise NotImplementedError
+# Frame Subclasses are imported at EoF to prevent an import error.
+# Future_Annotations Silence the Typeing errors that would occur above.
+# pylint: disable=wrong-import-position
+from .charting_frame import ChartingFrame

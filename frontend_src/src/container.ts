@@ -11,6 +11,13 @@ export type update_tab_func = (
     favicon?: string
 ) => void
 
+
+// This Must Match FrameTypes Enum in window.py
+type frame_subclasses = typeof chart_frame
+const FrameTypes:{[key:number]: frame_subclasses} = {
+    2: chart_frame
+}
+
 /**
  * Class to hold information on a single layout and a set of Frames. Multiple instances
  * can be created, though, all instances share the same Container.tsx Element. TSX Element
@@ -83,8 +90,11 @@ export class container{
      * Will Require a UI Element for display and Frame type Selection. Alternatively, set up a
      * add_[type]_frame method for each type of frame and don't allow frame type manipulation.
      */
-    protected add_frame(new_id: string): frame {
-        let new_frame = new chart_frame(new_id, this.update_tab)
+    protected add_frame(new_id: string, type:number): frame {
+        //Logging an error instead of throwing one because when thrown nothing is displayed in the console.
+        if (type == 1) console.error('Cannot Create an instance of an Abstract Frame')
+
+        let new_frame = new FrameTypes[type](new_id, this.update_tab)
         this.frames.push(new_frame)
         return new_frame
     }
@@ -186,4 +196,3 @@ export class container{
         this.resize_frames()
     }
 }
-

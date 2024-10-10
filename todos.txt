@@ -41,7 +41,6 @@ Frontend-Backend (Typescript):
 Backend-Backend (Python):
 	- Series(Indicator) + Volume Refactor
 	- Series Common Additions (Markers, H-lines, Sub-class Typing extensions)
-	- Separation of Frames and Charting Frames
 
 	- Primitves : Re-assess the parent of a primitive and from which pool their IDs are generated against. 
 					Should Ideally allow for primitives to be created under one constant ID in python, but still allow
@@ -76,3 +75,25 @@ Cross-Architecture:
 	- Watchlists: Create a Watchlist Side-bar Widget. Could require open sockets for price updates.
 
 	- Timezones: Add timezone control support (likely to the bottom util control bar)
+
+	- Frames : More like, todo as desired.. 
+			  - Expand the number of Frame Subclasses to include things like
+	 			stock screeners, Broker Integration, & Depth of Book info.
+
+			  - Create a 'Mutable' Frame Type that replaces the Default Frame Type of 'Chart'. UI would
+			  	allow the user to select the generated frame type.
+
+			  - Add Frame Creation Buttons to the Frame Viewer so Various Frame Types can be created without
+			  	requireing the layout to first be expanded. (Only current method of adding frames)
+				
+
+~~~~~~~~~~~~ Finished Tasks ~~~~~~~~~~~~
+
+Frontend (TSX / UI) :
+
+Frontend-Backend (Typescript):
+
+Backend-Backend (Python):
+	~~ [10/10/24] - Separation of Frames and Charting frames
+
+Cross-Architecture:

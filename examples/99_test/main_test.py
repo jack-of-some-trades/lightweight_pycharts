@@ -4,7 +4,8 @@ from typing import Optional
 import pandas as pd
 
 import lightweight_pycharts as lwc
-from lightweight_pycharts import Symbol
+from lightweight_pycharts import Symbol, TF
+from lightweight_pycharts import indicators
 from lightweight_pycharts.orm.series import OhlcData, SingleValueData
 
 
@@ -29,7 +30,7 @@ def symbol_search_handler(ticker: str, **kwargs) -> Optional[list[Symbol]]:
     ]
 
 
-def data_request_handler(symbol: lwc.Symbol, tf: lwc.TF) -> Optional[pd.DataFrame]:
+def data_request_handler(symbol: Symbol, tf: TF) -> Optional[pd.DataFrame]:
     "Request Handler for Bulk REST Data Fetches."
     if tf.period == "m" and (tf.mult in [1, 5, 30]):
         match symbol.ticker:
@@ -45,9 +46,7 @@ def data_request_handler(symbol: lwc.Symbol, tf: lwc.TF) -> Optional[pd.DataFram
                 return pd.read_csv("examples/data/lwpc_ohlc.csv")
 
 
-async def socket_request_handler(
-    state: str, symbol: lwc.Symbol, series: lwc.indicators.Series
-):
+async def socket_request_handler(state: str, symbol: Symbol, series: indicators.Series):
     """
     Request Handler for Web-Sockets. The requested 'state' is determined by Symbol Changes
     and the frame.socket_open Boolean. The user should keep this Boolean as up-to-date as possible.
@@ -113,25 +112,22 @@ async def main():
         ]
     )
     window.set_timeframes(
-        favs=[
-            lwc.TF(1, "m"),
-            lwc.TF(5, "m"),
-            lwc.TF(30, "m"),
-        ],
+        favs=[TF(1, "m"), TF(5, "m"), TF(30, "m")],
     )
 
     window.new_tab()
     main_frame = window.containers[0].frames[0]
     df = pd.read_csv("examples/data/ohlcv.csv")
 
-    main_frame.main_series.set_data(
-        df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
-    )
+    if isinstance(main_frame, lwc.ChartingFrame):
+        main_frame.main_series.set_data(
+            df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
+        )
 
-    lwc.indicators.Volume(main_frame)
-    # opts = lwc.indicators.SMA.__options__(period=20)
-    sma20 = lwc.indicators.SMA(main_frame)
-    lwc.indicators.SMA(sma20)
+        indicators.Volume(main_frame)
+        # opts = lwc.indicators.SMA.__options__(period=20)
+        sma20 = indicators.SMA(main_frame)
+        indicators.SMA(sma20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

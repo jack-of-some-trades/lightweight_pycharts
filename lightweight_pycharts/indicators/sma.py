@@ -5,6 +5,7 @@ from typing import Optional
 import pandas as pd
 
 from lightweight_pycharts.indicator import (
+    IndParent_T,
     Options,
     Indicator,
     SeriesData,
@@ -40,8 +41,13 @@ class SMA(Indicator):
 
     __options__ = SMAOptions
 
-    def __init__(self, parent, opts: Optional[SMAOptions] = None):
-        super().__init__(parent)
+    def __init__(
+        self,
+        parent: IndParent_T,
+        opts: Optional[SMAOptions] = None,
+        display_name: str = "",
+    ):
+        super().__init__(parent, display_name=display_name)
         if opts is None:
             opts = SMAOptions()
 

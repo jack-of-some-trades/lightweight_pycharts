@@ -11,6 +11,7 @@ from typing import (
 import pandas as pd
 from numpy import nan
 
+from lightweight_pycharts.charting_frame import ChartingFrame
 from lightweight_pycharts.orm.options import PriceScaleMargins, PriceScaleOptions
 from lightweight_pycharts.orm.types import Color, PriceFormat
 
@@ -84,7 +85,7 @@ class Series(Indicator):
 
     def __init__(
         self,
-        parent: win.Frame,
+        parent: ChartingFrame,
         options: SeriesIndicatorOptions = SeriesIndicatorOptions(),
         *,
         js_id: Optional[str] = None,
@@ -461,7 +462,7 @@ class Volume(Indicator):
 
     def __init__(
         self,
-        parent: win.Frame | Series,
+        parent: win.ChartingFrame | Series,
         src: Optional[Callable] = None,
         options=VolumeIndicatorOptions(),
     ) -> None:
