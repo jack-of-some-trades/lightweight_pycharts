@@ -17,7 +17,19 @@ Frontend-Backend (Typescript):
 
 	- Update the Pane 'make_event_params' to have better Series Hit Registration
 
-	-- Primitives: 
+	- Data-Viewer Widget Panel: Panel that displays information (and maybe allows options control) of a selected
+		object. Could potentially show Data on Series, primitive, & indicator objects
+
+	- Frame-Viewer(?) Update: Allow for toggling of Pane Axis Visiblity
+
+	-- Series:
+		- Additional Series Type Styling Options Menus
+
+		- Add Tracking of Seriers Markers and H-Lines to Series-Base
+
+		- Allow for controls to move series objects between left/right/overlay/named price axises
+
+	-- Primitives:
 		- Additional Primitive Tools
 
 		- Reasses how a TrendLine ensures it is visible in update(). This could require a
@@ -26,14 +38,22 @@ Frontend-Backend (Typescript):
 
 		- Options + Style Menu System
 
+		- Make an ID Scheme for primitive group serieses
+
 	-- Multi-Pane Layouts:
 		- Charting Frame + Pane: Integrate a Method for changing a Charting Frame's internal layout so
 								Multiple Panes can be displayed per Frame. (Multi-layout already supported.) 
+		
+		- Frame Viewer widget panel: Update to allow panes to be rearranged, & added
 
 		- Primitives: Re-assess Method for generating IDs when adding Primitives to a Pane. Should this ping python
-						for a name? Should it generate a random string of chars. Should the length be 4 chars or less
-						to signify it wasn't make by python? What are the ramifications on ID collision when drawings
-						are (potentially) moved/shared across frames?
+						for a name? Should it generate a random string of chars? if so, What would be the scope and
+						length of the generated ID? What are the ramifications on ID collision when drawings
+						are (potentially) moved/shared across frames? Do you even try and create a global scope
+						or do user drawn/loaded primitives have an ID scope of just the pane they are attached to
+						necessitating this ID (actually whole object) is recreated on pane movement.
+						Should the Python Pane Object even try and keep track of it's own list of primitive IDs
+						or is this just left to python?
 
 		- Primitives, Series, Indicators: Implement Move-To-Pane Methods
 
@@ -57,6 +77,14 @@ Backend-Backend (Python):
 				: Optimize this class... by optimizing Pandas_Market_Calendars :( PMC is by far the slowest piece of code
 					involved in this entire library. Optimizing it will be the biggest bang-for-buck performance optimization
 
+	- Disable GIL : Experiment with Disabling the GIL in Python 3.13. This implmentation would replace the multi-processing
+					behavior with multi-threading. This could be a decent performance increase seeing as how the memory space
+					between Core A and Core B would be shared. Modules wouldn't need to load twice on start-up and,
+					more importantly, all objects that traverse the Queue wouldn't need to be pickled. They could just reference
+					the memory location of the relevant object which would be far more efficient. This could also potentially allow
+					for the js_api to directly execute functions on memory. e.g. It could manipulate Container / Frame objects
+					directly as opposed to telling the Window to manipulate these low level objects.
+
 Cross-Architecture:
 	- Indicators: Search Menu + Python Import-Lib
 
@@ -66,7 +94,6 @@ Cross-Architecture:
 	- Series Objects / Series_DFs : Create an 'infinite-history' system as described by :
 			https://tradingview.github.io/lightweight-charts/tutorials/demos/infinite-history
 			This would help lighten the load on the fwd_queue preventing future bottlenecks
-
 
 	- Trade-Execution: Add support for trade buy/sell execution events to the window event manager. 
 						Indicators already have access to the Event system for this reason.

@@ -6,15 +6,13 @@ from typing import Optional
 
 import pandas as pd
 
-from lightweight_pycharts import TF, Symbol
-
 from . import util
 from . import indicators
 from . import window as win
 from . import indicator as ind
 from .js_cmd import JS_CMD
 
-from .orm.series import AnyBasicData, SeriesType, SingleValueData
+from .orm.series import AnyBasicData, SingleValueData
 
 logger = logging.getLogger("lightweight-pycharts")
 

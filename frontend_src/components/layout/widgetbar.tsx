@@ -1,10 +1,10 @@
-import { createEffect, createSignal, JSX, Match, Setter, splitProps, Switch } from "solid-js";
+import { createEffect, createSignal, JSX, Match, Switch } from "solid-js";
 import { Icon, icons } from "../icons";
 
 import "../../css/layout/widget_panel.css";
 import { FrameViewer } from "../widget_panels/frame_viewer";
 import { ObjectTree } from "../widget_panels/object_tree";
-import { WIDGET_BAR_WIDTH, WIDGET_PANEL_MARGIN } from "./wrapper";
+import { PanelResizeCTX, WIDGET_BAR_WIDTH, WIDGET_PANEL_MARGIN } from "./wrapper";
 
 const [selectedWidget, setSelectedWidget] = createSignal<icons | undefined>()
 
@@ -40,32 +40,15 @@ function WidgetIcon(props:{icon:icons} & JSX.SvgSVGAttributes<SVGSVGElement> ){
     )
 }
 
-
 // #endregion
 
 // #region --------------------- Widget Panel Display ----------------------- */
 
-const MIN_PANEL_WIDTH = 156
-const MAX_PANEL_WIDTH = 468
-
-export interface PanelProps {
-    resizePanel: (size:number) => void
-}
-
-interface widget_panel_props extends JSX.HTMLAttributes<HTMLDivElement> {
-    resizePanel: Setter<number>
-}
-export function WidgetPanel(props:widget_panel_props){
-    const [, divProps] = splitProps(props, ['resizePanel'])
+export function WidgetPanel(divProps:JSX.HTMLAttributes<HTMLDivElement> ){
+    const resizePanel = PanelResizeCTX().setWidgetPanelWidth
 
     const resizeWidgetPanel = (e:MouseEvent) => {
-        let width =  window.innerWidth - (e.clientX + WIDGET_BAR_WIDTH + WIDGET_PANEL_MARGIN)
-        props.resizePanel(Math.max(Math.min(width, MAX_PANEL_WIDTH), MIN_PANEL_WIDTH))
-    }
-
-    //Allows each panel to set their own base size when shown.
-    const PanelProps:PanelProps = {
-        resizePanel: (size:number) => {props.resizePanel(Math.max(Math.min(size, MAX_PANEL_WIDTH), MIN_PANEL_WIDTH))}
+        resizePanel(window.innerWidth - (e.clientX + WIDGET_BAR_WIDTH + WIDGET_PANEL_MARGIN))
     }
 
     const onMouseDown = (e:MouseEvent) => {
@@ -77,8 +60,8 @@ export function WidgetPanel(props:widget_panel_props){
 
     return <div class='layout_main widget_panel' {...divProps} onMouseDown={onMouseDown}>
         <Switch>
-            <Match when={selectedWidget() === icons.frame_editor}><FrameViewer {...PanelProps}/></Match>
-            <Match when={selectedWidget() === icons.object_tree}><ObjectTree {...PanelProps}/></Match>
+            <Match when={selectedWidget() === icons.frame_editor}><FrameViewer/></Match>
+            <Match when={selectedWidget() === icons.object_tree}><ObjectTree/></Match>
         </Switch>
     </div>
 }

@@ -1,12 +1,12 @@
 
 import { Accessor, createContext, createEffect, createSignal, For, JSX, on, onMount, Setter, Show, useContext } from "solid-js";
-import { PanelProps } from "../layout/widgetbar";
 
 import { createStore, SetStoreFunction } from "solid-js/store";
 import { SeriesBase_T } from "../../src/charting_frame/series-plugins/series-base";
 import { DraggableSelection, OverlayItemTag, SelectableItemTag } from "../draggable_selector";
 
 import '../../css/widget_panels/object_tree.css';
+import { PanelResizeCTX } from "../layout/wrapper";
 
 const DEFAULT_WIDTH = 250
 
@@ -79,46 +79,62 @@ export function ObjTreeContext(props:JSX.HTMLAttributes<HTMLElement>){
 
 const MIN_TREE_HEIGHT = 50
 
-export function ObjectTree(props:PanelProps){
-    onMount(()=>{props.resizePanel(DEFAULT_WIDTH)})
+export function ObjectTree(){
     const primTitleDiv = createSignal<HTMLDivElement>()
     const seriesTitleDiv = createSignal<HTMLDivElement>()
 
+    let panelHeight = -1, seriesTreeHeight = -1, seriesTreeHeightFrac = 0.5
     const getHeight = (el:Element | undefined) => Math.ceil(el?.getBoundingClientRect().height ?? 0)
-    const widgetPanelHeight = () => getHeight(document.querySelector('.layout_main.widget_panel') ?? undefined)
-    let seriesTreeHeight = (widgetPanelHeight() - 50)/2
+
+    //This works by setting the height of each div because of the drag 'n drop library. Something about it's
+    //implementation makes resize on drag choppy when just setting just the size of the primitive tree
     const seriesTreeStyle = createSignal<JSX.CSSProperties>({height:`${seriesTreeHeight}px`})
     const primTreeStyle = createSignal<JSX.CSSProperties>({height:`${seriesTreeHeight}px`})
 
     // Resize Trees when dragging the divider.
-    const resizeSeriesTree = (e:MouseEvent) => {
-        let free_space = widgetPanelHeight() - getHeight(primTitleDiv[0]()) - getHeight(seriesTitleDiv[0]())
+    const resizeOnDrag = (e:MouseEvent) => {
+        let free_space = panelHeight - getHeight(primTitleDiv[0]()) - getHeight(seriesTitleDiv[0]())
         // Bound the new setting to keep the Series and Primitive Trees above their minimums
         seriesTreeHeight = Math.min(Math.max( MIN_TREE_HEIGHT, seriesTreeHeight + e.movementY ), free_space - MIN_TREE_HEIGHT)
         seriesTreeStyle[1]({height:`${seriesTreeHeight}px`})
         primTreeStyle[1]({height:`${free_space - seriesTreeHeight}px`})
+        
+        seriesTreeHeightFrac = seriesTreeHeight/free_space
     }
     const onMouseDown = () => {
-        document.addEventListener('mousemove', resizeSeriesTree)
-        document.addEventListener('mouseup', () => document.removeEventListener('mousemove', resizeSeriesTree), {once:true})
+        document.addEventListener('mousemove', resizeOnDrag)
+        document.addEventListener('mouseup', () => document.removeEventListener('mousemove', resizeOnDrag), {once:true})
     }
 
-    // Resize the Trees to 50/50 when the series objects change.
-    createEffect(on(ObjectTreeCTX().ids, () => {
-        let free_space = widgetPanelHeight() - getHeight(primTitleDiv[0]()) - getHeight(seriesTitleDiv[0]())
-        seriesTreeHeight = Math.floor(free_space/2)
-        seriesTreeStyle[1]({height:`${seriesTreeHeight}px`})
-        primTreeStyle[1]({height:`${free_space - seriesTreeHeight}px`})
-    }))
+    // Resize Function Called by wrapper when window resizes
+    const onWindowResize = (rect: DOMRect) => {
+        panelHeight = rect.height
+        let free_space = panelHeight - getHeight(primTitleDiv[0]()) - getHeight(seriesTitleDiv[0]())
+        if (ObjectTreeCTX().selectedSeries()){
+            // Reference outer scope seriesTreeHeight & seriesTreeHeightFrac so the widget has some level of layout memory
+            seriesTreeHeight = Math.floor(free_space * seriesTreeHeightFrac)
+            seriesTreeStyle[1]({height:`${seriesTreeHeight}px`} )
+            primTreeStyle[1]({height:`${free_space - seriesTreeHeight}px`})
+        } else {
+            seriesTreeStyle[1]({height:`${free_space}px`})
+            seriesTreeHeight = free_space
+        }
+    }
+
+    onMount(()=>{
+        PanelResizeCTX().setWidgetPanelWidth(DEFAULT_WIDTH)
+        PanelResizeCTX().setWidgetPanelResizeFunc(() => onWindowResize)
+    })
 
     return <>
         <div ref={seriesTitleDiv[1]} class='widget_panel_title'>Series Object Tree</div>
         <SeriesTree style={seriesTreeStyle[0]()}/>
 
-        <div class='obj_tree_resize_handle' onMouseDown={onMouseDown}/>
-
-        <div ref={primTitleDiv[1]} class='widget_panel_title'>Primitive Object Tree</div>
-        <PrimitiveTree style={primTreeStyle[0]()}/>
+        <Show when={ObjectTreeCTX().selectedSeries() !== undefined} keyed>
+            <div class='obj_tree_resize_handle' onMouseDown={onMouseDown}/>
+            <div ref={primTitleDiv[1]} class='widget_panel_title'>Primitive Object Tree</div>
+            <PrimitiveTree style={primTreeStyle[0]()}/>
+        </Show>
     </>
 }
 
@@ -126,7 +142,15 @@ function SeriesTree(props:JSX.HTMLAttributes<HTMLDivElement>){
     const ids = ObjectTreeCTX().ids
     const serieses = ObjectTreeCTX().serieses
     const reorder = ObjectTreeCTX().seriesReorderFunc
+    const selectedSeries = ObjectTreeCTX().selectedSeries
     const setSelectedSeries = ObjectTreeCTX().setSelectedSeries
+
+    //Reset the selected series when the frame changes or the series is deleted (series no long detected in series tree)
+    createEffect(on(ids, () => {
+        let curr_id = selectedSeries()?._id
+        if (curr_id !== undefined && ids().find((id) => id === curr_id) === undefined)
+            setSelectedSeries(undefined)
+    })) 
 
     return <Show when={ids()} keyed>
         <DraggableSelection
@@ -147,7 +171,8 @@ function SeriesTree(props:JSX.HTMLAttributes<HTMLDivElement>){
                 if (series === undefined) return
 
                 return <SelectableItemTag 
-                    onClick={()=>setSelectedSeries(series)}
+                    onClick={()=>{if (selectedSeries() !== series) setSelectedSeries(series); else setSelectedSeries(undefined)}}
+                    attr:target={selectedSeries() === series ? "" : undefined}
                     tag_id={()=>id}
                     tag_name={()=>serieses.find((item)=>item.id===id)?.name ?? ""}
                 />

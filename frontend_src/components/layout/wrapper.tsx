@@ -3,7 +3,7 @@
  * and construction of the entire SolidJS Component tree is initiated.
  */
 
-import { JSX, createEffect, createSignal, on, onMount } from 'solid-js'
+import { Accessor, JSX, Setter, createContext, createEffect, createSignal, on, onMount, useContext } from 'solid-js'
 import { SetStoreFunction, createStore } from 'solid-js/store'
 import { OverlayContextProvider } from './overlay_manager'
 import { TitleBar } from './titlebar'
@@ -20,9 +20,12 @@ import { WidgetBar, WidgetPanel } from './widgetbar'
 const MARGIN = 5
 const TOP_HEIGHT = 38
 const TITLE_HEIGHT = 38
+
+const MIN_WIDGET_PANEL_WIDTH = 156
+const MAX_WIDGET_PANEL_WIDTH = 468
 export const WIDGET_BAR_WIDTH = 52
-const [WIDGET_PANEL_WIDTH, setWidgetPanelWidth] = createSignal(208)
 export const WIDGET_PANEL_MARGIN = 2
+
 const TOOLBAR_WIDTH = 46
 const UTILBAR_WIDTH = 38
 
@@ -66,6 +69,7 @@ export enum LAYOUT_SECTIONS {
  */
 export function Wrapper(){
     const [layout, set_layout] = createStore(layout_default)
+    const widgetPanelWidth = PanelResizeCTX().widgetPanelWidth
 
     onMount(() => { 
         //Add Resize listener
@@ -75,7 +79,7 @@ export function Wrapper(){
 
     //Resize when visibility changes & when Widget_Panel changes size
     createEffect(() => {resize(window.innerWidth, window.innerHeight, layout, set_layout)})
-    createEffect(on(WIDGET_PANEL_WIDTH, () => {resize(window.innerWidth, window.innerHeight, layout, set_layout)}))
+    createEffect(on(widgetPanelWidth, () => {resize(window.innerWidth, window.innerHeight, layout, set_layout)}))
 
     //Functions to be passed to the Titlebar
     const title_bar_props = {
@@ -102,7 +106,7 @@ export function Wrapper(){
                 <TopBar style={layout.topbar}/>
                 <ToolBar style={layout.toolbar}/>
                 <WidgetBar style={layout.widgetbar} {...widget_bar_props}/>
-                <WidgetPanel style={layout.widgetpanel} resizePanel={setWidgetPanelWidth}/>
+                <WidgetPanel style={layout.widgetpanel}/>
                 <div class='layout_main' style={layout.utilbar}/>
             </div>
         </GlobalContexts>
@@ -117,16 +121,22 @@ function GlobalContexts(props:JSX.HTMLAttributes<HTMLElement>){
         <ColorContext>
         <ToolBoxContext>
         <ObjTreeContext>
+        <PanelResizeContext>
         <OverlayContextProvider>
-        {props.children}
+            {props.children}
         </OverlayContextProvider>
+        </PanelResizeContext>
         </ObjTreeContext>
         </ToolBoxContext>
         </ColorContext>
     </>
 }
 
+
+//#region -------------- Interactive Layout Functions -------------- //
+
 function resize(width:number, height:number, layout:layout_struct, set_layout:SetStoreFunction<layout_struct>){
+    const widgetPanelWidth = PanelResizeCTX().widgetPanelWidth()
     let side_bar_height = height - TITLE_HEIGHT
     let center_height = height - TITLE_HEIGHT
     let center_width = width
@@ -140,7 +150,7 @@ function resize(width:number, height:number, layout:layout_struct, set_layout:Se
     if (layout.widgetbar.display === 'flex')
         center_width -= (WIDGET_BAR_WIDTH + MARGIN)
     if (layout.widgetpanel.display === 'flex')
-        center_width -= (WIDGET_PANEL_WIDTH()) + WIDGET_PANEL_MARGIN
+        center_width -= (widgetPanelWidth) + WIDGET_PANEL_MARGIN
     if (layout.utilbar.display === 'flex')
         center_height -= (UTILBAR_WIDTH + MARGIN)
 
@@ -148,14 +158,21 @@ function resize(width:number, height:number, layout:layout_struct, set_layout:Se
     set_layout('toolbar', 'height', `${side_bar_height}px`)
     set_layout('widgetbar', 'height', `${side_bar_height}px`)
     set_layout('widgetpanel', 'height', `${side_bar_height}px`)
-    set_layout('widgetpanel', 'width', `${WIDGET_PANEL_WIDTH()}px`)
+    set_layout('widgetpanel', 'width', `${widgetPanelWidth}px`)
     set_layout('center', 'height', `${center_height}px`)
     set_layout('center', 'width', `${center_width}px`)
     set_layout('utilbar', 'width', `${center_width}px`)
 
-    //Resize Active Center Display, A DOMRect is given so that the dimensions are accurate. 
-    // w/o it, the container retrieves the size of the center panel prior to the set_layout calls taking effect.
+    // Resize Active Display Panels, A DOMRect is given so that the dimensions are accurate. 
+    // w/o this arg, each panel would query it's div for the size and it would be the old panel size.
     if (window.active_container) window.active_container.resize(new DOMRect(0, 0, center_width, center_height))
+        
+    let func = PanelResizeCTX().widgetPanelResizeFunc()
+    if (func !== undefined) func(new DOMRect(0, 0, widgetPanelWidth, center_height))
+
+    //** TODO: uncomment when util Panel is implemented **/
+    // func = ResizeCTX().utilPanelResizeFunc()
+    // if (func !== undefined) func(new DOMRect(0, 0, center_width, utilPanelHeight))
 }
 
 function show_section_unbound(set_layout:SetStoreFunction<layout_struct>, section: LAYOUT_SECTIONS) {
@@ -210,3 +227,67 @@ function hide_section_unbound(set_layout:SetStoreFunction<layout_struct>, sectio
 
     if (window.active_container) window.active_container.resize()
 }
+
+//#endregion
+
+//#region -------------- Panel Resize Context -------------- //
+
+//Resize Context for Widget & Util Panels
+interface resize_context_props { 
+    widgetPanelWidth: Accessor<number>,
+    setWidgetPanelWidth: (width:number) => void,
+    widgetPanelResizeFunc: Accessor<(rect:DOMRect)=>void>,
+    setWidgetPanelResizeFunc: Setter<(rect:DOMRect)=>void>
+
+    //** TODO: uncomment when util Panel is implemented **/
+    // utilPanelHeight: Accessor<number>,
+    // setUtilPanelHeight: (height:number) => void,
+    // utilPanelResizeFunc: Accessor<(rect:DOMRect)=>void>,
+    // setUtilPanelResizeFunc: Setter<(rect:DOMRect)=>void>
+}
+
+const default_resize_props:resize_context_props = {
+    widgetPanelWidth: ()=>0,
+    setWidgetPanelWidth: ()=>{},
+    widgetPanelResizeFunc:  ()=>()=>{},
+    setWidgetPanelResizeFunc: ()=>{},
+
+    //** TODO: uncomment when util Panel is implemented **/
+    // utilPanelHeight: ()=>0,
+    // setUtilPanelHeight: ()=>{},
+    // utilPanelResizeFunc:  ()=>()=>{},
+    // setUtilPanelResizeFunc: ()=>{},
+}
+
+let resizeContext = createContext<resize_context_props>( default_resize_props )
+export function PanelResizeCTX():resize_context_props { return useContext(resizeContext) }
+
+function PanelResizeContext(props:JSX.HTMLAttributes<HTMLElement>){
+    //** TODO: uncomment when util Panel is implemented **/
+    // const utilPanelHeight = createSignal(0)
+    // const utilPanelFunc= createSignal((rect:DOMRect)=>{})
+
+    const widgetPanelWidth = createSignal<number>(208)
+    const widgetPanelFunc = createSignal((rect:DOMRect)=>{})
+    
+    const ResizeCTX:resize_context_props = {
+        widgetPanelWidth: widgetPanelWidth[0],
+        //Bound the size of the widget panel
+        setWidgetPanelWidth: (v:number)=>{widgetPanelWidth[1](Math.max(Math.min(v, MAX_WIDGET_PANEL_WIDTH), MIN_WIDGET_PANEL_WIDTH))},
+        widgetPanelResizeFunc:  widgetPanelFunc[0],
+        setWidgetPanelResizeFunc: widgetPanelFunc[1],
+    
+    //** TODO: uncomment when util Panel is implemented **/
+        // utilPanelHeight: utilPanelHeight[0],
+        // setUtilPanelHeight: (v:number)=>{utilPanelHeight[1](Math.max(Math.min(v, MAX_UTIL_PANEL_HEIGHT), MIN_UTIL_PANEL_HEIGHT))},
+        // utilPanelResizeFunc:  utilPanelFunc[0],
+        // setUtilPanelResizeFunc: utilPanelFunc[1],
+    }
+    resizeContext = createContext<resize_context_props>(ResizeCTX)
+
+    return <resizeContext.Provider value={ResizeCTX}>
+        {props.children}
+    </resizeContext.Provider>
+}
+
+//#endregion

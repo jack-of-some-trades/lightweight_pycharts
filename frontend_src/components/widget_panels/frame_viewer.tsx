@@ -1,17 +1,17 @@
 
 import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import { ContainerCTX } from "../layout/container";
-import { PanelProps } from "../layout/widgetbar";
 
 import { chart_frame } from "../../src/charting_frame/charting_frame";
 import { frame } from "../../src/frame";
 import { num_frames } from "../../src/layouts";
 import { DraggableSelection, OverlayItemTag, SelectableItemTag } from "../draggable_selector";
 import { Icon, icons } from "../icons";
+import { PanelResizeCTX } from "../layout/wrapper";
 
 const DEFAULT_WIDTH = 200
 
-export function FrameViewer(props:PanelProps){
+export function FrameViewer(){
     //Displays used in a keyed show tag so the <For/> tag updates when the container does.
     const displays = ContainerCTX().displays
     
@@ -20,7 +20,7 @@ export function FrameViewer(props:PanelProps){
   
     const getTagName = (id:string) => FRAME_NAME_MAP.get(active_container.frames.find((f)=>f.id === id)?.type ?? "") ?? ""
 
-    onMount(()=>props.resizePanel(DEFAULT_WIDTH))
+    onMount(()=>PanelResizeCTX().setWidgetPanelWidth(DEFAULT_WIDTH))
 
     return <>
         <div class='widget_panel_title'>Frame Viewer</div>

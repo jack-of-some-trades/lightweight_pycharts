@@ -10,3 +10,8 @@
 }
 
 .obj_tree { overflow-y: auto; }
+
+.obj_tree .drag_tag { border-radius: 5px; }
+.obj_tree .drag_tag[target] {
+    border-left: solid 1px var(--second-accent-color);
+}
