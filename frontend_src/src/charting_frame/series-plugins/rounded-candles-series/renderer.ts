@@ -34,6 +34,7 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 	): void {
 		this._data = data;
 		this._options = options;
+		// if (this._data.bars[this._data.bars.length - 1].barColor)
 	}
 
 	_drawImpl(
@@ -64,6 +65,15 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 				isUp,
 			};
 		});
+
+		// Set the Priceline Color by setting Options.Color 
+		// The var isn't used for candle color ironic enough, but this is what LWC internally grabs for the priceLine Color
+		if (this._options.priceLineColor !== ''){
+			this._options.color = this._options.priceLineColor
+		} else {
+			this._options.color = bars.at(-1)?.isUp ? this._options.upColor : this._options.downColor
+		}
+
 
 		const radius = this._options.radius(this._data.barSpacing);
 		this._drawWicks(renderingScope, bars, this._data.visibleRange);
