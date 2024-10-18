@@ -64,6 +64,14 @@
     display: flex;
     align-items: center;
     width: fit-content;
+    padding: 0 12px;
+}
+
+/* Reset Rule for nesting so Non-Nested & Nested Items have their left edge aligned */
+.indicator_opts .input_form .group div.inline,
+.indicator_opts .input_form .group div.input_block, 
+.indicator_opts .input_form .inline div.input_block{ 
+    padding: 0 0;
 }
 
 .indicator_opts .input_form .group {
@@ -72,8 +80,8 @@
     width: -webkit-fill-available;
     align-items: center;
     margin: 10px 0px;
-    padding: 0px 5px;
-    border-radius: 20px;
+    padding: 0px 12px;
+    border-radius: 6px;
 }
 .indicator_opts .group h3 {
     margin: 4px 6px;

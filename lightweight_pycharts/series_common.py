@@ -15,7 +15,6 @@ from pandas.api.types import is_datetime64_any_dtype
 from .js_cmd import JS_CMD
 from .orm import series as s
 from .orm.options import PriceScaleOptions
-from .orm.types import SeriesPriceLine, SeriesMarker
 
 if TYPE_CHECKING:
     from .indicator import Indicator
@@ -43,7 +42,7 @@ class SeriesCommon:
         *,
         name: Optional[str] = None,
         display_pane_id: Optional[str] = None,
-        v_map: s.ValueMap | dict[str, str] = {"close": "value", "value": "close"},
+        arg_map: s.ArgMap | dict[str, str] = {"close": "value", "value": "close"},
     ) -> None:
         if display_pane_id is None:
             display_pane_id = indicator._ids[0]
@@ -58,18 +57,18 @@ class SeriesCommon:
         # Tuple of Ids to make addressing through Queue easier: order = (pane, indicator, series)
         self._ids = display_pane_id, indicator.js_id, self._js_id
 
-        if isinstance(v_map, s.ValueMap):
-            self._value_map = v_map.as_dict
+        if isinstance(arg_map, s.ArgMap):
+            self._value_map = arg_map.as_dict
         else:
             # Ensure data can be displayed as both OHLC and Single Value based
-            self._value_map = v_map.copy()
-            if "close" not in v_map and "value" in v_map:
-                self._value_map["close"] = v_map["value"]
-            elif "value" not in v_map and "close" in v_map:
-                self._value_map["value"] = v_map["close"]
-            if "value" not in v_map:
+            self._value_map = arg_map.copy()
+            if "close" not in arg_map and "value" in arg_map:
+                self._value_map["close"] = arg_map["value"]
+            elif "value" not in arg_map and "close" in arg_map:
+                self._value_map["value"] = arg_map["close"]
+            if "value" not in arg_map:
                 self._value_map["value"] = "close"
-            if "close" not in v_map:
+            if "close" not in arg_map:
                 self._value_map["close"] = "value"
 
         # Make _series reference a Weakref since this is a child obj.
@@ -94,7 +93,7 @@ class SeriesCommon:
         return self._js_id
 
     @property
-    def options(self) -> s.SeriesOptionsCommon:
+    def options(self) -> s.SeriesOptionsCommon | dict:
         "Copy of the Object's Series Options Dataclass"
         # Using a Property Tag here so there's some indication options should be updated through
         # apply_options and not via direct dataclass manipulation
@@ -110,11 +109,6 @@ class SeriesCommon:
             return s.SeriesType.Line
         elif series_type == s.SeriesType.OHLC_Data:
             return s.SeriesType.Candlestick
-        elif series_type == s.SeriesType.Custom:
-            logger.warning(
-                "SeriesCommon given an invalid display type of 'Custom'. Making SeriesType a line"
-            )
-            return s.SeriesType.Line
         return series_type
 
     def _to_transfer_dataframe_(
@@ -213,15 +207,23 @@ class SeriesCommon:
 
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.AnySeriesOptions) -> None:
-        "Update the Display Options of the Series."
+    def apply_options(self, options: s.AnySeriesOptions | dict) -> None:
+        """
+        Update the Display Options of the Series.
+
+        The Argument can be a SeriesOptions instance or a dict formatted to the lwc api spec.
+        https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SeriesOptionsCommon
+        """
         self._options = options
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_OPTS, *self._ids, options))
 
-    def apply_scale_options(self, options: PriceScaleOptions) -> None:
+    def apply_scale_options(self, options: PriceScaleOptions | dict) -> None:
         """
         Update the Options for the Price Scale this Series belongs too.
         **Warning**: These changes may be shared with other series objects!
+
+        The Argument can be a PriceScaleOptions instance or a dict formatted to the lwc api spec.
+        https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceScaleOptions
         """
         self._fwd_queue.put((JS_CMD.UPDATE_PRICE_SCALE_OPTS, *self._ids, options))
 
@@ -243,15 +245,15 @@ class SeriesCommon:
             )
         )
 
-    def change_pane(self, new_pane: str) -> None: ...
+    # def change_pane(self, new_pane: str) -> None: ...
 
-    def add_marker(self, marker: SeriesMarker) -> None: ...
+    # def add_marker(self, marker: SeriesMarker) -> None: ...
 
-    def remove_marker(self, marker: SeriesMarker | str) -> None: ...
+    # def remove_marker(self, marker: SeriesMarker | str) -> None: ...
 
-    def add_price_line(self, price_line: SeriesPriceLine) -> None: ...
+    # def add_price_line(self, price_line: SeriesPriceLine) -> None: ...
 
-    def remove_price_line(self, price_line: SeriesPriceLine | float) -> None: ...
+    # def remove_price_line(self, price_line: SeriesPriceLine | float) -> None: ...
 
 
 # region ----------------------------- Single Value Series Objects ------------------------------ #

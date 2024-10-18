@@ -54,6 +54,40 @@ class Color:
         self._g = g
         self._a = a
 
+    def __eq__(self, other: Self):
+        return (
+            (self._r == other.r)
+            and (self._g == other.g)
+            and (self._b == other.b)
+            and (self._a == other.a)
+        )
+
+    def __neq__(self, other: Self):
+        return (
+            (self._r != other.r)
+            or (self._g != other.g)
+            or (self._b != other.b)
+            or (self._a != other.a)
+        )
+
+    @classmethod
+    def from_color(
+        cls,
+        ref: Self,
+        r: int | None = None,
+        g: int | None = None,
+        b: int | None = None,
+        a: float | None = None,
+    ):
+        "Instantiate a new Color Instance, from a Given Color Instance, updating the given RGB Values"
+        new_inst = cls(0, 0, 0, 0)
+        # Pass variables after construction to Value Check them w/ setter funcs
+        new_inst.r = r if r is not None else ref.r
+        new_inst.g = g if g is not None else ref.g
+        new_inst.b = b if b is not None else ref.b
+        new_inst.a = a if a is not None else ref.a
+        return new_inst
+
     @classmethod
     def from_rgb(cls, r: int, g: int, b: int, a: float = 1):
         "Instantiate a new Color Instance from RGB Values"

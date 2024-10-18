@@ -40,7 +40,7 @@ ALT_EXCHANGE_NAMES = {
 def update_dataframe(
     df: pd.DataFrame,
     data: AnySeriesData | dict[str, Any],
-    v_map: Optional[ValueMap | dict[str, str]] = None,
+    v_map: Optional[ArgMap | dict[str, str]] = None,
 ) -> pd.DataFrame:
     """
     Convenience Function to Update a Pandas DataFrame from a given piece of data w/ optional rename
@@ -56,7 +56,7 @@ def update_dataframe(
     time = data_dict.pop("time")  # Must have a 'time':pd.Timestamp pair
 
     if v_map is not None:
-        map_dict = v_map.as_dict if isinstance(v_map, ValueMap) else v_map.copy()
+        map_dict = v_map.as_dict if isinstance(v_map, ArgMap) else v_map.copy()
 
         # Rename and drop old keys
         for key in set(map_dict.keys()).intersection(data_dict.keys()):
@@ -158,7 +158,12 @@ class Series_DF:
         self._pd_tf = base_df.timedelta
         self.calendar = base_df.calendar
         self.only_days = base_df.only_days
-        self._data_type = SeriesType.Custom
+        self._data_type = base_df.data_type
+
+    @property
+    def columns(self) -> set[str]:
+        "Column Names within the Dataframe"
+        return set(self.df.columns)
 
     @property
     def ext(self) -> bool:
@@ -619,7 +624,7 @@ class Whitespace_DF:
 
 
 @dataclass
-class ValueMap:
+class ArgMap:
     """
     Renaming map to specify how the columns of a DataFrame should map to a Displayable Series.
     This object can cover value mapping for Line, Histogram, and Bar series
@@ -634,7 +639,6 @@ class ValueMap:
     high: Optional[str] = None
     low: Optional[str] = None
     color: Optional[str] = None
-    custom_values: Optional[str] = None
     custom_values: Optional[str] = None
 
     def __post_init__(self):
@@ -653,20 +657,20 @@ class ValueMap:
         )
 
 
-class CandleValueMap(ValueMap):
+class CandleValueMap(ArgMap):
     "Value Map Extention for Candlestick and Rounded Candlestick Series"
     wickColor: Optional[str] = None
     borderColor: Optional[str] = None
 
 
-class AreaValueMap(ValueMap):
+class AreaValueMap(ArgMap):
     "Value Map Extention for an Area Series"
     lineColor: Optional[str] = None  # TODO: Remove once Line and Area are unified
     topColor: Optional[str] = None
     bottomColor: Optional[str] = None
 
 
-class BaselineValueMap(ValueMap):
+class BaselineValueMap(ArgMap):
     "Value Map Extention for a Baseline Series"
     topLineColor: Optional[str] = None
     topFillColor1: Optional[str] = None
@@ -844,7 +848,6 @@ class SeriesType(IntEnum):
     In actuality this matches the Series_Type enum in util.ts
     """
 
-    Custom = -1
     WhitespaceData = 0
 
     SingleValueData = auto()
@@ -902,15 +905,10 @@ class SeriesType(IntEnum):
     def data_type(df: pd.DataFrame) -> AnyBasicSeriesType:
         "Checks the column names of a DataFrame and return the data type"
         column_names = set(df.columns)
-        if set(["close", "value"]).issubset(column_names):
-            return SeriesType.Custom  # Both OHLC & Single Value?
-        elif "close" in column_names:
+        if "close" in column_names:
             return SeriesType.OHLC_Data
         elif "value" in column_names:
             return SeriesType.SingleValueData
-        elif len(column_names) > 1:
-            # No value or close, but more than 'time' Column exists in the DF.
-            return SeriesType.Custom
         else:  # Only a time Column Exists
             return SeriesType.WhitespaceData
 
@@ -948,8 +946,7 @@ class SeriesType(IntEnum):
 AnyBasicSeriesType = Literal[
     SeriesType.WhitespaceData,
     SeriesType.SingleValueData,
-    SeriesType.OHLC_Data,
-    SeriesType.Custom,
+    SeriesType.OHLC_Data
 ]
 
 

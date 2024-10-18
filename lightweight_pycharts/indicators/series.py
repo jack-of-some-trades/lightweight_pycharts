@@ -5,35 +5,35 @@ from dataclasses import dataclass
 from typing import (
     Optional,
     Any,
-    Callable,
+    get_args,
 )
 
 import pandas as pd
 from numpy import nan
 
 from lightweight_pycharts.charting_frame import ChartingFrame
-from lightweight_pycharts.orm.options import PriceScaleMargins, PriceScaleOptions
 from lightweight_pycharts.orm.types import Color, PriceFormat
 
-from lightweight_pycharts import window as win
 from lightweight_pycharts import series_common as sc
 from lightweight_pycharts.indicator import (
     Indicator,
     IndicatorOptions,
     output_property,
     default_output_property,
+    param,
 )
 from lightweight_pycharts.orm import Symbol, TF
 from lightweight_pycharts.orm.series import (
+    AnyBasicSeriesType,
     HistogramData,
     HistogramStyleOptions,
     Series_DF,
+    SeriesOptionsCommon,
     SeriesType,
     AnyBasicData,
-    ValueMap,
+    ArgMap,
     Whitespace_DF,
     SingleValueData,
-    update_dataframe,
 )
 
 logger = getLogger("lightweight-pycharts")
@@ -65,12 +65,37 @@ class BarState:
     is_single_value: bool = False
 
 
+G1 = "Display Series"
+G2 = "Volume Series"
+I1 = "a"
+
+
 # pylint: disable=arguments-differ
 @dataclass
-class SeriesIndicatorOptions:
+class SeriesIndicatorOptions(IndicatorOptions):
     "Indicator Options for a Series"
-    visible: bool = True
-    series_type: SeriesType = SeriesType.Candlestick
+    series_type: SeriesType = param(
+        SeriesType.Rounded_Candle,
+        "Series Type",
+        G1,
+        options=[t for t in SeriesType if t not in get_args(AnyBasicSeriesType)],
+    )
+
+    up_color: Color = param(Color.from_hex("#26a69a"), "Color - Up ", G1, I1)
+    down_color: Color = param(Color.from_hex("#ef5350"), "Down ", G1, I1)
+
+    vol_price_axis: str = param("vol", "Price Axis", G2, autosend=False)
+    vol_scale_invert: bool = param(False, "Invert", G2, I1)
+    vol_scale_margin: int = param(75, "Scale Margin", G2, I1, min=0, max=100)
+    vol_opacity: int = param(
+        50,
+        "Opacity",
+        G2,
+        min=0,
+        max=100,
+        step=5,
+        slider=True,
+    )
 
 
 class Series(Indicator):
@@ -82,30 +107,101 @@ class Series(Indicator):
     """
 
     __special_id__ = "XyzZy"
+    __options__ = SeriesIndicatorOptions
 
     def __init__(
         self,
         parent: ChartingFrame,
-        options: SeriesIndicatorOptions = SeriesIndicatorOptions(),
+        opts: Optional[SeriesIndicatorOptions] = None,
         *,
         js_id: Optional[str] = None,
+        display_name: str = "",
     ) -> None:
-        super().__init__(parent, js_id=js_id, display_name="Main-Series")
+        if js_id == self.__special_id__:
+            super().__init__(parent, js_id=js_id, display_name="Main-Series")
+        else:
+            super().__init__(parent, js_id=js_id, display_name=display_name)
 
         # Dunder to allow specific permissions to the main source of a data for a Frame.
-        # Because reasons, the user can never accidentally set the _js_id to be __special_id__.
+        # Because _ids can't be duplicated and this _id is reserved on frame creation,
+        # the user can never accidentally set the _js_id to be __special_id__.
         self.__frame_primary_src__ = (
             self._js_id == self.parent_frame.indicators.prefix + Series.__special_id__
         )
 
-        self.opts = options
+        if opts is None:
+            opts = SeriesIndicatorOptions()
+
+        if self.__frame_primary_src__:
+            self.parent_frame.__set_displayed_series_type__(opts.series_type)
+
+        self.opts = opts
         self.socket_open = False
         self.symbol = Symbol("LWPC")
         self._bar_state: Optional[BarState] = None
+
+        # Cached colors w/ the appropriate opacity
+        self.vol_up_color = Color.from_color(opts.up_color, a=opts.vol_opacity / 100)
+        self.vol_down_color = Color.from_color(
+            opts.down_color, a=opts.vol_opacity / 100
+        )
+
         self.main_data: Optional[Series_DF] = None
         self.whitespace_data: Optional[Whitespace_DF] = None
 
-        self.main_series = sc.SeriesCommon(self, self.opts.series_type)
+        self.display_series = sc.SeriesCommon(
+            self, opts.series_type, name="Display-Series"
+        )
+        self.vol_series = sc.SeriesCommon(
+            self,
+            SeriesType.Histogram,
+            name="Vol-Series",
+            arg_map=ArgMap(value="volume", color="vol_color"),
+        )
+        self.update_options(opts)
+        self.init_menu(opts)
+
+    def update_options(self, opts: SeriesIndicatorOptions):
+        if opts.series_type != self.opts.series_type:
+            self.change_series_type(opts.series_type)
+
+        if (
+            opts.up_color != self.opts.up_color
+            or opts.down_color != self.opts.down_color
+            or opts.vol_opacity != self.opts.vol_opacity
+        ):
+            self.vol_up_color = Color.from_color(
+                opts.up_color, a=opts.vol_opacity / 100
+            )
+            self.vol_down_color = Color.from_color(
+                opts.down_color, a=opts.vol_opacity / 100
+            )
+            self._set_vol_series()
+
+        self.vol_series.apply_options(
+            SeriesOptionsCommon(
+                priceScaleId=opts.vol_price_axis, priceFormat=PriceFormat("volume")
+            )
+        )
+        if opts.vol_scale_invert:
+            self.vol_series.apply_scale_options(
+                {
+                    "scaleMargins": {"top": 0, "bottom": opts.vol_scale_margin / 100},
+                    "invertScale": True,
+                }
+            )
+
+        else:
+            self.vol_series.apply_scale_options(
+                {
+                    "scaleMargins": {"top": opts.vol_scale_margin / 100, "bottom": 0},
+                    "invertScale": False,
+                }
+            )
+
+        self.opts = opts
+
+    # region ------------------ Sub-Routines ------------------
 
     def _init_bar_state(self):
         if self.main_data is None:
@@ -133,7 +229,7 @@ class Series(Indicator):
             is_ohlc="close" in col_names,
         )
 
-    def _update_bar_state(self):
+    def _update_bar_state(self, current_timestamp: pd.Timestamp, is_new: bool):
         if self.main_data is None or self._bar_state is None:
             return
 
@@ -142,7 +238,7 @@ class Series(Indicator):
 
         self._bar_state.index = len(self.main_data.df) - 1
         self._bar_state.time = self.main_data.curr_bar_open_time
-        # self._bar_state.timestamp ## Set in Update Data
+        self._bar_state.timestamp = current_timestamp
         self._bar_state.time_close = self.main_data.curr_bar_close_time
         self._bar_state.time_length = self.main_data.timedelta
         self._bar_state.open = df.iloc[-1]["open"] if "open" in col_names else nan
@@ -153,9 +249,40 @@ class Series(Indicator):
         self._bar_state.volume = df.iloc[-1]["volume"] if "volume" in col_names else nan
         self._bar_state.ticks = df.iloc[-1]["ticks"] if "ticks" in col_names else nan
         # self._bar_state.is_ext=self.main_data.ext, TODO: Implement Time check
-        # self._bar_state.is_new ## Set in Update Data
+        self._bar_state.is_new = is_new
         # self._bar_state.is_single_value ## Constant
         # self._bar_state.is_ohlc ## Constant
+
+    def _set_vol_series(self):
+        if self.main_data is not None and "volume" in self.main_data.columns:
+            if set(["open", "close"]).issubset(self.main_data.columns):
+                # Generate a Color Series for the Volume Histogram if we can
+                vol_color = self.main_data.df["close"] >= self.main_data.df["open"]
+                self.main_data.df["vol_color"] = vol_color.replace(
+                    {True: self.vol_up_color, False: self.vol_down_color}
+                )
+            elif "vol_color" in self.main_data.columns:
+                self.main_data.df.drop("vol_color", inplace=True)
+
+            # Color Doesn't Need to exist to update the Series
+            self.vol_series.set_data(self.main_data)
+
+    def _update_vol_series(self):
+        if self._bar_state is None:
+            return
+
+        if self._bar_state.close is nan or self._bar_state.open is nan:
+            color = None
+        elif self._bar_state.close > self._bar_state.open:
+            color = self.vol_up_color
+        else:
+            color = self.vol_down_color
+
+        self.vol_series.update_data(
+            HistogramData(self._bar_state.time, self._bar_state.volume, color=color)
+        )
+
+    # endregion
 
     def delete(self):
         super().delete()
@@ -179,12 +306,12 @@ class Series(Indicator):
         if self.__frame_primary_src__:
             self.parent_frame.__set_displayed_symbol__(self.symbol)
 
-        # Initialize Data
+        # ---------------- Initialize Series DataFrame ----------------
         if not isinstance(data, pd.DataFrame):
             data = pd.DataFrame(data)
         self.main_data = Series_DF(data, self.symbol.exchange)
 
-        # Clear and Return on bad data.
+        # ---------------- Clear & Return on Bad Data ----------------
         if self.main_data.timeframe == TF(1, "E"):
             self.clear_data()
             return
@@ -192,10 +319,12 @@ class Series(Indicator):
             self.clear_data(timeframe=self.main_data.timeframe)
             return
 
+        # ---------------- Update Displayed Series Objects with Data ----------------
         self._init_bar_state()
-        self.main_series.set_data(self.main_data)
+        self.display_series.set_data(self.main_data)
+        self._set_vol_series()
 
-        # Only make Whitespace Series if this is the primary dataset
+        # ---------------- Set the frame's Whitespace Series if needed ----------------
         if self.__frame_primary_src__:
             self.whitespace_data = Whitespace_DF(self.main_data)
             self.parent_frame.__set_whitespace__(
@@ -207,7 +336,7 @@ class Series(Indicator):
             # Only do this once everything else has completed and not Error'd.
             self.parent_frame.__set_displayed_timeframe__(self.main_data.timeframe)
 
-        # Manually set Watcher 'Set' State & Notify Observers
+        # ---------------- Inform all Indicators that New Data is Available ----------------
         self._watcher.set = True
         self._notify_observers_set()
 
@@ -229,27 +358,26 @@ class Series(Indicator):
         ):
             return
 
+        # ------------------ Determine if Data Should be Aggregated or Appended ------------------
+        new_bar = False
         if data_update.time < self.main_data.next_bar_time:  # type: ignore
-            # Update the last bar
+            # Update the last bar (Aggregate)
             display_data = self.main_data.update_from_tick(
                 data_update, accumulate=accumulate
             )
-            if self._bar_state is not None:
-                self._bar_state.is_new = False
         else:
-            # Create new Bar
+            # Create new Bar (Append)
             if data_update.time != self.main_data.next_bar_time:
                 # Update given is a new bar, but not the expected time
-                # Ensure it fits the data's time interval
+                # Ensure it fits the data's time interval e.g. 12:00:0071 -> 12:00:00
                 time_delta = data_update.time - self.main_data.next_bar_time  # type: ignore
                 data_update.time -= time_delta % self.main_data.timedelta  # type: ignore
 
             curr_bar_time = self.main_data.curr_bar_open_time
             display_data = self.main_data.update(data_update)
-            if self._bar_state is not None:
-                self._bar_state.is_new = True
+            new_bar = True
 
-            # Manage Whitespace Series
+            # --------------------- Manage Whitespace Series ---------------------
             if self.__frame_primary_src__ and self.whitespace_data is not None:
                 if data_update.time != (
                     expected_time := self.whitespace_data.next_timestamp(curr_bar_time)
@@ -273,12 +401,12 @@ class Series(Indicator):
                         SingleValueData(self.main_data.curr_bar_open_time, 0),
                     )
 
-        self._update_bar_state()
-        if self._bar_state is not None:
-            self._bar_state.timestamp = pd.Timestamp(data_update.time)
-        self.main_series.update_data(display_data)
+        # ---------------------- Update Displayed Series and BarState Object ----------------------
+        self._update_bar_state(pd.Timestamp(data_update.time), new_bar)
+        self.display_series.update_data(display_data)
+        self._update_vol_series()
 
-        # All Indicators need to update given new data, notify them to reset the updated state
+        # --------------------- Propogate the Data Update to other Indicators ---------------------
         self._watcher.reset_updated_state()
         self._watcher.updated = True
         self._notify_observers_update()
@@ -314,7 +442,7 @@ class Series(Indicator):
         # Notify Observers
         self._notify_observers_clear()
 
-    def change_series_type(self, series_type: SeriesType):
+    def change_series_type(self, series_type: SeriesType, update_ui_menu=False):
         "Change the Series Type of the main dataset"
         # Check Input
         if series_type == SeriesType.WhitespaceData:
@@ -328,11 +456,16 @@ class Series(Indicator):
 
         # Set. No Data renaming needed, that is handeled when converting to json
         self.opts.series_type = series_type
-        self.main_series.change_series_type(series_type, self.main_data)
+        self.display_series.change_series_type(series_type, self.main_data)
 
         # Update window display if necessary
         if self.__frame_primary_src__:
             self.parent_frame.__set_displayed_series_type__(self.opts.series_type)
+
+        # This function can be called by the window controls. If it is, update the menu since
+        # that isn't where this change originated from and thus is out of date
+        if update_ui_menu:
+            self.update_menu(self.opts)
 
     def bar_time(self, index: int) -> pd.Timestamp:
         """
@@ -378,7 +511,7 @@ class Series(Indicator):
             else:
                 return self.main_data.df.index[index]
 
-    # region ---------------- Output Properties ----------------
+    # region ------------------------ Output Properties ------------------------
 
     @output_property
     def last_bar_index(self) -> int:
@@ -443,68 +576,3 @@ class Series(Indicator):
 
 
 # endregion
-
-
-@dataclass
-class VolumeIndicatorOptions:
-    "Options for a volume series"
-    up_color: Color = Color.from_hex("#26a69a80")
-    down_color: Color = Color.from_hex("#ef535080")
-
-    series_opts = HistogramStyleOptions(
-        priceScaleId="vol", priceFormat=PriceFormat("volume")
-    )
-    price_scale_opts = PriceScaleOptions(scaleMargins=PriceScaleMargins(0.7, 0))
-
-
-class Volume(Indicator):
-    "Histogram Series that plots the Volume of a given Series(Indicator)"
-
-    def __init__(
-        self,
-        parent: win.ChartingFrame | Series,
-        src: Optional[Callable] = None,
-        options=VolumeIndicatorOptions(),
-    ) -> None:
-        super().__init__(parent)
-
-        self.opts = options
-        self._data = pd.DataFrame()
-        self.series_map = ValueMap("volume", color="vol_color")
-        self.series = sc.SeriesCommon(
-            self, SeriesType.Histogram, self.opts.series_opts, v_map=self.series_map
-        )
-        self.series.apply_scale_options(self.opts.price_scale_opts)
-
-        if src is None:
-            src = self.parent_frame.main_series.dataframe
-
-        self.link_args({"data": src})
-
-    def set_data(self, data: pd.DataFrame, *_, **__):
-        if "volume" not in data.columns:
-            return
-
-        self._data = pd.DataFrame(data["volume"])
-
-        if set(["open", "close"]).issubset(data.columns):
-            color = data["close"] > data["open"]
-            self._data["vol_color"] = color.replace(
-                {True: self.opts.up_color, False: self.opts.down_color}
-            )
-        self.series.set_data(self._data)
-
-    def update_data(self, bar_state: BarState, *_, **__):
-        if bar_state.volume is nan:
-            return
-
-        if bar_state.close is nan or bar_state.open is nan:
-            color = None
-        elif bar_state.close > bar_state.open:
-            color = self.opts.up_color
-        else:
-            color = self.opts.down_color
-
-        update_data = HistogramData(bar_state.time, bar_state.volume, color=color)
-        self.series.update_data(update_data)
-        self._data = update_dataframe(self._data, update_data, self.series_map)

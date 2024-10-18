@@ -66,7 +66,7 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 			};
 		});
 
-		// Set the Priceline Color by setting Options.Color 
+		// Set the Priceline Color by setting Options.Color. This is handled in LWC's series-bar-colorer.ts -> barStyleFnMap
 		// The var isn't used for candle color ironic enough, but this is what LWC internally grabs for the priceLine Color
 		if (this._options.priceLineColor !== ''){
 			this._options.color = this._options.priceLineColor

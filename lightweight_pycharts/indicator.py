@@ -1,17 +1,18 @@
 """ Classes and functions that handle implementation of chart indicators """
 
+from dataclasses import field
 from logging import getLogger
 from abc import abstractmethod
 from inspect import signature, _empty, currentframe
 from typing import (
     ClassVar,
-    Dict,
     Optional,
     Any,
     Callable,
-    Protocol,
+    Self,
     TypeAlias,
 )
+import weakref
 
 import pandas as pd
 
@@ -46,6 +47,7 @@ def default_output_property[T: Callable](func: T) -> T:
     return func
 
 
+# pylint: disable=redefined-builtin
 def param[
     T
 ](
@@ -56,9 +58,10 @@ def param[
     tooltip: str = "",
     *,
     options: Optional[list[T]] = None,
-    min_val: Optional[T] = None,
-    max_val: Optional[T] = None,
-    step: Optional[T] = None,
+    min: Optional[float] = None,
+    max: Optional[float] = None,
+    step: Optional[float] = None,
+    slider: Optional[bool] = None,
     autosend: bool = True,
 ):
     """
@@ -87,48 +90,89 @@ def param[
             "inline": inline,
             "tooltip": tooltip if tooltip != "" else None,
             "options": options,
-            "min": min_val,
-            "max": max_val,
+            "min": min,
+            "max": max,
             "step": step,
+            "slider": slider,
             "autosend": autosend,
         }
 
     except AttributeError as e:
         raise AttributeError(
-            "Options input function invoked in improper context."
+            """
+            Options input function invoked in improper context.
+            e.g. A jupyter notebook where namespace frames are invalid.
+            """
         ) from e
 
-    return default
+    # Really?? You throw an exception when not using default_factory. That's excessive.
+    # pylint: disable=invalid-field-call
+    return field(default_factory=lambda: default)
+    # pylint: enable=invalid-field-call redefined-builtin
 
 
 # endregion
 
+# pylint: disable=protected-access
 # region --------------------------- Indicator Options Classes --------------------------- #
 
 
-class Options(metaclass=OptionsMeta):
-    "Inheritable OptionsMeta Class"
+class IndicatorOptions(metaclass=OptionsMeta):
+    "Inheritable Indicator Options Class"
+    # Dunders populated by the OptionsMeta Class
     __arg_types__: ClassVar[dict] = {}
     __src_types__: ClassVar[dict] = {}
     __menu_struct__: ClassVar[dict] = {}
 
+    def to_dict(self) -> dict:
+        "Parses the Dataclass Object into a formatted, JSON dumpable, dict"
+        _opts = {}
+        for k, arg_type in self.__arg_types__.items():
+            v = getattr(self, k, None)
+            if arg_type == "source":
+                # Replace all source args with Tuple[str] representations of the functions
+                # boundCls.Func_name() -> out_args === "[boundCls.id]:[Func_name]"
+                _opts[k] = getattr(getattr(v, "__self__", None), "_js_id", "None")
+                _opts[k] += ":" + getattr(v, "__name__", "None")
+            elif arg_type == "enum":
+                # Normally we dump the value, in this case we dump the name since
+                # it's only displayed in JS, not used.
+                _opts[k] = v.name if v is not None else None
+            else:
+                # Remaining Objs are picklable and can be json dumped
+                _opts[k] = v
+        return _opts
 
-class IndicatorOptions(Protocol):
-    "Protocol Class to type check for an Indicator Options Dataclass Instance"
-    __arg_types__: ClassVar[dict]
-    __src_types__: ClassVar[dict]
-    __menu_struct__: ClassVar[dict]
-    __dataclass_fields__: ClassVar[Dict[str, Any]]
+    @classmethod
+    def from_dict(cls, args: dict, parent_frame: win.ChartingFrame) -> Self:
+        """
+        Creates and returns an instance of the Dataclass from a formatted dict.
+        ** The values of the given arguments dict are mutated by this function **
+        """
+        for k, v in args.items():
+            arg_type = cls.__arg_types__[k]
 
+            if arg_type == "source":
+                ind_id, func_name = v.split(":")
+                try:
+                    ind = parent_frame.indicators[ind_id]
+                    args[k] = getattr(ind, func_name)
+                except (IndexError, AttributeError):
+                    args[k] = lambda: None
+                    logger.critical("Source link %s is invalid.", v)
+                    # Critical Error since this will most likely cause an
+                    # indicator's Set/Update_Data to throw an exception
 
-class IndicatorOptionsCls(Protocol):
-    "Protocol Class to type check for an Indicator Options Dataclass"
-    __arg_types__: dict
-    __src_types__: dict
-    __menu_struct__: dict
-    __dataclass_fields__: Dict[str, Any]
+            elif arg_type == "timestamp":
+                args[k] = pd.Timestamp(v)
 
-    def __call__(self, *_, **__) -> IndicatorOptions: ...
+            elif arg_type == "enum":
+                args[k] = cls.__src_types__[k]._member_map_[v]
+
+            elif arg_type == "color":
+                args[k] = Color.from_hex(v)
+
+        return cls(**args)
 
 
 # endregion
@@ -136,7 +180,6 @@ class IndicatorOptionsCls(Protocol):
 # region --------------------------- Indicator & Watcher Classes --------------------------- #
 
 
-# pylint: disable=protected-access
 class Watcher:
     """
     An Indicator instance object that links one indicator to another, monitoring for data updates.
@@ -147,12 +190,7 @@ class Watcher:
     """
 
     def __init__(self, parent: "Indicator"):
-        self._set_data = parent.set_data
-        self._clear_data = parent.clear_data
-        self._update_data = parent.update_data
-        self._notify_observers_set = parent._notify_observers_set
-        self._notify_observers_clear = parent._notify_observers_clear
-        self._notify_observers_update = parent._notify_observers_update
+        self._parent = weakref.ref(parent)
 
         # set & updated ensure all indicators only set/update once they are ready to. Set, being
         # more of a latch, is likely bug free. However, doing this for updated **may** lead to an
@@ -175,31 +213,129 @@ class Watcher:
 
     def notify_set(self):
         "Notify the Watcher that an update occured in the given Indicator"
+        if (parent := self._parent()) is None:
+            return
+
         if all([ind._watcher.set for ind in self.set_notifiers]):
             # All indicator srcs Ready, Preform historical set_data calc.
             # Will Fire on Notifier = None, intentional so Watcher can self-fire on init
-            self._set_data(
+            parent.set_data(
                 **dict([(name, func()) for name, func in self.set_args.items()])
             )
             self.set = True
-            self._notify_observers_set()
+            parent._notify_observers_set()
 
     def notify_update(self):
         "Notify the Watcher that an update occured in the given Indicator"
+        if (parent := self._parent()) is None:
+            return
+
         if all([ind._watcher.updated for ind in self.update_notifiers]):
             # Ready to Update, Fire Update then set updated Readiness State
-            self._update_data(
+            parent.update_data(
                 **dict([(name, func()) for name, func in self.update_args.items()])
             )
             self.updated = True
-            self._notify_observers_update()
+            parent._notify_observers_update()
 
     def notify_clear(self):
         "Notify the Watcher that the source it calculated from is no longer valid and should clear"
-        self._clear_data()
+        if (parent := self._parent()) is None:
+            return
+
         self.set = False
         self.updated = False
-        self._notify_observers_clear()
+        parent.clear_data()
+        parent._notify_observers_clear()
+
+    # pylint: disable=unused-variable
+    def link_args(self, args: dict[str, Callable[[], Any]], parent: "Indicator"):
+        "Link this Watcher to all of the indicators it needs to observe"
+        if len(self.observables) > 0:
+            self._unlink_all_args()  # Clear all present args before setting
+
+        parent_cls = parent.__class__
+        main_series = parent.parent_frame.main_series
+
+        # Auto-Link default args if the Indicator requests it.
+        if "bar_state" in parent_cls.__input_args__ and "bar_state" not in args:
+            args["bar_state"] = main_series.bar_state
+        if "time" in parent_cls.__input_args__ and "time" not in args:
+            args["time"] = main_series.last_bar_time
+        if "index" in parent_cls.__input_args__ and "index" not in args:
+            args["index"] = main_series.last_bar_index
+
+        # Check all required argument links are present
+        if not set(parent_cls.__input_args__.keys()).issubset(args.keys()):
+            missing_args = set(parent_cls.__input_args__.keys()).difference(args.keys())
+            raise ValueError(f"{parent.cls_name} Missing Arg Links for: {missing_args}")
+
+        # Type check the inputs, Prepare Watcher, and look for circular dependencies
+        for name, (arg_type, default_arg) in parent_cls.__input_args__.items():
+            # Not likely to actually implement a default_arg but it's right there
+            rtn_type = signature(args[name]).return_annotation
+            rtn_type = object if rtn_type is _empty else rtn_type
+
+            # --------- Type Check the Function Given ---------
+            if not issubclass(arg_type, rtn_type):
+                raise TypeError(
+                    f"{parent.cls_name} Given {rtn_type} for parameter {name}. Expected {arg_type}"
+                )
+
+            # --------- Give this Watcher Object to the indicator it is going to observe ---------
+
+            bound_cls_inst = args[
+                name
+            ].__self__  # Get the Indicator Instance bound to the desired output
+
+            if bound_cls_inst._watcher in parent._observers:
+                # Check that there isn't a Circular Dependence between Indicators
+                logger.critical(  # ATM this only protects against direct circular dependencies
+                    "Circular Indicator dependency between %s & %s",
+                    bound_cls_inst.cls_name,
+                    parent.cls_name,
+                )
+                # Provide a Fake Source that yields an empty instance of the type expected. While
+                # this just delays a crash, this does allow the user to fix the issue before then.
+                args[name] = arg_type  # === lambda: arg_type()
+                args[name].__self__ = None
+
+            elif self not in bound_cls_inst._observers:
+                # If no circular dependace, place this watcher into that indicator's _observers list
+                # signifying this watcher is observing that indicator instance for updates
+                bound_cls_inst._observers.append(self)
+
+            # --------- Create Dicts of {*arg_name*: function to call for *arg_name* data} ---------
+
+            if name in parent_cls.__set_args__:
+                self.set_args[name] = args[name]
+                self.set_notifiers.append(bound_cls_inst)
+            if name in parent_cls.__update_args__:
+                self.update_args[name] = args[name]
+                self.update_notifiers.append(bound_cls_inst)
+
+            # self.observables === Union(self.set_args & self.update_args)
+            self.observables[name] = args[name]
+
+    # pylint: enable=unused-variable
+
+    def _unlink_all_args(self):
+        "Unsubscribe from all of the linked input args"
+        # Clear this indicator and all dependant indicators
+        self.notify_clear()
+
+        # Remove self from all of the '_observers' lists that it's appended to
+        bound_arg_funcs = self.observables.values()
+        for bound_func_cls in set([func.__self__ for func in bound_arg_funcs]):
+            if bound_func_cls is not None:
+                bound_func_cls._observers.remove(self)
+
+        # Clear Watcher after unbinding
+        self.set_args = {}
+        self.set_notifiers = []
+        self.update_args = {}
+        self.update_notifiers = []
+        self.observables = {}
 
 
 class Indicator(metaclass=IndicatorMeta):
@@ -231,7 +367,7 @@ class Indicator(metaclass=IndicatorMeta):
     # isn't the one actually creating the object.
 
     # Optional Definition of an Options Dataclasss; set by User
-    __options__: Optional[IndicatorOptionsCls] = None
+    __options__: Optional[type[IndicatorOptions]] = None
     # Dunder Cls Params specific to each Sub-Class; set by MetaClass
     __set_args__: dict[str, tuple[type, Any]]
     __input_args__: dict[str, tuple[type, Any]]
@@ -347,74 +483,33 @@ class Indicator(metaclass=IndicatorMeta):
         "Manually force a full recalculation of this indicator and all dependent indicators"
         self._watcher.notify_set()
 
-    def __parse_options_obj__(self, obj: IndicatorOptions) -> dict:
-        "Parse an IndicatorOptions instance into a picklable dict"
-        if self.__options__ is None:
-            logger.error("Cannot parse obj, %s needs an options Class", self.cls_name)
-            return {}
-
-        _opts = {}
-        for k, arg_type in self.__options__.__arg_types__.items():
-            v = getattr(obj, k, None)
-            if arg_type == "source":
-                # Replace all source args with Tuple[str] representations of the functions
-                # boundCls.Func_name() -> out_args === "[boundCls.id]:[Func_name]"
-                _opts[k] = getattr(getattr(v, "__self__", None), "_js_id", "None")
-                _opts[k] += ":" + getattr(v, "__name__", "None")
-            elif arg_type == "enum":
-                # Normally we dump the value, in this case we dump the name since
-                # it's only displayed in JS, not used.
-                _opts[k] = v.name if v is not None else None
-            else:
-                # Remaining Objs are picklable and can be json dumped
-                _opts[k] = v
-
-        return _opts
-
-    def __parse_options_dict__(self, args: dict) -> Optional[IndicatorOptions]:
-        "Parse a dictionary into an instance of self.__options__"
+    def __update_options__(self, args: dict) -> Optional[IndicatorOptions]:
+        "Parse a dictionary into an instance of self.__options__ and call self.update_options"
         if self.__options__ is None:
             logger.error("Cannot load obj, %s needs an options Class", self.cls_name)
             return
 
-        # Change all of the encoded dictonary values into their python objects
-        for k, v in args.items():
-            arg_type = self.__options__.__arg_types__[k]
-            if arg_type == "source":
-                ind_id, func_name = v.split(":")
-                try:
-                    ind = self.parent_frame.indicators[ind_id]
-                    args[k] = getattr(ind, func_name)
-                except (IndexError, AttributeError):
-                    logger.critical("Source link %s is invalid.", v)
-                    args[k] = lambda: None
-                    # Critical Error since this will most likely cause an
-                    # indicator's Set/Update_Data to throw an exception
-            elif arg_type == "timestamp":
-                args[k] = pd.Timestamp(v)
-            elif arg_type == "enum":
-                args[k] = self.__options__.__src_types__[k]._member_map_[v]
-            elif arg_type == "color":
-                args[k] = Color.from_hex(v)
-
-        # pylint: disable=not-callable
-        recalculate = self.update_options(self.__options__(**args))
-        # ...but I defined it as having a __call__?
-        # pylint: enable=not-callable
+        recalculate = self.update_options(
+            self.__options__.from_dict(args, self.parent_frame)
+        )
 
         if recalculate:
             self.recalculate()
 
     def delete(self):
         "Remove the indicator and all of it's instance objects"
-        self._unlink_all_args()
+        self._watcher._unlink_all_args()
+
         for series in self._series.copy().values():
             series.delete()
         for primative in self._primitives.copy().values():
             primative.delete()
+
         self.clear_data()  # Clear data after deleting sub-objects to limit redundant actions
         self.parent_frame.indicators.pop(self._js_id)
         self._fwd_queue.put((JS_CMD.DELETE_INDICATOR, *self._ids))
+
+    # region ------------------- Abstract Methods -------------------
 
     @abstractmethod
     def set_data(self, *_, **__):
@@ -476,87 +571,15 @@ class Indicator(metaclass=IndicatorMeta):
         """
         return False
 
+    # endregion
+
     def link_args(self, args: dict[str, Callable[[], Any]]):
         """
         Subscribe this indicator's inputs to the provided indicator output arguments.
 
         :param: args: a dictionary providing links for all Set and Update args.
         """
-        if len(self._watcher.observables) > 0:
-            self._unlink_all_args()  # Clear all present args before setting
-
-        cls = self.__class__
-
-        # Auto-Link default args if the Indicator requests it.
-        if "bar_state" in cls.__input_args__ and "bar_state" not in args:
-            args["bar_state"] = self.parent_frame.main_series.bar_state
-        if "time" in cls.__input_args__ and "time" not in args:
-            args["time"] = self.parent_frame.main_series.last_bar_time
-        if "index" in cls.__input_args__ and "index" not in args:
-            args["index"] = self.parent_frame.main_series.last_bar_index
-
-        # Check all required argument links are present
-        if not set(cls.__input_args__.keys()).issubset(args.keys()):
-            missing_args = set(cls.__input_args__.keys()).difference(args.keys())
-            raise ValueError(f"{self.cls_name} Missing Arg Links for: {missing_args}")
-
-        # In the loops below the '_' param is the default_arg of the function.
-        # It's not used because quite frankly i'm not sure how or why you'd implement that...
-
-        # Type check the inputs, Prepare Watcher, and look for circular dependencies
-        for name, (arg_type, _) in cls.__input_args__.items():
-            rtn_type = signature(args[name]).return_annotation
-            rtn_type = object if rtn_type is _empty else rtn_type
-
-            if not issubclass(arg_type, rtn_type):
-                raise TypeError(
-                    f"{self.cls_name} Given {rtn_type} for parameter {name}. Expected {arg_type}"
-                )
-
-            # Give this Indicator's watcher to the function's bound indicator
-            bound_cls_inst = args[name].__self__
-            if bound_cls_inst._watcher in self._observers:
-                logger.critical(  # ATM this only protects against direct circular dependencies
-                    "Circular Indicator dependency between %s & %s",
-                    bound_cls_inst.cls_name,
-                    self.cls_name,
-                )
-                # Provide a Fake Source that yields an empty instance of the type expected. While
-                # this delays a crash, this does allow the user to fix the issue before then.
-                args[name] = arg_type  # === lambda: arg_type()
-                args[name].__self__ = None
-
-            elif self._watcher not in bound_cls_inst._observers:
-                # Append a weakref of this indicator's observer
-                bound_cls_inst._observers.append(self._watcher)
-
-            # Observables is the Union of set_args & update_args. Useful to have it's own reference
-            self._watcher.observables[name] = args[name]
-            # Create Dicts of Param_Name:Callable & Host_Indicator: Bool
-            if name in cls.__set_args__:
-                self._watcher.set_args[name] = args[name]
-                self._watcher.set_notifiers.append(bound_cls_inst)
-            if name in cls.__update_args__:
-                self._watcher.update_args[name] = args[name]
-                self._watcher.update_notifiers.append(bound_cls_inst)
-
-    def _unlink_all_args(self):
-        "Unsubscribe from all of the Indicator's linked input args."
-        # Clear this indicator and all dependant indicators
-        self._watcher.notify_clear()
-
-        # Remove self from all of the '_observers' lists that it's appended to
-        bound_arg_funcs = self._watcher.observables.values()
-        for bound_func_cls in set([func.__self__ for func in bound_arg_funcs]):
-            if bound_func_cls is not None:
-                bound_func_cls._observers.remove(self._watcher)
-
-        # Clear Watcher
-        self._watcher.set_args = {}
-        self._watcher.set_notifiers = []
-        self._watcher.update_args = {}
-        self._watcher.update_notifiers = []
-        self._watcher.observables = {}
+        self._watcher.link_args(args, self)
 
     def init_menu(self, opts: IndicatorOptions):
         "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"
@@ -569,7 +592,7 @@ class Indicator(metaclass=IndicatorMeta):
                 JS_CMD.SET_INDICATOR_MENU,
                 *self._ids,
                 self.__options__.__menu_struct__,
-                self.__parse_options_obj__(opts),
+                opts.to_dict(),
             )
         )
 
@@ -579,9 +602,7 @@ class Indicator(metaclass=IndicatorMeta):
             logger.error("Cannot set Menu, %s needs an options Class", self.cls_name)
             return
 
-        self._fwd_queue.put(
-            (JS_CMD.SET_INDICATOR_OPTIONS, *self._ids, self.__parse_options_obj__(opts))
-        )
+        self._fwd_queue.put((JS_CMD.SET_INDICATOR_OPTIONS, *self._ids, opts.to_dict()))
 
     def set_label(self, label: str):
         "Set the label text for this indicator in the pane's Legend. Raw HTML Accepted"
@@ -618,8 +639,8 @@ class Indicator(metaclass=IndicatorMeta):
 
     def delete_series(self, _type: type = sc.SeriesCommon):
         """
-        Deletes all Primitives owned by this indicator of the given type.
-        If no argument is given, all of the primitives will be deleted.
+        Deletes all Series owned by this indicator of the given type.
+        If no argument is given, all of the Series will be deleted.
         """
         for _series in self._series.copy().values():
             if isinstance(_series, _type):
@@ -642,6 +663,8 @@ class Indicator(metaclass=IndicatorMeta):
         the chart doesn't have visible gaps. If the Primitive is still supposed to be drawn at
         4:15PM, it will de-render until a valid timestamp is given.
         """
+        # TODO: Add a nearest_bar_time function to primitive-base to ensure primitives render
+        # negating the need for the above comment.
         return self.parent_frame.main_series.bar_time(index)
 
 

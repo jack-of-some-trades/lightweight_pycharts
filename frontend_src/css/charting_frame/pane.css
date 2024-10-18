@@ -119,6 +119,12 @@
     margin-bottom: 4px;
 }
 
+/* Reset rule to remove padding margin at the bottom */
+.scale_buttons_left .scale_icon_text:last-child,
+.scale_buttons_right .scale_icon_text:last-child {
+    margin-bottom: 0px;
+}
+
 
 .scale_buttons_left .scale_icon_text[active],
 .scale_buttons_right .scale_icon_text[active]  {

@@ -38,7 +38,7 @@ const default_series_select_opts: series_json = {
 export function SeriesSwitcher(){
     const id = 'series_selector'
     let el = document.createElement('div')
-    const [selectedSeries, setSelectedSeries] = createSignal<Series_Type>(Series_Type.CANDLESTICK)
+    const [selectedSeries, setSelectedSeries] = createSignal<Series_Type>()
     const [menuLocation, setMenuLocation] = createSignal<point>({x:0, y:0})
     const [SeriesOpts, setSeriesOpts] = createStore(default_series_select_opts)
 
@@ -81,9 +81,9 @@ export function SeriesSwitcher(){
     return (
         <div class='topbar_container' ref={el}>
             {/* Additional Icon to show selected TF when it's not in the favorites list*/}
-            <Show when={!SeriesOpts.favorites.includes(selectedSeries())}>
+            <Show when={selectedSeries() && !SeriesOpts.favorites.includes(selectedSeries() as Series_Type)}>
                 <Icon 
-                    icon={series_icon_map[selectedSeries()]}
+                    icon={series_icon_map[selectedSeries() as Series_Type]}
                     classList={{topbar_icon_btn:true}}
                     activated={true}
                 />

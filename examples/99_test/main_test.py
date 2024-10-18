@@ -124,7 +124,7 @@ async def main():
             df, symbol=Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
         )
 
-        indicators.Volume(main_frame)
+        # indicators.Volume(main_frame)
         # opts = lwc.indicators.SMA.__options__(period=20)
         sma20 = indicators.SMA(main_frame)
         indicators.SMA(sma20)

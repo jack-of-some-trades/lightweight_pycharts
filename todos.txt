@@ -59,7 +59,6 @@ Frontend-Backend (Typescript):
 
 
 Backend-Backend (Python):
-	- Series(Indicator) + Volume Refactor
 	- Series Common Additions (Markers, H-lines, Sub-class Typing extensions)
 
 	- Primitves : Re-assess the parent of a primitive and from which pool their IDs are generated against. 
@@ -122,5 +121,6 @@ Frontend-Backend (Typescript):
 
 Backend-Backend (Python):
 	~~ [10/10/24] - Separation of Frames and Charting frames
+	~~ [10/18/24] - Series(Indicator) + Volume Refactor
 
 Cross-Architecture:

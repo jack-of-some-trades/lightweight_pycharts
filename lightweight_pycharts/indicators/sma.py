@@ -6,8 +6,8 @@ import pandas as pd
 
 from lightweight_pycharts.indicator import (
     IndParent_T,
-    Options,
     Indicator,
+    IndicatorOptions,
     SeriesData,
     default_output_property,
     param,
@@ -26,13 +26,13 @@ class Method(Enum):
 
 
 @dataclass
-class SMAOptions(Options):
+class SMAOptions(IndicatorOptions):
     "Dataclass of Options for the SMA Indicator"
     src: Optional[SeriesData] = None
     method: Method = param(Method.SMA, "Calculation Method")
     period: int = param(9, "Period")
     color: ... = param(Color.from_rgb(200, 50, 100), "Line Color", inline="line_style")
-    size: ... = param(1, "Line Size", inline="line_style", min_val=0, max_val=5)
+    size: ... = param(1, "Line Size", inline="line_style", min=0, max=5)
 
 
 # pylint: disable=arguments-differ possibly-unused-variable

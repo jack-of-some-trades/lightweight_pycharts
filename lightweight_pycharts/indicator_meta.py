@@ -143,7 +143,7 @@ class OptionsMeta(type):
 
     def __new__(mcs, name, bases, namespace, /, **kwargs):
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
-        if name == "Options":
+        if name == "IndicatorOptions":
             return cls
 
         arg_params = namespace.get("__arg_params__")
@@ -194,6 +194,13 @@ class OptionsMeta(type):
         # check data linkages
 
         for i, arg_key in enumerate(args):
+            # if the Arg is an Object (like Color) then dataclasses requires a Field.
+            # Convert that Field back to the default arg we need before continuing.
+            if arg := getattr(namespace[arg_key], "default_factory", None):
+                namespace[arg_key] = arg()
+            elif arg := getattr(namespace[arg_key], "default", None):
+                namespace[arg_key] = arg
+
             arg_type, src_type = mcs._process_type(
                 namespace[arg_key], __annotations__[arg_key]
             )
@@ -287,6 +294,7 @@ class OptionsMeta(type):
             rtn_struct["min"] = arg_params["min"]
             rtn_struct["max"] = arg_params["max"]
             rtn_struct["step"] = arg_params["step"]
+            rtn_struct["slider"] = arg_params["slider"]
 
         elif arg_type == "enum":  # ------------------------------------------------
             # Remap all of the Enums to be their name

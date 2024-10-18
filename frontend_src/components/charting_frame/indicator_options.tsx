@@ -148,7 +148,7 @@ function onSubmit(c_id:string, f_id:string, ind:indicator, e:Event){
             Array.from(nodes as HTMLInputElement[], (node) => {
                 switch(node.getAttribute('type')){
                     case ("checkbox"): return [node.id, node.checked]
-                    case ("number"): return [node.id, parseFloat(node.value)]
+                    case ("number"): case("range"): return [node.id, parseFloat(node.value)]
                     default: return [node.id, node.value]
                 }
             })
@@ -224,6 +224,7 @@ interface input_params {
     min?: number
     max?: number
     step?: number
+    slider?: boolean
 }
 
 function Input(props: input_switch_props){
@@ -305,7 +306,7 @@ function TimeInput(props: input_props){
 
 function NumberInput(props: input_props){
     return (
-        <input id={props.key}  type="number"
+        <input id={props.key}  type={props.params.slider ? 'range' : 'number'}
             value={props.options[props.key]}
             max={props.params.max}
             min={props.params.min}
