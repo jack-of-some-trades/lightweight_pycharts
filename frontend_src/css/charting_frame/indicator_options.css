@@ -2,11 +2,17 @@
 
 .indicator_opts {min-width: 20em;}
 .indicator_opts * {
-    color: var(--text-color);
     font-family: var(--font);
     text-align: left;
     text-wrap: nowrap;
     user-select: none;
+}
+
+.indicator_opts div,
+.indicator_opts label,
+.indicator_opts input,
+.indicator_opts select {
+    color: var(--text-color);
 }
 
 

@@ -3,10 +3,12 @@
     position: relative;
 }
 
+/* Input Tag Type defined by this module which can be query selected against th e actual 'color' input type */
 input[type="color_picker"]{
     display:none;
 }
 
+/* #region ---- ---- Color Grids ---- ---- */
 .color_menu {
     position: absolute;
     z-index: 1;
@@ -46,7 +48,12 @@ input[type="color_picker"]{
     border: 2px solid var(--accent-color);
 }
 
-.color_menu input[type='color']{
+.color_menu .color_box svg[active]{
+    color: red;
+}
+
+
+.color_menu .color_set input[type='color']{
     width: 18px;
     height: 18px;
     position: absolute; 
@@ -62,17 +69,34 @@ input[type="color_picker"]{
     display:none;
 }
 
-.color_menu .user_opts .color_box:active{
-    border-color: var(--second-accent-color);
+/* #region ---- ---- Current Color Selector ---- ---- */
+
+
+.color_menu .current_color { padding: 10px }
+
+.color_menu .current_color input[type="color"] {
+    position: relative;
+    width: 30%;
+    height: 20px;
+    border: none;
+    outline: none;
+    background: none;
+}
+.color_menu .current_color input[type="text"] {
+    position: relative;
+    top: -7px;
+    width: 50%;
+
+    text-align: center;
+    text-transform: uppercase;
 }
 
-.color_menu .opacity_txt {
+.color_menu .current_color .opacity_txt {
     font-size: small;
-    margin: 10px 10px 0px;
+    text-align: center;
 }
 
-.color_menu input[type="range"] {
+.color_menu .current_color input[type="range"] {
     padding: 0;
-    width: 130px;
-    margin: 0px 15px 10px;
+    width: -webkit-fill-available;
 }

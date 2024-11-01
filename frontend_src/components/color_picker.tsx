@@ -2,12 +2,13 @@
  * The Color Picker is a globally Accessible and placeable Component that allows for easy
  * Selection of both predefined and user-defined colors. 
  */
-import { createContext, createEffect, createSignal, For, JSX, onCleanup, onMount, Show, splitProps, useContext } from "solid-js"
+import { Accessor, createContext, createEffect, createSignal, For, JSX, onCleanup, onMount, Show, splitProps, useContext } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"
 import "../css/color_picker.css"
 import { Icon, icons } from "./icons"
 
 const default_colors = [
+    '#FFFFFF','#CCCCCC','#999999','#666666','#333333','#000000',
     '#EBB0B0','#E9CEA1','#E5DF80','#ADEB97','#A3C3EA','#D8BDED',
     '#E15F5D','#E1B45F','#E2D947','#4BE940','#639AE1','#D7A0E8',
     '#E42C2A','#E49D30','#E7D827','#3CFF0A','#3275E4','#B06CE3',
@@ -58,13 +59,16 @@ export function ColorContext(props:JSX.HTMLAttributes<HTMLElement>){
  *      querySelecting the <input/> Tag.
  */
 interface color_input_props extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'ref'|'onInput'|'oninput'> {
-    input_id:string, 
+    input_id:string,
     init_color:string, //rbga() or #hex string
     onInput?:(color:string)=>void,
 }
 export function ColorInput(props:color_input_props){
     let divRef = document.createElement('div')
-    let opacityRef = document.createElement('input')
+    let hexInEl = document.createElement('input')
+    let colorInEl = document.createElement('input')
+    let opacityInEl = document.createElement('input')
+
     const [showMenu, setShowMenu] = createSignal(false)
     const [selectedColor, setSelectedColor] = createSignal(
         props.init_color === '' ? '#00000000' :
@@ -78,48 +82,57 @@ export function ColorInput(props:color_input_props){
     onMount(() => document.addEventListener('mousedown', hide_menu))
     onCleanup(() => document.removeEventListener('mousedown', hide_menu))
 
-    // #region ---- ---- Functions to parse input and click events ---- 
-    function onColorSelect(e:MouseEvent, color:string){
-        if(e.button === 0) {
-            let hex_opacity = Math.round(parseInt(opacityRef.value) * 2.55)
-            setSelectedColor(color + hex_opacity.toString(16).padStart(2,'0'))
-        }
-    }
+    // #region ---- ---- Functions to parse input and click events ----
+    const opacity_dec = () => Math.round(Number('0x' + selectedColor().slice(7, 9))/ 2.55 )
+    const opacity_hex = () => Math.round(parseInt(opacityInEl.value) * 2.55).toString(16).padStart(2,'0').toUpperCase()
 
-    function onOpacitySelect(){
-        let hex_opacity = Math.round(parseInt(opacityRef.value) * 2.55)
-        setSelectedColor(selectedColor().slice(0, 7) + hex_opacity.toString(16).padStart(2,'0'))
-    }
-
-    const get_opacity = () => Math.round(Number('0x' + selectedColor().slice(7))/ 2.55 )
+    function onOpacityInput(){ setSelectedColor(selectedColor().slice(0, 7) + opacity_hex()) }
+    function onMouseSelect(e:MouseEvent, color:string){ if(e.button === 0) setSelectedColor(color + opacity_hex())}
 
     createEffect(()=>{if (props.onInput) props.onInput(selectedColor())})
     // #endregion ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     return <div ref={divRef} {...divProps} style={{'background-color':selectedColor()}}>
         {/* Inner div to conform to parent's size shape, also set position to relative. */}
-        <div 
+        <div
             onClick={(e)=>{if(e.button === 0) setShowMenu(true)}}
             style={{width:"100%", height:"100%", position:"relative"}}
         >
             <Show when={showMenu()}>
                 <div class="color_menu">
-                    <DefaultColorSet onSel={onColorSelect}/>
+                    <DefaultColorSet onSel={onMouseSelect}/>
                     <div class="cpick_separator"/>
-                    <UserColorSet onSel={onColorSelect}/>
+                    <UserColorSet onSel={onMouseSelect} selectedColor={selectedColor}/>
                     <div class="cpick_separator"/>
-                    <div class="opacity_txt" innerText={"Opacity: " + get_opacity().toString() + "%"}/>
-                    <input 
-                        ref={opacityRef}
-                        type="range" step={5}
-                        value={selectedColor().length === 9 ? get_opacity() : 100 }
-                        oninput={onOpacitySelect}
-                    />
+                    <div class="current_color">
+                        <input 
+                            ref={colorInEl} type="color"
+                            value={selectedColor().slice(0,7)}
+                            style={{"background-color":selectedColor().slice(0,7)}} 
+                            oninput={() => setSelectedColor(colorInEl.value + opacity_hex())}
+                        />
+                        <input 
+                            ref={hexInEl} type='text'
+                            value={selectedColor()}
+                            pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$"
+                            onBlur={() => {
+                                if (hexInEl.value.length === 9) setSelectedColor(hexInEl.value)
+                                else if (hexInEl.value.length === 7) setSelectedColor(hexInEl.value + opacity_hex())
+                            }}
+                        />
+                        <div class="opacity_txt" innerText={"Opacity: " + opacity_dec().toString() + "%"}/>
+                        <input 
+                            ref={opacityInEl}
+                            type="range" step={5}
+                            value={selectedColor().length === 9 ? opacity_dec() : 100 }
+                            oninput={onOpacityInput}
+                        />
+                    </div>
                 </div>
             </Show>
         </div>
 
-        {/* invisible Input tag, w/ user id, to enable querySelecting the chosen color */}
+        {/* invisible Input tag, w/ user id, to enable querySelecting the chosen color *with* Opacity */}
         <input 
             id={props.input_id} 
             type="color_picker" 
@@ -128,6 +141,7 @@ export function ColorInput(props:color_input_props){
     </div>
 }
 
+/** Component to Display Some Standard UI Colors */
 function DefaultColorSet(props:{onSel:(e:MouseEvent, color:string)=>void}){
     return <div class="color_set"> 
         <For each={default_colors}>{(color)=>
@@ -140,36 +154,38 @@ function DefaultColorSet(props:{onSel:(e:MouseEvent, color:string)=>void}){
     </div>
 }
 
-function UserColorSet(props:{onSel:(e:MouseEvent, color:string)=>void}){
+/** Component to Display * Edit User Saved Colors */
+function UserColorSet(props:{onSel:(e:MouseEvent, color:string)=>void, selectedColor:Accessor<string>}){
     const {userColors, setUserColors} = ColorPickerCTX()
-
-    /** 
-     * If you're here wandering why the last User Selectable Color wont delete and it annoys you, same.
-     * the setUserColors() call below correctly slices the array. It should be deleteing.. best I can
-     * tell it's a bug in SolidJS where the last element of an array (in a store) can't be trimmed
-     */
+    const remove_color = createSignal<boolean>(false)
 
     return <div class="color_set user_opts"> 
         <For each={userColors}>{(color, i) => <>
-            <div class="color_box" style={{"background-color":color}} 
-                onKeyDown={(e) => { if(e.key === 'Delete')
-                    setUserColors([...userColors.slice(0,i()), ...userColors.slice(i() + 1)])
+            <div class="color_box" style={{"background-color":color}}
+                onClick={(e) => {
+                    if (remove_color[0]())
+                        setUserColors([...userColors.slice(0,i()), ...userColors.slice(i() + 1)])
+                    else
+                        props.onSel(e, color)
                 }}
-                onMouseDown={(e) => props.onSel(e, color)}
-            >
-                <input 
-                    type='color' 
-                    value={color.slice(0,7)}
-                    onblur={(e:FocusEvent) => setUserColors(i(), (e.target as HTMLInputElement).value)}
-                />
-            </div>
-        </>
-        }</For>
+            />
+        </> }</For>
+        
+        {/* Add The Currently Selected Color to the User Favorites */}
         <div class="color_box">
             <Icon 
                 icon={icons.options_add} 
                 style={{width:"18px", height:"18px"}}
-                onClick={() => setUserColors([...userColors, "#000000"])}
+                onClick={() => setUserColors([...userColors, props.selectedColor().slice(0,7)])}
+            />
+        </div>
+        {/* Allow For the User to Remove Colors from their Favorites */}
+        <div class="color_box">
+            <Icon
+                icon={icons.options_remove}
+                style={{width:"18px", height:"18px"}}
+                attr:active={remove_color[0]()? '' : undefined} 
+                onClick={() => remove_color[1](!remove_color[0]())}
             />
         </div>
     </div>
