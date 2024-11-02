@@ -41,7 +41,7 @@ const defaultOptions: RoundedCandleSeriesOptions = {
 	},
 } as const;
 
-export class RoundedCandleSeries<TData extends RoundedCandleSeriesData>
+export class RoundedCandleSeriesImpl<TData extends RoundedCandleSeriesData>
 	implements ICustomSeriesPaneView<Time, TData, RoundedCandleSeriesOptions> {
 	_renderer: RoundedCandleSeriesRenderer<TData>;
 

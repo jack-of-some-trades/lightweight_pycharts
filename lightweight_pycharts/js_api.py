@@ -131,7 +131,7 @@ class js_api:
 
 @dataclass
 class MpHooks:
-    "All required Multiprocessor Hooks required for a javascript interface"
+    "All Multiprocessor Hooks required for the javascript Sub-Process interface"
     fwd_queue: mp.Queue = field(default_factory=mp.Queue)
     rtn_queue: mp.Queue = field(default_factory=mp.Queue)
     js_loaded_event: mp_EventClass = field(default_factory=mp.Event)

@@ -6,7 +6,7 @@ import * as lwc from "lightweight-charts";
 import { Accessor, createSignal, Setter } from "solid-js";
 import { pane } from "../pane";
 import { PrimitiveBase } from "../primitive-plugins/primitive-base";
-import { RoundedCandleSeries, RoundedCandleSeriesData, RoundedCandleSeriesOptions, RoundedCandleSeriesPartialOptions } from "./rounded-candles-series/rounded-candles-series";
+import { RoundedCandleSeriesData, RoundedCandleSeriesImpl, RoundedCandleSeriesOptions, RoundedCandleSeriesPartialOptions } from "./rounded-candles-series/rounded-candles-series";
 
 
 // #region --------------------- Type Definitions & Interface Extensions ----------------------- */
@@ -45,8 +45,8 @@ export type LineSeries = SeriesBase<"Line">
 export type AreaSeries = SeriesBase<"Area">
 export type BaselineSeries = SeriesBase<"Baseline">
 export type HistogramSeries = SeriesBase<'Histogram'>
-export type CandleStickSeriesBase = SeriesBase<'Candlestick'>
-export type RoundedCandleSeriesBase = SeriesBase<"Rounded_Candle">
+export type CandleStickSeries = SeriesBase<'Candlestick'>
+export type RoundedCandleSeries = SeriesBase<"Rounded_Candle">
 export type SeriesBase_T = SeriesBase<Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
 
 // Meant to represent the 'Series' in lwc that isn't exported. (the class owned by 'SeriesApi')
@@ -163,7 +163,7 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
             case (Series_Type.ROUNDED_CANDLE):
                 //Ideally custom series objects will get baked directly into the TS Code like this
                 //So accomodations don't need to be made on the Python side
-                return this._pane.chart.addCustomSeries(new RoundedCandleSeries())
+                return this._pane.chart.addCustomSeries(new RoundedCandleSeriesImpl())
             default: //Catch-all, primarily reached by WhitespaceSeries'
                 return this._pane.chart.addLineSeries()
         }

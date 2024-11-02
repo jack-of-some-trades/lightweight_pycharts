@@ -944,9 +944,7 @@ class SeriesType(IntEnum):
 
 
 AnyBasicSeriesType = Literal[
-    SeriesType.WhitespaceData,
-    SeriesType.SingleValueData,
-    SeriesType.OHLC_Data
+    SeriesType.WhitespaceData, SeriesType.SingleValueData, SeriesType.OHLC_Data
 ]
 
 
@@ -1005,7 +1003,7 @@ class LineStyleOptions(SeriesOptionsCommon):
     crosshairMarkerBorderWidth: Optional[int] = None
     crosshairMarkerBorderColor: Optional[JS_Color] = None
     crosshairMarkerBackgroundColor: Optional[JS_Color] = None
-    lastPriceAnimation: Optional[LastPriceAnimationMode] = None
+    # lastPriceAnimation: Optional[LastPriceAnimationMode] = None
 
 
 @dataclass
@@ -1034,17 +1032,17 @@ class AreaStyleOptions(SeriesOptionsCommon):
 
     topColor: Optional[JS_Color] = None
     bottomColor: Optional[JS_Color] = None
+    invertFilledArea: Optional[bool] = None
+
+    pointMarkersRadius: Optional[int] = None
+    pointMarkersVisible: Optional[bool] = None
 
     crosshairMarkerVisible: Optional[bool] = None
     crosshairMarkerRadius: Optional[int] = None
+    crosshairMarkerBorderWidth: Optional[int] = None
     crosshairMarkerBorderColor: Optional[JS_Color] = None
     crosshairMarkerBackgroundColor: Optional[JS_Color] = None
-    crosshairMarkerBorderWidth: Optional[int] = None
-
-    invertFilledArea: Optional[bool] = None
-    pointMarkersVisible: Optional[bool] = None
-    pointMarkersRadius: Optional[int] = None
-    lastPriceAnimation: Optional[LastPriceAnimationMode] = None
+    # lastPriceAnimation: Optional[LastPriceAnimationMode] = None
 
 
 @dataclass
@@ -1068,14 +1066,15 @@ class BaselineStyleOptions(SeriesOptionsCommon):
     bottomFillColor1: Optional[JS_Color] = None
     bottomFillColor2: Optional[JS_Color] = None
 
-    pointMarkersVisible: Optional[bool] = None
     pointMarkersRadius: Optional[int] = None
+    pointMarkersVisible: Optional[bool] = None
+
     crosshairMarkerVisible: Optional[bool] = None
     crosshairMarkerRadius: Optional[int] = None
     crosshairMarkerBorderColor: Optional[str] = None
-    crosshairMarkerBackgroundColor: Optional[str] = None
     crosshairMarkerBorderWidth: Optional[int] = None
-    lastPriceAnimation: Optional[LastPriceAnimationMode] = None
+    crosshairMarkerBackgroundColor: Optional[str] = None
+    # lastPriceAnimation: Optional[LastPriceAnimationMode] = None
 
 
 # endregion

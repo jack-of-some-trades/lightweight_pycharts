@@ -191,6 +191,8 @@ function UserColorSet(props:{onSel:(e:MouseEvent, color:string)=>void, selectedC
     </div>
 }
 
+// #endregion
+
 function RGBAToHex(rgba:string, forceRemoveAlpha=false) {
     return "#" + rgba.replace(/^rgba?\(|\s+|\)$/g, '').split(',') 
         .filter((string, index) => !forceRemoveAlpha || index !== 3)

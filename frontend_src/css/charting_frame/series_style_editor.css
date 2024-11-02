@@ -19,7 +19,8 @@
 }
 
 /* Make the last element in a row fill the space */
-.series_style_selector .style_selector_row span:last-child,
+.series_style_selector .style_selector_row span.select-span:last-child,
+.series_style_selector .style_selector_row span.opts-select:last-child,
 .series_style_selector .style_selector_row input:last-child,
 .series_style_selector .style_selector_row select:last-child{
     width: -webkit-fill-available;
@@ -27,6 +28,7 @@
 
 .series_style_selector .style_selector_row:first-child span {
     display: flex;
+    align-items: center;
     flex-direction: row-reverse;
 }
 
