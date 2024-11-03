@@ -32,10 +32,6 @@
     flex-direction: row-reverse;
 }
 
-.series_style_selector .style_selector_row .color_input_wrapper {
-    flex: 0 0 10px;
-}
-
 .series_style_selector .style_selector_row input[type='number'] {
     width: 35px
 }

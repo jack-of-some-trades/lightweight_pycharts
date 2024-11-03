@@ -16,13 +16,20 @@ interface series_style_editor_props{
 }
 
 interface series_options_signals{
+    // baseline: Signal<boolean>,
     priceline: Signal<boolean>,
-    baseline: Signal<boolean>,
     markers: Signal<boolean> | undefined,
     crosshair: Signal<boolean> | undefined,
-    wick_color: Signal<boolean> | undefined,
-    border_color: Signal<boolean> | undefined,
 }
+
+/** 
+ * DEAD CODE NOTE:
+ * Throughout this file are a bunch of commented out code that deals
+ * with the 'index-to-100' & '% scale' Baseline settings. The code is
+ * fully functional, it's just been commented out since there is no UI
+ * method to switch to those scale settings. If those scales are ever
+ * re-integrated then the code can be uncommented.
+ */
 
 /**
  * Entry Point Component that creates a <form/> for a single series and Populates it with
@@ -34,16 +41,13 @@ export function SeriesStyleEditor(props:series_style_editor_props){
 
     let s_type = props.series.s_type
     const LineType = s_type === s.Series_Type.LINE || s_type === s.Series_Type.AREA || s_type === s.Series_Type.BASELINE
-    const CandleType = s_type === s.Series_Type.CANDLESTICK || s_type === s.Series_Type.ROUNDED_CANDLE
 
-    //Boolean Signals to Show / Hide the more Niche Series Settings
+    //Boolean Signals to Show / Hide the Niche Series Settings, undefined => don't include that section
     let signals:series_options_signals = {
-        priceline: createSignal(false),
-        baseline: createSignal(false),
+        // baseline: createSignal(false),  //SeriesCommon
+        priceline: createSignal(false),  //SeriesCommon
         markers: LineType ? createSignal(false) : undefined,
         crosshair: LineType ? createSignal(false) : undefined,
-        wick_color: CandleType ? createSignal(false) : undefined,
-        border_color: s_type === s.Series_Type.CANDLESTICK ? createSignal(false) : undefined,
     }
 
     //Update the Options when the advanced settings toggle to make sure they are up-to-date
@@ -55,7 +59,7 @@ export function SeriesStyleEditor(props:series_style_editor_props){
 
     const editor_props = {
         submit: () => form.requestSubmit(),
-        signals: signals
+        ...signals
     }
 
     return (
@@ -83,6 +87,12 @@ export function SeriesStyleEditor(props:series_style_editor_props){
                     <Match when={props.series.s_type===s.Series_Type.ROUNDED_CANDLE}>
                         <RndCandleEditor opts={options() as RoundedCandleSeriesOptions} {...editor_props}/></Match>
                 </Switch>
+                <SeriesCommon 
+                    // show_baseline={signals.baseline?.[0]() ?? false}
+                    show_price_line={signals.priceline?.[0]() ?? false}
+                    submit={editor_props.submit}
+                    options={options()}
+                />
             </div>
         </form>
     )
@@ -105,7 +115,11 @@ function onSubmit(series:s.SeriesBase_T, e:SubmitEvent){
                 switch(node.getAttribute('type')){
                     case ("checkbox"): return [node.id, node.checked]
                     case (null): return [node.id, parseInt(node.value)] // <select/> tag
-                    case ("number"): return [node.id, parseFloat(node.value)]
+                    case ("number"): 
+                        if (node.id === 'baseValue') //Special Case Handeling for Baseline Series
+                            return [node.id, {'type':'price', 'price':parseFloat(node.value)}]
+                        else
+                            return [node.id, parseFloat(node.value)]
                     // Special Case: '' for some color options means the setting will inherit from another color setting
                     case ("color_picker"): return [node.id, node.value === '#00000000' ? '' : node.value]
                     default: return [node.id, node.value]
@@ -122,9 +136,8 @@ function onSubmit(series:s.SeriesBase_T, e:SubmitEvent){
  * Individual Style Components for each type of ISeriesAPI Instance
  */
 
-interface editor_props { 
+interface editor_props extends series_options_signals { 
     submit:()=>void,
-    signals:series_options_signals
 }
 
 function LineEditor(props:{opts:LineSeriesOptions} & editor_props){
@@ -139,18 +152,12 @@ function LineEditor(props:{opts:LineSeriesOptions} & editor_props){
             submit={props.submit}
         />
         <Markers
-            show_adv={props.signals.markers?.[0]() ?? false}
+            show_adv={props.markers?.[0]() ?? false}
             submit={props.submit}
             options={props.opts}
         />
         <Crosshair
-            show_adv={props.signals.crosshair?.[0]() ?? false}
-            submit={props.submit}
-            options={props.opts}
-        />
-        <SeriesCommon 
-            show_baseline={props.signals.baseline?.[0]() ?? false}
-            show_price_line={props.signals.priceline?.[0]() ?? false}
+            show_adv={props.crosshair?.[0]() ?? false}
             submit={props.submit}
             options={props.opts}
         />
@@ -179,43 +186,97 @@ function AreaEditor(props:{opts:AreaSeriesOptions} & editor_props){
             <ColorInputWrapper key={'bottomColor'} default={props.opts.bottomColor} submit={props.submit}/>
         </div>
         <Markers
-            show_adv={props.signals.markers?.[0]() ?? false}
+            show_adv={props.markers?.[0]() ?? false}
             submit={props.submit}
             options={props.opts}
         />
         <Crosshair
-            show_adv={props.signals.crosshair?.[0]() ?? false}
-            submit={props.submit}
-            options={props.opts}
-        />
-        <SeriesCommon 
-            show_baseline={props.signals.baseline?.[0]() ?? false}
-            show_price_line={props.signals.priceline?.[0]() ?? false}
+            show_adv={props.crosshair?.[0]() ?? false}
             submit={props.submit}
             options={props.opts}
         />
     </>
 }
 
-
 function HistogramEditor(props:{opts:HistogramSeriesOptions} & editor_props){
-    return <></>
+    return <>
+        <div class="style_selector_row">
+            <label for={'base'} innerText={'Base Value: '}/>
+            <input id={'base'} type="number" value={props.opts.base} onInput={props.submit} style={{'width':'auto'}}/>
+            <label for={'color'} innerText={'Color: '} style={{'margin-left':'18px'}}/>
+            <ColorInputWrapper key={'color'} default={props.opts.color} submit={props.submit}/>
+        </div>
+    </>
 }
 
 function BaseLineEditor(props:{opts:BaselineSeriesOptions} & editor_props){
-    return <></>
+    return <>
+        <div class="style_selector_row">
+            <label for={'baseValue'} innerText={'Base Price: '}/>
+            <input id={'baseValue'} type="number" value={props.opts.baseValue.price} onInput={props.submit} style={{'width':'auto'}}/>
+        </div>
+        <div class="style_selector_row">
+            <label for={'topLineColor'} innerText={'Top Line:'} style={{'margin-right':'27px'}}/>
+            <ColorInputWrapper key={'topLineColor'} default={props.opts.topLineColor} submit={props.submit}/>
+            <label for={'topFillColor1'} innerText={'Fill 1:'} style={{'margin-left':'12px'}}/>
+            <ColorInputWrapper key={'topFillColor1'} default={props.opts.topFillColor1} submit={props.submit}/>
+            <label for={'topFillColor2'} innerText={'Fill 2:'} style={{'margin-left':'12px'}}/>
+            <ColorInputWrapper key={'topFillColor2'} default={props.opts.topFillColor2} submit={props.submit}/>
+        </div>
+        <div class="style_selector_row">
+            <label for={'bottomLineColor'} innerText={'Bottom Line: '}/>
+            <ColorInputWrapper key={'bottomLineColor'} default={props.opts.bottomLineColor} submit={props.submit}/>
+            <label for={'bottomFillColor1'} innerText={'Fill 1:'} style={{'margin-left':'12px'}}/>
+            <ColorInputWrapper key={'bottomFillColor1'} default={props.opts.bottomFillColor1} submit={props.submit}/>
+            <label for={'bottomFillColor2'} innerText={'Fill 2:'} style={{'margin-left':'12px'}}/>
+            <ColorInputWrapper key={'bottomFillColor2'} default={props.opts.bottomFillColor2} submit={props.submit}/>
+        </div>
+        <div class="style_selector_row">
+            <label for={'lineVisible'} innerText={'Line: '}/>
+            <Checkbox key={'lineVisible'} checked={props.opts.lineVisible} submit={props.submit}/>
+            <LineWidthPicker key={'lineWidth'} default={props.opts.lineWidth} submit={props.submit}/>
+            <LineTypePicker key={'lineType'} default={props.opts.lineType} submit={props.submit}/>
+            <LineStylePicker key={'lineStyle'} default={props.opts.lineStyle} submit={props.submit}/>
+        </div>
+        <Markers
+            show_adv={props.markers?.[0]() ?? false}
+            submit={props.submit}
+            options={props.opts}
+        />
+        <Crosshair
+            show_adv={props.crosshair?.[0]() ?? false}
+            submit={props.submit}
+            options={props.opts}
+        />
+    </>
 }
 
 function BarEditor(props:{opts:BarSeriesOptions} & editor_props){
-    return <></>
+    return <>
+        <div class="style_selector_row">
+            <label for={'thinBars'} innerText={'Thin Bars: '}/>
+            <Checkbox key={'thinBars'} checked={props.opts.thinBars} submit={props.submit}/>
+            <label for={'openVisible'} innerText={'Show Open:'} style={{'margin-left':'12px'}}/>
+            <Checkbox key={'openVisible'} checked={props.opts.openVisible} submit={props.submit}/>
+            <span/> {/* Empty Span expands to fill empty space so checkbox wont */}
+        </div>
+        <BarColor submit={props.submit} opts={props.opts}/>
+    </>
 }
 
 function CandleEditor(props:{opts:CandlestickSeriesOptions} & editor_props){
-    return <></>
+    return <>
+        <BarColor submit={props.submit} opts={props.opts}/>
+        <BarWick submit={props.submit} opts={props.opts}/>
+        <BarBorder submit={props.submit} opts={props.opts}/>
+    </>
 }
 
 function RndCandleEditor(props:{opts:RoundedCandleSeriesOptions} & editor_props){
-    return <></>
+    return <>
+        <BarColor submit={props.submit} opts={props.opts}/>
+        <BarWick submit={props.submit} opts={props.opts}/>
+    </>
 }
 
 // #endregion
@@ -232,24 +293,26 @@ function SettingsToggle(props:{signal:Signal<boolean> | undefined, tip:string}) 
 }
 
 function TitleBar(props:{name:string, visible:boolean, submit:()=>void, signals:series_options_signals}){
-
     return <div class="style_selector_row">
         <label for={'visible'} innerText={props.name}/>
         <Checkbox key={'visible'} checked={props.visible} submit={props.submit}/>
         <span class="opts-select">
-            <SettingsToggle signal={props.signals.baseline} tip='Index-to-100 Baseline'/>
-            <SettingsToggle signal={props.signals.border_color} tip='Border Color'/>
-            <SettingsToggle signal={props.signals.wick_color} tip='Wick Color'/>
+            {/* <SettingsToggle signal={props.signals.baseline} tip='Index-to-100 Baseline'/> */}
+            <SettingsToggle signal={props.signals.priceline} tip='Price Line & Label'/>
             <SettingsToggle signal={props.signals.crosshair} tip='Crosshair Marker'/>
             <SettingsToggle signal={props.signals.markers} tip='Data Markers'/>
-            <SettingsToggle signal={props.signals.priceline} tip='Price Line & Label'/>
             <label innerText={'Adv. Opts:'}/>
         </span>
     </div>
 }
 
-
-function SeriesCommon(props:{show_price_line:boolean, show_baseline:boolean, submit:()=>void, options:SeriesOptionsCommon}){
+interface series_common_props {
+    show_price_line:boolean, 
+    // show_baseline:boolean, 
+    submit:()=>void, 
+    options:SeriesOptionsCommon
+}
+function SeriesCommon(props:series_common_props){
     return <>
         <PriceLine 
             visible={props.options.priceLineVisible}
@@ -266,14 +329,14 @@ function SeriesCommon(props:{show_price_line:boolean, show_baseline:boolean, sub
             visible={props.options.lastValueVisible} 
             submit={props.submit}
         />
-        <Baseline
+        {/* <Baseline
             visible={props.options.baseLineVisible}
             color={props.options.baseLineColor}
             style={props.options.baseLineStyle}
             width={props.options.baseLineWidth}
             show_adv={props.show_baseline}
             submit={props.submit}
-        />
+        /> */}
     </>
 }
 
@@ -321,20 +384,20 @@ function PriceLine(props:price_line_props){
 }
 
 
-interface baseline_props{
-    visible:boolean, color:string, width:number, style:LineStyle, submit:()=>void, show_adv:boolean
-}
-function Baseline(props:baseline_props){
-    return <Show when={props.show_adv}>
-        <div class="style_selector_row">
-        <label for={'baseLineVisible'}  innerText='Baseline:'/>
-        <Checkbox key={'baseLineVisible'} checked={props.visible} submit={props.submit}/>
-        <ColorInputWrapper key={'baseLineColor'} default={props.color} submit={props.submit}/>
-        <LineWidthPicker key={'baseLineWidth'} default={props.width} submit={props.submit}/>
-        <LineStylePicker key={'baseLineStyle'} default={props.style} submit={props.submit}/>
-        </div>
-    </Show>
-}
+// interface baseline_props{
+//     visible:boolean, color:string, width:number, style:LineStyle, submit:()=>void, show_adv:boolean
+// }
+// function Baseline(props:baseline_props){
+//     return <Show when={props.show_adv}>
+//         <div class="style_selector_row">
+//         <label for={'baseLineVisible'}  innerText='Baseline:'/>
+//         <Checkbox key={'baseLineVisible'} checked={props.visible} submit={props.submit}/>
+//         <ColorInputWrapper key={'baseLineColor'} default={props.color} submit={props.submit}/>
+//         <LineWidthPicker key={'baseLineWidth'} default={props.width} submit={props.submit}/>
+//         <LineStylePicker key={'baseLineStyle'} default={props.style} submit={props.submit}/>
+//         </div>
+//     </Show>
+// }
 
 
 function Markers(props:{show_adv:boolean, submit:()=>void, options:LineStyleOptions | BaselineStyleOptions  | AreaSeriesOptions}){
@@ -347,6 +410,7 @@ function Markers(props:{show_adv:boolean, submit:()=>void, options:LineStyleOpti
         </div>
     </Show>
 }
+
 function Crosshair(props:{show_adv:boolean, submit:()=>void, options:LineStyleOptions | BaselineStyleOptions  | AreaSeriesOptions}){
     return <Show when={props.show_adv}>
         <div class="style_selector_row">
@@ -360,6 +424,42 @@ function Crosshair(props:{show_adv:boolean, submit:()=>void, options:LineStyleOp
             <ColorInputWrapper key={'crosshairMarkerBorderColor'} default={props.options.crosshairMarkerBorderColor} submit={props.submit}/>
         </div>
     </Show>
+}
+
+
+function BarColor(props:{submit:()=>void, opts:BarSeriesOptions | CandlestickSeriesOptions | RoundedCandleSeriesOptions}){
+    return <div class="style_selector_row">
+        <label innerText={'Body: '}/>
+        <span style={{"flex-grow":1}}/>
+        <label for={'upColor'} innerText={'Up Color: '}/>
+        <ColorInputWrapper key={'upColor'} default={props.opts.upColor} submit={props.submit}/>
+        <label for={'downColor'} innerText={'Down Color:'} style={{'margin-left':'12px'}}/>
+        <ColorInputWrapper key={'downColor'} default={props.opts.downColor} submit={props.submit}/>
+    </div>
+}
+
+function BarWick(props:{submit:()=>void, opts:CandlestickSeriesOptions | RoundedCandleSeriesOptions}){
+    return <div class="style_selector_row">
+        <label for={'wickVisible'} innerText='Wick:'/>
+        <Checkbox key={'wickVisible'} checked={props.opts.wickVisible} submit={props.submit}/>
+        <span style={{"flex-grow":1}}/>
+        <label for={'wickUpColor'} innerText={'Up Color: '} style={{'margin-left':'12px'}}/>
+        <ColorInputWrapper key={'wickUpColor'} default={props.opts.wickUpColor} submit={props.submit}/>
+        <label for={'wickDownColor'} innerText={'Down Color:'} style={{'margin-left':'12px'}}/>
+        <ColorInputWrapper key={'wickDownColor'} default={props.opts.wickDownColor} submit={props.submit}/>
+    </div>
+}
+
+function BarBorder(props:{submit:()=>void, opts:CandlestickSeriesOptions}){
+    return <div class="style_selector_row">
+        <label for={'borderVisible'} innerText='Border:'/>
+        <Checkbox key={'borderVisible'} checked={props.opts.borderVisible} submit={props.submit}/>
+        <span style={{"flex-grow":1}}/>
+        <label for={'borderUpColor'} innerText={'Up Color: '} style={{'margin-left':'12px'}}/>
+        <ColorInputWrapper key={'borderUpColor'} default={props.opts.borderUpColor} submit={props.submit}/>
+        <label for={'borderDownColor'} innerText={'Down Color:'} style={{'margin-left':'12px'}}/>
+        <ColorInputWrapper key={'borderDownColor'} default={props.opts.borderDownColor} submit={props.submit}/>
+    </div>
 }
 
 // #endregion
@@ -423,7 +523,6 @@ function LineSourcePicker(props:{key:string, default:PriceLineSource, submit:()=
 
 
 function ColorInputWrapper(props:{key:string, default:string, submit:()=>void}){
-
     return (
         <ColorInput
             id={props.key}
@@ -434,6 +533,4 @@ function ColorInputWrapper(props:{key:string, default:string, submit:()=>void}){
         />
     )
 }
-// #endregion
-
 // #endregion

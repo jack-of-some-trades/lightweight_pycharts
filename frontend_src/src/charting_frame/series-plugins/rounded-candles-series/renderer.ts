@@ -76,7 +76,8 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 
 
 		const radius = this._options.radius(this._data.barSpacing);
-		this._drawWicks(renderingScope, bars, this._data.visibleRange);
+		if (this._options.wickVisible)
+			this._drawWicks(renderingScope, bars, this._data.visibleRange);
 		this._drawCandles(renderingScope, bars, this._data.visibleRange, radius);
 	}
 

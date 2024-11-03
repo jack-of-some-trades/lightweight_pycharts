@@ -209,8 +209,8 @@ def NumtoHex(num: int):
     return hex(num).lstrip("0x").zfill(2)
 
 
-Hex_Color: TypeAlias = str
-JS_Color: TypeAlias = Hex_Color | Color
+# String Should be a #(Hex) Color.
+JS_Color: TypeAlias = str | Color
 
 
 @dataclass

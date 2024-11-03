@@ -19,7 +19,7 @@ export interface RoundedCandleSeriesData extends CandlestickData, CustomData {
 
 export type RoundedCandleSeriesPartialOptions = SeriesPartialOptions<RoundedCandleSeriesOptions>;
 
-export interface RoundedCandleSeriesOptions extends CustomSeriesOptions, Exclude<CandlestickSeriesOptions, 'borderVisible' | 'borderColor' | 'borderUpColor' | 'borderDownColor'> {
+export interface RoundedCandleSeriesOptions extends CustomSeriesOptions, Omit<CandlestickSeriesOptions, 'borderVisible' | 'borderColor' | 'borderUpColor' | 'borderDownColor'> {
 	radius: (barSpacing: number) => number;
 }
 
@@ -28,10 +28,6 @@ const defaultOptions: RoundedCandleSeriesOptions = {
 	upColor: '#26a69a',
 	downColor: '#ef5350',
 	wickVisible: true,
-	borderVisible: true,
-	borderColor: '#378658',
-	borderUpColor: '#26a69a',
-	borderDownColor: '#ef5350',
 	wickColor: '#737375',
 	wickUpColor: '#26a69a',
 	wickDownColor: '#ef5350',
