@@ -19,13 +19,11 @@ logger = logging.getLogger("lightweight-pycharts")
 
 class ChartingFrame(win.Frame):
     """
-    Frame Objects primarily hold information about the timeseries that is being displayed. They
-    retain a copy of data that is used across all sub-panes as well as the references to said panes.
+    Charting Frames store, display and compute on time-series data.
 
-    ** ATM this class translates to a Chart_Frame in the Frontend. At some point in the future this
-    will become a Chart_Frame that inherits from an Abstract Frame class. That implementation will
-    match the current Frontend implementation and allow for 'Frame' to be an abstract re-sizeable
-    viewport in the window. Broker integration, Bid/Ask Tables, Stock Screeners... Sky's the limit.
+    Currently, This can only display a single pane and thus a single chart,
+    but the framework is present so that in the future each frame could
+    display multiple charts that all share the same available data.
     """
 
     Frame_Type = win.FrameTypes.CHART
@@ -73,6 +71,7 @@ class ChartingFrame(win.Frame):
         return list(self.panes.keys())
 
     def autoscale_timeaxis(self):
+        "Autoscale the Time axis of all panes owned by this Charting Frame"
         self._fwd_queue.put((JS_CMD.AUTOSCALE_TIME_AXIS, self._js_id))
 
     @property

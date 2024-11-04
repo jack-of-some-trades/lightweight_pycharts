@@ -396,6 +396,9 @@ class Frame(ABC):
     Abstract Class that represents one segment of a Container's Layout. This class can be inherited
     from to create different types of displays that natively work with the layout configurations
     and resize functionality.
+
+    Currently this is only inherited by a Charting_Frame, but in the future could be inherited by
+    other useful tools such as Broker integration, Bid/Ask Tables, Stock Screeners... Sky's the limit.
     """
 
     Frame_Type = FrameTypes.ABSTRACT

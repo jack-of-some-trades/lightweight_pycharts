@@ -61,7 +61,7 @@ export function IndicatorOpts(props:indicator_option_props){
             bounding_client_id={`#${props.id}>.title_box`}
         >
             <div class="title_box">
-                <h2>{props.parent_ind.type + " • " + props.parent_ind.name + "Options"}</h2>
+                <h2>{props.parent_ind.type + " • " + props.parent_ind.name + (props.parent_ind.name !== '' ? " • " : '' )  + "Options"}</h2>
                 <Icon icon={icons.close} force_reload={true} onClick={props.close_menu}/>
             </div>
 
@@ -214,7 +214,7 @@ interface input_props {
 //Metaclass _parse_arg[_param] functions throw into the menu_struct for each argument
 interface input_params {
     title: string
-    default : any   //This has no current use.
+    default : any   //This has no current use, but it is available 
     autosend: boolean
     tooltip?: string
     options?: Array<any>

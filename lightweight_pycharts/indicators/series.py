@@ -68,6 +68,7 @@ class BarState:
 G1 = "Display Series"
 G2 = "Volume Series"
 I1 = "a"
+I2 = "b"
 
 
 # pylint: disable=arguments-differ
@@ -81,12 +82,15 @@ class SeriesIndicatorOptions(IndicatorOptions):
         options=[t for t in SeriesType if t not in get_args(AnyBasicSeriesType)],
     )
 
-    up_color: Color = param(Color.from_hex("#26a69a"), "Color - Up ", G1, I1)
-    down_color: Color = param(Color.from_hex("#ef5350"), "Down ", G1, I1)
-
-    vol_price_axis: str = param("vol", "Price Axis", G2, autosend=False)
+    vol_price_axis: str = param(
+        "vol", "Price Axis", G2, autosend=False, tooltip="Press Enter to Commit Change"
+    )
     vol_scale_invert: bool = param(False, "Invert", G2, I1)
     vol_scale_margin: int = param(75, "Scale Margin", G2, I1, min=0, max=100)
+
+    color_vol: bool = param(True, "Color Vol", G2, I2)
+    up_color: Color = param(Color.from_hex("#26a69a"), "Up ", G2, I2)
+    down_color: Color = param(Color.from_hex("#ef5350"), "Down ", G2, I2)
     vol_opacity: int = param(
         50,
         "Opacity",
@@ -156,12 +160,13 @@ class Series(Indicator):
             self,
             SeriesType.Histogram,
             name="Vol-Series",
+            options=HistogramStyleOptions(color="#6666667F"),
             arg_map=ArgMap(value="volume", color="vol_color"),
         )
         self.update_options(opts)
         self.init_menu(opts)
 
-    def update_options(self, opts: SeriesIndicatorOptions):
+    def update_options(self, opts: SeriesIndicatorOptions) -> bool:
         if opts.series_type != self.opts.series_type:
             self.change_series_type(opts.series_type)
 
@@ -169,6 +174,7 @@ class Series(Indicator):
             opts.up_color != self.opts.up_color
             or opts.down_color != self.opts.down_color
             or opts.vol_opacity != self.opts.vol_opacity
+            or opts.color_vol != self.opts.color_vol
         ):
             self.vol_up_color = Color.from_color(
                 opts.up_color, a=opts.vol_opacity / 100
@@ -176,6 +182,8 @@ class Series(Indicator):
             self.vol_down_color = Color.from_color(
                 opts.down_color, a=opts.vol_opacity / 100
             )
+            # Need to update bool before Coloring Vol Series
+            self.opts.color_vol = opts.color_vol
             self._set_vol_series()
 
         self.vol_series.apply_options(
@@ -200,6 +208,7 @@ class Series(Indicator):
             )
 
         self.opts = opts
+        return False
 
     # region ------------------ Sub-Routines ------------------
 
@@ -255,14 +264,16 @@ class Series(Indicator):
 
     def _set_vol_series(self):
         if self.main_data is not None and "volume" in self.main_data.columns:
-            if set(["open", "close"]).issubset(self.main_data.columns):
+            if self.opts.color_vol and set(["open", "close"]).issubset(
+                self.main_data.columns
+            ):
                 # Generate a Color Series for the Volume Histogram if we can
                 vol_color = self.main_data.df["close"] >= self.main_data.df["open"]
                 self.main_data.df["vol_color"] = vol_color.replace(
                     {True: self.vol_up_color, False: self.vol_down_color}
                 )
             elif "vol_color" in self.main_data.columns:
-                self.main_data.df.drop("vol_color", inplace=True)
+                self.main_data.df.drop(columns="vol_color", inplace=True)
 
             # Color Doesn't Need to exist to update the Series
             self.vol_series.set_data(self.main_data)
@@ -271,7 +282,11 @@ class Series(Indicator):
         if self._bar_state is None:
             return
 
-        if self._bar_state.close is nan or self._bar_state.open is nan:
+        if (
+            not self.opts.color_vol
+            or self._bar_state.close is nan
+            or self._bar_state.open is nan
+        ):
             color = None
         elif self._bar_state.close > self._bar_state.open:
             color = self.vol_up_color
