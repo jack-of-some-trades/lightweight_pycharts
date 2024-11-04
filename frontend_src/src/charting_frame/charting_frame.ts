@@ -247,7 +247,6 @@ export class chart_frame extends frame {
     }
 
     autoscale_content() {
-        this.panes[0]?.autoscale_time_axis()
         this.panes.forEach(pane => {
             pane.autoscale_time_axis()
         });

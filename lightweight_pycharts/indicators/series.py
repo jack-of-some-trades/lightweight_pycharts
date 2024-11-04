@@ -334,6 +334,7 @@ class Series(Indicator):
 
         if self.__frame_primary_src__:
             # Only do this once everything else has completed and not Error'd.
+            self.parent_frame.autoscale_timeaxis()
             self.parent_frame.__set_displayed_timeframe__(self.main_data.timeframe)
 
         # ---------------- Inform all Indicators that New Data is Available ----------------

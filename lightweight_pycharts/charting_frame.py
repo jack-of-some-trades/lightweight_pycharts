@@ -72,6 +72,9 @@ class ChartingFrame(win.Frame):
         "Return a List of all Panes Ids of this object"
         return list(self.panes.keys())
 
+    def autoscale_timeaxis(self):
+        self._fwd_queue.put((JS_CMD.AUTOSCALE_TIME_AXIS, self._js_id))
+
     @property
     def main_pane(self) -> Pane:
         "Main Display Pane of the Frame"

@@ -97,6 +97,7 @@ class JS_CMD(IntEnum):
 
     # Frame Commands
     ADD_PANE = auto()
+    AUTOSCALE_TIME_AXIS = auto()
     SET_WHITESPACE_DATA = auto()
     CLEAR_WHITESPACE_DATA = auto()
     UPDATE_WHITESPACE_DATA = auto()
@@ -234,6 +235,10 @@ def update_whitespace_data(
     frame_id: str, data: WhitespaceData, p_data: SingleValueData
 ) -> str:
     return f"{frame_id}.update_whitespace_data({dump(data)}, {dump(p_data)});"
+
+
+def autoscale_time_axis(frame_id: str):
+    return f"{frame_id}.autoscale_content();"
 
 
 # endregion
@@ -459,6 +464,7 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str | None]] = {
     JS_CMD.REMOVE_FRAME: remove_frame,
     # ---- Frame Commands ----
     JS_CMD.ADD_PANE: add_pane,
+    JS_CMD.AUTOSCALE_TIME_AXIS: autoscale_time_axis,
     JS_CMD.SET_WHITESPACE_DATA: set_whitespace_data,
     JS_CMD.CLEAR_WHITESPACE_DATA: clear_whitespace_data,
     JS_CMD.UPDATE_WHITESPACE_DATA: update_whitespace_data,
