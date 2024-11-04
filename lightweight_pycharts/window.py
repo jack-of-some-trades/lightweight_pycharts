@@ -149,6 +149,11 @@ class Window:
                 if isinstance(frame, ChartingFrame):
                     frame.indicators[args[2]].__update_options__(args[3])
 
+            case PY_CMD.UPDATE_SERIES_OPTS, str(), str(), str(), str(), dict():
+                frame = self.get_container(args[0]).frames[args[1]]
+                if isinstance(frame, ChartingFrame):
+                    frame.indicators[args[2]]._series[args[3]].__sync_options__(args[4])
+
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()
 

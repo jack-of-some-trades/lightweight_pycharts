@@ -383,6 +383,11 @@ class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [Pr
     minMove: Optional[float] = None
 
 
+# region ---- ---- ---- ---- Timescale and Axis interfaces ---- ---- ---- ----
+# These are interfaces exported by the lightweight-charts library. They are pretty niche to
+# display of a given chart, So niche they likely won't ever be interacted with in the Python
+# Backend so they've been commented out. If they find a use they can be uncommented back in
+
 # @dataclass
 # class PriceFormatCustom:
 #     """
@@ -396,113 +401,116 @@ class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [Pr
 #     formatter: Optional[j_func]
 
 
-@dataclass
-class TimeRange:
-    """
-    Represents a Time range `from` one value `to` another.
-    """
+# @dataclass
+# class TimeRange:
+#     """
+#     Represents a Time range `from` one value `to` another.
+#     """
 
-    from_: Time
-    to_: Time
-
-
-@dataclass
-class BarsInfo(TimeRange):
-    """
-    Represents a range of bars and the number of bars outside the range.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BarsInfo
-    """
-
-    barsBefore: int
-    barsAfter: int
+#     from_: Time
+#     to_: Time
 
 
-@dataclass
-class Point:
-    """
-    Represents a point on the chart.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/Point
-    """
+# @dataclass
+# class BarsInfo(TimeRange):
+#     """
+#     Represents a range of bars and the number of bars outside the range.
+#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BarsInfo
+#     """
 
-    x: float
-    y: float
-
-
-@dataclass
-class TouchMouseEventData:
-    """
-    The TouchMouseEventData class represents events that occur due to the user interacting with a
-    pointing device (such as a mouse).
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TouchMouseEventData
-    """
-
-    clientX: Coordinate
-    clientY: Coordinate
-    pageX: Coordinate
-    pageY: Coordinate
-    screenX: Coordinate
-    screenY: Coordinate
-    localX: Coordinate
-    localY: Coordinate
-    ctrlKey: bool
-    altKey: bool
-    shiftKey: bool
-    metaKey: bool
+#     barsBefore: int
+#     barsAfter: int
 
 
-@dataclass
-class MouseEventParams:
-    """
-    Represents a mouse event.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/MouseEventParams
-    """
+# @dataclass
+# class Point:
+#     """
+#     Represents a point on the chart.
+#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/Point
+#     """
 
-    time: Optional[Time] = None
-    logical: Optional[int] = None
-    point: Optional[Point] = None
-    # Likely will not implement since these aren't really functional in the API
-    # series_data = {}
-    # hovered_series: Optional[str] = None
-    hovered_object_id: Optional[str] = None
-    source_event: Optional[TouchMouseEventData] = None
+#     x: float
+#     y: float
 
 
-@dataclass
-class TickMark:
-    """
-    Tick mark for the horizontal scale.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TickMark
-    """
+# @dataclass
+# class TouchMouseEventData:
+#     """
+#     The TouchMouseEventData class represents events that occur due to the user interacting with a
+#     pointing device (such as a mouse).
+#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TouchMouseEventData
+#     """
 
-    index: int
-    time: Time
-    weight: float
-    original_time: Time
-
-
-@dataclass
-class TimeMark:
-    """
-    Represents a tick mark on the horizontal (time) scale.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TimeMark
-    """
-
-    need_align_coordinate: bool
-    coord: int
-    label: str
-    weight: float
+#     clientX: Coordinate
+#     clientY: Coordinate
+#     pageX: Coordinate
+#     pageY: Coordinate
+#     screenX: Coordinate
+#     screenY: Coordinate
+#     localX: Coordinate
+#     localY: Coordinate
+#     ctrlKey: bool
+#     altKey: bool
+#     shiftKey: bool
+#     metaKey: bool
 
 
-@dataclass
-class TimeScalePoint:
-    """
-    Represents a point on the time scale.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TimeScalePoint
-    """
+# @dataclass
+# class MouseEventParams:
+#     """
+#     Represents a mouse event.
+#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/MouseEventParams
+#     """
 
-    time: Time
-    timeWeight: float
-    originalTime: Time
+#     time: Optional[Time] = None
+#     logical: Optional[int] = None
+#     point: Optional[Point] = None
+#     # Likely will not implement since these aren't really functional in the API
+#     # series_data = {}
+#     # hovered_series: Optional[str] = None
+#     hovered_object_id: Optional[str] = None
+#     source_event: Optional[TouchMouseEventData] = None
+
+
+# @dataclass
+# class TickMark:
+#     """
+#     Tick mark for the horizontal scale.
+#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TickMark
+#     """
+
+#     index: int
+#     time: Time
+#     weight: float
+#     original_time: Time
+
+
+# @dataclass
+# class TimeMark:
+#     """
+#     Represents a tick mark on the horizontal (time) scale.
+#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TimeMark
+#     """
+
+#     need_align_coordinate: bool
+#     coord: int
+#     label: str
+#     weight: float
+
+
+# @dataclass
+# class TimeScalePoint:
+#     """
+#     Represents a point on the time scale.
+#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TimeScalePoint
+#     """
+
+#     time: Time
+#     timeWeight: float
+#     originalTime: Time
+
+
+# endregion
 
 
 @dataclass

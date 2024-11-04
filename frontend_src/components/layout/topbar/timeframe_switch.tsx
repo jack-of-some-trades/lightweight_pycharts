@@ -56,7 +56,7 @@ export function TimeframeSwitcher(){
     }
     
     window.topbar.setTimeframe = setSelectedTF
-    window.api.update_timeframe_opts = setTimeframeOpts
+    window.api.update_timeframe_topbar_opts = setTimeframeOpts
 
     // Tell Python when the timeframe changes
     function onSel(timeframe:tf){

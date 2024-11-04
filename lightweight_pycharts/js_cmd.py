@@ -73,6 +73,7 @@ class PY_CMD(IntEnum):
     LAYOUT_CHANGE = auto()
     ADD_INDICATOR = auto()
     SET_INDICATOR_OPTS = auto()
+    UPDATE_SERIES_OPTS = auto()
 
 
 class JS_CMD(IntEnum):
@@ -167,15 +168,15 @@ def remove_reference(*_ids: str) -> str:
 
 
 def set_window_layouts(favs: dict) -> str:
-    return f"api.update_layout_opts({dump(favs)});"
+    return f"api.update_layout_topbar_opts({dump(favs)});"
 
 
 def set_window_series_types(favs: dict) -> str:
-    return f"api.update_series_opts({dump(favs)});"
+    return f"api.update_series_topbar_opts({dump(favs)});"
 
 
 def set_window_timeframes(opts: dict) -> str:
-    return f"api.update_timeframe_opts({dump(opts)});"
+    return f"api.update_timeframe_topbar_opts({dump(opts)});"
 
 
 def update_symbol_search(symbols: list[types.Symbol]) -> str:
@@ -369,16 +370,22 @@ def change_series_type(
 
 
 def update_series_opts(
-    frame_id: str, indicator_id: str, series_id: str, opts: AnySeriesOptions
+    frame_id: str, indicator_id: str, series_id: str, opts: AnySeriesOptions | dict
 ) -> str:
     rtn_str = (
         series_preamble(frame_id, indicator_id, series_id)
         + f"_ser.applyOptions({dump(opts)});"
     )
+    func_str = ""
 
-    if opts.autoscaleInfoProvider is not None:
-        # Strip the quotations from around the autoscale function
+    # Strip the quotations from around the autoscale function if it exists
+    if isinstance(opts, dict):
+        if "autoscaleInfoProvider" in opts:
+            func_str = str(opts["autoscaleInfoProvider"])
+    elif opts.autoscaleInfoProvider is not None:
         func_str = str(opts.autoscaleInfoProvider)
+
+    if func_str != "":
         strt = rtn_str.find(func_str)
         end = strt + len(func_str)
         rtn_str = rtn_str[: strt - 1] + func_str + rtn_str[end + 1 :]

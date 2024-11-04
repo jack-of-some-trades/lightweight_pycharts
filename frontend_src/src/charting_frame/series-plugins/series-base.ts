@@ -114,6 +114,7 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
     _series: lwc.ISeriesApi<lwc.SeriesType>
 
     _id: string
+    _indicator_id: string
     primitiveIds: Accessor<string[]>
     setPrimitiveIds: Setter<string[]>
     _parent_name: string | undefined
@@ -122,12 +123,14 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
 
     constructor(
         _id:string, 
+        _indicator_id:string,
         _name:string | undefined,
         _parent_name: string | undefined,
         _type:Series_Type, 
         _pane:pane
     ){
         this._id = _id
+        this._indicator_id = _indicator_id
         this._name = _name
         this._parent_name = _parent_name
         this.s_type = _type

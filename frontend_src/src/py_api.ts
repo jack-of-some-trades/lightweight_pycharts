@@ -1,7 +1,8 @@
 //Typescript API that interfaces with python.
 
+import { Series_Type } from "./charting_frame/series-plugins/series-base";
 import { Container_Layouts, num_frames } from "./layouts";
-import { makeid, Series_Type, symbol_item } from "./types";
+import { makeid, symbol_item } from "./types";
 
 
 //Each Function Maps directly to a function within the js_api class in js_api.py
@@ -54,6 +55,10 @@ export class py_api {
     set_indicator_options = (container_id: string, frame_id: string, ind_id:string, obj: Object) => {
         console.log(`Set Indicator Options: ${container_id},${frame_id},${ind_id}`, obj)
     }
+
+    update_series_options = (container_id: string, frame_id: string, ind_id:string, ser_id:string, opts:any) => {
+        console.log(`Set Series Options: ${container_id},${frame_id},${ind_id},${ser_id}`, opts)
+    }
     
     /* ---------------- Python >>> Javascript ---------------- */
     // The following functions are called by Python. They are set by JS as the window is rendered
@@ -63,9 +68,10 @@ export class py_api {
     populate_search_symbols = (items:symbol_item[]) => {}
     set_search_filters = (category:string, opts:string[]) => {}
 
-    update_series_opts = (opts:any) => console.log(opts)
-    update_layout_opts = (opts:any) => console.log(opts)
-    update_timeframe_opts = (opts:any) => console.log(opts, window.topbar)
+    update_series_topbar_opts = (opts:any) => console.log('Series opts:', opts)
+    update_layout_topbar_opts = (opts:any) => console.log('Layout opts:', opts)
+    update_timeframe_topbar_opts = (opts:any) => console.log('Timeframe opts:', opts)
 
     set_user_colors = (opts:string[]) => {}
+
 }

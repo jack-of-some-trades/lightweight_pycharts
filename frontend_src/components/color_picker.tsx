@@ -2,7 +2,7 @@
  * The Color Picker is a globally Accessible and placeable Component that allows for easy
  * Selection of both predefined and user-defined colors. 
  */
-import { Accessor, createContext, createEffect, createSignal, For, JSX, onCleanup, onMount, Show, splitProps, useContext } from "solid-js"
+import { Accessor, createContext, createEffect, createSignal, For, JSX, on, onCleanup, onMount, Show, splitProps, useContext } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"
 import "../css/color_picker.css"
 import { Icon, icons } from "./icons"
@@ -87,9 +87,12 @@ export function ColorInput(props:color_input_props){
     const opacity_hex = () => Math.round(parseInt(opacityInEl.value) * 2.55).toString(16).padStart(2,'0').toUpperCase()
 
     function onOpacityInput(){ setSelectedColor(selectedColor().slice(0, 7) + opacity_hex()) }
-    function onMouseSelect(e:MouseEvent, color:string){ if(e.button === 0) setSelectedColor(color + opacity_hex())}
+    function onMouseSelect(e:MouseEvent, color:string){ if(e.button === 0) setSelectedColor(color + opacity_hex()) }
 
-    createEffect(()=>{if (props.onInput) props.onInput(selectedColor())})
+    createEffect(on(selectedColor, 
+        ()=>{if (props.onInput) props.onInput(selectedColor())},
+        {defer:true} // Prevent this from firing an update when the Component is simply mounted
+    ))
     // #endregion ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     return <div ref={divRef} {...divProps} style={{'background-color':selectedColor()}}>

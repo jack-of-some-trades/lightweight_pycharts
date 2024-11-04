@@ -253,7 +253,7 @@ export class pane {
     }
 
     add_primitive_group(){
-        const group = new SeriesBase('primitives', 'Primitives', undefined, Series_Type.LINE, this)
+        const group = new SeriesBase('primitives','', 'Primitives', undefined, Series_Type.LINE, this)
         //Set Visibility to False so the Series itself doesn't display anything, only the primitives are visible.
         group.applyOptions({visible:false})
         this.primitive_serieses.push(group)

@@ -34,7 +34,7 @@ class js_api:
     * private, protected, sunder, and dunder methods are *not* placed in the Javascript window
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         # Pass in a temporary Object that we will overwrite later.
         # This is really just used to silence linter errors
         self.rtn_queue = mp.Queue(maxsize=1)
@@ -46,36 +46,36 @@ class js_api:
         # done after the py_webivew window has loaded
         self.view_window = view_window
 
-    def close(self) -> None:
+    def close(self):
         self.view_window.close()
 
-    def maximize(self) -> None:
+    def maximize(self):
         self.view_window.maximize()
 
-    def minimize(self) -> None:
+    def minimize(self):
         self.view_window.minimize()
 
-    def restore(self) -> None:
+    def restore(self):
         self.view_window.restore()
 
-    def add_container(self) -> None:
+    def add_container(self):
         self.rtn_queue.put((PY_CMD.ADD_CONTAINER,))
 
-    def remove_container(self, _id: str) -> None:
+    def remove_container(self, _id: str):
         self.rtn_queue.put((PY_CMD.REMOVE_CONTAINER, _id))
 
-    def remove_frame(self, container_id: str, frame_id: str) -> None:
+    def remove_frame(self, container_id: str, frame_id: str):
         self.rtn_queue.put((PY_CMD.REMOVE_FRAME, container_id, frame_id))
 
-    def reorder_containers(self, _from: int, _to: int) -> None:
+    def reorder_containers(self, _from: int, _to: int):
         self.rtn_queue.put((PY_CMD.REORDER_CONTAINERS, _from, _to))
 
-    def layout_change(self, container_id: str, layout: int) -> None:
+    def layout_change(self, container_id: str, layout: int):
         self.rtn_queue.put(
             (PY_CMD.LAYOUT_CHANGE, container_id, orm.enum.layouts(layout))
         )
 
-    def series_change(self, container_id: str, frame_id: str, series_type: str) -> None:
+    def series_change(self, container_id: str, frame_id: str, series_type: str):
         try:
             self.rtn_queue.put(
                 (
@@ -120,9 +120,28 @@ class js_api:
 
     def set_indicator_options(
         self, container_id: str, frame_id: str, indicator_id: str, obj: dict
-    ) -> None:
+    ):
         self.rtn_queue.put(
             (PY_CMD.SET_INDICATOR_OPTS, container_id, frame_id, indicator_id, obj)
+        )
+
+    def update_series_options(
+        self,
+        container_id: str,
+        frame_id: str,
+        indicator_id: str,
+        series_id: str,
+        options: dict,
+    ):
+        self.rtn_queue.put(
+            (
+                PY_CMD.UPDATE_SERIES_OPTS,
+                container_id,
+                frame_id,
+                indicator_id,
+                series_id,
+                options,
+            )
         )
 
 
@@ -142,7 +161,7 @@ class MpHooks:
 
 
 class _scriptProtocol(Protocol):
-    def __call__(self, cmd: str, promise: Optional[Callable] = None) -> None: ...
+    def __call__(self, cmd: str, promise: Optional[Callable] = None): ...
 
 
 class View(ABC):
@@ -169,7 +188,7 @@ class View(ABC):
         self,
         hooks: MpHooks,
         run_script: _scriptProtocol,
-    ) -> None:
+    ):
         self.run_script = run_script
         self.fwd_queue = hooks.fwd_queue
         self.rtn_queue = hooks.rtn_queue
@@ -260,7 +279,7 @@ class PyWv(View):
         log_level: Optional[str | int] = None,
         api: Optional[js_api] = None,
         **kwargs,
-    ) -> None:
+    ):
         # Pass Hooks and run_script to super
         super().__init__(mp_hooks, run_script=self._handle_eval_js)
 
@@ -384,7 +403,7 @@ class PyWv(View):
 class QWebView:  # (View):
     """Class to create and manage a Pyside QWebView widget"""
 
-    def __init__(self) -> None:
+    def __init__(self):
         # In theory, Even though most things you could want are already fleshed out in the PYWebView
         # version, You could expand the View Class to work with QWebView. In the event that that may
         # offer some unique advantage like a better window frame or something, idk man... options.

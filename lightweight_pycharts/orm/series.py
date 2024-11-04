@@ -978,6 +978,19 @@ class SeriesOptionsCommon:
     baseLineColor: Optional[JS_Color] = None
     autoscaleInfoProvider: Optional[j_func] = None
 
+    @property
+    def as_dict(self) -> dict:
+        "The Object in dictionary form with 'Nones' Dropped."
+        return asdict(  # Drop Nones
+            self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
+        )
+
+    @classmethod
+    def from_dict(cls, obj: dict) -> Self:
+        "Create an instance from a dict ignoring extraneous params"
+        params = signature(cls).parameters
+        return cls(**{k: v for k, v in obj.items() if k in params})
+
 
 # region --------------------------------------- Single Value Series Objects --------------------------------------- #
 

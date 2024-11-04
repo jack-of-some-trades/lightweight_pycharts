@@ -67,7 +67,7 @@ export function LayoutSwitcher(){
     }
 
     window.topbar.setLayout = setSelectedLayout
-    window.api.update_layout_opts = setLayoutOpts
+    window.api.update_layout_topbar_opts = setLayoutOpts
 
     // Tell Python when the Layout changes
     function onSel(layout:Container_Layouts){

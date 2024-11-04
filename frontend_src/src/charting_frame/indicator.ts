@@ -87,7 +87,7 @@ export class indicator {
     //only encompassed being called from python, not from within JS.
 
     protected add_series(_id: string, _type: s.Series_Type, _name:string|undefined = undefined) {
-        this.series.set(_id, new s.SeriesBase(_id, _name, this.name !== "" ? this.name : this.type, _type, this.pane))
+        this.series.set(_id, new s.SeriesBase(_id, this.id, _name, this.name !== "" ? this.name : this.type, _type, this.pane))
     }
 
     protected remove_series(_id: string) {
