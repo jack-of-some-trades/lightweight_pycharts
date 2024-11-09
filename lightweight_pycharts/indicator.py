@@ -208,12 +208,14 @@ class Watcher:
     def reset_updated_state(self):
         "Reset the Updated state and tell all observers to reset as well, an update is coming"
         self.updated = False
-        for ind in self.update_notifiers:
-            ind._watcher.reset_updated_state()
+        if (parent := self._parent()) is not None:
+            for watcher in parent._observers:
+                watcher.reset_updated_state()
+        logger.info(f"reset updated stated")
 
     def notify_set(self):
         "Notify the Watcher that an update occured in the given Indicator"
-        if (parent := self._parent()) is None:
+        if self.set or (parent := self._parent()) is None:
             return
 
         if all([ind._watcher.set for ind in self.set_notifiers]):
@@ -227,11 +229,12 @@ class Watcher:
 
     def notify_update(self):
         "Notify the Watcher that an update occured in the given Indicator"
-        if (parent := self._parent()) is None:
+        if self.updated or (parent := self._parent()) is None:
             return
 
         if all([ind._watcher.updated for ind in self.update_notifiers]):
             # Ready to Update, Fire Update then set updated Readiness State
+            logger.info(f"Updating Indicator: {parent.cls_name}, {parent.js_id}")
             parent.update_data(
                 **dict([(name, func()) for name, func in self.update_args.items()])
             )
@@ -557,8 +560,8 @@ class Indicator(metaclass=IndicatorMeta):
         """
         for series in self._series.values():
             series.clear_data()
-        for primative in self._primitives.values():
-            primative.clear()
+        for primitive in self._primitives.values():
+            primitive.clear()
 
     def update_options(self, _: IndicatorOptions) -> bool:
         """

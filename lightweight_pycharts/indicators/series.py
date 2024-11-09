@@ -312,6 +312,8 @@ class Series(Indicator):
         **__,
     ):
         "Sets the main source of data for this Frame"
+        self.clear_data()
+
         # Update the Symbol Regardless if data is good or not
         if symbol is not None:
             self.symbol = symbol
