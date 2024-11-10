@@ -19,7 +19,7 @@ from lightweight_pycharts import indicators
 from .window import Window, Container, Frame
 from .charting_frame import ChartingFrame
 from .orm.types import TF, Color, Symbol
-from .orm.enum import layouts, ColorLiteral
+from .orm.enum import layouts
 from .orm.series import SeriesType
 
 __all__ = (
@@ -34,7 +34,6 @@ __all__ = (
     "Symbol",
     #
     # Enums
-    "ColorLiteral",
     "layouts",
     "SeriesType",
     #

@@ -7,10 +7,18 @@ Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeri
 
 import logging
 from weakref import ref
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
+
+from lightweight_pycharts.orm.types import (
+    SeriesMarker,
+    SeriesMarkerSelectors,
+    SeriesPriceLine,
+    SeriesPriceLineSelectors,
+)
+from lightweight_pycharts.util import ID_Dict
 
 from .js_cmd import JS_CMD
 from .orm import series as s
@@ -60,6 +68,10 @@ class SeriesCommon:
         self._js_id = indicator._series.generate_id(self)
         # Tuple of Ids to make addressing through Queue easier: order = (pane, indicator, series)
         self._ids = display_pane_id, indicator.js_id, self._js_id
+
+        # Collection of Sub-Object Ids to provide automatic ID Generation
+        self._markers = ID_Dict("m")
+        self._pricelines = ID_Dict("pl")
 
         if isinstance(arg_map, s.ArgMap):
             self._value_map = arg_map.as_dict
@@ -113,7 +125,6 @@ class SeriesCommon:
         Update the internal options object to reflect changes entered into the UI.
         Should only to be used to keep Python and Typescript Objects in sync.
         """
-        logger.info(options)
         self._options = options
 
     @staticmethod
@@ -208,6 +219,8 @@ class SeriesCommon:
     def clear_data(self):
         "Remove All displayed Data. This does not remove/delete the Series Object."
         self._fwd_queue.put((JS_CMD.CLEAR_SERIES_DATA, *self._ids))
+        self.remove_all_markers()
+        self.remove_all_pricelines()
 
     def update_data(self, data: s.AnySeriesData):
         """
@@ -265,20 +278,145 @@ class SeriesCommon:
             )
         )
 
+    # TODO: Multi-pane implementation
     # def change_pane(self, new_pane: str): ...
 
-    # def add_marker(self, marker: SeriesMarker): ...
+    # pylint: disable=protected-access
 
-    # def remove_marker(self, marker: SeriesMarker | str): ...
+    @property
+    def markers(self) -> list[SeriesMarker]:
+        "A List of all the Markers applied to this Series"
+        return list(self._markers.values())
 
-    # def add_price_line(self, price_line: SeriesPriceLine): ...
+    def add_marker(self, marker: SeriesMarker):
+        "Add the Given Marker to this series common object"
+        if marker._js_id is not None and marker._js_id in self._markers:
+            # Exceedingly Rare, the only way this would happen is if Pricelines are very
+            # frequency shared across multiple series objects.
+            logger.warning("Could not add Marker, JS_ID Conflict with Obj: %s", marker)
+            return
 
-    # def remove_price_line(self, price_line: SeriesPriceLine | float): ...
+        if marker._js_id is not None:
+            self._markers.affix_id(marker._js_id, marker)
+        else:
+            marker._js_id = self._markers.generate_id(marker)
+
+        self._fwd_queue.put(
+            (JS_CMD.ADD_SERIES_MARKER, *self._ids, marker._js_id, marker)
+        )
+
+    def remove_marker(self, marker: SeriesMarker):
+        "Remove the given Marker from the series"
+        if marker._js_id is not None and marker._js_id in self._markers:
+            self._markers.pop(marker._js_id)
+            self._fwd_queue.put(
+                (JS_CMD.REMOVE_SERIES_MARKER, *self._ids, marker._js_id)
+            )
+
+    def update_marker(self, marker: SeriesMarker):
+        "Update the Options of the given Marker"
+        if marker._js_id is None or marker._js_id not in self._markers:
+            logger.debug(
+                "Could not update Marker %s, It is not attached, adding to series %s instead ",
+                marker,
+                self,
+            )
+            self.add_marker(marker)
+        else:
+            self._fwd_queue.put(
+                (
+                    JS_CMD.UPDATE_SERIES_MARKER,
+                    *self._ids,
+                    marker._js_id,
+                    marker,
+                )
+            )
+
+    def filter_markers(self, key: SeriesMarkerSelectors, value: Any):
+        "Remove all the markers that match the given key:value pair"
+        keys = [k for k, v in self._markers.items() if v.getattr(key, None) == value]
+
+        for k in keys:
+            self._markers.pop(k)
+
+        self._fwd_queue.put((JS_CMD.FILTER_SERIES_MARKERS, *self._ids, keys))
+
+    def remove_all_markers(self):
+        "Remove All Markers from this series. Cannot be undone."
+        self._markers = ID_Dict("m")
+        self._fwd_queue.put((JS_CMD.REMOVE_ALL_SERIES_MARKERS, *self._ids))
+
+    @property
+    def pricelines(self) -> list[SeriesPriceLine]:
+        "A List of all the PriceLines applied to this Series"
+        return list(self._pricelines.values())
+
+    def add_priceline(self, priceline: SeriesPriceLine):
+        "Add the Given Priceline to this series common object"
+        if priceline._js_id is not None and priceline._js_id in self._pricelines:
+            # Exceedingly Rare, the only way this would happen is if Pricelines are very
+            # frequency shared across multiple series objects.
+            logger.warning(
+                "Could not add Priceline, JS_ID Conflict with Obj: %s", priceline
+            )
+            return
+
+        if priceline._js_id is not None:
+            self._pricelines.affix_id(priceline._js_id, priceline)
+        else:
+            priceline._js_id = self._pricelines.generate_id(priceline)
+
+        self._fwd_queue.put(
+            (JS_CMD.ADD_SERIES_PRICELINE, *self._ids, priceline._js_id, priceline)
+        )
+
+    def remove_priceline(self, priceline: SeriesPriceLine):
+        "Remove the given Priceline from the series"
+        if priceline._js_id is not None and priceline._js_id in self._pricelines:
+            self._pricelines.pop(priceline._js_id)
+            self._fwd_queue.put(
+                (JS_CMD.REMOVE_SERIES_PRICELINE, *self._ids, priceline._js_id)
+            )
+
+    def update_priceline(self, priceline: SeriesPriceLine):
+        "Update the Options of the given Priceline"
+        if priceline._js_id is None or priceline._js_id not in self._pricelines:
+            logger.debug(
+                "Could not update Priceline %s, It is not attached, adding to series %s instead ",
+                priceline,
+                self,
+            )
+            self.add_priceline(priceline)
+        else:
+            self._fwd_queue.put(
+                (
+                    JS_CMD.UPDATE_SERIES_PRICELINE,
+                    *self._ids,
+                    priceline._js_id,
+                    priceline,
+                )
+            )
+
+    def filter_pricelines(self, key: SeriesPriceLineSelectors, value: Any):
+        "Remove all the pricelines that match the given key:value pair"
+        keys = [k for k, v in self._pricelines.items() if v.getattr(key, None) == value]
+
+        for k in keys:
+            self._pricelines.pop(k)
+
+        self._fwd_queue.put((JS_CMD.FILTER_SERIES_PRICELINES, *self._ids, keys))
+
+    def remove_all_pricelines(self):
+        "Remove All Pricelines from this series. Cannot be undone."
+        self._pricelines = ID_Dict("pl")
+        self._fwd_queue.put((JS_CMD.REMOVE_ALL_SERIES_PRICELINES, *self._ids))
+
+    # pylint: enable=protected-access
 
 
-# region ----------------------------- Single Value Series Objects ------------------------------ #
+# region -------------------------- Series Common Type Hint Extensions --------------------------- #
 
-# The Subclasses below are solely to make object creation cleaner for the user. They don't
+# The Subclasses below are solely to make object creation a little cleaner for the user. They don't
 # actually provide any additional functionality (beyond type hinting) to SeriesCommon.
 
 
@@ -361,17 +499,116 @@ class HistogramSeries(SeriesCommon):
 
 class AreaSeries(SeriesCommon):
     "Subclass of SeriesCommon that Type Hints for an Area Series"
-    __series_type__ = s.SeriesType.Area
+
+    def __init__(
+        self,
+        indicator: "Indicator",
+        options: s.AreaStyleOptions | dict = s.AreaStyleOptions(),
+        name: Optional[str] = None,
+        display_pane_id: Optional[str] = None,
+    ):
+        super().__init__(
+            indicator,
+            s.SeriesType.Area,
+            options,
+            name=name,
+            display_pane_id=display_pane_id,
+        )
+
+    @property
+    def options_obj(self) -> s.AreaStyleOptions:
+        return s.AreaStyleOptions(**self._options)
+
+    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.AreaData):
+        self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
+
+    def apply_options(self, options: s.AreaStyleOptions | dict):
+        super().apply_options(options)
+
+    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+        """
+        **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
+        Calling this function will raise an Attribute Error.
+        """
+        raise AttributeError(
+            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
+        )
 
 
 class BaselineSeries(SeriesCommon):
     "Subclass of SeriesCommon that Type Hints for a Baseline Series"
-    __series_type__ = s.SeriesType.Baseline
+
+    def __init__(
+        self,
+        indicator: "Indicator",
+        options: s.BaselineStyleOptions | dict = s.BaselineStyleOptions(),
+        name: Optional[str] = None,
+        display_pane_id: Optional[str] = None,
+    ):
+        super().__init__(
+            indicator,
+            s.SeriesType.Baseline,
+            options,
+            name=name,
+            display_pane_id=display_pane_id,
+        )
+
+    @property
+    def options_obj(self) -> s.BaselineStyleOptions:
+        return s.BaselineStyleOptions(**self._options)
+
+    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.BaselineData):
+        self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
+
+    def apply_options(self, options: s.BaselineStyleOptions | dict):
+        super().apply_options(options)
+
+    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+        """
+        **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
+        Calling this function will raise an Attribute Error.
+        """
+        raise AttributeError(
+            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
+        )
 
 
 class BarSeries(SeriesCommon):
     "Subclass of SeriesCommon that Type Hints for a Bar Series"
-    __series_type__ = s.SeriesType.Bar
+
+    def __init__(
+        self,
+        indicator: "Indicator",
+        options: s.BarStyleOptions | dict = s.BarStyleOptions(),
+        name: Optional[str] = None,
+        display_pane_id: Optional[str] = None,
+    ):
+        super().__init__(
+            indicator,
+            s.SeriesType.Bar,
+            options,
+            name=name,
+            display_pane_id=display_pane_id,
+        )
+
+    @property
+    def options_obj(self) -> s.BarStyleOptions:
+        return s.BarStyleOptions(**self._options)
+
+    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.HistogramData):
+        self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
+
+    def apply_options(self, options: s.BarStyleOptions | dict):
+        super().apply_options(options)
+
+    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+        """
+        **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
+        Calling this function will raise an Attribute Error.
+        """
+        raise AttributeError(
+            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
+        )
 
 
 class CandlestickSeries(SeriesCommon):
@@ -380,26 +617,74 @@ class CandlestickSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options=s.CandlestickStyleOptions(),
+        options: s.CandlestickStyleOptions | dict = s.CandlestickStyleOptions(),
+        name: Optional[str] = None,
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
             s.SeriesType.Candlestick,
             options,
+            name=name,
             display_pane_id=display_pane_id,
         )
 
-    def update_data(self, data: s.WhitespaceData | s.OhlcData | s.CandlestickData):
+    @property
+    def options_obj(self) -> s.CandlestickStyleOptions:
+        return s.CandlestickStyleOptions(**self._options)
+
+    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.HistogramData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.CandlestickStyleOptions | s.SeriesOptionsCommon):
+    def apply_options(self, options: s.CandlestickStyleOptions | dict):
         super().apply_options(options)
+
+    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+        """
+        **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
+        Calling this function will raise an Attribute Error.
+        """
+        raise AttributeError(
+            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
+        )
 
 
 class RoundedCandleSeries(SeriesCommon):
     "Subclass of SeriesCommon that Type Hints for a Rounded Candle Series"
-    __series_type__ = s.SeriesType.Rounded_Candle
+
+    def __init__(
+        self,
+        indicator: "Indicator",
+        options: s.RoundedCandleStyleOptions | dict = s.RoundedCandleStyleOptions(),
+        name: Optional[str] = None,
+        display_pane_id: Optional[str] = None,
+    ):
+        super().__init__(
+            indicator,
+            s.SeriesType.Rounded_Candle,
+            options,
+            name=name,
+            display_pane_id=display_pane_id,
+        )
+
+    @property
+    def options_obj(self) -> s.RoundedCandleStyleOptions:
+        return s.RoundedCandleStyleOptions(**self._options)
+
+    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.HistogramData):
+        self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
+
+    def apply_options(self, options: s.RoundedCandleStyleOptions | dict):
+        super().apply_options(options)
+
+    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+        """
+        **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
+        Calling this function will raise an Attribute Error.
+        """
+        raise AttributeError(
+            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
+        )
 
 
 # endregion

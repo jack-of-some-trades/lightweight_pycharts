@@ -23,10 +23,6 @@ Frontend-Backend (Typescript):
 	- Frame-Viewer(?) Update: Allow for toggling of Pane Axis Visiblity
 
 	-- Series:
-		- Additional Series Type Styling Options Menus
-
-		- Add Tracking of Seriers Markers and H-Lines to Series-Base
-
 		- Allow for controls to move series objects between left/right/overlay/named price axises
 
 	-- Primitives:
@@ -59,7 +55,9 @@ Frontend-Backend (Typescript):
 
 
 Backend-Backend (Python):
-	- Series Common Additions (Markers, H-lines, Sub-class Typing extensions)
+	- Indicator Exception Handler: In the Watcher, when a call to set_data or update_data is made, a try-except block
+					could be inserted to guard against the program crashing. This could involve the creation of an on
+					screen interface to display the error when such an error occurs.
 
 	- Primitves : Re-assess the parent of a primitive and from which pool their IDs are generated against. 
 					Should Ideally allow for primitives to be created under one constant ID in python, but still allow
@@ -77,12 +75,12 @@ Backend-Backend (Python):
 					involved in this entire library. Optimizing it will be the biggest bang-for-buck performance optimization
 
 	- Disable GIL : Experiment with Disabling the GIL in Python 3.13. This implmentation would replace the multi-processing
-					behavior with multi-threading. This could be a decent performance increase seeing as how the memory space
+					behavior with multi-threading. This *could* be a decent performance increase seeing as how the memory space
 					between Core A and Core B would be shared. Modules wouldn't need to load twice on start-up and,
 					more importantly, all objects that traverse the Queue wouldn't need to be pickled. They could just reference
-					the memory location of the relevant object which would be far more efficient. This could also potentially allow
-					for the js_api to directly execute functions on memory. e.g. It could manipulate Container / Frame objects
-					directly as opposed to telling the Window to manipulate these low level objects.
+					the memory location of the relevant object which would be far more efficient. In additon, without pickling, 
+					bound functions could be passed through the queue potentially allowing for more direct communication between
+					indicators / series / primitive / etc. objects and the window.
 
 Cross-Architecture:
 	- Indicators: Search Menu + Python Import-Lib
@@ -111,16 +109,3 @@ Cross-Architecture:
 
 			  - Add Frame Creation Buttons to the Frame Viewer so Various Frame Types can be created without
 			  	requireing the layout to first be expanded. (Only current method of adding frames)
-				
-
-~~~~~~~~~~~~ Finished Tasks ~~~~~~~~~~~~
-
-Frontend (TSX / UI) :
-
-Frontend-Backend (Typescript):
-
-Backend-Backend (Python):
-	~~ [10/10/24] - Separation of Frames and Charting frames
-	~~ [10/18/24] - Series(Indicator) + Volume Refactor
-
-Cross-Architecture:

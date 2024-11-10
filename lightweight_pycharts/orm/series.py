@@ -700,9 +700,9 @@ class WhitespaceData:
 
     def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Aware).
         self.time = pd.Timestamp(self.time)
-        try:
+        if self.time.tzinfo is not None:
             self.time = self.time.tz_convert("UTC")
-        except TypeError:
+        else:
             self.time = self.time.tz_localize("UTC")
 
     @property

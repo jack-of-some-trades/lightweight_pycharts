@@ -187,7 +187,7 @@ export class pane {
         if (from < 0) from = this.serieses.length + from
         if (to < 0) to = this.serieses.length + to
 
-        //This function is called by the Object Tree which doesn't know about the whitespace series
+        //This function is called by the Object Tree which doesn't know about the whitespace series on every chart
         // => add 1 to Accounts for the index 0 whitespace series.
         if (adjust_by_1) {from += 1; to += 1;}
 

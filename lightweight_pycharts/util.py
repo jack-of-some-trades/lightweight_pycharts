@@ -18,9 +18,9 @@ class ID_List(list[str]):
         self.prefix = prefix + "_"
         super().__init__()
 
-    def generate_id(self) -> str:
+    def generate_id(self, len: int = 4) -> str:
         "Generates a new ID, adds it to the list, and returns it for use."
-        _id = self.prefix + "".join(choices(ascii_letters, k=4))
+        _id = self.prefix + "".join(choices(ascii_letters, k=len))
 
         if _id not in self:
             self.append(_id)
@@ -58,9 +58,9 @@ class ID_Dict[T](dict[str, T]):
 
         return super().__getitem__(key)
 
-    def generate_id(self, item: Optional[T] = None) -> str:
+    def generate_id(self, item: Optional[T] = None, len: int = 4) -> str:
         "Generates and returns a new Key. If an item is given it is added to the dictionary"
-        _id = self.prefix + "".join(choices(ascii_letters, k=4))
+        _id = self.prefix + "".join(choices(ascii_letters, k=len))
 
         if _id not in self:
             if item is not None:
@@ -76,7 +76,8 @@ class ID_Dict[T](dict[str, T]):
 
         If an item is given it is automatically added to the dictionary.
         """
-        _id_prefixed = self.prefix + _id
+        _id_prefixed = _id if _id.startswith(self.prefix) else self.prefix + _id
+
         if _id_prefixed not in self:
             if item is not None:
                 self[_id_prefixed] = item

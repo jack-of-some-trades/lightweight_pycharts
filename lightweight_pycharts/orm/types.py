@@ -2,7 +2,7 @@
 
 from math import floor
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TypeAlias, Literal, Optional, Self
 
 from pandas import Timestamp
@@ -213,7 +213,7 @@ def NumtoHex(num: int):
 JS_Color: TypeAlias = str | Color
 
 
-@dataclass
+@dataclass(slots=True)
 class TF:
     "Dataclass Representation of a Timeframe"
     _mult: int
@@ -328,13 +328,13 @@ class TF:
 
 # pylint: disable="wrong-import-position"
 # Moving the Import to here fixes a circular import error w/Color
-from .enum import ColorType, SeriesMarkerShape, SeriesMarkerPosition, LineStyle
+from .enum import ColorType, MarkerShape, MarkerLoc, LineStyle
 
 # Some of these will likely not be used unless further Javascript <-> Python integeration
 # is done; specifically around passing MouseEvents and Timeframe Changes back to Python.
 
 
-@dataclass
+@dataclass(slots=True)
 class SolidColor:
     """
     Represents a solid color.
@@ -345,7 +345,7 @@ class SolidColor:
     color: Optional[JS_Color] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class VerticalGradientColor:
     """
     Represents a vertical gradient of two colors.
@@ -357,7 +357,7 @@ class VerticalGradientColor:
     bottomColor: Optional[JS_Color] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class BaseValuePrice:
     """
     Represents a type of priced base value of baseline series type.
@@ -368,7 +368,7 @@ class BaseValuePrice:
     type: BaseValueType = "price"
 
 
-@dataclass
+@dataclass(slots=True)
 class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [PriceFormatBuiltIn | PriceFormatCustom]
     """
     Represents series value formatting options.
@@ -513,28 +513,70 @@ class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [Pr
 # endregion
 
 
-@dataclass
+SeriesMarkerSelectors = Literal[
+    "time", "id", "shape", "position", "id", "size", "color", "text"
+]
+
+
+@dataclass(slots=True)
 class SeriesMarker:
     """
     Represents a series marker.
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SeriesMarker
+
+    The '_js_id' parameter is populated once the marker is added to a seriescommon object.
+    It should not be manipulated, but it can be used to uniquely identify markers within
+    a single seriescommon object.
+
+    The 'id' parameter is completely unused by this library so the User can define a naming
+    convention that can be filtered against.
     """
 
+    def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Aware).
+        self.time = Timestamp(self.time)
+        if self.time.tzinfo is not None:
+            self.time = self.time.tz_convert("UTC")
+        else:
+            self.time = self.time.tz_localize("UTC")
+
+    _js_id: Optional[str] = field(default=None, init=False, repr=False)
     time: Time
-    shape: SeriesMarkerShape
-    position: SeriesMarkerPosition
+    shape: MarkerShape
+    position: MarkerLoc
     id: Optional[str] = None
     size: Optional[int] = 1
     color: Optional[JS_Color] = None
     text: Optional[str] = None
 
 
-@dataclass
+SeriesPriceLineSelectors = Literal[
+    "title",
+    "id",
+    "price",
+    "color",
+    "lineWidth",
+    "lineVisible",
+    "lineStyle",
+    "axisLabelVisible",
+    "axisLabelColor",
+    "axisLabelTextColor",
+]
+
+
+@dataclass(slots=True)
 class SeriesPriceLine:
     """
-    Represents a price line.
+    Represents a priceline.
+
+    The _js_id parameter is populated once the priceline is added to a seriescommon object.
+    It should not be manipulated, but it can be used to uniquely identify pricelines within
+    a single seriescommon object.
+
+    The id parameter is completely unused by this library so the User can define a naming
+    convention that can be filtered against.
     """
 
+    _js_id: Optional[str] = field(default=None, init=False, repr=False)
     title: str = ""
     id: Optional[str] = None
     price: float = 0
@@ -554,7 +596,7 @@ class SeriesPriceLine:
 # region --------------------------------------- Python <-> JS Interface Dataclasses --------------------------------------- #
 
 
-@dataclass
+@dataclass(slots=True)
 class Symbol:
     "Dataclass interface used to send Symbol Search information to the Symbol Search Menu"
     ticker: str

@@ -6,7 +6,7 @@ from . import series
 from . import options
 
 from .types import TF, Color, Symbol
-from .enum import layouts, ColorLiteral
+from .enum import layouts
 
 __all__ = (
     # SubModules
@@ -21,6 +21,5 @@ __all__ = (
     "Symbol",
     #
     # Enums
-    "ColorLiteral",
     "layouts",
 )

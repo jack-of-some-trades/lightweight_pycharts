@@ -152,7 +152,9 @@ class Window:
             case PY_CMD.UPDATE_SERIES_OPTS, str(), str(), str(), str(), dict():
                 frame = self.get_container(args[0]).frames[args[1]]
                 if isinstance(frame, ChartingFrame):
+                    # pylint: disable=protected-access
                     frame.indicators[args[2]]._series[args[3]].__sync_options__(args[4])
+                    # pylint: enable=protected-access
 
             case PY_CMD.ADD_CONTAINER, *_:
                 self.new_tab()

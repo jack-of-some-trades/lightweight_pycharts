@@ -211,7 +211,6 @@ class Watcher:
         if (parent := self._parent()) is not None:
             for watcher in parent._observers:
                 watcher.reset_updated_state()
-        logger.info(f"reset updated stated")
 
     def notify_set(self):
         "Notify the Watcher that an update occured in the given Indicator"
@@ -234,7 +233,6 @@ class Watcher:
 
         if all([ind._watcher.updated for ind in self.update_notifiers]):
             # Ready to Update, Fire Update then set updated Readiness State
-            logger.info(f"Updating Indicator: {parent.cls_name}, {parent.js_id}")
             parent.update_data(
                 **dict([(name, func()) for name, func in self.update_args.items()])
             )

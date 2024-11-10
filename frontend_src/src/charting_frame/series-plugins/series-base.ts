@@ -115,11 +115,16 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
 
     _id: string
     _indicator_id: string
-    primitiveIds: Accessor<string[]>
-    setPrimitiveIds: Setter<string[]>
     _parent_name: string | undefined
     _name: string | undefined
     s_type: Series_Type
+
+    _markers = new Map<string, lwc.SeriesMarker<lwc.Time>>()
+    _pricelines = new Map<string, lwc.IPriceLine>()
+
+    //Solid-JS signals so UI can be updated when Primitives are added/removed
+    primitiveIds: Accessor<string[]>
+    setPrimitiveIds: Setter<string[]>
 
     constructor(
         _id:string, 
@@ -136,6 +141,8 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
         this.s_type = _type
         this._pane = _pane
         this._series = this._create_series(_type)
+
+        this._markers = new Map<string, lwc.SeriesMarker<lwc.Time>>()
 
         const sig = createSignal<string[]>([])
         this.primitiveIds = sig[0]; this.setPrimitiveIds = sig[1]; 
@@ -228,16 +235,52 @@ export class SeriesBase<T extends Exclude<keyof SeriesOptionsMap_EXT, 'Custom'>>
     update(bar: SeriesDataTypeMap_EXT[T]) {this._series.update(bar)}
     setData(data: SeriesDataTypeMap_EXT[T][]) {this._series.setData(data)}
 
-    markers(): lwc.SeriesMarker<lwc.Time>[] {return this._series.markers()}
-    setMarkers(data: lwc.SeriesMarker<lwc.Time>[]){this._series.setMarkers(data)}
-
-    removePriceLine(line: lwc.IPriceLine){this._series.removePriceLine(line)}
-    createPriceLine(options: lwc.CreatePriceLineOptions): lwc.IPriceLine {return this._series.createPriceLine(options)}
+    markers(): lwc.SeriesMarker<lwc.Time>[] {return Array.from(this._markers.values())}
+    // setMarkers() OBE by inclusion of Markers Map.
+    // setMarkers(data: lwc.SeriesMarker<lwc.Time>[]){this._series.setMarkers(data)}
+    private _updateMarkers(){this._series.setMarkers(this.markers())}
+    updateMarker(mark_id :string, mark: lwc.SeriesMarker<lwc.Time>){ 
+        this._markers.set(mark_id, mark)
+        this._updateMarkers() 
+    }
+    removeMarker(mark_id :string){ 
+        if (this._markers.delete(mark_id)) this._updateMarkers()
+    }
+    filterMarkers(_ids: string[]){
+        _ids.forEach((id) => this._markers.delete(id))
+        this._updateMarkers()
+    }
+    removeAllMarkers(){
+        this._markers = new Map<string, lwc.SeriesMarker<lwc.Time>>()
+        this._updateMarkers()
+    }
     
-    //@ts-ignore: _series.Ls.jl === seriesAPI.serieses._primitives array for Lightweight-Charts v4.2.0
-    get primitiveWrapperArray(): PrimitiveBase[] { return this._series.Ls.jl }
-    //@ts-ignore: _series.Ls.jl[].Dl === seriesAPI.serieses._primitives[].PrimitiveBase Array for Lightweight-Charts v4.2.0
-    get primitives(): PrimitiveBase[] { return Array.from(this.primitiveWrapperArray, (wrap) => wrap.Dl)}
+    priceLines():lwc.IPriceLine[] {return Array.from(this._pricelines.values())}
+    removePriceLine(line_id:string){
+        let line = this._pricelines.get(line_id)
+        if (line !== undefined){
+            this._series.removePriceLine(line)
+            this._pricelines.delete(line_id)
+        }
+    }
+    updatePriceLine(line_id:string, options: lwc.CreatePriceLineOptions){
+        let line = this._pricelines.get(line_id)
+        if (line !== undefined) line.applyOptions(options)
+    }
+    removeAllPriceLines(){
+        //@ts-ignore: _series.Ls.Il === seriesAPI._series.CustomPriceLines[] array for Lightweight-Charts v4.2.0
+        this._series.Ls.Il = []
+        this._pricelines = new Map<string, lwc.IPriceLine>()
+    }
+    createPriceLine(id:string, options: lwc.CreatePriceLineOptions) {
+        this._pricelines.set(id, this._series.createPriceLine(options))
+    }
+    filterPriceLines(_ids: string[]){ _ids.forEach(this.removePriceLine.bind(this)) }
+
+    //@ts-ignore: _series.Ls.jl === seriesAPI._series._primitives array for Lightweight-Charts v4.2.0
+    get primitiveWrapperArray(): SeriesPrimitiveWrapper[] { return this._series.Ls.jl }
+    //@ts-ignore: _series.Ls.jl[].Dl === seriesAPI._series._primitives[].PrimitiveBase Array for Lightweight-Charts v4.2.0
+    get primitives(): PrimitiveBase[] { return Array.from(this.primitiveWrapperArray, (wrapper) => wrapper.Dl)}
 
     attachPrimitive(primitive: PrimitiveBase) {
         this._series.attachPrimitive(primitive)

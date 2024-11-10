@@ -11,7 +11,7 @@ from pandas import DataFrame, Timestamp, notnull
 from lightweight_pycharts.orm.options import PriceScaleOptions
 
 from .orm import types
-from .orm.types import Color, j_func
+from .orm.types import Color, SeriesMarker, SeriesPriceLine, j_func
 from .orm.enum import layouts
 from .orm.series import (
     AnySeriesData,
@@ -120,14 +120,28 @@ class JS_CMD(IntEnum):
     ADD_SERIES = auto()
     REMOVE_SERIES = auto()
     SET_LEGEND_LABEL = auto()
+    SET_INDICATOR_MENU = auto()
+    SET_INDICATOR_OPTIONS = auto()
+    UPDATE_PRICE_SCALE_OPTS = auto()
+
+    # Series Commands
     SET_SERIES_DATA = auto()
     CLEAR_SERIES_DATA = auto()
     UPDATE_SERIES_DATA = auto()
     CHANGE_SERIES_TYPE = auto()
     UPDATE_SERIES_OPTS = auto()
-    SET_INDICATOR_MENU = auto()
-    SET_INDICATOR_OPTIONS = auto()
-    UPDATE_PRICE_SCALE_OPTS = auto()
+
+    ADD_SERIES_MARKER = auto()
+    REMOVE_SERIES_MARKER = auto()
+    UPDATE_SERIES_MARKER = auto()
+    FILTER_SERIES_MARKERS = auto()
+    REMOVE_ALL_SERIES_MARKERS = auto()
+
+    ADD_SERIES_PRICELINE = auto()
+    REMOVE_SERIES_PRICELINE = auto()
+    UPDATE_SERIES_PRICELINE = auto()
+    FILTER_SERIES_PRICELINES = auto()
+    REMOVE_ALL_SERIES_PRICELINES = auto()
 
     # PyWebView Commands
     SHOW = auto()
@@ -379,6 +393,7 @@ def update_series_opts(
     func_str = ""
 
     # Strip the quotations from around the autoscale function if it exists
+    # so it is interpreted as a function and not a string
     if isinstance(opts, dict):
         if "autoscaleInfoProvider" in opts:
             func_str = str(opts["autoscaleInfoProvider"])
@@ -395,11 +410,106 @@ def update_series_opts(
 
 def update_scale_opts(
     frame_id: str, indicator_id: str, series_id: str, opts: PriceScaleOptions
-):
+) -> str:
     return (
         series_preamble(frame_id, indicator_id, series_id)
         + f"_ser.priceScale().applyOptions({dump(opts)});"
     )
+
+
+# region ------------------------ Series Markers ------------------------ #
+
+def remove_marker(
+    frame_id: str, indicator_id: str, series_id: str, mark_id: str
+) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.removeMarker('{mark_id}');"
+    )
+
+
+def update_marker(
+    frame_id: str, indicator_id: str, series_id: str, mark_id: str, marker: SeriesMarker
+) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.updateMarker('{mark_id}', {dump(marker)});"
+    )
+
+
+def filter_markers(
+    frame_id: str, indicator_id: str, series_id: str, mark_ids: list[str]
+) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.filterMarkers({dump(mark_ids)});"
+    )
+
+
+def remove_all_markers(frame_id: str, indicator_id: str, series_id: str) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id) + "_ser.removeAllMarkers();"
+    )
+
+
+# endregion
+
+
+# region ------------------------ Series Pricelines ------------------------ #
+
+
+def add_priceline(
+    frame_id: str,
+    indicator_id: str,
+    series_id: str,
+    line_id: str,
+    line: SeriesPriceLine,
+) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.createPriceLine('{line_id}', {dump(line)});"
+    )
+
+
+def remove_priceline(
+    frame_id: str, indicator_id: str, series_id: str, line_id: str
+) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.removePriceLine('{line_id}');"
+    )
+
+
+def update_priceline(
+    frame_id: str,
+    indicator_id: str,
+    series_id: str,
+    line_id: str,
+    line: SeriesPriceLine,
+) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.updatePriceLine('{line_id}', {dump(line)});"
+    )
+
+
+def filter_pricelines(
+    frame_id: str, indicator_id: str, series_id: str, line_ids: list[str]
+) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + f"_ser.filterPriceLines({dump(line_ids)});"
+    )
+
+
+def remove_all_pricelines(frame_id: str, indicator_id: str, series_id: str) -> str:
+    return (
+        series_preamble(frame_id, indicator_id, series_id)
+        + "_ser.removeAllPriceLines();"
+    )
+
+
+# endregion
 
 
 # endregion
@@ -489,16 +599,27 @@ CMD_ROLODEX: dict[JS_CMD, Callable[..., str | None]] = {
     JS_CMD.REMOVE_SERIES: remove_series,
     JS_CMD.SET_SERIES_DATA: set_series_data,
     JS_CMD.SET_LEGEND_LABEL: set_legend_label,
-    JS_CMD.CLEAR_SERIES_DATA: clear_series_data,
-    JS_CMD.UPDATE_SERIES_DATA: update_series_data,
-    JS_CMD.CHANGE_SERIES_TYPE: change_series_type,
-    JS_CMD.UPDATE_SERIES_OPTS: update_series_opts,
-    JS_CMD.UPDATE_PRICE_SCALE_OPTS: update_scale_opts,
     JS_CMD.ADD_IND_PRIMITIVE: add_ind_primitive,
     JS_CMD.REMOVE_IND_PRIMITIVE: remove_ind_primitive,
     JS_CMD.UPDATE_IND_PRIMITIVE: update_ind_primitive,
     JS_CMD.SET_INDICATOR_MENU: indicator_set_menu,
     JS_CMD.SET_INDICATOR_OPTIONS: indicator_set_options,
+    # ---- Series Commands ----
+    JS_CMD.CLEAR_SERIES_DATA: clear_series_data,
+    JS_CMD.UPDATE_SERIES_DATA: update_series_data,
+    JS_CMD.CHANGE_SERIES_TYPE: change_series_type,
+    JS_CMD.UPDATE_SERIES_OPTS: update_series_opts,
+    JS_CMD.UPDATE_PRICE_SCALE_OPTS: update_scale_opts,
+    JS_CMD.ADD_SERIES_MARKER: update_marker,
+    JS_CMD.REMOVE_SERIES_MARKER: remove_marker,
+    JS_CMD.UPDATE_SERIES_MARKER: update_marker,
+    JS_CMD.FILTER_SERIES_MARKERS: filter_markers,
+    JS_CMD.REMOVE_ALL_SERIES_MARKERS: remove_all_markers,
+    JS_CMD.ADD_SERIES_PRICELINE: add_priceline,
+    JS_CMD.REMOVE_SERIES_PRICELINE: remove_priceline,
+    JS_CMD.UPDATE_SERIES_PRICELINE: update_priceline,
+    JS_CMD.FILTER_SERIES_PRICELINES: filter_pricelines,
+    JS_CMD.REMOVE_ALL_SERIES_PRICELINES: remove_all_pricelines,
     # ---- PyWebView Commands ----
     JS_CMD.SHOW: lambda_none,
     JS_CMD.HIDE: lambda_none,
