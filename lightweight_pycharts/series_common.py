@@ -5,19 +5,16 @@ Classes that handle the implementation of Abstract and Specific Chart Series Obj
 Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeriesApi
 """
 
+from dataclasses import dataclass, field
 import logging
 from weakref import ref
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Literal, Optional, TYPE_CHECKING
 
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
-from lightweight_pycharts.orm.types import (
-    SeriesMarker,
-    SeriesMarkerSelectors,
-    SeriesPriceLine,
-    SeriesPriceLineSelectors,
-)
+from lightweight_pycharts.orm.enum import LineStyle, MarkerLoc, MarkerShape
+from lightweight_pycharts.orm.types import JS_Color, Time
 from lightweight_pycharts.util import ID_Dict
 
 from .js_cmd import JS_CMD
@@ -28,6 +25,84 @@ if TYPE_CHECKING:
     from .indicator import Indicator
 
 logger = logging.getLogger("lightweight-pycharts")
+
+
+MarkerSelectors = Literal[
+    "time", "id", "shape", "position", "id", "size", "color", "text"
+]
+
+
+@dataclass(slots=True)
+class Marker:
+    """
+    Represents a series marker.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SeriesMarker
+
+    The '_js_id' parameter is populated once the marker is added to a seriescommon object.
+    It should not be manipulated, but it can be used to uniquely identify markers within
+    a single seriescommon object.
+
+    The 'id' parameter is completely unused by this library so the User can define a naming
+    convention that can be filtered against.
+    """
+
+    def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Aware).
+        self.time = pd.Timestamp(self.time)
+        if self.time.tzinfo is not None:
+            self.time = self.time.tz_convert("UTC")
+        else:
+            self.time = self.time.tz_localize("UTC")
+
+    _js_id: Optional[str] = field(default=None, init=False, repr=False)
+    time: Time
+    shape: MarkerShape = MarkerShape.Circle
+    position: MarkerLoc = MarkerLoc.Below
+    id: Optional[str] = None
+    size: Optional[int] = 1
+    color: Optional[JS_Color] = None
+    text: Optional[str] = None
+
+
+PriceLineSelectors = Literal[
+    "title",
+    "id",
+    "price",
+    "color",
+    "lineWidth",
+    "lineVisible",
+    "lineStyle",
+    "axisLabelVisible",
+    "axisLabelColor",
+    "axisLabelTextColor",
+]
+
+
+@dataclass(slots=True)
+class PriceLine:
+    """
+    Represents a priceline.
+
+    The _js_id parameter is populated once the priceline is added to a seriescommon object.
+    It should not be manipulated, but it can be used to uniquely identify pricelines within
+    a single seriescommon object.
+
+    The id parameter is completely unused by this library so the User can define a naming
+    convention that can be filtered against.
+    """
+
+    _js_id: Optional[str] = field(default=None, init=False, repr=False)
+    title: str = ""
+    id: Optional[str] = None
+    price: float = 0
+    color: Optional[JS_Color] = None
+
+    lineWidth: int = 1
+    lineVisible: bool = True
+    lineStyle: LineStyle = LineStyle.Solid
+
+    axisLabelVisible: bool = True
+    axisLabelColor: Optional[JS_Color] = None
+    axisLabelTextColor: Optional[JS_Color] = None
 
 
 # This was placed here and not in orm.Series because of the Queue & Pane Dependency
@@ -284,11 +359,11 @@ class SeriesCommon:
     # pylint: disable=protected-access
 
     @property
-    def markers(self) -> list[SeriesMarker]:
+    def markers(self) -> list[Marker]:
         "A List of all the Markers applied to this Series"
         return list(self._markers.values())
 
-    def add_marker(self, marker: SeriesMarker):
+    def add_marker(self, marker: Marker):
         "Add the Given Marker to this series common object"
         if marker._js_id is not None and marker._js_id in self._markers:
             # Exceedingly Rare, the only way this would happen is if Pricelines are very
@@ -305,7 +380,7 @@ class SeriesCommon:
             (JS_CMD.ADD_SERIES_MARKER, *self._ids, marker._js_id, marker)
         )
 
-    def remove_marker(self, marker: SeriesMarker):
+    def remove_marker(self, marker: Marker):
         "Remove the given Marker from the series"
         if marker._js_id is not None and marker._js_id in self._markers:
             self._markers.pop(marker._js_id)
@@ -313,7 +388,7 @@ class SeriesCommon:
                 (JS_CMD.REMOVE_SERIES_MARKER, *self._ids, marker._js_id)
             )
 
-    def update_marker(self, marker: SeriesMarker):
+    def update_marker(self, marker: Marker):
         "Update the Options of the given Marker"
         if marker._js_id is None or marker._js_id not in self._markers:
             logger.debug(
@@ -332,7 +407,7 @@ class SeriesCommon:
                 )
             )
 
-    def filter_markers(self, key: SeriesMarkerSelectors, value: Any):
+    def filter_markers(self, key: MarkerSelectors, value: Any):
         "Remove all the markers that match the given key:value pair"
         keys = [k for k, v in self._markers.items() if v.getattr(key, None) == value]
 
@@ -347,11 +422,11 @@ class SeriesCommon:
         self._fwd_queue.put((JS_CMD.REMOVE_ALL_SERIES_MARKERS, *self._ids))
 
     @property
-    def pricelines(self) -> list[SeriesPriceLine]:
+    def pricelines(self) -> list[PriceLine]:
         "A List of all the PriceLines applied to this Series"
         return list(self._pricelines.values())
 
-    def add_priceline(self, priceline: SeriesPriceLine):
+    def add_priceline(self, priceline: PriceLine):
         "Add the Given Priceline to this series common object"
         if priceline._js_id is not None and priceline._js_id in self._pricelines:
             # Exceedingly Rare, the only way this would happen is if Pricelines are very
@@ -370,7 +445,7 @@ class SeriesCommon:
             (JS_CMD.ADD_SERIES_PRICELINE, *self._ids, priceline._js_id, priceline)
         )
 
-    def remove_priceline(self, priceline: SeriesPriceLine):
+    def remove_priceline(self, priceline: PriceLine):
         "Remove the given Priceline from the series"
         if priceline._js_id is not None and priceline._js_id in self._pricelines:
             self._pricelines.pop(priceline._js_id)
@@ -378,7 +453,7 @@ class SeriesCommon:
                 (JS_CMD.REMOVE_SERIES_PRICELINE, *self._ids, priceline._js_id)
             )
 
-    def update_priceline(self, priceline: SeriesPriceLine):
+    def update_priceline(self, priceline: PriceLine):
         "Update the Options of the given Priceline"
         if priceline._js_id is None or priceline._js_id not in self._pricelines:
             logger.debug(
@@ -397,7 +472,7 @@ class SeriesCommon:
                 )
             )
 
-    def filter_pricelines(self, key: SeriesPriceLineSelectors, value: Any):
+    def filter_pricelines(self, key: PriceLineSelectors, value: Any):
         "Remove all the pricelines that match the given key:value pair"
         keys = [k for k, v in self._pricelines.items() if v.getattr(key, None) == value]
 
@@ -446,7 +521,7 @@ class LineSeries(SeriesCommon):
     def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.LineData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.LineStyleOptions):
+    def apply_options(self, options: s.LineStyleOptions | dict):
         super().apply_options(options)
 
     def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):

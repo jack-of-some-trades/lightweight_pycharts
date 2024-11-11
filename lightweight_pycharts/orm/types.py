@@ -26,7 +26,7 @@ Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y", "E"]
 Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
 # Time: TypeAlias = Union[UTCTimestamp, BusinessDay, str]
 # BusinessDay is an object in the lightweight charts library. It is not included since
-# it only supports timefames of 'Day' or longer. Technically, this is true for string
+# it only supports timeframes of 'Day' or longer. Technically, this is true for string
 # as well, but this python library converts all times to a UTCtimestamp
 
 
@@ -234,14 +234,14 @@ class TF:
         mult = int(tf_str[0:-1])
         if period in PERIOD_CODES:
             return TF(mult, period)  # type: ignore
-        else:
-            raise TypeError(f"'{period}' not a valid Timeframe Period Code.")
+
+        raise TypeError(f"'{period}' not a valid Timeframe Period Code.")
 
     # region ---- TF Setters and Getters ----
 
     @property
     def mult(self) -> int:
-        "Timeframe Multipliar"
+        "Timeframe Multiplier"
         return self._mult
 
     @mult.setter
@@ -261,7 +261,7 @@ class TF:
 
     @property
     def toString(self) -> str:
-        "String representation fmt:{multipliar}{period}"
+        "String representation fmt:{multiplier}{period}"
         return f"{self._mult}{self._period}"
 
     @staticmethod
@@ -328,7 +328,7 @@ class TF:
 
 # pylint: disable="wrong-import-position"
 # Moving the Import to here fixes a circular import error w/Color
-from .enum import ColorType, MarkerShape, MarkerLoc, LineStyle
+from .enum import ColorType
 
 # Some of these will likely not be used unless further Javascript <-> Python integeration
 # is done; specifically around passing MouseEvents and Timeframe Changes back to Python.
@@ -341,7 +341,7 @@ class SolidColor:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SolidColor
     """
 
-    type: Literal[ColorType.Solid]
+    type: Literal[ColorType.Solid] = field(default=ColorType.Solid, init=False)
     color: Optional[JS_Color] = None
 
 
@@ -352,7 +352,9 @@ class VerticalGradientColor:
     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/VerticalGradientColor
     """
 
-    type: Literal[ColorType.VerticalGradient]
+    type: Literal[ColorType.VerticalGradient] = field(
+        default=ColorType.VerticalGradient, init=False
+    )
     topColor: Optional[JS_Color] = None
     bottomColor: Optional[JS_Color] = None
 
@@ -511,85 +513,6 @@ class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [Pr
 
 
 # endregion
-
-
-SeriesMarkerSelectors = Literal[
-    "time", "id", "shape", "position", "id", "size", "color", "text"
-]
-
-
-@dataclass(slots=True)
-class SeriesMarker:
-    """
-    Represents a series marker.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SeriesMarker
-
-    The '_js_id' parameter is populated once the marker is added to a seriescommon object.
-    It should not be manipulated, but it can be used to uniquely identify markers within
-    a single seriescommon object.
-
-    The 'id' parameter is completely unused by this library so the User can define a naming
-    convention that can be filtered against.
-    """
-
-    def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Aware).
-        self.time = Timestamp(self.time)
-        if self.time.tzinfo is not None:
-            self.time = self.time.tz_convert("UTC")
-        else:
-            self.time = self.time.tz_localize("UTC")
-
-    _js_id: Optional[str] = field(default=None, init=False, repr=False)
-    time: Time
-    shape: MarkerShape
-    position: MarkerLoc
-    id: Optional[str] = None
-    size: Optional[int] = 1
-    color: Optional[JS_Color] = None
-    text: Optional[str] = None
-
-
-SeriesPriceLineSelectors = Literal[
-    "title",
-    "id",
-    "price",
-    "color",
-    "lineWidth",
-    "lineVisible",
-    "lineStyle",
-    "axisLabelVisible",
-    "axisLabelColor",
-    "axisLabelTextColor",
-]
-
-
-@dataclass(slots=True)
-class SeriesPriceLine:
-    """
-    Represents a priceline.
-
-    The _js_id parameter is populated once the priceline is added to a seriescommon object.
-    It should not be manipulated, but it can be used to uniquely identify pricelines within
-    a single seriescommon object.
-
-    The id parameter is completely unused by this library so the User can define a naming
-    convention that can be filtered against.
-    """
-
-    _js_id: Optional[str] = field(default=None, init=False, repr=False)
-    title: str = ""
-    id: Optional[str] = None
-    price: float = 0
-    color: Optional[JS_Color] = None
-
-    lineWidth: int = 1
-    lineVisible: bool = True
-    lineStyle: LineStyle = LineStyle.Solid
-
-    axisLabelVisible: bool = True
-    axisLabelColor: Optional[JS_Color] = None
-    axisLabelTextColor: Optional[JS_Color] = None
-
 
 # endregion
 

@@ -11,7 +11,7 @@ from pandas import DataFrame, Timestamp, notnull
 from lightweight_pycharts.orm.options import PriceScaleOptions
 
 from .orm import types
-from .orm.types import Color, SeriesMarker, SeriesPriceLine, j_func
+from .orm.types import Color, j_func
 from .orm.enum import layouts
 from .orm.series import (
     AnySeriesData,
@@ -419,6 +419,7 @@ def update_scale_opts(
 
 # region ------------------------ Series Markers ------------------------ #
 
+
 def remove_marker(
     frame_id: str, indicator_id: str, series_id: str, mark_id: str
 ) -> str:
@@ -429,7 +430,7 @@ def remove_marker(
 
 
 def update_marker(
-    frame_id: str, indicator_id: str, series_id: str, mark_id: str, marker: SeriesMarker
+    frame_id: str, indicator_id: str, series_id: str, mark_id: str, marker: object
 ) -> str:
     return (
         series_preamble(frame_id, indicator_id, series_id)
@@ -459,11 +460,7 @@ def remove_all_markers(frame_id: str, indicator_id: str, series_id: str) -> str:
 
 
 def add_priceline(
-    frame_id: str,
-    indicator_id: str,
-    series_id: str,
-    line_id: str,
-    line: SeriesPriceLine,
+    frame_id: str, indicator_id: str, series_id: str, line_id: str, line: object
 ) -> str:
     return (
         series_preamble(frame_id, indicator_id, series_id)
@@ -481,11 +478,7 @@ def remove_priceline(
 
 
 def update_priceline(
-    frame_id: str,
-    indicator_id: str,
-    series_id: str,
-    line_id: str,
-    line: SeriesPriceLine,
+    frame_id: str, indicator_id: str, series_id: str, line_id: str, line: object
 ) -> str:
     return (
         series_preamble(frame_id, indicator_id, series_id)

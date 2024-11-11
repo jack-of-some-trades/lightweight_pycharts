@@ -13,7 +13,7 @@ import pandas as pd
 import pandas_market_calendars as mcal
 
 from .types import TF, Time, JS_Color, PriceFormat, BaseValuePrice, LineWidth, j_func
-from .enum import LineStyle, PriceLineSource, LastPriceAnimationMode, LineType
+from .enum import LineStyle, PriceLineSource, LineType
 
 
 logger = logging.getLogger("lightweight-pycharts")

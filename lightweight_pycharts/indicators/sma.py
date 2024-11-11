@@ -12,14 +12,10 @@ from lightweight_pycharts.indicator import (
     default_output_property,
     param,
 )
-from lightweight_pycharts.orm.enum import (
-    LineStyle,
-    MarkerLoc,
-    MarkerShape,
-)
+from lightweight_pycharts.orm.enum import LineStyle
 from lightweight_pycharts.orm.series import LineStyleOptions, SingleValueData
 from lightweight_pycharts import series_common as sc
-from lightweight_pycharts.orm.types import Color, SeriesMarker, SeriesPriceLine
+from lightweight_pycharts.orm.types import Color
 
 
 class Method(Enum):
@@ -63,9 +59,6 @@ class SMA(Indicator):
             LineStyleOptions(lineStyle=LineStyle.SparseDotted)
         )
 
-        self.pl1 = SeriesPriceLine(title="+5%", color="#26a69a77")
-        self.pl2 = SeriesPriceLine(title="-5%", color="#ef535077")
-
         self.update_options(opts)
         self.init_menu(opts)
         self.recalculate()
@@ -96,37 +89,6 @@ class SMA(Indicator):
     def update_data(self, time: pd.Timestamp, data: pd.Series, *_, **__):
         self._data[time] = data.tail(self.period).mean()
         self.line_series.update_data(SingleValueData(time, self._data.iloc[-1]))
-
-        self.pl1.price = self._data[time] * 1.05
-        self.pl2.price = self._data[time] * 0.95
-
-        self.line_series.update_priceline(self.pl1)
-        self.line_series.update_priceline(self.pl2)
-
-        self.check_markers()
-
-    def check_markers(self):
-        "Add Markers when crossing $20 to check system"
-        if self._data.iloc[-1] < 20 and self._data.iloc[-2] > 20:
-            # Crossed Down
-            self.line_series.add_marker(
-                SeriesMarker(
-                    self[-1],
-                    MarkerShape.Arrow_Down,
-                    MarkerLoc.Below,
-                    color="#ef5350",
-                )
-            )
-        elif self._data.iloc[-1] > 20 and self._data.iloc[-2] < 20:
-            # Crossed Up
-            self.line_series.add_marker(
-                SeriesMarker(
-                    self[-1],
-                    MarkerShape.Arrow_Up,
-                    MarkerLoc.Above,
-                    color="#26a69a",
-                )
-            )
 
     @default_output_property
     def average(self) -> pd.Series:

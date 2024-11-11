@@ -1,8 +1,6 @@
 """ Enumeration Defenitions """
 
-from enum import IntEnum, StrEnum, Enum, auto
-
-from .types import Color
+from enum import IntEnum, StrEnum, auto
 
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
