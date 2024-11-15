@@ -5,11 +5,11 @@ from weakref import ref
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from dataclasses import dataclass
-from typing import Any, Optional, TYPE_CHECKING, Self
+from typing import Any, Optional, TYPE_CHECKING
 
 
 from .js_cmd import JS_CMD
-from .orm.series import SingleValueData
+from .orm.series_data import SingleValueData
 
 from .orm.types import JS_Color
 

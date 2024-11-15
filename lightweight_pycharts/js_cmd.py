@@ -8,21 +8,11 @@ from dataclasses import is_dataclass, asdict
 
 from pandas import DataFrame, Timestamp, notnull
 
-from lightweight_pycharts.orm.options import PriceScaleOptions
+from .orm.types import Color, j_func, TF
 
-from .orm import types
-from .orm.types import Color, j_func
-from .orm.enum import layouts
-from .orm.series import (
-    AnySeriesData,
-    AnySeriesOptions,
-    SingleValueData,
-    WhitespaceData,
-    SeriesType,
-)
+# @pylint: disable=invalid-name, line-too-long, missing-function-docstring
 
 
-# @pylint: disable=invalid-name, line-too-long
 class ORM_JSONEncoder(JSONEncoder):
     "Enhanced JSON Encoder that encodes various pycharts/pandas objects in JSON"
 
@@ -42,11 +32,10 @@ class ORM_JSONEncoder(JSONEncoder):
             return repr(o)
         if isinstance(o, bool):
             return "true" if o else "false"
-        if isinstance(o, j_func):
-            print("j_func call")
-            return str(o)
         if isinstance(o, Enum):
             return o.value
+        if isinstance(o, j_func):
+            return o.func
         return super().default(o)
 
 
@@ -152,7 +141,6 @@ class JS_CMD(IntEnum):
     MINIMIZE = auto()
 
 
-# @pylint: disable=missing-function-docstring
 # region ------------------------ Window ------------------------ #
 
 
@@ -193,7 +181,7 @@ def set_window_timeframes(opts: dict) -> str:
     return f"api.update_timeframe_topbar_opts({dump(opts)});"
 
 
-def update_symbol_search(symbols: list[types.Symbol]) -> str:
+def update_symbol_search(symbols: list) -> str:
     return f"api.populate_search_symbols({dump(symbols)});"
 
 
@@ -210,7 +198,7 @@ def set_user_colors(opts: list[Color]):
 # region ------------------------ Container & Frame ------------------------ #
 
 
-def set_layout(container_id: str, layout: layouts) -> str:
+def set_layout(container_id: str, layout: Enum) -> str:
     return f"{container_id}.set_layout({layout});"
 
 
@@ -226,19 +214,19 @@ def add_pane(frame_id: str, pane_id: str) -> str:
     return f"var {pane_id} = {frame_id}.add_pane('{pane_id}');"
 
 
-def set_frame_series_type(frame_id: str, series: SeriesType) -> str:
+def set_frame_series_type(frame_id: str, series: Enum) -> str:
     return f"{frame_id}.set_series_type({series});"
 
 
-def set_frame_symbol(frame_id: str, symbol: types.Symbol) -> str:
+def set_frame_symbol(frame_id: str, symbol: object) -> str:
     return f"{frame_id}.set_symbol({dump(symbol)});"
 
 
-def set_frame_timeframe(frame_id: str, timeframe: types.TF) -> str:
+def set_frame_timeframe(frame_id: str, timeframe: TF) -> str:
     return f"{frame_id}.set_timeframe('{timeframe.toString}');"
 
 
-def set_whitespace_data(frame_id: str, data: DataFrame, p_data: SingleValueData) -> str:
+def set_whitespace_data(frame_id: str, data: DataFrame, p_data: object) -> str:
     return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')}, {dump(p_data)});"
 
 
@@ -246,9 +234,7 @@ def clear_whitespace_data(frame_id: str) -> str:
     return f"{frame_id}.set_whitespace_data([]);"
 
 
-def update_whitespace_data(
-    frame_id: str, data: WhitespaceData, p_data: SingleValueData
-) -> str:
+def update_whitespace_data(frame_id: str, data: object, p_data: object) -> str:
     return f"{frame_id}.update_whitespace_data({dump(data)}, {dump(p_data)});"
 
 
@@ -332,7 +318,7 @@ def add_series(
     frame_id: str,
     indicator_id: str,
     series_id: str,
-    series_type: SeriesType,
+    series_type: Enum,
     name: Optional[str],
 ) -> str:
     return (
@@ -362,7 +348,7 @@ def clear_series_data(frame_id: str, indicator_id: str, series_id: str) -> str:
 
 
 def update_series_data(
-    frame_id: str, indicator_id: str, series_id: str, data: AnySeriesData
+    frame_id: str, indicator_id: str, series_id: str, data: object
 ) -> str:
     return (
         series_preamble(frame_id, indicator_id, series_id)
@@ -374,7 +360,7 @@ def change_series_type(
     frame_id: str,
     indicator_id: str,
     series_id: str,
-    series_type: SeriesType,
+    series_type: Enum,
     data: DataFrame,
 ) -> str:
     return (
@@ -384,32 +370,16 @@ def change_series_type(
 
 
 def update_series_opts(
-    frame_id: str, indicator_id: str, series_id: str, opts: AnySeriesOptions | dict
+    frame_id: str, indicator_id: str, series_id: str, opts: object
 ) -> str:
-    rtn_str = (
+    return j_func.format(
         series_preamble(frame_id, indicator_id, series_id)
         + f"_ser.applyOptions({dump(opts)});"
     )
-    func_str = ""
-
-    # Strip the quotations from around the autoscale function if it exists
-    # so it is interpreted as a function and not a string
-    if isinstance(opts, dict):
-        if "autoscaleInfoProvider" in opts:
-            func_str = str(opts["autoscaleInfoProvider"])
-    elif opts.autoscaleInfoProvider is not None:
-        func_str = str(opts.autoscaleInfoProvider)
-
-    if func_str != "":
-        strt = rtn_str.find(func_str)
-        end = strt + len(func_str)
-        rtn_str = rtn_str[: strt - 1] + func_str + rtn_str[end + 1 :]
-
-    return rtn_str
 
 
 def update_scale_opts(
-    frame_id: str, indicator_id: str, series_id: str, opts: PriceScaleOptions
+    frame_id: str, indicator_id: str, series_id: str, opts: object
 ) -> str:
     return (
         series_preamble(frame_id, indicator_id, series_id)

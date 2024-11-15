@@ -1,20 +1,16 @@
-""" Series Datatypes and Custom Pandas Series DataFrame accessor """
+"Pandas Dataframe extentions to manage Series Data. "
 
 from __future__ import annotations
 import logging
 from datetime import time as dt_time
 from math import ceil, floor, inf
-from inspect import signature
-from enum import IntEnum, auto
-from typing import Literal, Optional, Self, TypeAlias, Dict, Any
-from dataclasses import asdict, dataclass, field
+from typing import Optional, Any
 
 import pandas as pd
 import pandas_market_calendars as mcal
 
-from .types import TF, Time, JS_Color, PriceFormat, BaseValuePrice, LineWidth, j_func
-from .enum import LineStyle, PriceLineSource, LineType
-
+from .orm import series_data as sd
+from .orm.types import TF
 
 logger = logging.getLogger("lightweight-pycharts")
 
@@ -32,15 +28,14 @@ ALT_EXCHANGE_NAMES = {
 }
 
 
-# pylint: disable=line-too-long
-# pylint: disable=invalid-name
+# pylint: disable=line-too-long, invalid-name
 # region ------------------------------ DataFrame Update Function ------------------------------ #
 
 
 def update_dataframe(
     df: pd.DataFrame,
-    data: AnySeriesData | dict[str, Any],
-    v_map: Optional[ArgMap | dict[str, str]] = None,
+    data: sd.AnySeriesData | dict[str, Any],
+    v_map: Optional[sd.ArgMap | dict[str, str]] = None,
 ) -> pd.DataFrame:
     """
     Convenience Function to Update a Pandas DataFrame from a given piece of data w/ optional rename
@@ -48,7 +43,7 @@ def update_dataframe(
     Unfortunately, no, The dataframe cannot be efficiently updated in place since a reference
     is passed. The new DataFrame can only be returned to update the reference in the higher scope.
     """
-    if isinstance(data, AnySeriesData):
+    if isinstance(data, sd.AnySeriesData):
         data_dict = data.as_dict
     else:
         data_dict = data.copy()
@@ -56,7 +51,7 @@ def update_dataframe(
     time = data_dict.pop("time")  # Must have a 'time':pd.Timestamp pair
 
     if v_map is not None:
-        map_dict = v_map.as_dict if isinstance(v_map, ArgMap) else v_map.copy()
+        map_dict = v_map.as_dict if isinstance(v_map, sd.ArgMap) else v_map.copy()
 
         # Rename and drop old keys
         for key in set(map_dict.keys()).intersection(data_dict.keys()):
@@ -83,7 +78,7 @@ def update_dataframe(
 # TODO: Integrate a method of tracking what is displayed and use that to limit the amount displayed.
 # Currently, All data is sent to the screen. This may be thousands of data-points that may never be
 # viewed. To limit the load on the Multi-processor fwd_queue an 'infinite history' system is needed
-# i.e. : https://tradingview.github.io/lightweight-charts/tutorials/demos/infinite-history
+# e.g. : https://tradingview.github.io/lightweight-charts/tutorials/demos/infinite-history
 #
 # I imagine this code will originate w/ a JS Window API callback in the rtn_queue. From there,
 # The Main_Series of the respective frame will handle the call; Updating a 'bars-back' variable in
@@ -91,7 +86,6 @@ def update_dataframe(
 # so each indicator can inform their respective series_common elements to display a certain range.
 
 
-@pd.api.extensions.register_dataframe_accessor("lwc_df")
 class Series_DF:
     "Pandas DataFrame Extention to Typecheck for Lightweight_PyCharts"
 
@@ -105,7 +99,7 @@ class Series_DF:
             return
 
         if pandas_df.size == 0:
-            self._data_type = SeriesType.WhitespaceData
+            self._data_type = sd.SeriesType.WhitespaceData
             self._tf = TF(1, "E")
             logger.warning("DataFrame has no Data.")
             return
@@ -136,7 +130,7 @@ class Series_DF:
             pandas_df["time"] = pandas_df["time"].dt.tz_localize("UTC")
 
         # Data Type is used to simplify updateing. Should be considered a constant
-        self._data_type: AnyBasicSeriesType = SeriesType.data_type(pandas_df)
+        self._data_type: sd.AnyBasicSeriesType = sd.SeriesType.data_type(pandas_df)
 
         self._tf, self._pd_tf = self._determine_tf(pandas_df)
         self.df = pandas_df.set_index("time")  # Set Time as index after TF check
@@ -181,7 +175,7 @@ class Series_DF:
         return self._pd_tf
 
     @property
-    def data_type(self) -> AnyBasicSeriesType:
+    def data_type(self) -> sd.AnyBasicSeriesType:
         "The underlying type of series data"
         return self._data_type
 
@@ -201,7 +195,7 @@ class Series_DF:
         return self.curr_bar_open_time + self._pd_tf
 
     @property
-    def last_bar(self) -> AnyBasicData:
+    def last_bar(self) -> sd.AnyBasicData:
         "The current bar (last entry in the dataframe) returned as AnyBasicType"
         data_dict = self.df.iloc[-1].to_dict()
         data_dict["time"] = self.df.index[-1]
@@ -318,14 +312,14 @@ class Series_DF:
 
         return TF(1, "E"), interval
 
-    def _to_dataclass_instance_(self, data_dict: dict) -> AnyBasicData:
+    def _to_dataclass_instance_(self, data_dict: dict) -> sd.AnyBasicData:
         "Returns a Dataclass instance of the given data that matches the datatype of the Series_DF"
-        if self.data_type == SeriesType.OHLC_Data:
-            return OhlcData.from_dict(data_dict)
-        elif self.data_type == SeriesType.SingleValueData:
-            return SingleValueData.from_dict(data_dict)
+        if self.data_type == sd.SeriesType.OHLC_Data:
+            return sd.OhlcData.from_dict(data_dict)
+        elif self.data_type == sd.SeriesType.SingleValueData:
+            return sd.SingleValueData.from_dict(data_dict)
         else:
-            return WhitespaceData.from_dict(data_dict)
+            return sd.WhitespaceData.from_dict(data_dict)
 
     def populate_ext_col(
         self,
@@ -340,8 +334,8 @@ class Series_DF:
     # Next line Silences a False-Positive Flag. Dunno why it thinks last_data's vars aren't initialized
     # @pylint: disable=attribute-defined-outside-init
     def update_from_tick(
-        self, data: AnyBasicData, accumulate: bool = False
-    ) -> AnyBasicData:
+        self, data: sd.AnyBasicData, accumulate: bool = False
+    ) -> sd.AnyBasicData:
         """
         Updates the OHLC / Single Value DataFrame from the given bar. The Bar is assumed to be
         a tick update with the assumption a new bar should not be created.
@@ -349,15 +343,15 @@ class Series_DF:
         Volume is overwritten by default. Set Accumulate(Volume) = True if desired,
         Returns Basic Data that is of the same data type (OHLC / Single Value) as the data set.
         """
-        if not isinstance(data, (SingleValueData, OhlcData)):
+        if not isinstance(data, (sd.SingleValueData, sd.OhlcData)):
             return data  # Nothing to update
         last_data = self.last_bar
 
         # Update price
         match last_data, data:
-            case SingleValueData(), SingleValueData():
+            case sd.SingleValueData(), sd.SingleValueData():
                 last_data.value = data.value
-            case OhlcData(), SingleValueData():
+            case sd.OhlcData(), sd.SingleValueData():
                 last_data.high = max(
                     (last_data.high if last_data.high is not None else -inf),
                     (data.value if data.value is not None else -inf),
@@ -368,7 +362,7 @@ class Series_DF:
                 )
                 last_data.close = data.value
                 data.value = last_data.close
-            case OhlcData(), OhlcData():
+            case sd.OhlcData(), sd.OhlcData():
                 last_data.high = max(
                     (last_data.high if last_data.high is not None else -inf),
                     (data.high if data.high is not None else -inf),
@@ -379,9 +373,9 @@ class Series_DF:
                 )
                 last_data.close = data.close
             # Last Two are VERY unlikely Scenarios
-            case SingleValueData(), OhlcData():
+            case sd.SingleValueData(), sd.OhlcData():
                 last_data.value = data.close
-            case WhitespaceData(), _:
+            case sd.WhitespaceData(), _:
                 last_data = data
                 if accumulate:  # Needed as setup for volume accumulation
                     data.volume = 0
@@ -400,20 +394,20 @@ class Series_DF:
         # The next line ensures the return dataclass matches the type stored by the Dataframe.
         return self._to_dataclass_instance_(last_data.as_dict)
 
-    def update(self, data: AnyBasicData) -> AnyBasicData:
+    def update(self, data: sd.AnyBasicData) -> sd.AnyBasicData:
         "Update the OHLC / Single Value DataFrame from a new bar. Data Assumed as next in sequence"
         data_dict = data.as_dict
         # Convert Data to proper format (if needed) then append. Unused values are popped so
         # Additional, unused, columns are not added to the dataframe
         match self._data_type, data:
-            case SeriesType.OHLC_Data, SingleValueData():
+            case sd.SeriesType.OHLC_Data, sd.SingleValueData():
                 # Ensure all ohlc are defined when storeing OHLC data from a single data point
                 data_dict["open"] = data_dict["value"]
                 data_dict["high"] = data_dict["value"]
                 data_dict["low"] = data_dict["value"]
                 data_dict["close"] = data_dict.pop("value")
 
-            case SeriesType.SingleValueData, OhlcData():
+            case sd.SeriesType.SingleValueData, sd.OhlcData():
                 if "open" in data_dict:
                     data_dict.pop("open")
                 if "high" in data_dict:
@@ -538,13 +532,13 @@ class Whitespace_DF:
             days = 0
         return pd.Timedelta(days=days, hours=_time.hour, minutes=_time.minute)
 
-    def _simple_extend(self) -> AnyBasicData:
+    def _simple_extend(self) -> sd.AnyBasicData:
         "Extend the dataframe by the current timestep without checking against a calendar"
         next_bar_time: pd.Timestamp = self.df["time"].iloc[-1] + self.pd_tf
         if self.only_days:
             next_bar_time = next_bar_time.normalize()
 
-        rtn_data = WhitespaceData(next_bar_time)
+        rtn_data = sd.WhitespaceData(next_bar_time)
         self.df = pd.concat(
             [self.df, pd.DataFrame([{"time": rtn_data.time}])], ignore_index=True
         )
@@ -573,7 +567,7 @@ class Whitespace_DF:
         else:
             raise KeyError(f"Whitespace DF contains multiple indexs of {curr_time}?")
 
-    def extend(self) -> AnyBasicData:
+    def extend(self) -> sd.AnyBasicData:
         "Extends the dataframe with one datapoint of whitespace. This whitespace datapoint is a valid trading time."
         if self.simple_override:  # Don't Bother with calendar if 24/7 market
             return self._simple_extend()
@@ -595,7 +589,7 @@ class Whitespace_DF:
 
         if self.calendar.open_at_time(schedule, next_bar_time):
             # Ticking forward by the chart's timeframe kept us in trading hours. Use that.
-            rtn_data = WhitespaceData(next_bar_time)
+            rtn_data = sd.WhitespaceData(next_bar_time)
         else:
             # Next timestep is outside of trading hours, grab next open
             todays_ind = schedule.index.get_indexer_for(
@@ -605,7 +599,7 @@ class Whitespace_DF:
                 raise ValueError("Today not found... How does this happen????")
 
             next_trade_day = schedule.iloc[todays_ind + 1]
-            rtn_data = WhitespaceData(next_trade_day[self.mkt_start])
+            rtn_data = sd.WhitespaceData(next_trade_day[self.mkt_start])
 
         if self.only_days:
             rtn_data.time = rtn_data.time.normalize()  # type: ignore (time guaranteed to be a Timestamp)
@@ -615,544 +609,3 @@ class Whitespace_DF:
             [self.df, pd.DataFrame([{"time": rtn_data.time}])], ignore_index=True
         )
         return rtn_data
-
-
-# endregion
-
-
-# region --------------------------------- Series Name Mappers --------------------------------- #
-
-
-@dataclass
-class ArgMap:
-    """
-    Renaming map to specify how the columns of a DataFrame should map to a Displayable Series.
-    This object can cover value mapping for Line, Histogram, and Bar series
-
-    If needed, new names can be dynamically added for custom series behavior. Note: This would
-    require a custom series primitive to be made within the TypeScript portion of this module.
-    """
-
-    value: Optional[str] = None
-    close: Optional[str] = None
-    open: Optional[str] = None
-    high: Optional[str] = None
-    low: Optional[str] = None
-    color: Optional[str] = None
-    custom_values: Optional[str] = None
-
-    def __post_init__(self):
-        # Ensure cross display compatability between single value and OHLC series
-        if self.value is None and self.close is not None:
-            self.value = self.close
-        elif self.close is None and self.value is not None:
-            self.close = self.value
-
-    @property
-    def as_dict(self) -> Dict[str, str]:
-        "Object as a dictionary with Nones and equivalent kv pairs (e.g. 'value' == 'value') dropped"
-        return asdict(
-            self,
-            dict_factory=lambda x: {k: v for (k, v) in x if v is not None and k != v},
-        )
-
-
-class CandleValueMap(ArgMap):
-    "Value Map Extention for Candlestick and Rounded Candlestick Series"
-    wickColor: Optional[str] = None
-    borderColor: Optional[str] = None
-
-
-class AreaValueMap(ArgMap):
-    "Value Map Extention for an Area Series"
-    lineColor: Optional[str] = None  # TODO: Remove once Line and Area are unified
-    topColor: Optional[str] = None
-    bottomColor: Optional[str] = None
-
-
-class BaselineValueMap(ArgMap):
-    "Value Map Extention for a Baseline Series"
-    topLineColor: Optional[str] = None
-    topFillColor1: Optional[str] = None
-    topFillColor2: Optional[str] = None
-    bottomLineColor: Optional[str] = None
-    bottomFillColor1: Optional[str] = None
-    bottomFillColor2: Optional[str] = None
-
-
-# endregion
-
-# region ---------------------------------- Series Data Types ---------------------------------- #
-
-
-@dataclass
-class WhitespaceData:
-    """
-    Represents a whitespace data item, which is a data point without a value.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/WhitespaceData
-    """
-
-    time: Time
-    custom_values: Optional[Dict[str, Any]] = field(default=None, kw_only=True)
-    # Anything placed in the custom_values dict can be retrieved by a TS/JS LWC Plugin.
-    # Any other values given to a JavaScript Lightweight_Charts series through setData()
-    # are ignored and deleted and thus are inaccessible beyond python.
-
-    def __post_init__(self):  # Ensure Consistent Time Format (UTC, TZ Aware).
-        self.time = pd.Timestamp(self.time)
-        if self.time.tzinfo is not None:
-            self.time = self.time.tz_convert("UTC")
-        else:
-            self.time = self.time.tz_localize("UTC")
-
-    @property
-    def as_dict(self) -> dict:
-        "The Object in dictionary form with 'Nones' Dropped."
-        return asdict(  # Drop Nones
-            self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
-        )
-
-    @classmethod
-    def from_dict(cls, obj: dict) -> Self:
-        "Create an instance from a dict ignoring extraneous params"
-        params = signature(cls).parameters
-        return cls(**{k: v for k, v in obj.items() if k in params})
-
-
-@dataclass
-class OhlcData(WhitespaceData):
-    """
-    Represents a bar with a time, open, high, low, and close prices.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/OhlcData
-    """
-
-    open: Optional[float] = None
-    high: Optional[float] = None
-    low: Optional[float] = None
-    close: Optional[float] = None
-    volume: Optional[float] = None  # Added by this library
-
-
-@dataclass
-class BarData(OhlcData):
-    """
-    Structure describing a single item of data for bar series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BarData
-    """
-
-    color: Optional[str] = None
-
-
-@dataclass
-class CandlestickData(OhlcData):
-    """
-    Structure describing a single item of data for candlestick series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/CandlestickData
-    """
-
-    color: Optional[str] = None
-    wickColor: Optional[str] = None
-    borderColor: Optional[str] = None
-
-
-@dataclass
-class RoundedCandleData(OhlcData):
-    """
-    Structure describing a single item of data for rounded candlestick series.
-    """
-
-    color: Optional[str] = None
-    wickColor: Optional[str] = None
-
-
-@dataclass
-class SingleValueData(WhitespaceData):
-    """
-    Represents a data point of a single-value series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SingleValueData
-    """
-
-    value: Optional[float] = None
-    volume: Optional[float] = None  # Added by this library
-
-
-@dataclass
-class HistogramData(SingleValueData):
-    """
-    Structure describing a single item of data for histogram series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/HistogramData
-    """
-
-    color: Optional[JS_Color] = None
-
-
-@dataclass
-class LineData(SingleValueData):
-    """
-    Structure describing a single item of data for line series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LineData
-    """
-
-    color: Optional[JS_Color] = None
-
-
-@dataclass
-class AreaData(SingleValueData):
-    """
-    Structure describing a single item of data for area series.
-    Docs:https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AreaData
-    """
-
-    lineColor: Optional[JS_Color] = None
-    topColor: Optional[JS_Color] = None
-    bottomColor: Optional[JS_Color] = None
-
-
-@dataclass
-class BaselineData(SingleValueData):
-    """
-    Structure describing a single item of data for baseline series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BaselineData
-    """
-
-    topLineColor: Optional[JS_Color] = None
-    topFillColor1: Optional[JS_Color] = None
-    topFillColor2: Optional[JS_Color] = None
-    bottomLineColor: Optional[JS_Color] = None
-    bottomFillColor1: Optional[JS_Color] = None
-    bottomFillColor2: Optional[JS_Color] = None
-
-
-AnyBasicData: TypeAlias = WhitespaceData | SingleValueData | OhlcData
-
-AnySeriesData: TypeAlias = (
-    WhitespaceData
-    | SingleValueData
-    | OhlcData
-    | LineData
-    | AreaData
-    | HistogramData
-    | BaselineData
-    | BarData
-    | CandlestickData
-    | RoundedCandleData
-)
-
-
-class SeriesType(IntEnum):
-    """
-    Represents the type of options for each series type.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriestype
-
-    This Enum is ultimately a Super set of of the Series Types described in the above documentation.
-    In actuality this matches the Series_Type enum in util.ts
-    """
-
-    WhitespaceData = 0
-
-    SingleValueData = auto()
-    Line = auto()
-    Area = auto()
-    Baseline = auto()
-    Histogram = auto()
-
-    OHLC_Data = auto()
-    Bar = auto()
-    Candlestick = auto()
-
-    Rounded_Candle = auto()
-
-    @staticmethod
-    def OHLC_Derived(s_type: SeriesType | AnySeriesData) -> bool:
-        "Returns True if the given SeriesType or Data Class is derived from OHLC Data"
-        if isinstance(s_type, AnySeriesData):
-            return isinstance(
-                s_type,
-                (OhlcData, BarData, CandlestickData, RoundedCandleData),
-            )
-        else:
-            return s_type in (
-                SeriesType.OHLC_Data,
-                SeriesType.Bar,
-                SeriesType.Candlestick,
-                SeriesType.Rounded_Candle,
-            )
-
-    @staticmethod
-    def SValue_Derived(s_type: SeriesType | AnySeriesData) -> bool:
-        "Returns True if the given SeriesType or Data Class is derived from Single-Value Data"
-        if isinstance(s_type, AnySeriesData):
-            return isinstance(
-                s_type,
-                (
-                    SingleValueData,
-                    LineData,
-                    AreaData,
-                    HistogramData,
-                    BaselineData,
-                ),
-            )
-        else:
-            return s_type in (
-                SeriesType.SingleValueData,
-                SeriesType.Line,
-                SeriesType.Area,
-                SeriesType.Baseline,
-                SeriesType.Histogram,
-            )
-
-    @staticmethod
-    def data_type(df: pd.DataFrame) -> AnyBasicSeriesType:
-        "Checks the column names of a DataFrame and return the data type"
-        column_names = set(df.columns)
-        if "close" in column_names:
-            return SeriesType.OHLC_Data
-        elif "value" in column_names:
-            return SeriesType.SingleValueData
-        else:  # Only a time Column Exists
-            return SeriesType.WhitespaceData
-
-    @property
-    def cls(self) -> type:
-        "Returns the DataClass this Type corresponds too"
-        match self:
-            case SeriesType.Bar:
-                return BarData
-            case SeriesType.Candlestick:
-                return CandlestickData
-            case SeriesType.Rounded_Candle:
-                return RoundedCandleData
-            case SeriesType.Area:
-                return AreaData
-            case SeriesType.Baseline:
-                return BaselineData
-            case SeriesType.Line:
-                return LineData
-            case SeriesType.Histogram:
-                return HistogramData
-            case SeriesType.SingleValueData:
-                return SingleValueData
-            case SeriesType.OHLC_Data:
-                return OhlcData
-            case _:  # Whitespace and Custom
-                return WhitespaceData
-
-    @property
-    def params(self) -> set:
-        "A set of the Parameters that compose this Series Type"
-        return set(signature(self.cls).parameters.keys())
-
-
-AnyBasicSeriesType = Literal[
-    SeriesType.WhitespaceData, SeriesType.SingleValueData, SeriesType.OHLC_Data
-]
-
-
-# endregion
-
-
-@dataclass
-class SeriesOptionsCommon:
-    """
-    Represents options common for all types of series. All options may be Optional,
-    but the Lightweight Charts API does assign default values to each. See the Docs for default values
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SeriesOptionsCommon
-    """
-
-    title: Optional[str] = None
-    visible: Optional[bool] = None
-    lastValueVisible: Optional[bool] = None
-    priceScaleId: Optional[str] = None
-
-    priceLineVisible: Optional[bool] = None
-    priceLineWidth: Optional[LineWidth] = None
-    priceLineColor: Optional[JS_Color] = None
-    priceLineStyle: Optional[LineStyle] = None
-    priceLineSource: Optional[PriceLineSource] = None
-    priceFormat: Optional[PriceFormat] = None
-
-    # BaseLine is for 'IndexTo' and Percent Modes
-    baseLineVisible: Optional[bool] = None
-    baseLineWidth: Optional[LineWidth] = None
-    baseLineStyle: Optional[LineStyle] = None
-    baseLineColor: Optional[JS_Color] = None
-    autoscaleInfoProvider: Optional[j_func] = None
-
-    @property
-    def as_dict(self) -> dict:
-        "The Object in dictionary form with 'Nones' Dropped."
-        return asdict(  # Drop Nones
-            self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
-        )
-
-    @classmethod
-    def from_dict(cls, obj: dict) -> Self:
-        "Create an instance from a dict ignoring extraneous params"
-        params = signature(cls).parameters
-        return cls(**{k: v for k, v in obj.items() if k in params})
-
-
-# region --------------------------------------- Single Value Series Objects --------------------------------------- #
-
-
-@dataclass
-class LineStyleOptions(SeriesOptionsCommon):
-    """
-    Represents style options for a line series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/LineStyleOptions
-    """
-
-    color: Optional[JS_Color] = None
-    lineVisible: Optional[bool] = None
-    lineWidth: Optional[int] = None
-    lineType: Optional[LineType] = None
-    lineStyle: Optional[LineStyle] = None
-
-    pointMarkersRadius: Optional[int] = None
-    pointMarkersVisible: Optional[bool] = None
-
-    crosshairMarkerVisible: Optional[bool] = None
-    crosshairMarkerRadius: Optional[int] = None
-    crosshairMarkerBorderWidth: Optional[int] = None
-    crosshairMarkerBorderColor: Optional[JS_Color] = None
-    crosshairMarkerBackgroundColor: Optional[JS_Color] = None
-    # lastPriceAnimation: Optional[LastPriceAnimationMode] = None
-
-
-@dataclass
-class HistogramStyleOptions(SeriesOptionsCommon):
-    """
-    Represents style options for a histogram series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/HistogramStyleOptions
-    """
-
-    base: Optional[float] = None
-    color: Optional[JS_Color] = None
-
-
-@dataclass
-class AreaStyleOptions(SeriesOptionsCommon):
-    """
-    Represents style options for an area series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/AreaStyleOptions
-    """
-
-    lineColor: Optional[JS_Color] = None
-    lineStyle: Optional[LineStyle] = None
-    lineType: Optional[LineType] = None
-    lineWidth: Optional[LineWidth] = None
-    lineVisible: Optional[bool] = None
-
-    topColor: Optional[JS_Color] = None
-    bottomColor: Optional[JS_Color] = None
-    invertFilledArea: Optional[bool] = None
-
-    pointMarkersRadius: Optional[int] = None
-    pointMarkersVisible: Optional[bool] = None
-
-    crosshairMarkerVisible: Optional[bool] = None
-    crosshairMarkerRadius: Optional[int] = None
-    crosshairMarkerBorderWidth: Optional[int] = None
-    crosshairMarkerBorderColor: Optional[JS_Color] = None
-    crosshairMarkerBackgroundColor: Optional[JS_Color] = None
-    # lastPriceAnimation: Optional[LastPriceAnimationMode] = None
-
-
-@dataclass
-class BaselineStyleOptions(SeriesOptionsCommon):
-    """
-    Represents style options for a baseline series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BaselineStyleOptions
-    """
-
-    baseValue: Optional[BaseValuePrice] = None
-    lineVisible: Optional[bool] = None
-    lineWidth: Optional[LineWidth] = None
-    lineType: Optional[LineType] = None
-    lineStyle: Optional[LineStyle] = None
-
-    topLineColor: Optional[JS_Color] = None
-    topFillColor1: Optional[JS_Color] = None
-    topFillColor2: Optional[JS_Color] = None
-
-    bottomLineColor: Optional[JS_Color] = None
-    bottomFillColor1: Optional[JS_Color] = None
-    bottomFillColor2: Optional[JS_Color] = None
-
-    pointMarkersRadius: Optional[int] = None
-    pointMarkersVisible: Optional[bool] = None
-
-    crosshairMarkerVisible: Optional[bool] = None
-    crosshairMarkerRadius: Optional[int] = None
-    crosshairMarkerBorderColor: Optional[str] = None
-    crosshairMarkerBorderWidth: Optional[int] = None
-    crosshairMarkerBackgroundColor: Optional[str] = None
-    # lastPriceAnimation: Optional[LastPriceAnimationMode] = None
-
-
-# endregion
-
-# region --------------------------------------- OHLC Value Series Objects --------------------------------------- #
-
-
-@dataclass
-class BarStyleOptions(SeriesOptionsCommon):
-    """
-    Represents style options for a bar series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BarStyleOptions
-    """
-
-    thinBars: Optional[bool] = None
-    openVisible: Optional[bool] = None
-    upColor: Optional[JS_Color] = None
-    downColor: Optional[JS_Color] = None
-
-
-@dataclass
-class CandlestickStyleOptions(SeriesOptionsCommon):
-    """
-    Represents style options for a candlestick series.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/CandlestickStyleOptions
-    """
-
-    upColor: Optional[JS_Color] = None
-    downColor: Optional[JS_Color] = None
-
-    borderVisible: Optional[bool] = None
-    borderColor: Optional[JS_Color] = None
-    borderUpColor: Optional[JS_Color] = None
-    borderDownColor: Optional[JS_Color] = None
-
-    wickVisible: Optional[bool] = None
-    wickColor: Optional[JS_Color] = None
-    wickUpColor: Optional[JS_Color] = None
-    wickDownColor: Optional[JS_Color] = None
-
-
-@dataclass
-class RoundedCandleStyleOptions(SeriesOptionsCommon):
-    """
-    Represents style options for a rounded candlestick series.
-    """
-
-    upColor: Optional[JS_Color] = None
-    downColor: Optional[JS_Color] = None
-
-    wickVisible: Optional[bool] = None
-    wickColor: Optional[JS_Color] = None
-    wickUpColor: Optional[JS_Color] = None
-    wickDownColor: Optional[JS_Color] = None
-
-
-# endregion
-
-AnySeriesOptions: TypeAlias = (
-    SeriesOptionsCommon
-    | LineStyleOptions
-    | HistogramStyleOptions
-    | AreaStyleOptions
-    | BaselineStyleOptions
-    | BarStyleOptions
-    | CandlestickStyleOptions
-    | RoundedCandleStyleOptions
-)

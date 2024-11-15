@@ -6,6 +6,7 @@ Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeri
 """
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 import logging
 from weakref import ref
 from typing import Any, Literal, Optional, TYPE_CHECKING
@@ -13,13 +14,34 @@ from typing import Any, Literal, Optional, TYPE_CHECKING
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
-from lightweight_pycharts.orm.enum import LineStyle, MarkerLoc, MarkerShape
-from lightweight_pycharts.orm.types import JS_Color, Time
-from lightweight_pycharts.util import ID_Dict
+from .orm.types import JS_Color, Time
+from .util import ID_Dict
 
 from .js_cmd import JS_CMD
-from .orm import series as s
-from .orm.options import PriceScaleOptions
+from . import dataframe_ext as df_ext
+from .orm import series_data as sd
+
+# pylint: disable = unused-import
+# Importing the following into Local Namespace so they can be reimported
+# directly from anything that imports series_common
+from .orm.chart_options import PriceScaleOptions
+from .orm.series_data import ArgMap, AreaArgMap, BaselineArgMap, BarArgMap, CandleArgMap
+from .orm.series_options import (
+    AnySeriesOptions,
+    PriceFormat,
+    PriceLineSource,
+    LineStyle,
+    LineType,
+    SeriesOptionsCommon,
+    LineStyleOptions,
+    HistogramStyleOptions,
+    AreaStyleOptions,
+    BaselineStyleOptions,
+    BarStyleOptions,
+    CandlestickStyleOptions,
+    RoundedCandleStyleOptions,
+)
+
 
 if TYPE_CHECKING:
     from .indicator import Indicator
@@ -27,9 +49,47 @@ if TYPE_CHECKING:
 logger = logging.getLogger("lightweight-pycharts")
 
 
+# region --------------------------- Marker and Priceline Objs --------------------------- #
+# pylint: disable = invalid-name
 MarkerSelectors = Literal[
     "time", "id", "shape", "position", "id", "size", "color", "text"
 ]
+
+PriceLineSelectors = Literal[
+    "title",
+    "id",
+    "price",
+    "color",
+    "lineWidth",
+    "lineVisible",
+    "lineStyle",
+    "axisLabelVisible",
+    "axisLabelColor",
+    "axisLabelTextColor",
+]
+
+
+class MarkerLoc(StrEnum):
+    """
+    Represents the position of a series marker relative to a bar.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriesmarkerposition
+    """
+
+    Above = "aboveBar"
+    Below = "belowBar"
+    In = "inBar"
+
+
+class MarkerShape(StrEnum):
+    """
+    Represents the shape of a series marker.
+    Docs: https://tradingview.github.io/lightweight-charts/docs/api#seriesmarkershape
+    """
+
+    Circle = "circle"
+    Square = "square"
+    Arrow_Up = "arrowUp"
+    Arrow_Down = "arrowDown"
 
 
 @dataclass(slots=True)
@@ -63,20 +123,6 @@ class Marker:
     text: Optional[str] = None
 
 
-PriceLineSelectors = Literal[
-    "title",
-    "id",
-    "price",
-    "color",
-    "lineWidth",
-    "lineVisible",
-    "lineStyle",
-    "axisLabelVisible",
-    "axisLabelColor",
-    "axisLabelTextColor",
-]
-
-
 @dataclass(slots=True)
 class PriceLine:
     """
@@ -96,7 +142,7 @@ class PriceLine:
     price: float = 0
     color: Optional[JS_Color] = None
 
-    lineWidth: int = 1
+    lineWidth: float = 1
     lineVisible: bool = True
     lineStyle: LineStyle = LineStyle.Solid
 
@@ -105,7 +151,10 @@ class PriceLine:
     axisLabelTextColor: Optional[JS_Color] = None
 
 
-# This was placed here and not in orm.Series because of the Queue & Pane Dependency
+# pylint: enable = invalid-name
+# endregion
+
+
 class SeriesCommon:
     """
     Baseclass to define the common functionality of all series types. This object provides
@@ -120,25 +169,25 @@ class SeriesCommon:
     def __init__(
         self,
         indicator: "Indicator",
-        series_type: s.SeriesType,
-        options: s.SeriesOptionsCommon | dict = s.SeriesOptionsCommon(),
+        series_type: sd.SeriesType,
+        options: SeriesOptionsCommon | dict = SeriesOptionsCommon(),
         *,
         name: Optional[str] = None,
         display_pane_id: Optional[str] = None,
-        arg_map: s.ArgMap | dict[str, str] = {"close": "value", "value": "close"},
+        arg_map: ArgMap | dict[str, str] = {"close": "value", "value": "close"},
     ):
         if display_pane_id is None:
             display_pane_id = indicator._ids[0]
             # default to display_pane of the parent indicator
 
-        if isinstance(options, s.SeriesOptionsCommon):
+        if isinstance(options, SeriesOptionsCommon):
             self._options = options.as_dict
         else:
             self._options = options
 
         self._series_type = self._series_type_check_(series_type)
         self._series_data_cls = self._series_type.cls
-        self._series_ohlc_derived = s.SeriesType.OHLC_Derived(self._series_type)
+        self._series_ohlc_derived = sd.SeriesType.OHLC_Derived(self._series_type)
 
         self._js_id = indicator._series.generate_id(self)
         # Tuple of Ids to make addressing through Queue easier: order = (pane, indicator, series)
@@ -148,7 +197,7 @@ class SeriesCommon:
         self._markers = ID_Dict("m")
         self._pricelines = ID_Dict("pl")
 
-        if isinstance(arg_map, s.ArgMap):
+        if isinstance(arg_map, ArgMap):
             self._value_map = arg_map.as_dict
         else:
             # Ensure data can be displayed as both OHLC and Single Value based
@@ -191,32 +240,33 @@ class SeriesCommon:
         return self._options
 
     @property
-    def options_obj(self) -> s.SeriesOptionsCommon:
+    def options_obj(self) -> SeriesOptionsCommon:
         "Copy of the Object's Series Options Dataclass"
-        return s.SeriesOptionsCommon.from_dict(self._options)
+        return SeriesOptionsCommon.from_dict(self._options)
 
     def __sync_options__(self, options: dict):
         """
         Update the internal options object to reflect changes entered into the UI.
         Should only to be used to keep Python and Typescript Objects in sync.
+        Use apply_options to make updates to the series.
         """
         self._options = options
 
     @staticmethod
-    def _series_type_check_(series_type: s.SeriesType) -> s.SeriesType:
+    def _series_type_check_(series_type: sd.SeriesType) -> sd.SeriesType:
         "Set a default series_type for the display ambiguous series types"
         if (
-            series_type == s.SeriesType.SingleValueData
-            or series_type == s.SeriesType.WhitespaceData
+            series_type == sd.SeriesType.SingleValueData
+            or series_type == sd.SeriesType.WhitespaceData
         ):
-            return s.SeriesType.Line
-        elif series_type == s.SeriesType.OHLC_Data:
-            return s.SeriesType.Candlestick
+            return sd.SeriesType.Line
+        elif series_type == sd.SeriesType.OHLC_Data:
+            return sd.SeriesType.Candlestick
         return series_type
 
     def _to_transfer_dataframe_(
         self,
-        data: s.Series_DF | pd.DataFrame | pd.Series,
+        data: df_ext.Series_DF | pd.DataFrame | pd.Series,
     ) -> pd.DataFrame:
         """
         Creates a formatted Dataframe from a Series/Series_DF/DataFrame object.
@@ -230,7 +280,7 @@ class SeriesCommon:
         multiprocessor Queue.
         """
         # Format 'data' to a dataframe called '_df' (A reference)
-        if isinstance(data, s.Series_DF):
+        if isinstance(data, df_ext.Series_DF):
             _df = data.df
         elif isinstance(data, pd.DataFrame):
             _df = data
@@ -262,7 +312,7 @@ class SeriesCommon:
         unused_cols = list(set(tmp_df.columns).difference(valid_keys))
         tmp_df.drop(columns=unused_cols, inplace=True)
 
-        # Need atleast one of the following to display anything on the screen
+        # Need at least one of the following to display anything on the screen
         if len(set(tmp_df.columns).intersection({"value", "close"})) == 0:
             logger.warning(
                 "Series %s of type %s doesn't know what to display!",
@@ -285,7 +335,7 @@ class SeriesCommon:
 
         return tmp_df
 
-    def set_data(self, data: s.Series_DF | pd.DataFrame | pd.Series):
+    def set_data(self, data: df_ext.Series_DF | pd.DataFrame | pd.Series):
         "Sets the Data of the Series to the given data set. All irrlevant data is ignored"
         # Set display type so data.json() only passes relevant information
         xfer_df = self._to_transfer_dataframe_(data)
@@ -297,12 +347,12 @@ class SeriesCommon:
         self.remove_all_markers()
         self.remove_all_pricelines()
 
-    def update_data(self, data: s.AnySeriesData):
+    def update_data(self, data: sd.AnySeriesData):
         """
         Update the Data on Screen. The data is sent to the lightweight charts API without checks.
         """
         # Recast AnySeriesData into the type of data expected for this series as needed
-        if self._series_ohlc_derived != s.SeriesType.OHLC_Derived(data):
+        if self._series_ohlc_derived != sd.SeriesType.OHLC_Derived(data):
             data_dict = data.as_dict
             if "value" in data_dict:
                 data_dict["close"] = data_dict["value"]
@@ -312,14 +362,14 @@ class SeriesCommon:
 
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.AnySeriesOptions | dict):
+    def apply_options(self, options: AnySeriesOptions | dict):
         """
         Update the Display Options of the Series.
 
         The Argument can be a SeriesOptions instance or a dict formatted to the lwc api spec.
         https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SeriesOptionsCommon
         """
-        if isinstance(options, s.SeriesOptionsCommon):
+        if isinstance(options, SeriesOptionsCommon):
             self._options = options.as_dict
         else:
             self._options = options
@@ -336,13 +386,15 @@ class SeriesCommon:
         self._fwd_queue.put((JS_CMD.UPDATE_PRICE_SCALE_OPTS, *self._ids, options))
 
     def change_series_type(
-        self, series_type: s.SeriesType, data: s.Series_DF | pd.DataFrame | pd.Series
+        self,
+        series_type: sd.SeriesType,
+        data: df_ext.Series_DF | pd.DataFrame | pd.Series,
     ):
         "Change the type of Series object that is displayed on the screen."
         # Set display type so data.json() only passes relevant information
         self._series_type = self._series_type_check_(series_type)
         self._series_data_cls = self._series_type.cls
-        self._series_ohlc_derived = s.SeriesType.OHLC_Derived(self._series_type)
+        self._series_ohlc_derived = sd.SeriesType.OHLC_Derived(self._series_type)
 
         self._fwd_queue.put(
             (
@@ -356,6 +408,7 @@ class SeriesCommon:
     # TODO: Multi-pane implementation
     # def change_pane(self, new_pane: str): ...
 
+    # region ---- ---- ---- ---- Markers and Pricelines ---- ---- ---- ----
     # pylint: disable=protected-access
 
     @property
@@ -487,6 +540,7 @@ class SeriesCommon:
         self._fwd_queue.put((JS_CMD.REMOVE_ALL_SERIES_PRICELINES, *self._ids))
 
     # pylint: enable=protected-access
+    # endregion
 
 
 # region -------------------------- Series Common Type Hint Extensions --------------------------- #
@@ -501,30 +555,32 @@ class LineSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options: s.LineStyleOptions | dict = s.LineStyleOptions(),
+        options: LineStyleOptions | dict = LineStyleOptions(),
         *,
         name: Optional[str] = None,
+        arg_map: ArgMap | dict[str, str] = {},
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
-            s.SeriesType.Line,
+            sd.SeriesType.Line,
             options,
             name=name,
             display_pane_id=display_pane_id,
+            arg_map=arg_map,
         )
 
     @property
-    def options_obj(self) -> s.LineStyleOptions:
-        return s.LineStyleOptions(**self._options)
+    def options_obj(self) -> LineStyleOptions:
+        return LineStyleOptions(**self._options)
 
-    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.LineData):
+    def update_data(self, data: sd.WhitespaceData | sd.SingleValueData | sd.LineData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.LineStyleOptions | dict):
+    def apply_options(self, options: LineStyleOptions | dict):
         super().apply_options(options)
 
-    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+    def change_series_type(self, series_type: sd.SeriesType, data: df_ext.Series_DF):
         """
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
@@ -540,29 +596,34 @@ class HistogramSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options: s.HistogramStyleOptions | dict = s.HistogramStyleOptions(),
+        options: HistogramStyleOptions | dict = HistogramStyleOptions(),
+        *,
         name: Optional[str] = None,
+        arg_map: ArgMap | dict[str, str] = {},
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
-            s.SeriesType.Histogram,
+            sd.SeriesType.Histogram,
             options,
             name=name,
             display_pane_id=display_pane_id,
+            arg_map=arg_map,
         )
 
     @property
-    def options_obj(self) -> s.HistogramStyleOptions:
-        return s.HistogramStyleOptions(**self._options)
+    def options_obj(self) -> HistogramStyleOptions:
+        return HistogramStyleOptions(**self._options)
 
-    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.HistogramData):
+    def update_data(
+        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
+    ):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.HistogramStyleOptions | dict):
+    def apply_options(self, options: HistogramStyleOptions | dict):
         super().apply_options(options)
 
-    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+    def change_series_type(self, series_type: sd.SeriesType, data: df_ext.Series_DF):
         """
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
@@ -578,29 +639,32 @@ class AreaSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options: s.AreaStyleOptions | dict = s.AreaStyleOptions(),
+        options: AreaStyleOptions | dict = AreaStyleOptions(),
+        *,
         name: Optional[str] = None,
+        arg_map: AreaArgMap | dict[str, str] = {},
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
-            s.SeriesType.Area,
+            sd.SeriesType.Area,
             options,
             name=name,
             display_pane_id=display_pane_id,
+            arg_map=arg_map,
         )
 
     @property
-    def options_obj(self) -> s.AreaStyleOptions:
-        return s.AreaStyleOptions(**self._options)
+    def options_obj(self) -> AreaStyleOptions:
+        return AreaStyleOptions(**self._options)
 
-    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.AreaData):
+    def update_data(self, data: sd.WhitespaceData | sd.SingleValueData | sd.AreaData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.AreaStyleOptions | dict):
+    def apply_options(self, options: AreaStyleOptions | dict):
         super().apply_options(options)
 
-    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+    def change_series_type(self, series_type: sd.SeriesType, data: df_ext.Series_DF):
         """
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
@@ -616,29 +680,34 @@ class BaselineSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options: s.BaselineStyleOptions | dict = s.BaselineStyleOptions(),
+        options: BaselineStyleOptions | dict = BaselineStyleOptions(),
+        *,
         name: Optional[str] = None,
+        arg_map: BaselineArgMap | dict[str, str] = {},
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
-            s.SeriesType.Baseline,
+            sd.SeriesType.Baseline,
             options,
             name=name,
             display_pane_id=display_pane_id,
+            arg_map=arg_map,
         )
 
     @property
-    def options_obj(self) -> s.BaselineStyleOptions:
-        return s.BaselineStyleOptions(**self._options)
+    def options_obj(self) -> BaselineStyleOptions:
+        return BaselineStyleOptions(**self._options)
 
-    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.BaselineData):
+    def update_data(
+        self, data: sd.WhitespaceData | sd.SingleValueData | sd.BaselineData
+    ):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.BaselineStyleOptions | dict):
+    def apply_options(self, options: BaselineStyleOptions | dict):
         super().apply_options(options)
 
-    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+    def change_series_type(self, series_type: sd.SeriesType, data: df_ext.Series_DF):
         """
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
@@ -654,29 +723,34 @@ class BarSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options: s.BarStyleOptions | dict = s.BarStyleOptions(),
+        options: BarStyleOptions | dict = BarStyleOptions(),
+        *,
         name: Optional[str] = None,
+        arg_map: BarArgMap | dict[str, str] = {},
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
-            s.SeriesType.Bar,
+            sd.SeriesType.Bar,
             options,
             name=name,
+            arg_map=arg_map,
             display_pane_id=display_pane_id,
         )
 
     @property
-    def options_obj(self) -> s.BarStyleOptions:
-        return s.BarStyleOptions(**self._options)
+    def options_obj(self) -> BarStyleOptions:
+        return BarStyleOptions(**self._options)
 
-    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.HistogramData):
+    def update_data(
+        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
+    ):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.BarStyleOptions | dict):
+    def apply_options(self, options: BarStyleOptions | dict):
         super().apply_options(options)
 
-    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+    def change_series_type(self, series_type: sd.SeriesType, data: df_ext.Series_DF):
         """
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
@@ -692,29 +766,34 @@ class CandlestickSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options: s.CandlestickStyleOptions | dict = s.CandlestickStyleOptions(),
+        options: CandlestickStyleOptions | dict = CandlestickStyleOptions(),
+        *,
         name: Optional[str] = None,
+        arg_map: CandleArgMap | dict[str, str] = {},
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
-            s.SeriesType.Candlestick,
+            sd.SeriesType.Candlestick,
             options,
             name=name,
+            arg_map=arg_map,
             display_pane_id=display_pane_id,
         )
 
     @property
-    def options_obj(self) -> s.CandlestickStyleOptions:
-        return s.CandlestickStyleOptions(**self._options)
+    def options_obj(self) -> CandlestickStyleOptions:
+        return CandlestickStyleOptions(**self._options)
 
-    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.HistogramData):
+    def update_data(
+        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
+    ):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.CandlestickStyleOptions | dict):
+    def apply_options(self, options: CandlestickStyleOptions | dict):
         super().apply_options(options)
 
-    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+    def change_series_type(self, series_type: sd.SeriesType, data: df_ext.Series_DF):
         """
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
@@ -730,29 +809,34 @@ class RoundedCandleSeries(SeriesCommon):
     def __init__(
         self,
         indicator: "Indicator",
-        options: s.RoundedCandleStyleOptions | dict = s.RoundedCandleStyleOptions(),
+        options: RoundedCandleStyleOptions | dict = RoundedCandleStyleOptions(),
+        *,
         name: Optional[str] = None,
+        arg_map: BarArgMap | dict[str, str] = {},
         display_pane_id: Optional[str] = None,
     ):
         super().__init__(
             indicator,
-            s.SeriesType.Rounded_Candle,
+            sd.SeriesType.Rounded_Candle,
             options,
             name=name,
+            arg_map=arg_map,
             display_pane_id=display_pane_id,
         )
 
     @property
-    def options_obj(self) -> s.RoundedCandleStyleOptions:
-        return s.RoundedCandleStyleOptions(**self._options)
+    def options_obj(self) -> RoundedCandleStyleOptions:
+        return RoundedCandleStyleOptions(**self._options)
 
-    def update_data(self, data: s.WhitespaceData | s.SingleValueData | s.HistogramData):
+    def update_data(
+        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
+    ):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
-    def apply_options(self, options: s.RoundedCandleStyleOptions | dict):
+    def apply_options(self, options: RoundedCandleStyleOptions | dict):
         super().apply_options(options)
 
-    def change_series_type(self, series_type: s.SeriesType, data: s.Series_DF):
+    def change_series_type(self, series_type: sd.SeriesType, data: df_ext.Series_DF):
         """
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.

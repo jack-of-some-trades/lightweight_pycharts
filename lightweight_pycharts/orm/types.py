@@ -2,27 +2,17 @@
 
 from math import floor
 from datetime import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TypeAlias, Literal, Optional, Self
 
 from pandas import Timestamp
 
-# pylint: disable=line-too-long
-# pylint: disable=invalid-name
-
-HorzAlign: TypeAlias = Literal["left", "center", "right"]
-VertAlign: TypeAlias = Literal["bottom", "top", "center"]
-PriceFormatType: TypeAlias = Literal["price", "volume", "percent"]
-DataChangedScope: TypeAlias = Literal["full", "update"]
-BaseValueType: TypeAlias = Literal["price"]
-LineWidth: TypeAlias = Literal[1, 2, 3, 4]
-
-Coordinate: TypeAlias = int
-UTCTimestamp: TypeAlias = int
+# pylint: disable=line-too-long, invalid-name
 
 PERIOD_CODES = ["s", "m", "h", "D", "W", "M", "Y", "E"]
 Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y", "E"]
 
+UTCTimestamp: TypeAlias = int
 Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
 # Time: TypeAlias = Union[UTCTimestamp, BusinessDay, str]
 # BusinessDay is an object in the lightweight charts library. It is not included since
@@ -30,14 +20,42 @@ Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
 # as well, but this python library converts all times to a UTCtimestamp
 
 
+@dataclass(slots=True)
+class Symbol:
+    "Dataclass interface used to send Symbol Search information to the Symbol Search Menu"
+    ticker: str
+    name: Optional[str] = None
+    broker: Optional[str] = None
+    sec_type: Optional[str] = None
+    exchange: Optional[str] = None
+
+
 class j_func:
-    "String Subclass to strip whitespace. Ideally, this string represents a Javascript Function"
+    """
+    String Representation of a Javascript Function.
+
+    This object allows raw python strings to be given to the JavaScript Script Executor
+    and executed as anonymous functions. This is intended to be used to provide custom
+    formatters for the various lightweight chart options that take them.
+    """
 
     def __init__(self, func: str):
-        self.func = func.replace(" ", "").replace("\n", "")
+        # Replace '\n' with ';' to ensure command separation,
+        # Replace all internal quotes with ` to avoid json.dumps adding escape characters,
+        # Split and join w/ " " to limit excess whitespace
+        # Add "~" as markers to target trim outer quotes after dumping the string.
+        self.func = func.replace("\n", ";").replace('"', "`").replace("'", "`")
+        self.func = "~" + " ".join(self.func.split()) + "~"
 
-    def __str__(self) -> str:
-        return self.func
+    @staticmethod
+    def format(str_in: str) -> str:
+        "Deletes the Outer Quotes, Call after String has been JSON Dumped."
+        return str_in.replace('"~', "").replace('~"', "")
+
+
+def NumtoHex(num: int):
+    "Format a [0,255] number into Hex"
+    return hex(num).lstrip("0x").zfill(2)
 
 
 # Note, this object cannot be a dataclass otherwise json.dumps()
@@ -204,11 +222,6 @@ class Color:
         return f"#{NumtoHex(self._r)}{NumtoHex(self._g)}{NumtoHex(self._b)}{NumtoHex(round(self._a*255))}"
 
 
-def NumtoHex(num: int):
-    "Format a number into Hex"
-    return hex(num).lstrip("0x").zfill(2)
-
-
 # String Should be a #(Hex) Color.
 JS_Color: TypeAlias = str | Color
 
@@ -237,7 +250,7 @@ class TF:
 
         raise TypeError(f"'{period}' not a valid Timeframe Period Code.")
 
-    # region ---- TF Setters and Getters ----
+    # region ---- Timeframe Getters and Setters ----
 
     @property
     def mult(self) -> int:
@@ -322,211 +335,3 @@ class TF:
                 return -1
 
     # endregion
-
-
-# region --------------------------------------- Lightweight Chart interface Dataclasses --------------------------------------- #
-
-# pylint: disable="wrong-import-position"
-# Moving the Import to here fixes a circular import error w/Color
-from .enum import ColorType
-
-# Some of these will likely not be used unless further Javascript <-> Python integeration
-# is done; specifically around passing MouseEvents and Timeframe Changes back to Python.
-
-
-@dataclass(slots=True)
-class SolidColor:
-    """
-    Represents a solid color.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/SolidColor
-    """
-
-    type: Literal[ColorType.Solid] = field(default=ColorType.Solid, init=False)
-    color: Optional[JS_Color] = None
-
-
-@dataclass(slots=True)
-class VerticalGradientColor:
-    """
-    Represents a vertical gradient of two colors.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/VerticalGradientColor
-    """
-
-    type: Literal[ColorType.VerticalGradient] = field(
-        default=ColorType.VerticalGradient, init=False
-    )
-    topColor: Optional[JS_Color] = None
-    bottomColor: Optional[JS_Color] = None
-
-
-@dataclass(slots=True)
-class BaseValuePrice:
-    """
-    Represents a type of priced base value of baseline series type.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BaseValuePrice
-    """
-
-    price: float
-    type: BaseValueType = "price"
-
-
-@dataclass(slots=True)
-class PriceFormat:  # Actually PriceFormatBuiltIn. True PriceFormat is Union [PriceFormatBuiltIn | PriceFormatCustom]
-    """
-    Represents series value formatting options.
-    The precision and minMove properties allow wide customization of formatting.
-    Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceFormatBuiltIn
-
-    Docs Reference the Built-in Values only, PriceFormatCustom is not implemented here
-    """
-
-    type: Optional[PriceFormatType] = None
-    precision: Optional[int] = None
-    minMove: Optional[float] = None
-
-
-# region ---- ---- ---- ---- Timescale and Axis interfaces ---- ---- ---- ----
-# These are interfaces exported by the lightweight-charts library. They are pretty niche to
-# display of a given chart, So niche they likely won't ever be interacted with in the Python
-# Backend so they've been commented out. If they find a use they can be uncommented back in
-
-# @dataclass
-# class PriceFormatCustom:
-#     """
-#     Represents series value formatting options.
-#     Removed to keep JS Functions in JS Files. May enable later on though
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/PriceFormatCustom
-#     """
-
-#     type = Literal["custom"]
-#     minMove: float = 0.01
-#     formatter: Optional[j_func]
-
-
-# @dataclass
-# class TimeRange:
-#     """
-#     Represents a Time range `from` one value `to` another.
-#     """
-
-#     from_: Time
-#     to_: Time
-
-
-# @dataclass
-# class BarsInfo(TimeRange):
-#     """
-#     Represents a range of bars and the number of bars outside the range.
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/BarsInfo
-#     """
-
-#     barsBefore: int
-#     barsAfter: int
-
-
-# @dataclass
-# class Point:
-#     """
-#     Represents a point on the chart.
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/Point
-#     """
-
-#     x: float
-#     y: float
-
-
-# @dataclass
-# class TouchMouseEventData:
-#     """
-#     The TouchMouseEventData class represents events that occur due to the user interacting with a
-#     pointing device (such as a mouse).
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TouchMouseEventData
-#     """
-
-#     clientX: Coordinate
-#     clientY: Coordinate
-#     pageX: Coordinate
-#     pageY: Coordinate
-#     screenX: Coordinate
-#     screenY: Coordinate
-#     localX: Coordinate
-#     localY: Coordinate
-#     ctrlKey: bool
-#     altKey: bool
-#     shiftKey: bool
-#     metaKey: bool
-
-
-# @dataclass
-# class MouseEventParams:
-#     """
-#     Represents a mouse event.
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/MouseEventParams
-#     """
-
-#     time: Optional[Time] = None
-#     logical: Optional[int] = None
-#     point: Optional[Point] = None
-#     # Likely will not implement since these aren't really functional in the API
-#     # series_data = {}
-#     # hovered_series: Optional[str] = None
-#     hovered_object_id: Optional[str] = None
-#     source_event: Optional[TouchMouseEventData] = None
-
-
-# @dataclass
-# class TickMark:
-#     """
-#     Tick mark for the horizontal scale.
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TickMark
-#     """
-
-#     index: int
-#     time: Time
-#     weight: float
-#     original_time: Time
-
-
-# @dataclass
-# class TimeMark:
-#     """
-#     Represents a tick mark on the horizontal (time) scale.
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TimeMark
-#     """
-
-#     need_align_coordinate: bool
-#     coord: int
-#     label: str
-#     weight: float
-
-
-# @dataclass
-# class TimeScalePoint:
-#     """
-#     Represents a point on the time scale.
-#     Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/TimeScalePoint
-#     """
-
-#     time: Time
-#     timeWeight: float
-#     originalTime: Time
-
-
-# endregion
-
-# endregion
-
-# region --------------------------------------- Python <-> JS Interface Dataclasses --------------------------------------- #
-
-
-@dataclass(slots=True)
-class Symbol:
-    "Dataclass interface used to send Symbol Search information to the Symbol Search Menu"
-    ticker: str
-    name: Optional[str] = None
-    broker: Optional[str] = None
-    sec_type: Optional[str] = None
-    exchange: Optional[str] = None
-
-
-# endregion

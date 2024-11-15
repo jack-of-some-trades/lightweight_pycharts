@@ -12,16 +12,12 @@ from typing import Literal, Optional
 
 import pandas as pd
 
-from lightweight_pycharts.orm.series import SeriesType
-
 from . import orm
 from . import util
 from . import indicators
-from .orm.types import TF, Color, Symbol
 
-from .orm import layouts
 from .events import Events, Emitter, Socket_Switch_Protocol
-from .js_api import PyWv, MpHooks
+from .js_api import PyWv, MpHooks, PyWebViewOptions
 from .js_cmd import JS_CMD, PY_CMD
 
 logger = logging.getLogger("lightweight-pycharts")
@@ -38,17 +34,7 @@ class FrameTypes(Enum):
 
 
 class Window:
-    """Window is an object that handles the Javascript Webview Object
-    This window creates and handels a Javascript implementation of:
-        - Application Frame     *TBI
-        - Window Tabs           *TBI
-        - Toolbar               *TBI
-        - Search Bar            *TBI
-        - Interval Switcher     *TBI
-        - Watchlist, etc.       *TBI
-
-    Window contains a 'Container' object for every tab.
-    """
+    "Window is an object that creates & Parses Commands from the Javascript Webview"
 
     def __init__(
         self,
@@ -56,7 +42,7 @@ class Window:
         daemon: bool = True,
         events: Optional[Events] = None,
         log_level: Optional[logging._Level] = None,
-        options: Optional[orm.options.PyWebViewOptions] = None,
+        options: Optional[PyWebViewOptions] = None,
         **kwargs,
     ) -> None:
         # -------- Setup and start the Pywebview subprocess  -------- #
@@ -135,11 +121,11 @@ class Window:
                 }
                 self.events.data_request(symbol=args[2], tf=args[3], rsp_kwargs=kwargs)
 
-            case PY_CMD.LAYOUT_CHANGE, str(), orm.enum.layouts():
+            case PY_CMD.LAYOUT_CHANGE, str(), orm.Layouts():
                 container = self.get_container(args[0])
                 container.set_layout(args[1])
 
-            case PY_CMD.SERIES_CHANGE, str(), str(), orm.series.SeriesType():
+            case PY_CMD.SERIES_CHANGE, str(), str(), orm.SeriesType():
                 frame = self.get_container(args[0]).frames[args[1]]
                 if isinstance(frame, ChartingFrame):
                     frame.main_series.change_series_type(args[2], True)
@@ -186,7 +172,7 @@ class Window:
     # region ------------------------ Private Event Response Methods ------------------------ #
 
     @staticmethod
-    def _symbol_search_rsp(items: list[orm.types.Symbol], *_, fwd_queue: mp.Queue):
+    def _symbol_search_rsp(items: list[orm.Symbol], *_, fwd_queue: mp.Queue):
         fwd_queue.put((JS_CMD.SET_SYMBOL_ITEMS, items))
 
     @staticmethod
@@ -250,7 +236,7 @@ class Window:
         "Pass a .css file's absolute filepath to the window to load it"
         self._fwd_queue.put((JS_CMD.LOAD_CSS, filepath))
 
-    def set_user_colors(self, opts: list[Color]):
+    def set_user_colors(self, opts: list[orm.JS_Color]):
         "Set the User Defined Colors available in the Color Picker"
         self._fwd_queue.put((JS_CMD.SET_USER_COLORS, opts))
 
@@ -297,11 +283,11 @@ class Window:
         "Set the available search filters in the symbol search menu."
         self._fwd_queue.put((JS_CMD.SET_SYMBOL_SEARCH_OPTS, category, items))
 
-    def set_layout_favs(self, favs: list[orm.layouts]):
+    def set_layout_favs(self, favs: list[orm.Layouts]):
         "Set the layout types shown on the Window's TopBar"
         self._fwd_queue.put((JS_CMD.UPDATE_LAYOUT_FAVS, {"favorites": favs}))
 
-    def set_series_favs(self, favs: list[orm.series.SeriesType]):
+    def set_series_favs(self, favs: list[orm.SeriesType]):
         "Set the Series types shown on the Window's TopBar"
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_FAVS, {"favorites": favs}))
 
@@ -342,7 +328,7 @@ class Container:
         self._fwd_queue = fwd_queue
         self._window = window
         self._js_id = _js_id
-        self._layout = layouts.SINGLE
+        self._layout = orm.Layouts.SINGLE
         self.frames = util.ID_Dict[Frame](f"{_js_id}_f")
 
         self._fwd_queue.put((JS_CMD.ADD_CONTAINER, self._js_id))
@@ -366,7 +352,7 @@ class Container:
             case FrameTypes.ABSTRACT:
                 raise TypeError("Cannot Initilize an Abstract Frame Type")
 
-    def set_layout(self, layout: layouts):
+    def set_layout(self, layout: orm.Layouts):
         "Set the layout of the Container creating Frames as needed"
         # If there arent enough Frames to support the layout then generate them
         frame_diff = len(self.frames) - layout.num_frames
@@ -405,7 +391,7 @@ class Frame(ABC):
     and resize functionality.
 
     Currently this is only inherited by a Charting_Frame, but in the future could be inherited by
-    other useful tools such as Broker integration, Bid/Ask Tables, Stock Screeners... Sky's the limit.
+    other useful tools such as Broker integration, Bid/Ask Tables, Stock Screeners, Sky's the limit
     """
 
     Frame_Type = FrameTypes.ABSTRACT
@@ -442,15 +428,15 @@ class Frame(ABC):
     # This is because these are displayed by the window so all frames should define them
     # though this may change in the future.
 
-    def __set_displayed_symbol__(self, symbol: Symbol):
+    def __set_displayed_symbol__(self, symbol: orm.Symbol):
         "*Does not change underlying data Symbol*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_SYMBOL, self._js_id, symbol))
 
-    def __set_displayed_timeframe__(self, timeframe: TF):
+    def __set_displayed_timeframe__(self, timeframe: orm.TF):
         "*Does not change underlying data TF*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_TIMEFRAME, self._js_id, timeframe))
 
-    def __set_displayed_series_type__(self, series_type: SeriesType):
+    def __set_displayed_series_type__(self, series_type: orm.SeriesType):
         "*Does not change underlying data Type*"
         self._fwd_queue.put((JS_CMD.SET_FRAME_SERIES_TYPE, self._js_id, series_type))
 

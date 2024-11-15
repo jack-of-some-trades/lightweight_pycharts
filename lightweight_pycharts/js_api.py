@@ -14,10 +14,8 @@ from webview.errors import JavascriptException
 
 from lightweight_pycharts.util import is_dunder
 
-from . import orm
-from . import js_cmd as cmds
-from .orm.series import SeriesType
-from .js_cmd import JS_CMD, PY_CMD
+from . import orm, SeriesType
+from .js_cmd import JS_CMD, PY_CMD, CMD_ROLODEX
 
 file_dir = dirname(abspath(__file__))
 logger = logging.getLogger("lightweight-pycharts")
@@ -71,9 +69,7 @@ class js_api:
         self.rtn_queue.put((PY_CMD.REORDER_CONTAINERS, _from, _to))
 
     def layout_change(self, container_id: str, layout: int):
-        self.rtn_queue.put(
-            (PY_CMD.LAYOUT_CHANGE, container_id, orm.enum.layouts(layout))
-        )
+        self.rtn_queue.put((PY_CMD.LAYOUT_CHANGE, container_id, orm.Layouts(layout)))
 
     def series_change(self, container_id: str, frame_id: str, series_type: str):
         try:
@@ -235,7 +231,7 @@ class View(ABC):
 
             try:
                 # Lookup JS Command
-                cmd_str = cmds.CMD_ROLODEX[cmd](*args)
+                cmd_str = CMD_ROLODEX[cmd](*args)
             except TypeError as e:
                 arg_list = [type(arg) for arg in args]
                 logger.error("Command:%s: Given %s \n\tError msg: %s", cmd, arg_list, e)
@@ -398,6 +394,38 @@ class PyWv(View):
     def _on_restore(self):
         self.pyweb_window.maximized = False
         # self.run_script("") #Should make this update the icon...
+
+
+@dataclass
+class PyWebViewOptions:
+    """
+    All** available 'PyWebview' Create_Window Options
+
+    ** At Somepoint in the future this may be expanded to include server options
+    and window.start() Options.
+    """
+
+    title: str = ""
+    x: int = 100
+    y: int = 100
+    width: int = 800
+    height: int = 600
+    resizable: bool = True
+    fullscreen: bool = False
+    min_size: tuple[int, int] = (400, 250)
+    hidden: bool = False
+    on_top: bool = False
+    confirm_close: bool = False
+    background_color: str = "#FFFFFF"
+    transparent: bool = False
+    text_select: bool = False
+    zoomable: bool = False
+    draggable: bool = False
+    vibrancy: bool = False
+    debug: bool = False
+    # server
+    # server_args
+    # localization
 
 
 class QWebView:  # (View):

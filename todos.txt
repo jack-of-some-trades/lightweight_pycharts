@@ -59,7 +59,7 @@ Backend-Backend (Python):
 					could be inserted to guard against the program crashing. This could involve the creation of an on
 					screen interface to display the error when such an error occurs.
 
-	- Primitves : Re-assess the parent of a primitive and from which pool their IDs are generated against. 
+	- Primitives : Re-assess the parent of a primitive and from which pool their IDs are generated against. 
 					Should Ideally allow for primitives to be created under one constant ID in python, but still allow
 					traversal of panes..... or maybe they break the constant ID rule and when they shift panes a new id is
 					generated and the python primitive object ID is updated?

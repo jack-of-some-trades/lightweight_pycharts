@@ -4,9 +4,7 @@ from typing import Optional
 import pandas as pd
 
 import lightweight_pycharts as lwc
-from lightweight_pycharts import Symbol, TF
-from lightweight_pycharts import indicators
-from lightweight_pycharts.orm.series import OhlcData, SingleValueData
+from lightweight_pycharts import Symbol, TF, indicators, OhlcData, SingleValueData
 
 
 def symbol_search_handler(ticker: str, **kwargs) -> Optional[list[Symbol]]:
@@ -97,10 +95,10 @@ async def main():
     window.set_search_filters("exchange", [])
     window.set_layout_favs(
         [
-            lwc.layouts.SINGLE,
-            lwc.layouts.DOUBLE_VERT,
-            lwc.layouts.TRIPLE_VERT_LEFT,
-            lwc.layouts.QUAD_SQ_H,
+            lwc.Layouts.SINGLE,
+            lwc.Layouts.DOUBLE_VERT,
+            lwc.Layouts.TRIPLE_VERT_LEFT,
+            lwc.Layouts.QUAD_SQ_H,
         ]
     )
     window.set_series_favs(

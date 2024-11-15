@@ -11,10 +11,19 @@ from typing import (
 import pandas as pd
 from numpy import nan
 
-from lightweight_pycharts.charting_frame import ChartingFrame
-from lightweight_pycharts.orm.types import Color, PriceFormat
-
+from lightweight_pycharts import (
+    Color,
+    Symbol,
+    TF,
+    AnyBasicSeriesType,
+    HistogramData,
+    SeriesType,
+    AnyBasicData,
+    SingleValueData,
+)
 from lightweight_pycharts import series_common as sc
+from lightweight_pycharts.charting_frame import ChartingFrame
+from lightweight_pycharts.dataframe_ext import Series_DF, Whitespace_DF
 from lightweight_pycharts.indicator import (
     Indicator,
     IndicatorOptions,
@@ -22,19 +31,7 @@ from lightweight_pycharts.indicator import (
     default_output_property,
     param,
 )
-from lightweight_pycharts.orm import Symbol, TF
-from lightweight_pycharts.orm.series import (
-    AnyBasicSeriesType,
-    HistogramData,
-    HistogramStyleOptions,
-    Series_DF,
-    SeriesOptionsCommon,
-    SeriesType,
-    AnyBasicData,
-    ArgMap,
-    Whitespace_DF,
-    SingleValueData,
-)
+
 
 logger = getLogger("lightweight-pycharts")
 
@@ -160,8 +157,8 @@ class Series(Indicator):
             self,
             SeriesType.Histogram,
             name="Vol-Series",
-            options=HistogramStyleOptions(color="#6666667F"),
-            arg_map=ArgMap(value="volume", color="vol_color"),
+            options=sc.HistogramStyleOptions(color="#6666667F"),
+            arg_map=sc.ArgMap(value="volume", color="vol_color"),
         )
         self.update_options(opts)
         self.init_menu(opts)
@@ -187,8 +184,9 @@ class Series(Indicator):
             self._set_vol_series()
 
         self.vol_series.apply_options(
-            SeriesOptionsCommon(
-                priceScaleId=opts.vol_price_axis, priceFormat=PriceFormat("volume")
+            sc.SeriesOptionsCommon(
+                priceScaleId=opts.vol_price_axis,
+                priceFormat=sc.PriceFormat("volume"),
             )
         )
         if opts.vol_scale_invert:

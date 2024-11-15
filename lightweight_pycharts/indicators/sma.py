@@ -12,10 +12,8 @@ from lightweight_pycharts.indicator import (
     default_output_property,
     param,
 )
-from lightweight_pycharts.orm.enum import LineStyle
-from lightweight_pycharts.orm.series import LineStyleOptions, SingleValueData
+from lightweight_pycharts import Color, SingleValueData
 from lightweight_pycharts import series_common as sc
-from lightweight_pycharts.orm.types import Color
 
 
 class Method(Enum):
@@ -56,7 +54,7 @@ class SMA(Indicator):
         self._data = pd.Series()
         self.line_series = sc.LineSeries(self, name="My SMA")
         self.line_series.apply_options(
-            LineStyleOptions(lineStyle=LineStyle.SparseDotted)
+            sc.LineStyleOptions(lineStyle=sc.LineStyle.SparseDotted)
         )
 
         self.update_options(opts)
@@ -65,7 +63,7 @@ class SMA(Indicator):
 
     def update_options(self, opts: SMAOptions) -> bool:
         self.line_series.apply_options(
-            LineStyleOptions(color=opts.color, lineWidth=opts.size)
+            sc.LineStyleOptions(color=opts.color, lineWidth=opts.size)
         )
 
         if self.period != opts.period:
