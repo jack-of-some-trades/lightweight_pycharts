@@ -1,5 +1,5 @@
 import { BitmapCoordinatesRenderingScope, CanvasRenderingTarget2D } from 'fancy-canvas';
-import { ICustomSeriesPaneRenderer, PaneRendererCustomData, PriceToCoordinateConverter, Range, Time } from 'lightweight-charts';
+import { ICustomSeriesPaneRenderer, PaneRendererCustomData, PriceToCoordinateConverter, Time } from 'lightweight-charts';
 import { candlestickWidth } from '../../helpers/dimensions/candles.js';
 import { gridAndCrosshairMediaWidth } from '../../helpers/dimensions/crosshair-width.js';
 import { positionsBox, positionsLine } from '../../helpers/dimensions/positions.js';
@@ -50,7 +50,10 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 			return;
 		}
 
-		const bars: BarItem[] = this._data.bars.map(bar => {
+		const start = this._data.visibleRange.from
+		const end = this._data.visibleRange.to
+		
+		const vis_bars = this._data.bars.slice(start, end).map(bar => {
 			const isUp = bar.originalData.close >= bar.originalData.open;
 			const openY = priceToCoordinate(bar.originalData.open as number) ?? 0;
 			const highY = priceToCoordinate(bar.originalData.high as number) ?? 0;
@@ -71,20 +74,22 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 		if (this._options.priceLineColor !== ''){
 			this._options.color = this._options.priceLineColor
 		} else {
-			this._options.color = bars.at(-1)?.isUp ? this._options.upColor : this._options.downColor
+			// Color Based on the last bar in the series.
+			let last_bar = this._data.bars.at(-1)
+			let lastIsUp = last_bar ? last_bar.originalData.close >= last_bar.originalData.open : false
+			this._options.color = lastIsUp ? this._options.upColor : this._options.downColor
 		}
 
 
 		const radius = this._options.radius(this._data.barSpacing);
 		if (this._options.wickVisible)
-			this._drawWicks(renderingScope, bars, this._data.visibleRange);
-		this._drawCandles(renderingScope, bars, this._data.visibleRange, radius);
+			this._drawWicks(renderingScope, vis_bars);
+		this._drawCandles(renderingScope, vis_bars, radius);
 	}
 
 	private _drawWicks(
 		renderingScope: BitmapCoordinatesRenderingScope,
-		bars: readonly BarItem[],
-		visibleRange: Range<number>
+		bars: readonly BarItem[]
 	): void {
 		if (this._data === null || this._options === null) {
 			return;
@@ -98,8 +103,7 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 
 		const wickWidth = gridAndCrosshairMediaWidth(horizontalPixelRatio);
 
-		for (let i = visibleRange.from; i < visibleRange.to; i++) {
-			const bar = bars[i];
+		for (const bar of bars) {
 			ctx.fillStyle = bar.isUp
 				? this._options.wickUpColor
 				: this._options.wickDownColor;
@@ -113,7 +117,6 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 	private _drawCandles(
 		renderingScope: BitmapCoordinatesRenderingScope,
 		bars: readonly BarItem[],
-		visibleRange: Range<number>,
 		radius: number
 	): void {
 		if (this._data === null || this._options === null) {
@@ -130,9 +133,7 @@ export class RoundedCandleSeriesRenderer<TData extends RoundedCandleSeriesData>
 		// positionsLine will adjust for pixelRatio
 		const candleBodyWidth = candlestickWidth(this._data.barSpacing, 1);
 
-		for (let i = visibleRange.from; i < visibleRange.to; i++) {
-			const bar = bars[i];
-
+		for (const bar of bars) {
 			const verticalPositions = positionsBox(Math.min(bar.openY, bar.closeY), Math.max(bar.openY, bar.closeY), verticalPixelRatio);
 			const linePositions = positionsLine(bar.x, horizontalPixelRatio, candleBodyWidth);
 
