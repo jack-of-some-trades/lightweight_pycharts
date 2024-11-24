@@ -10,13 +10,11 @@ from functools import partial
 from dataclasses import asdict
 from typing import Literal, Optional
 
-import pandas as pd
 
 from . import orm
 from . import util
-from . import indicators
 
-from .events import Events, Emitter, Socket_Switch_Protocol
+from .events import Events
 from .js_api import PyWv, MpHooks, PyWebViewOptions
 from .js_cmd import JS_CMD, PY_CMD
 
@@ -82,11 +80,9 @@ class Window:
             self.events = events
         else:
             self.events = Events()
-        self.events.symbol_search.response = partial(
+
+        self.events.symbol_search.responder = partial(
             self._symbol_search_rsp, fwd_queue=self._fwd_queue
-        )
-        self.events.data_request.response = partial(
-            self._data_request_rsp, socket_switch=self.events.socket_switch
         )
 
         # Using ID_List over ID_Dict so element order is mutable for PY_CMD.REORDER_CONTAINERS
@@ -109,17 +105,12 @@ class Window:
                     exchanges=args[4],
                 )
 
-            case PY_CMD.DATA_REQUEST, str(), str(), orm.Symbol(), orm.TF():
+            case PY_CMD.TIMESERIES_REQUEST, str(), str(), orm.Symbol(), orm.TF():
                 frame = self.get_container(args[0]).frames[args[1]]
                 if not isinstance(frame, ChartingFrame):
                     return
 
-                kwargs = {
-                    "series": frame.main_series,
-                    "symbol": args[2],
-                    "timeframe": args[3],
-                }
-                self.events.data_request(symbol=args[2], tf=args[3], rsp_kwargs=kwargs)
+                frame.main_series.request_timeseries(symbol=args[2], timeframe=args[3])
 
             case PY_CMD.LAYOUT_CHANGE, str(), orm.Layouts():
                 container = self.get_container(args[0])
@@ -164,7 +155,7 @@ class Window:
             else:
                 cmd, *rsp = self._rtn_queue.get()
                 self._execute_cmd(cmd, *rsp)
-                # logger.debug("Window Recieved Command: %s: %s", cmd, rsp)
+                # logger.debug("Window Received Command: %s: %s", cmd, rsp)
         logger.debug("Exited Async Queue Manager")
 
     # endregion
@@ -174,31 +165,6 @@ class Window:
     @staticmethod
     def _symbol_search_rsp(items: list[orm.Symbol], *_, fwd_queue: mp.Queue):
         fwd_queue.put((JS_CMD.SET_SYMBOL_ITEMS, items))
-
-    @staticmethod
-    def _data_request_rsp(
-        data: Optional[pd.DataFrame],
-        *_,
-        series: indicators.Series,
-        symbol: orm.Symbol,
-        timeframe: orm.TF,
-        socket_switch: Emitter[Socket_Switch_Protocol],  # Set by Partial Func
-    ):
-        # Close the socket if there was a symbol change
-        if series.socket_open and series.symbol != symbol:
-            socket_switch(state="close", symbol=series.symbol, series=series)
-
-        if data is not None:
-            # Set Data *before* series.update_data can be called
-            series.set_data(data, symbol=symbol)
-            if not series.socket_open:
-                socket_switch(state="open", symbol=symbol, series=series)
-        else:
-            if series.socket_open:
-                # Closes the socket if an invalid timeframe was selected.
-                socket_switch(state="close", symbol=series.symbol, series=series)
-            # Clear Data *after* Socket close so socket close gets passed the old symbol
-            series.clear_data(timeframe, symbol)
 
     # endregion
 
@@ -314,7 +280,7 @@ class Window:
             }
         json_dict = {
             "menu_listings": menu_opts,
-            "favorites": [tf.toString for tf in favs],
+            "favorites": [tf.toStr for tf in favs],
         }
         self._fwd_queue.put((JS_CMD.UPDATE_TF_OPTS, json_dict))
 

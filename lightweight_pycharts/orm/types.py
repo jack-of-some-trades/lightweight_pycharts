@@ -1,23 +1,27 @@
 """ Basic Types and TypeAliases """
 
+import logging
+from inspect import signature
 from math import floor
 from datetime import datetime
 from dataclasses import dataclass
 from typing import TypeAlias, Literal, Optional, Self
 
-from pandas import Timestamp
+from pandas import Timestamp, Timedelta
 
 # pylint: disable=line-too-long, invalid-name
 
-PERIOD_CODES = ["s", "m", "h", "D", "W", "M", "Y", "E"]
-Period: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y", "E"]
+periods = ["s", "m", "h", "D", "W", "M", "Y", "E"]
+PERIOD_CODES: TypeAlias = Literal["s", "m", "h", "D", "W", "M", "Y", "E"]
 
 UTCTimestamp: TypeAlias = int
 Time: TypeAlias = UTCTimestamp | str | Timestamp | datetime
 # Time: TypeAlias = Union[UTCTimestamp, BusinessDay, str]
 # BusinessDay is an object in the lightweight charts library. It is not included since
-# it only supports timeframes of 'Day' or longer. Technically, this is true for string
-# as well, but this python library converts all times to a UTCtimestamp
+# it only supports timeframes of 'Day' or longer. This is also true for Lightweight-chart's string
+# as well, but this python library can convert strings to a Standard Pandas Timestamp
+
+logger = logging.getLogger("lightweight-pycharts")
 
 
 @dataclass(slots=True)
@@ -29,13 +33,45 @@ class Symbol:
     sec_type: Optional[str] = None
     exchange: Optional[str] = None
 
+    @classmethod
+    def from_dict(cls, obj: dict, **kwargs) -> Self:
+        """
+        Creates a Symbol populating what it can from the given dictionary.
+        Default arguments can be passed as keyword args to supplement missing dictionary keys.
+        """
+        if "ticker" not in obj:
+            logger.error(
+                'Symbol.from_dict() must be given a dictionary with a "ticker" key. Given: %s',
+                obj,
+            )
+            return cls("LWPC")
+
+        params = signature(cls).parameters
+        return cls(**kwargs | {k: v for k, v in obj.items() if k in params})
+
+    def __eq__(self, other: Self) -> bool:
+        # Not checking name field since a timeseries set can be unique defined by below criteria
+        return (
+            self.ticker.lower() == other.ticker.lower()
+            and _str_compare(self.broker, other.broker)
+            and _str_compare(self.exchange, other.exchange)
+            and _str_compare(self.sec_type, other.sec_type)
+        )
+
+
+def _str_compare(a: Optional[str], b: Optional[str]) -> bool:
+    "Compare two strings that are potentially undefined"
+    if a is not None and b is not None:
+        return a.lower() == b.lower()
+    return a == b
+
 
 class j_func:
     """
     String Representation of a Javascript Function.
 
-    This object allows raw python strings to be given to the JavaScript Script Executor
-    and executed as anonymous functions. This is intended to be used to provide custom
+    This object allows raw python strings to be given to the JavaScript Executor
+    and invoked as anonymous functions. This is intended to be used to provide custom
     formatters for the various lightweight chart options that take them.
     """
 
@@ -142,19 +178,19 @@ class Color:
 
     @classmethod
     def from_gradient(
-        cls, value: float, bot: float, top: float, bot_color: Self, top_color: Self
+        cls, value: float, from_val: float, to_val: float, from_col: Self, to_col: Self
     ) -> Self:
         "Returns a color based on the relative position of value in the [bot, top] Range."
-        if value <= bot:
-            return bot_color
-        if value >= top:
-            return top_color
-        ratio = (value - bot) / (top - bot)
+        if value <= from_val:
+            return from_col
+        if value >= to_val:
+            return to_col
+        ratio = (value - from_val) / (to_val - from_val)
 
-        r = floor((top_color._r - bot_color._r) * ratio + bot_color._r)
-        g = floor((top_color._g - bot_color._g) * ratio + bot_color._g)
-        b = floor((top_color._b - bot_color._b) * ratio + bot_color._b)
-        a = floor((top_color._a - bot_color._a) * ratio + bot_color._a)
+        r = floor((to_col._r - from_col._r) * ratio + from_col._r)
+        g = floor((to_col._g - from_col._g) * ratio + from_col._g)
+        b = floor((to_col._b - from_col._b) * ratio + from_col._b)
+        a = floor((to_col._a - from_col._a) * ratio + from_col._a)
 
         return cls(r, g, b, a)
 
@@ -228,27 +264,70 @@ JS_Color: TypeAlias = str | Color
 
 @dataclass(slots=True)
 class TF:
-    "Dataclass Representation of a Timeframe"
-    _mult: int
-    _period: Period
+    """
+    Dataclass Representation of a Timeframe, Constructed directly from an integer
+    and a Period Code or from a string using TF.fromStr().
 
-    def __init__(self, mult: int, period: Period):
+    A String time code is the simple concatenation of the multiplier and the period code.
+    The Period Code is required, but the multiplier is not. If no multiplier is given then
+    it is assumed to be 1.
+
+    The Multiplier should not be so large that it encroaches into an adjacent Period Code.
+    e.g. '0.25m' and '24h' are invalid, use '15s' or '1D' instead
+
+    Period Codes:
+        "s" = seconds,
+        "m" = minutes,
+        "h" = hours,
+        "D" = Days,
+        "W" = Weeks,
+        "M" = Months,
+        "Y" = Years
+    """
+
+    _mult: int
+    _period: PERIOD_CODES
+
+    def __init__(self, mult: int, period: PERIOD_CODES):
         self._validate(mult, period)
         self._period = period
         self._mult = mult
 
     def __str__(self) -> str:
-        return self.toString
+        return self.toStr
 
     @classmethod
-    def fromString(cls, tf_str: str) -> Self:
+    def fromStr(cls, tf_str: str) -> Self:
         "Create a TF Object from a formatted string"
         period = tf_str[-1]
-        mult = int(tf_str[0:-1])
-        if period in PERIOD_CODES:
+        mult = tf_str[0:-1]
+        mult = int(mult) if mult != "" else 1
+        if period in periods:
             return TF(mult, period)  # type: ignore
 
         raise TypeError(f"'{period}' not a valid Timeframe Period Code.")
+
+    # region ---- Comparators ----
+
+    def __eq__(self, other: Self):
+        return self.unix_len == other.unix_len
+
+    def __neq__(self, other: Self):
+        return self.unix_len != other.unix_len
+
+    def __gt__(self, other: Self):
+        return self.unix_len >= other.unix_len
+
+    def __ge__(self, other: Self):
+        return self.unix_len > other.unix_len
+
+    def __lt__(self, other: Self):
+        return self.unix_len < other.unix_len
+
+    def __le__(self, other: Self):
+        return self.unix_len <= other.unix_len
+
+    # endregion
 
     # region ---- Timeframe Getters and Setters ----
 
@@ -263,23 +342,27 @@ class TF:
         self._mult = value
 
     @property
-    def period(self) -> Period:
+    def period(self) -> PERIOD_CODES:
         "Timeframe Period"
         return self._period
 
     @period.setter
-    def period(self, value: Period):
+    def period(self, value: PERIOD_CODES):
         self._validate(self._mult, value)
         self._period = value
 
     @property
-    def toString(self) -> str:
+    def toStr(self) -> str:
         "String representation fmt:{multiplier}{period}"
         return f"{self._mult}{self._period}"
 
+    # endregion
+
     @staticmethod
-    def _validate(amount: int, unit: Period):
-        if amount <= 0:
+    def _validate(amount: int, unit: PERIOD_CODES):
+        if amount == 0:
+            amount = 1
+        elif amount < 0:
             raise ValueError(
                 f"Timeframe Period Multiplier,{amount}, must be a positive value."
             )
@@ -332,6 +415,14 @@ class TF:
             case "Y":
                 return self._mult * 31556926
             case _:
-                return -1
+                logger.warning("Attempting to get length of an invalid Timeframe.")
+                return 0
 
-    # endregion
+    def as_timedelta(self) -> Timedelta:
+        """
+        The Timeframe returned as a Pandas Timedelta Object.
+
+        Month & Year Timeframes follow the unix standard:
+        1 Month = 30.44 Days, 1 Year = 365.24 Days
+        """
+        return Timedelta(self.unix_len * 1_000_000_000)

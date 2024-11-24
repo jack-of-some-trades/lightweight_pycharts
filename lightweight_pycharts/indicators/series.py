@@ -3,6 +3,7 @@
 from logging import getLogger
 from dataclasses import dataclass
 from typing import (
+    Dict,
     Optional,
     Any,
     get_args,
@@ -23,7 +24,7 @@ from lightweight_pycharts import (
 )
 from lightweight_pycharts import series_common as sc
 from lightweight_pycharts.charting_frame import ChartingFrame
-from lightweight_pycharts.dataframe_ext import Series_DF, Whitespace_DF
+from lightweight_pycharts.dataframe_ext import LTF_DF, Series_DF, Whitespace_DF
 from lightweight_pycharts.indicator import (
     Indicator,
     IndicatorOptions,
@@ -136,18 +137,22 @@ class Series(Indicator):
         if self.__frame_primary_src__:
             self.parent_frame.__set_displayed_series_type__(opts.series_type)
 
+        if self.events.data_request.responder is None:
+            self.events.data_request.responder = _timeseries_request_responder
+
         self.opts = opts
-        self.socket_open = False
+        self.timeframe = None
         self.symbol = Symbol("LWPC")
         self._bar_state: Optional[BarState] = None
 
-        # Cached colors w/ the appropriate opacity
+        # Cached Volume colors w/ the appropriate opacity
         self.vol_up_color = Color.from_color(opts.up_color, a=opts.vol_opacity / 100)
         self.vol_down_color = Color.from_color(
             opts.down_color, a=opts.vol_opacity / 100
         )
 
         self.main_data: Optional[Series_DF] = None
+        self.ltf_data: Dict[TF, LTF_DF] = {}
         self.whitespace_data: Optional[Whitespace_DF] = None
 
         self.display_series = sc.SeriesCommon(
@@ -162,6 +167,32 @@ class Series(Indicator):
         )
         self.update_options(opts)
         self.init_menu(opts)
+
+    def request_timeseries(
+        self, symbol: Optional[Symbol], timeframe: Optional[TF] = None
+    ):
+        "Request that this Series change it's symbol and/or timeframe to the one given."
+        self.clear_data()
+
+        if symbol is not None:
+            self.symbol = symbol
+            if self.__frame_primary_src__:
+                self.parent_frame.__set_displayed_symbol__(symbol)
+
+        if timeframe is not None:
+            self.timeframe = timeframe
+            if self.__frame_primary_src__:
+                self.parent_frame.__set_displayed_timeframe__(timeframe)
+
+        if self.symbol is not None and self.timeframe is not None:
+            self.events.data_request(
+                symbol=self.symbol,
+                timeframe=self.timeframe,
+                rsp_kwargs={"series": self},
+            )
+            self.events.open_socket(symbol=self.symbol, series=self)
+
+    # region ------------------ Abstract Method Implementations ------------------
 
     def update_options(self, opts: SeriesIndicatorOptions) -> bool:
         if opts.series_type != self.opts.series_type:
@@ -208,115 +239,16 @@ class Series(Indicator):
         self.opts = opts
         return False
 
-    # region ------------------ Sub-Routines ------------------
-
-    def _init_bar_state(self):
-        if self.main_data is None:
-            return
-
-        df = self.main_data.df
-        col_names = self.main_data.df.columns
-
-        self._bar_state = BarState(
-            index=len(self.main_data.df) - 1,
-            time=self.main_data.curr_bar_open_time,
-            timestamp=self.main_data.curr_bar_open_time,
-            time_close=self.main_data.curr_bar_close_time,
-            time_length=self.main_data.timedelta,
-            open=(df.iloc[-1]["open"] if "open" in col_names else nan),
-            high=(df.iloc[-1]["high"] if "high" in col_names else nan),
-            low=(df.iloc[-1]["low"] if "low" in col_names else nan),
-            close=(df.iloc[-1]["close"] if "close" in col_names else nan),
-            value=(df.iloc[-1]["value"] if "value" in col_names else nan),
-            volume=(df.iloc[-1]["volume"] if "volume" in col_names else nan),
-            ticks=(df.iloc[-1]["ticks"] if "ticks" in col_names else nan),
-            # is_ext=self.main_data.ext, # TODO: Implement time check
-            is_new=True,
-            is_single_value="value" in col_names,
-            is_ohlc="close" in col_names,
-        )
-
-    def _update_bar_state(self, current_timestamp: pd.Timestamp, is_new: bool):
-        if self.main_data is None or self._bar_state is None:
-            return
-
-        df = self.main_data.df
-        col_names = self.main_data.df.columns
-
-        self._bar_state.index = len(self.main_data.df) - 1
-        self._bar_state.time = self.main_data.curr_bar_open_time
-        self._bar_state.timestamp = current_timestamp
-        self._bar_state.time_close = self.main_data.curr_bar_close_time
-        self._bar_state.time_length = self.main_data.timedelta
-        self._bar_state.open = df.iloc[-1]["open"] if "open" in col_names else nan
-        self._bar_state.high = df.iloc[-1]["high"] if "high" in col_names else nan
-        self._bar_state.low = df.iloc[-1]["low"] if "low" in col_names else nan
-        self._bar_state.close = df.iloc[-1]["close"] if "close" in col_names else nan
-        self._bar_state.value = df.iloc[-1]["value"] if "value" in col_names else nan
-        self._bar_state.volume = df.iloc[-1]["volume"] if "volume" in col_names else nan
-        self._bar_state.ticks = df.iloc[-1]["ticks"] if "ticks" in col_names else nan
-        # self._bar_state.is_ext=self.main_data.ext, TODO: Implement Time check
-        self._bar_state.is_new = is_new
-        # self._bar_state.is_single_value ## Constant
-        # self._bar_state.is_ohlc ## Constant
-
-    def _set_vol_series(self):
-        if self.main_data is not None and "volume" in self.main_data.columns:
-            if self.opts.color_vol and set(["open", "close"]).issubset(
-                self.main_data.columns
-            ):
-                # Generate a Color Series for the Volume Histogram if we can
-                vol_color = self.main_data.df["close"] >= self.main_data.df["open"]
-                self.main_data.df["vol_color"] = vol_color.replace(
-                    {True: self.vol_up_color, False: self.vol_down_color}
-                )
-            elif "vol_color" in self.main_data.columns:
-                self.main_data.df.drop(columns="vol_color", inplace=True)
-
-            # Color Doesn't Need to exist to update the Series
-            self.vol_series.set_data(self.main_data)
-
-    def _update_vol_series(self):
-        if self._bar_state is None:
-            return
-
-        if (
-            not self.opts.color_vol
-            or self._bar_state.close is nan
-            or self._bar_state.open is nan
-        ):
-            color = None
-        elif self._bar_state.close > self._bar_state.open:
-            color = self.vol_up_color
-        else:
-            color = self.vol_down_color
-
-        self.vol_series.update_data(
-            HistogramData(self._bar_state.time, self._bar_state.volume, color=color)
-        )
-
-    # endregion
-
-    def delete(self):
-        super().delete()
-        if self.socket_open:
-            self.events.socket_switch(state="close", symbol=self.symbol, series=self)
-
     def set_data(
         self,
         data: pd.DataFrame | list[dict[str, Any]],
         *_,
-        symbol: Optional[Symbol] = None,
         **__,
     ):
         "Sets the main source of data for this Frame"
-        self.clear_data()
-
-        # Update the Symbol Regardless if data is good or not
-        if symbol is not None:
-            self.symbol = symbol
-        else:
-            self.symbol = Symbol("LWPC")
+        if self.main_data is not None:
+            # Ensure Data is clear. Most of the time it already will be.
+            self.clear_data()
 
         if self.__frame_primary_src__:
             self.parent_frame.__set_displayed_symbol__(self.symbol)
@@ -327,12 +259,15 @@ class Series(Indicator):
         self.main_data = Series_DF(data, self.symbol.exchange)
 
         # ---------------- Clear & Return on Bad Data ----------------
-        if self.main_data.timeframe == TF(1, "E"):
-            self.clear_data()
+        if (
+            self.main_data.timeframe == TF(1, "E")
+            or self.main_data.data_type == SeriesType.WhitespaceData
+        ):
+            self.main_data = None
             return
-        if self.main_data.data_type == SeriesType.WhitespaceData:
-            self.clear_data(timeframe=self.main_data.timeframe)
-            return
+        # Ensure timeframe matches data timeframe in case the data given doesn't match
+        # the timeframe that this was set to somehow
+        self.timeframe = self.main_data.timeframe
 
         # ---------------- Update Displayed Series Objects with Data ----------------
         self._init_bar_state()
@@ -427,13 +362,8 @@ class Series(Indicator):
         self._watcher.updated = True
         self._notify_observers_update()
 
-    def clear_data(
-        self, timeframe: Optional[TF] = None, symbol: Optional[Symbol] = None, **_
-    ):
-        """
-        Clears the data in memory and on the screen and, if not none,
-        updates the desired timeframe and symbol for the Frame
-        """
+    def clear_data(self):
+        "Clears the data in memory and on the screen, Closes out An open Socket if one exists"
         self.main_data = None
         self._bar_state = None
 
@@ -441,22 +371,127 @@ class Series(Indicator):
             self.whitespace_data = None
             self.parent_frame.__clear_whitespace__()
 
-        if self.socket_open:
-            # Ensure Socket is Closed
-            self.events.socket_switch(state="close", symbol=self.symbol, series=self)
-
-        if symbol is not None:
-            self.symbol = symbol
-            if self.__frame_primary_src__:
-                self.parent_frame.__set_displayed_symbol__(symbol)
-
-        if timeframe is not None and self.__frame_primary_src__:
-            self.parent_frame.__set_displayed_timeframe__(timeframe)
+        self.events.close_socket(series=self)
 
         super().clear_data()
 
-        # Notify Observers
+        # Notify Observers to propagate the Data Clear Event
         self._notify_observers_clear()
+
+    # endregion
+
+    # region ------------------ Set & Update Sub-Routines ------------------
+
+    def _init_bar_state(self):
+        if self.main_data is None:
+            return
+
+        df = self.main_data.df
+        col_names = self.main_data.df.columns
+
+        self._bar_state = BarState(
+            index=len(self.main_data.df) - 1,
+            time=self.main_data.curr_bar_open_time,
+            timestamp=self.main_data.curr_bar_open_time,
+            time_close=self.main_data.curr_bar_close_time,
+            time_length=self.main_data.timedelta,
+            open=(df.iloc[-1]["open"] if "open" in col_names else nan),
+            high=(df.iloc[-1]["high"] if "high" in col_names else nan),
+            low=(df.iloc[-1]["low"] if "low" in col_names else nan),
+            close=(df.iloc[-1]["close"] if "close" in col_names else nan),
+            value=(df.iloc[-1]["value"] if "value" in col_names else nan),
+            volume=(df.iloc[-1]["volume"] if "volume" in col_names else nan),
+            ticks=(df.iloc[-1]["ticks"] if "ticks" in col_names else nan),
+            # is_ext=self.main_data.ext, # TODO: Implement time check
+            is_new=True,
+            is_single_value="value" in col_names,
+            is_ohlc="close" in col_names,
+        )
+
+    def _update_bar_state(self, current_timestamp: pd.Timestamp, is_new: bool):
+        if self.main_data is None or self._bar_state is None:
+            return
+
+        df = self.main_data.df
+        col_names = self.main_data.df.columns
+
+        self._bar_state.index = len(self.main_data.df) - 1
+        self._bar_state.time = self.main_data.curr_bar_open_time
+        self._bar_state.timestamp = current_timestamp
+        self._bar_state.time_close = self.main_data.curr_bar_close_time
+        self._bar_state.time_length = self.main_data.timedelta
+        self._bar_state.open = float(
+            df.iloc[-1]["open"] if "open" in col_names else nan
+        )
+        self._bar_state.high = float(
+            df.iloc[-1]["high"] if "high" in col_names else nan
+        )
+        self._bar_state.low = float(df.iloc[-1]["low"] if "low" in col_names else nan)
+        self._bar_state.close = float(
+            df.iloc[-1]["close"] if "close" in col_names else nan
+        )
+        self._bar_state.value = float(
+            df.iloc[-1]["value"] if "value" in col_names else nan
+        )
+        self._bar_state.volume = float(
+            df.iloc[-1]["volume"] if "volume" in col_names else nan
+        )
+        self._bar_state.ticks = float(
+            df.iloc[-1]["ticks"] if "ticks" in col_names else nan
+        )
+        # self._bar_state.is_ext=self.main_data.ext, TODO: Implement Time check
+        self._bar_state.is_new = is_new
+        # self._bar_state.is_single_value ## Constant
+        # self._bar_state.is_ohlc ## Constant
+
+    def _set_vol_series(self):
+        if self.main_data is not None and "volume" in self.main_data.columns:
+            if self.opts.color_vol and set(["open", "close"]).issubset(
+                self.main_data.columns
+            ):
+                # Generate a Color Series for the Volume Histogram if we can
+                vol_color = self.main_data.df["close"] >= self.main_data.df["open"]
+                self.main_data.df["vol_color"] = vol_color.replace(
+                    {True: self.vol_up_color, False: self.vol_down_color}
+                )
+            elif "vol_color" in self.main_data.columns:
+                self.main_data.df.drop(columns="vol_color", inplace=True)
+
+            # Color Doesn't Need to exist to update the Series
+            self.vol_series.set_data(self.main_data)
+
+    def _update_vol_series(self):
+        if self._bar_state is None:
+            return
+
+        if (
+            not self.opts.color_vol
+            or self._bar_state.close is nan
+            or self._bar_state.open is nan
+        ):
+            color = None
+        elif self._bar_state.close > self._bar_state.open:
+            color = self.vol_up_color
+        else:
+            color = self.vol_down_color
+
+        self.vol_series.update_data(
+            HistogramData(self._bar_state.time, self._bar_state.volume, color=color)
+        )
+
+    # endregion
+
+    # region ------------------ Lower-Timeframe Support ------------------
+
+    def request_ltf(self, timeframe: TF):
+        "Request that a Lower Timeframe of data be retrieved for calculation"
+        raise NotImplementedError
+
+    def release_ltf(self, timeframe: TF):
+        "Relinquish the need for this series to track a specific lower timeframe"
+        raise NotImplementedError
+
+    # endregion
 
     def change_series_type(self, series_type: SeriesType, update_ui_menu=False):
         "Change the Series Type of the main dataset"
@@ -589,6 +624,14 @@ class Series(Indicator):
         return pd.Series({})
 
     # endregion
+
+
+def _timeseries_request_responder(
+    data: pd.DataFrame | list[dict[str, Any]] | None, series: Series, **_
+):
+    "Function that responds to the data returned by an Event.data_request being emitted"
+    if data is not None:
+        series.set_data(data)
 
 
 # endregion

@@ -2,7 +2,6 @@
 
 from asyncio import iscoroutinefunction, create_task
 from typing import (
-    Literal,
     Protocol,
     Self,
     TypeAlias,
@@ -27,7 +26,8 @@ class Events:
     def __init__(self):
         self.symbol_search = Emitter[Symbol_Search_Protocol]()
         self.data_request = Emitter[Data_Request_Protocol]()
-        self.socket_switch = Emitter[Socket_Switch_Protocol]()
+        self.open_socket = Emitter[Socket_Open_Protocol]()
+        self.close_socket = Emitter[Socket_Close_Protocol]()
 
 
 # region -------------------------- Python Event Protocol Definitions -------------------------- #
@@ -43,11 +43,11 @@ class Command_async(Protocol):
 
 class Data_request_sync(Protocol):
     def __call__(
-        self, symbol: types.Symbol, tf: types.TF
+        self, symbol: types.Symbol, timeframe: types.TF
     ) -> DataFrame | list[dict[str, Any]] | None: ...
 class Data_request_async(Protocol):
     def __call__(
-        self, symbol: types.Symbol, tf: types.TF
+        self, symbol: types.Symbol, timeframe: types.TF
     ) -> DataFrame | list[dict[str, Any]] | None: ...
 
 
@@ -76,20 +76,16 @@ class Symbol_search_async_2(Protocol):
     ) -> Optional[list[types.Symbol]]: ...
 
 
-class Socket_switch_sync(Protocol):
-    def __call__(
-        self,
-        state: Literal["open", "close"],
-        symbol: types.Symbol,
-        series: "Series",
-    ) -> None: ...
-class Socket_switch_async(Protocol):
-    async def __call__(
-        self,
-        state: Literal["open", "close"],
-        symbol: types.Symbol,
-        series: "Series",
-    ) -> None: ...
+class Socket_Open_sync(Protocol):
+    def __call__(self, symbol: types.Symbol, series: "Series") -> None: ...
+class Socket_Open_async(Protocol):
+    async def __call__(self, symbol: types.Symbol, series: "Series") -> None: ...
+
+
+class Socket_Close_sync(Protocol):
+    def __call__(self, series: "Series") -> None: ...
+class Socket_close_async(Protocol):
+    async def __call__(self, series: "Series") -> None: ...
 
 
 # Type Aliases to congregate various different Protocol Signatures into Groups
@@ -101,7 +97,8 @@ Symbol_Search_Protocol: TypeAlias = (
     | Symbol_search_async_2
 )
 Data_Request_Protocol: TypeAlias = Data_request_sync | Data_request_async
-Socket_Switch_Protocol: TypeAlias = Socket_switch_sync | Socket_switch_async
+Socket_Open_Protocol: TypeAlias = Socket_Open_sync | Socket_Open_async
+Socket_Close_Protocol: TypeAlias = Socket_Close_sync | Socket_close_async
 
 # endregion
 
@@ -109,7 +106,8 @@ Emitter_Protocols: TypeAlias = (
     Command_Protocol
     | Symbol_Search_Protocol
     | Data_Request_Protocol
-    | Socket_Switch_Protocol
+    | Socket_Open_Protocol
+    | Socket_Close_Protocol
 )
 
 
@@ -129,14 +127,19 @@ class Emitter[T: Emitter_Protocols](list[T]):
     # TODO : Make this class track async tasks that it has created so they can be closed
     # This will likely entail making the class definitively only handle one response function
 
-    def __init__(self, response: Optional[Callable] = None):
+    def __init__(self, responder: Optional[Callable] = None):
         super().__init__()
-        self.response = response
-        self.__single_responder__ = True
+        # A Caller is a function that is appended to this Object.
+        # Each caller gets called when an event it emitted
+        self.__single_caller__ = True
+
+        # The responder function called with the return products of each Caller
+        # There can only be one responder
+        self.responder = responder
 
     def __iadd__(self, func: T) -> Self:
         if func not in self:
-            if self.__single_responder__:
+            if self.__single_caller__:
                 self.clear()
             self.append(func)
         return self
@@ -146,36 +149,40 @@ class Emitter[T: Emitter_Protocols](list[T]):
             self.remove(func)
         return self
 
-    # rsp_kwargs are set when the event it emitted, They are arguments
+    # rsp_kwargs are set when the event is emitted, They are arguments
     # passed directly to the response function of the emitter.
     def __call__(self, *args, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs):
         if len(self) == 0:
-            return
-        if iscoroutinefunction(call := self[0]):
-            # Run Self, Asynchronously
-            create_task(
-                self._async_response_wrap_(call, *args, **kwargs, rsp_kwargs=rsp_kwargs)
-            )
-        else:
-            # Run Self, Synchronously
-            rsp = call(*args, **kwargs)
-            if self.response is None:
-                return
+            return  # No Functions have been appended to this Emitter Yet
 
-            self.response(  # only unpack rsp tuples, not lists
-                *rsp if isinstance(rsp, tuple) else (rsp,),
-                **rsp_kwargs if rsp_kwargs is not None else {},
-            )
+        for caller in self:
+            if iscoroutinefunction(caller):
+                # Run Self, Asynchronously
+                create_task(
+                    self._async_response_wrap_(
+                        caller, *args, **kwargs, rsp_kwargs=rsp_kwargs
+                    )
+                )
+            else:
+                # Run Self, Synchronously
+                rsp = caller(*args, **kwargs)
+                if self.responder is None:
+                    return
+
+                self.responder(  # only unpack rsp tuples, not lists
+                    *rsp if isinstance(rsp, tuple) else (rsp,),
+                    **rsp_kwargs if rsp_kwargs is not None else {},
+                )
 
     async def _async_response_wrap_(
         self, call, *args, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs
     ):
-        "Simple Wrapper to 'await' the initial 'call' function."
+        "Simple Wrapper to await the initial caller function."
         rsp = await call(*args, **kwargs)
-        if self.response is None:
+        if self.responder is None:
             return
 
-        self.response(
+        self.responder(
             *rsp if isinstance(rsp, tuple) else rsp,  # only unpack tuples, not lists
             **rsp_kwargs if rsp_kwargs is not None else {},
         )

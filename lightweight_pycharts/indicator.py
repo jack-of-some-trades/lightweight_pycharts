@@ -444,7 +444,10 @@ class Indicator(metaclass=IndicatorMeta):
 
     @property
     def js_id(self) -> str:
-        "Immutable Copy of the Object's Javascript_ID"
+        """
+        Immutable Copy of the Object's Javascript_ID. The Id is unique only to it's frame
+        Use this Object's Hash ID if a truly unique ID is required.
+        """
         return self._js_id
 
     @property
@@ -553,8 +556,8 @@ class Indicator(metaclass=IndicatorMeta):
         Clear Data from the indicator, resetting it the post __init__ state. This is also called
         just prior to indicator deletion, so can reliably clean up the state of linked objects.
 
-        The series and primitive objects are not guaranteed to exist since this might be called
-        ahead of deletion.
+        If this function is extended by a subclass, that indicator should call super().clear_data()
+        since this function clears all series and primitive data.
         """
         for series in self._series.values():
             series.clear_data()

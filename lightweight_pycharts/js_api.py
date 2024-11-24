@@ -87,16 +87,20 @@ class js_api:
             )
 
     def data_request(
-        self, container_id: str, frame_id: str, symbol: dict[str, str], tf_str: str
+        self,
+        container_id: str,
+        frame_id: str,
+        symbol: dict[str, str],
+        tf_str: str,
     ):
         try:
             self.rtn_queue.put(
                 (
-                    PY_CMD.DATA_REQUEST,
+                    PY_CMD.TIMESERIES_REQUEST,
                     container_id,
                     frame_id,
                     orm.Symbol(**symbol),
-                    orm.TF.fromString(tf_str),
+                    orm.TF.fromStr(tf_str),
                 )
             )
         except ValueError as e:
@@ -234,7 +238,12 @@ class View(ABC):
                 cmd_str = CMD_ROLODEX[cmd](*args)
             except TypeError as e:
                 arg_list = [type(arg) for arg in args]
-                logger.error("Command:%s: Given %s \n\tError msg: %s", cmd, arg_list, e)
+                logger.error(
+                    "Command:%s: Given %s \n\tError msg: %s",
+                    JS_CMD(cmd).name,
+                    arg_list,
+                    e,
+                )
                 continue  # Skip to next Command
 
             if cmd_str is None:

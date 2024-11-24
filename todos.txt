@@ -73,6 +73,7 @@ Backend-Backend (Python):
 				: Incorperate Calendar information into 'next_bar_time()'
 				: Optimize this class... by optimizing Pandas_Market_Calendars :( PMC is by far the slowest piece of code
 					involved in this entire library. Optimizing it will be the biggest bang-for-buck performance optimization
+				: Fix the Whitespace Extension DF. Currently it errors when given ETH since it is always expecting RTH
 
 	- Disable GIL : Experiment with Disabling the GIL in Python 3.13. This implmentation would replace the multi-processing
 					behavior with multi-threading. This *could* be a decent performance increase seeing as how the memory space

@@ -56,7 +56,7 @@ class PY_CMD(IntEnum):
     SYMBOL_SEARCH = auto()
     SYMBOL_SELECT = auto()
 
-    DATA_REQUEST = auto()
+    TIMESERIES_REQUEST = auto()
     # RANGE_CHANGE = auto() # Maybe?
     SERIES_CHANGE = auto()
     LAYOUT_CHANGE = auto()
@@ -223,7 +223,7 @@ def set_frame_symbol(frame_id: str, symbol: object) -> str:
 
 
 def set_frame_timeframe(frame_id: str, timeframe: TF) -> str:
-    return f"{frame_id}.set_timeframe('{timeframe.toString}');"
+    return f"{frame_id}.set_timeframe('{timeframe.toStr}');"
 
 
 def set_whitespace_data(frame_id: str, data: DataFrame, p_data: object) -> str:
