@@ -15,7 +15,8 @@ from webview.errors import JavascriptException
 from lightweight_pycharts.util import is_dunder
 
 from . import orm, SeriesType
-from .js_cmd import JS_CMD, PY_CMD, CMD_ROLODEX
+from .js_cmd import JS_CMD, VIEW_CMD_ROLODEX
+from .py_cmd import PY_CMD
 
 file_dir = dirname(abspath(__file__))
 logger = logging.getLogger("lightweight-pycharts")
@@ -28,7 +29,8 @@ logger = logging.getLogger("lightweight-pycharts")
 class js_api:
     """
     Base javascript Callback API.
-    Every function in this class maps to a function in the py_api class in py_api.ts
+    Every function in this class maps to a function in the py_api class in py_api.ts and
+    thus allows for events/inputs into the Javascript Window to invoke python functions.
     * private, protected, sunder, and dunder methods are *not* placed in the Javascript window
     """
 
@@ -86,19 +88,13 @@ class js_api:
                 "Couldn't Change Series_Type, '%s' isn't a valid series", series_type
             )
 
-    def data_request(
-        self,
-        container_id: str,
-        frame_id: str,
-        symbol: dict[str, str],
-        tf_str: str,
-    ):
+    def data_request(self, c_id: str, f_id: str, symbol: dict[str, str], tf_str: str):
         try:
             self.rtn_queue.put(
                 (
                     PY_CMD.TIMESERIES_REQUEST,
-                    container_id,
-                    frame_id,
+                    c_id,
+                    f_id,
                     orm.Symbol(**symbol),
                     orm.TF.fromStr(tf_str),
                 )
@@ -126,23 +122,9 @@ class js_api:
         )
 
     def update_series_options(
-        self,
-        container_id: str,
-        frame_id: str,
-        indicator_id: str,
-        series_id: str,
-        options: dict,
+        self, c_id: str, f_id: str, i_id: str, s_id: str, opts: dict
     ):
-        self.rtn_queue.put(
-            (
-                PY_CMD.UPDATE_SERIES_OPTS,
-                container_id,
-                frame_id,
-                indicator_id,
-                series_id,
-                options,
-            )
-        )
+        self.rtn_queue.put((PY_CMD.UPDATE_SERIES_OPTS, c_id, f_id, i_id, s_id, opts))
 
 
 ##### --------------------------------- Helper Classes --------------------------------- #####
@@ -235,7 +217,7 @@ class View(ABC):
 
             try:
                 # Lookup JS Command
-                cmd_str = CMD_ROLODEX[cmd](*args)
+                cmd_str = VIEW_CMD_ROLODEX[cmd](*args)
             except TypeError as e:
                 arg_list = [type(arg) for arg in args]
                 logger.error(

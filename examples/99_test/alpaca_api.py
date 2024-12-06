@@ -2,10 +2,9 @@
 
 import os
 import asyncio
-from typing import Optional
 from itertools import islice
 from logging import getLogger
-from typing import Dict, Any, overload
+from typing import Optional, Dict, Any, overload
 from dotenv import find_dotenv, load_dotenv
 
 

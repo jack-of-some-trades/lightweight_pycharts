@@ -1,4 +1,7 @@
-"Function definitions that return formatted Javascript scripts as literal strings"
+"""
+Implementations of Command Functions that return formatted Javascript ready for execution
+All Functions wave been rolled-up into VIEW_CMD_ROLODEX that Maps {JS_CMD: Function}
+"""
 
 from math import floor
 from enum import Enum, IntEnum, auto
@@ -42,27 +45,6 @@ class ORM_JSONEncoder(JSONEncoder):
 def dump(obj: Any) -> str:
     "Enchanced JSON.dumps() to serialize all ORM Objects"
     return dumps(obj, cls=ORM_JSONEncoder, separators=(",", ":"))
-
-
-class PY_CMD(IntEnum):
-    "Enumeration of the various commands that javascript can send to python"
-    ADD_CONTAINER = auto()
-    REMOVE_CONTAINER = auto()
-    REORDER_CONTAINERS = auto()
-    REMOVE_FRAME = auto()
-    # ADD_PANE = auto()
-    # REMOVE_PANE = auto()
-
-    SYMBOL_SEARCH = auto()
-    SYMBOL_SELECT = auto()
-
-    TIMESERIES_REQUEST = auto()
-    # RANGE_CHANGE = auto() # Maybe?
-    SERIES_CHANGE = auto()
-    LAYOUT_CHANGE = auto()
-    ADD_INDICATOR = auto()
-    SET_INDICATOR_OPTS = auto()
-    UPDATE_SERIES_OPTS = auto()
 
 
 class JS_CMD(IntEnum):
@@ -526,7 +508,7 @@ def lambda_none(*_) -> None:
     return None
 
 
-CMD_ROLODEX: dict[JS_CMD, Callable[..., str | None]] = {
+VIEW_CMD_ROLODEX: dict[JS_CMD, Callable[..., str | None]] = {
     # ---- Window Commands ----
     JS_CMD.JS_CODE: js_code,
     JS_CMD.ADD_CONTAINER: add_container,

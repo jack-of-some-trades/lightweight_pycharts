@@ -10,13 +10,14 @@ from functools import partial
 from dataclasses import asdict
 from typing import Literal, Optional
 
+from lightweight_pycharts.py_cmd import WIN_CMD_ROLODEX
 
 from . import orm
 from . import util
 
 from .events import Events
 from .js_api import PyWv, MpHooks, PyWebViewOptions
-from .js_cmd import JS_CMD, PY_CMD
+from .js_cmd import JS_CMD
 
 logger = logging.getLogger("lightweight-pycharts")
 
@@ -82,91 +83,25 @@ class Window:
             self.events = Events()
 
         self.events.symbol_search.responder = partial(
-            self._symbol_search_rsp, fwd_queue=self._fwd_queue
+            _symbol_search_rsp, fwd_queue=self._fwd_queue
         )
 
         # Using ID_List over ID_Dict so element order is mutable for PY_CMD.REORDER_CONTAINERS
         self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
 
-    # region ------------------------ Private Window Methods  ------------------------ #
-
-    def _execute_cmd(self, cmd: PY_CMD, *args):
-        logger.debug("PY_CMD: %s: %s", cmd.name, str(args))
-        # If this CMD list gets very large then it might be worth making another CMD_ROLODEX.
-        # High dependence on window instance variables is keeping this as a Match Statement ATM.
-        match cmd, *args:
-            case PY_CMD.SYMBOL_SEARCH, str(), bool(), list(), list(), list():
-                self.events.symbol_search(
-                    ticker=args[0],
-                    confirmed=args[1],
-                    types=args[2],
-                    brokers=args[3],
-                    exchanges=args[4],
-                )
-
-            case PY_CMD.TIMESERIES_REQUEST, str(), str(), orm.Symbol(), orm.TF():
-                frame = self.get_container(args[0]).frames[args[1]]
-                if not isinstance(frame, ChartingFrame):
-                    return
-
-                frame.main_series.request_timeseries(symbol=args[2], timeframe=args[3])
-
-            case PY_CMD.LAYOUT_CHANGE, str(), orm.Layouts():
-                container = self.get_container(args[0])
-                container.set_layout(args[1])
-
-            case PY_CMD.SERIES_CHANGE, str(), str(), orm.SeriesType():
-                frame = self.get_container(args[0]).frames[args[1]]
-                if isinstance(frame, ChartingFrame):
-                    frame.main_series.change_series_type(args[2], True)
-
-            case PY_CMD.SET_INDICATOR_OPTS, str(), str(), str(), dict():
-                frame = self.get_container(args[0]).frames[args[1]]
-                if isinstance(frame, ChartingFrame):
-                    frame.indicators[args[2]].__update_options__(args[3])
-
-            case PY_CMD.UPDATE_SERIES_OPTS, str(), str(), str(), str(), dict():
-                frame = self.get_container(args[0]).frames[args[1]]
-                if isinstance(frame, ChartingFrame):
-                    # pylint: disable=protected-access
-                    frame.indicators[args[2]]._series[args[3]].__sync_options__(args[4])
-                    # pylint: enable=protected-access
-
-            case PY_CMD.ADD_CONTAINER, *_:
-                self.new_tab()
-
-            case PY_CMD.REMOVE_CONTAINER, str():
-                self.del_tab(args[0])
-
-            case PY_CMD.REMOVE_FRAME, str(), str():
-                self.get_container(args[0]).remove_frame(args[1])
-
-            case PY_CMD.REORDER_CONTAINERS, int(), int():
-                # This keeps the Window Obj Tab order identical to what is displayed
-                self._container_ids.insert(args[1], self._container_ids.pop(args[0]))
-                self.containers.insert(args[1], self.containers.pop(args[0]))
-
     async def _manage_queue(self):
         logger.debug("Entered Async Queue Manager")
         while not self._stop_event.is_set():
             if self._rtn_queue.empty():
+                # Sleep Time is to prioritize other Event Loop Calls.
+                # Can be set to 0 if the Rtn_Queue becomes more active.
                 await asyncio.sleep(0.05)
             else:
-                cmd, *rsp = self._rtn_queue.get()
-                self._execute_cmd(cmd, *rsp)
-                # logger.debug("Window Received Command: %s: %s", cmd, rsp)
+                cmd, *args = self._rtn_queue.get()
+                WIN_CMD_ROLODEX[cmd](self, *args)
+                logger.debug("PY_CMD: %s: %s", cmd.name, str(args))
         logger.debug("Exited Async Queue Manager")
-
-    # endregion
-
-    # region ------------------------ Private Event Response Methods ------------------------ #
-
-    @staticmethod
-    def _symbol_search_rsp(items: list[orm.Symbol], *_, fwd_queue: mp.Queue):
-        fwd_queue.put((JS_CMD.SET_SYMBOL_ITEMS, items))
-
-    # endregion
 
     # region ------------------------ Public Window Methods  ------------------------ #
 
@@ -285,6 +220,11 @@ class Window:
         self._fwd_queue.put((JS_CMD.UPDATE_TF_OPTS, json_dict))
 
     # endregion
+
+
+# Window Event Reponse Functions
+def _symbol_search_rsp(items: list[orm.Symbol], *_, fwd_queue: mp.Queue):
+    fwd_queue.put((JS_CMD.SET_SYMBOL_ITEMS, items))
 
 
 class Container:
@@ -409,7 +349,8 @@ class Frame(ABC):
     # endregion
 
 
-# Frame Subclasses are imported at EoF to prevent an import error.
-# Future_Annotations Silence the Typeing errors that would occur above.
+# EoF Imports to prevent an import error.
+# Future_Annotations Silence the Typing errors that would occur above.
 # pylint: disable=wrong-import-position
 from .charting_frame import ChartingFrame
+from .py_cmd import WIN_CMD_ROLODEX
