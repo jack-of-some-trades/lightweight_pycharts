@@ -4,8 +4,7 @@ All Functions have been rolled-up into WIN_CMD_ROLODEX that Maps {PY_CMD: Functi
 """
 
 from enum import IntEnum, auto
-from .window import Window, ChartingFrame
-
+from . import window as win
 
 # @pylint: disable=invalid-name, missing-function-docstring, protected-access
 
@@ -35,7 +34,7 @@ class PY_CMD(IntEnum):
 # Strict Typing has been relaxed since these are only invoked by formatted Rtn_Queue Packets
 
 
-def symbol_search(window: Window, *args):
+def symbol_search(window: "win.Window", *args):
     window.events.symbol_search(
         ticker=args[0],
         confirmed=args[1],
@@ -45,48 +44,48 @@ def symbol_search(window: Window, *args):
     )
 
 
-def request_timeseries(window: Window, c_id, f_id, symbol, tf):
+def request_timeseries(window: "win.Window", c_id, f_id, symbol, tf):
     frame = window.get_container(c_id).frames[f_id]
-    if isinstance(frame, ChartingFrame):
+    if isinstance(frame, win.ChartingFrame):
         frame.main_series.request_timeseries(symbol=symbol, timeframe=tf)
 
 
-def layout_change(window: Window, c_id, layout):
+def layout_change(window: "win.Window", c_id, layout):
     container = window.get_container(c_id)
     container.set_layout(layout)
 
 
-def series_change(window: Window, c_id, f_id, _type):
+def series_change(window: "win.Window", c_id, f_id, _type):
     frame = window.get_container(c_id).frames[f_id]
-    if isinstance(frame, ChartingFrame):
+    if isinstance(frame, win.ChartingFrame):
         frame.main_series.change_series_type(_type, True)
 
 
-def set_indicator_opts(window: Window, c_id, f_id, i_id, opts):
+def set_indicator_opts(window: "win.Window", c_id, f_id, i_id, opts):
     frame = window.get_container(c_id).frames[f_id]
-    if isinstance(frame, ChartingFrame):
+    if isinstance(frame, win.ChartingFrame):
         frame.indicators[i_id].__update_options__(opts)
 
 
-def update_series_opts(window: Window, c_id, f_id, i_id, s_id, opts):
+def update_series_opts(window: "win.Window", c_id, f_id, i_id, s_id, opts):
     frame = window.get_container(c_id).frames[f_id]
-    if isinstance(frame, ChartingFrame):
+    if isinstance(frame, win.ChartingFrame):
         frame.indicators[i_id]._series[s_id].__sync_options__(opts)
 
 
-def add_container(window: Window):
+def add_container(window: "win.Window"):
     window.new_tab()
 
 
-def remove_container(window: Window, c_id):
+def remove_container(window: "win.Window", c_id):
     window.del_tab(c_id)
 
 
-def remove_frame(window: Window, c_id, f_id):
+def remove_frame(window: "win.Window", c_id, f_id):
     window.get_container(c_id).remove_frame(f_id)
 
 
-def reorder_containers(window: Window, _from, _to):
+def reorder_containers(window: "win.Window", _from, _to):
     # This keeps the Window Obj Tab order identical to what is displayed
     window._container_ids.insert(_to, window._container_ids.pop(_from))
     window.containers.insert(_to, window.containers.pop(_from))

@@ -10,14 +10,13 @@ from functools import partial
 from dataclasses import asdict
 from typing import Literal, Optional
 
-from lightweight_pycharts.py_cmd import WIN_CMD_ROLODEX
-
 from . import orm
 from . import util
 
 from .events import Events
-from .js_api import PyWv, MpHooks, PyWebViewOptions
 from .js_cmd import JS_CMD
+from .py_cmd import WIN_CMD_ROLODEX
+from .js_api import PyWv, MpHooks, PyWebViewOptions
 
 logger = logging.getLogger("lightweight-pycharts")
 
@@ -77,11 +76,7 @@ class Window:
         self._queue_manager = asyncio.create_task(self._manage_queue())
 
         # -------- Create Subobjects  -------- #
-        if events is not None:
-            self.events = events
-        else:
-            self.events = Events()
-
+        self.events = Events() if events is None else events
         self.events.symbol_search.responder = partial(
             _symbol_search_rsp, fwd_queue=self._fwd_queue
         )
@@ -222,7 +217,7 @@ class Window:
     # endregion
 
 
-# Window Event Reponse Functions
+# Window Event Response Function
 def _symbol_search_rsp(items: list[orm.Symbol], *_, fwd_queue: mp.Queue):
     fwd_queue.put((JS_CMD.SET_SYMBOL_ITEMS, items))
 
@@ -353,4 +348,3 @@ class Frame(ABC):
 # Future_Annotations Silence the Typing errors that would occur above.
 # pylint: disable=wrong-import-position
 from .charting_frame import ChartingFrame
-from .py_cmd import WIN_CMD_ROLODEX
