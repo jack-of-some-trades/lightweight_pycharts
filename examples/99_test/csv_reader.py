@@ -6,7 +6,7 @@ import pandas as pd
 from lightweight_pycharts import Symbol, TF, indicators, OhlcData, SingleValueData
 
 
-def symbol_search_handler(ticker: str, **kwargs) -> Optional[list[Symbol]]:
+def symbol_search_handler(ticker: str, **_) -> Optional[list[Symbol]]:
     """
     The handler that is called when a symbol search is requested. The List of Symbols given
     will be displayed, verbatim, on screen. When an item is selected on screen, an equivalent
@@ -27,16 +27,16 @@ def symbol_search_handler(ticker: str, **kwargs) -> Optional[list[Symbol]]:
     ]
 
 
-def data_request_handler(symbol: Symbol, tf: TF) -> Optional[pd.DataFrame]:
+def data_request_handler(symbol: Symbol, timeframe: TF) -> Optional[pd.DataFrame]:
     "Request Handler for Bulk REST Data Fetches."
-    if tf.period == "m" and (tf.mult in [1, 5, 30]):
+    if timeframe.period == "m" and (timeframe.mult in [1, 5, 30]):
         match symbol.ticker:
             case "AAPL":
-                return pd.read_csv(f"examples/data/AAPL_{tf.mult}min.csv")
+                return pd.read_csv(f"examples/data/AAPL_{timeframe.mult}min.csv")
             case "GOOGL":
-                return pd.read_csv(f"examples/data/GOOGL_{tf.mult}min.csv")
+                return pd.read_csv(f"examples/data/GOOGL_{timeframe.mult}min.csv")
             case "TSLA":
-                return pd.read_csv(f"examples/data/TSLA_{tf.mult}min.csv")
+                return pd.read_csv(f"examples/data/TSLA_{timeframe.mult}min.csv")
             case "LWPC":
                 return pd.read_csv("examples/data/lwpc_ohlcv.csv")
             case "LWPC-TICK":

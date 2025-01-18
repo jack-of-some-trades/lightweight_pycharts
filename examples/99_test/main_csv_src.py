@@ -1,26 +1,35 @@
-"Simple Main Script to launch Lightweight-Pycharts sorcing data from the Alpaca API"
+"Simple Main script to run Lightweight-Pycharts sourcing data from local csv files."
 import asyncio
 
 import pandas as pd
 
-from alpaca_api import AlpacaAPI
+import csv_reader as csv
 
 import lightweight_pycharts as lwc
 
 
 async def main():
-    # The Window is about twice as slow to load compared to the CSV main because of the Alpaca API
-    # All symbols are loaded at the start and for some reason that API never decided to make that an
-    # Async request so here we wait.
-    alpaca_api = AlpacaAPI()
+    """
+    Main Function for creating a Window. While the implementation of this is largely
+    left for the user, there should be two constants: The Function is Async and called
+    from a [ if __name__ == "__main__": ] block.
+
+    The window internally runs a loop manager that handles a return queue. This loop manager
+    is run using async/await hence the need for main() to be an async function.
+
+    The Loop that is managed is a multi-process Queue that receives feedback commands
+    from the window. The spawning of a child process is what necessitates
+    the use of a [ if __name__ == "__main__": ] block.
+    """
 
     window = lwc.Window(log_level="INFO", debug=True, frameless=False)
-    window.events.data_request += alpaca_api.get_hist
-    window.events.symbol_search += alpaca_api.search_symbols
-    window.events.open_socket += alpaca_api.open_socket
-    window.events.close_socket += alpaca_api.close_socket
+    window.events.data_request += csv.data_request_handler
+    window.events.symbol_search += csv.symbol_search_handler
+    window.events.open_socket += csv.socket_request_handler
 
-    AlpacaAPI.set_window_filters(window)
+    window.set_search_filters("security_type", ["Crypto", "Equity"])
+    window.set_search_filters("data_broker", ["Local", "Alpaca"])
+    window.set_search_filters("exchange", [])
     window.set_layout_favs(
         [
             lwc.Layouts.SINGLE,
@@ -56,7 +65,6 @@ async def main():
         lwc.indicators.SMA(sma20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
-    await alpaca_api.shutdown()
 
 
 if __name__ == "__main__":

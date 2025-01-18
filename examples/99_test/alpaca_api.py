@@ -74,6 +74,13 @@ class AlpacaAPI:
 
         self._init_symbols()
 
+    @staticmethod
+    def set_window_filters(window: lwc.Window):
+        "Set the Pychart's Window Filters for Alpaca"
+        window.set_search_filters("security_type", ["Crypto", "Equity"])
+        window.set_search_filters("data_broker", ["Local", "Alpaca"])
+        window.set_search_filters("exchange", [])
+
     async def shutdown(self):
         "Turn off the Alpaca Data Streams"
         # This would need to be refined in a final implementation, though that absolutely is
@@ -87,6 +94,7 @@ class AlpacaAPI:
     def _init_symbols(self):
         # Store Alpaca's Full asset list so it can be searched later without another API Request
         client = TradingClient(**ALPACA_API_KEYS, paper=True)
+        # Why does this not have an Async Version?
         assets_json = client.get_all_assets()
         self.assets = (
             DataFrame(assets_json).rename(columns=_asset_rename_map).set_index("id")
