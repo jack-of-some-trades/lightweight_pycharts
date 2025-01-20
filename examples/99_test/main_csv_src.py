@@ -55,6 +55,9 @@ async def main():
     df = pd.read_csv("examples/data/ohlcv.csv")
 
     if isinstance(main_frame, lwc.ChartingFrame):
+        main_frame.main_series.symbol = lwc.Symbol(
+            "LWPC", name="Update by Bar Test", exchange="NASDAQ"
+        )
         main_frame.main_series.set_data(
             df, symbol=lwc.Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
         )

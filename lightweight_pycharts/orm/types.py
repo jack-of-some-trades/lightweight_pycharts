@@ -307,6 +307,47 @@ class TF:
 
         raise TypeError(f"'{period}' not a valid Timeframe Period Code.")
 
+    @classmethod
+    def from_timedelta(cls, interval: Timedelta) -> Self:
+        "Create a TF Object from a Pandas Timedelta Object"
+        if interval < Timedelta("1s"):
+            raise ValueError(
+                "Series Data cannot be Tick Data, it must be aggrigated to at least 1 Second intervals first."
+            )
+
+        errmsg = f"Interval [{interval}] invalid. Series Data must be a simple interval. (An integer multiple of a single period [D|h|m|s])"
+
+        comp = interval.components
+        if comp.days > 0:
+            if comp.hours + comp.minutes + comp.seconds > 0:
+                raise ValueError(errmsg)
+            if comp.days < 7:
+                return cls(comp.days, "D")
+            if comp.days < 28:
+                logger.info("Attempting to Classify Weekly Interval, %s", interval)
+                return cls(floor(comp.days / 7), "W")
+            if comp.days < 365:
+                logger.info("Attempting to Classify Monthly Interval, %s", interval)
+                # Denominator is 1 Unix Month / 1 Unix Day
+                return cls(floor(comp.days / (2629743 / 86400)), "M")
+            else:
+                logger.info("Attempting to Classify Yearly Interval, %s", interval)
+                # Denominator is 1 Unix Year / 1 Unix Day
+                return cls(floor(comp.days / (31556926 / 86400)), "Y")
+        elif comp.hours > 0:
+            if comp.minutes + comp.seconds > 0:
+                raise ValueError(errmsg)
+            return cls(comp.hours, "h")
+        elif comp.minutes > 0:
+            if comp.seconds > 0:
+                raise ValueError(errmsg)
+            return cls(comp.minutes, "m")
+        elif comp.seconds > 0:
+            return cls(comp.seconds, "s")
+
+        # This should never be reached.
+        raise ValueError(f"Failed to Classify Interval {interval}")
+
     # region ---- Comparators ----
 
     def __eq__(self, other: Self):
@@ -415,7 +456,8 @@ class TF:
             case "Y":
                 return self._mult * 31556926
             case _:
-                logger.warning("Attempting to get length of an invalid Timeframe.")
+                # logger.warning("Attempting to get length of an invalid Timeframe.")
+                raise ValueError("Attempting to get length of an invalid Timeframe.")
                 return 0
 
     def as_timedelta(self) -> Timedelta:

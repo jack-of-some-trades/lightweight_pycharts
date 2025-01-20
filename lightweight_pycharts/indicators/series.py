@@ -260,7 +260,7 @@ class Series(Indicator):
 
         # ---------------- Clear & Return on Bad Data ----------------
         if (
-            self.main_data.timeframe == TF(1, "E")
+            self.main_data.timeframe.period == "E"
             or self.main_data.data_type == SeriesType.WhitespaceData
         ):
             self.main_data = None
@@ -313,7 +313,7 @@ class Series(Indicator):
         new_bar = False
         if data_update.time < self.main_data.next_bar_time:  # type: ignore
             # Update the last bar (Aggregate)
-            display_data = self.main_data.update_from_tick(
+            display_data = self.main_data.update_curr_bar(
                 data_update, accumulate=accumulate
             )
         else:
@@ -321,11 +321,12 @@ class Series(Indicator):
             if data_update.time != self.main_data.next_bar_time:
                 # Update given is a new bar, but not the expected time
                 # Ensure it fits the data's time interval e.g. 12:00:0071 -> 12:00:00
+                # TODO: Update the time calc. This will error for HTF when timedelta is invalid
                 time_delta = data_update.time - self.main_data.next_bar_time  # type: ignore
                 data_update.time -= time_delta % self.main_data.timedelta  # type: ignore
 
             curr_bar_time = self.main_data.curr_bar_open_time
-            display_data = self.main_data.update(data_update)
+            display_data = self.main_data.append_new_bar(data_update)
             new_bar = True
 
             # --------------------- Manage Whitespace Series ---------------------
@@ -541,6 +542,7 @@ class Series(Indicator):
                 logger.warning("Requested Bar-Time beyond 500 Bars in the Future.")
                 return self.whitespace_data.df.index[-1]
             elif index < -(len(self.main_data.df) - 1):
+                # i.e. Less than the max possible negative index
                 logger.warning("Requested Bar-Time prior to start of the dataset.")
                 return self.main_data.df.index[0]
             else:

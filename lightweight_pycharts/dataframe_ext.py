@@ -1,36 +1,30 @@
-"Pandas Dataframe extentions to manage Series Data. "
+"Pandas Dataframe extensions to manage Series Data and Market Calendars"
 
 from __future__ import annotations
+from importlib import import_module
 import logging
-from datetime import time as dt_time
-from math import ceil, floor, inf
-from typing import Optional, Any
+from math import inf
+from types import ModuleType
+from typing import TYPE_CHECKING, Dict, Optional, Any
 
 import pandas as pd
-import pandas_market_calendars as mcal
 
 from .orm import series_data as sd
 from .orm.types import TF
 
-logger = logging.getLogger("lightweight-pycharts")
-
-EXCHANGE_NAMES = dict([(val.lower(), val) for val in mcal.get_calendar_names()])
-
-ALT_EXCHANGE_NAMES = {
-    "xnas": "NASDAQ",
-    "arca": "NYSE",
-    "forex": "24/5",
-    "alpaca": "24/7",
-    "polygon": "24/7",
-    "polygon.io": "24/7",
-    "coinbase": "24/7",
-    "kraken": "24/7",
-    "crypto": "24/7",
-}
-
+log = logging.getLogger("lightweight-pycharts")
 
 # pylint: disable=line-too-long, invalid-name
-# region ------------------------------ DataFrame Update Function ------------------------------ #
+# region ------------------------------ DataFrame Functions ------------------------------ #
+
+
+def determine_timedelta(series: pd.DatetimeIndex | pd.Series) -> pd.Timedelta:
+    "Returns the most frequent Timedelta within the first 250 indices of the data given"
+    if isinstance(series, pd.DatetimeIndex):
+        # .diff() Unknown-attribute False Alarm Error.
+        return pd.Timedelta(series[0:250].diff().value_counts().idxmax())  # type: ignore
+    else:
+        return pd.Timedelta(series.iloc[0:250].diff().value_counts().idxmax())
 
 
 def update_dataframe(
@@ -41,7 +35,7 @@ def update_dataframe(
     """
     Convenience Function to Update a Pandas DataFrame from a given piece of data w/ optional rename
 
-    Unfortunately, no, The dataframe cannot be efficiently updated in place since a reference
+    Unfortunately, the dataframe cannot be efficiently updated in place since a reference
     is passed. The new DataFrame can only be returned to update the reference in the higher scope.
     """
     if isinstance(data, sd.AnySeriesData):
@@ -72,9 +66,37 @@ def update_dataframe(
         return pd.concat([df, pd.DataFrame([data_dict], index=[time])])
 
 
+def _column_name_check(
+    column_names: set[str],
+    aliases: list[str],
+    required: bool = False,
+) -> Dict[str, str]:
+    """
+    Checks the column names for any of the expected aliases.
+    If required and not present, an Attribute Error is thrown.
+
+    Returns a mapping of the {'aliases[0]': 'Found Alias'} if necessary
+    """
+    intersection = list(column_names.intersection(aliases))
+
+    if len(intersection) == 0:
+        if required:
+            raise AttributeError(
+                f'Given data must have a "{" | ".join(aliases)}" column'
+            )
+        return {}
+
+    if len(intersection) > 1:
+        raise AttributeError(
+            f'Given data can have only one "{" | ".join(aliases)}" type of column'
+        )
+
+    return {intersection[0]: aliases[0]}
+
+
 # endregion
 
-# region -------------------------------- Pandas Series Objects -------------------------------- #
+# region --------------------------- Pandas Dataframe Object Wrappers --------------------------- #
 
 # TODO: Integrate a method of tracking what is displayed and use that to limit the amount displayed.
 # Currently, All data is sent to the screen. This may be thousands of data-points that may never be
@@ -98,67 +120,48 @@ class Series_DF:
 
     def __init__(
         self,
-        pandas_df: pd.DataFrame | Series_DF,
+        pandas_df: pd.DataFrame,
         exchange: Optional[str] = None,
     ):
-        if isinstance(pandas_df, Series_DF):
-            self._init_from_series_df_(pandas_df)
-            return
-
         if len(pandas_df) <= 1:
             self._data_type = sd.SeriesType.WhitespaceData
             self._tf = TF(1, "E")
-            logger.warning("DataFrame is insufficient. Need more than 1 Datapoint.")
+            log.warning("DataFrame is insufficient. Need more than 1 Datapoint.")
             # More than one data point is needed to determine timeframe of the data.
             # While not strictly necessary, soft failing here is ok since plotting a
             # single point of data is pointless.
             return
 
-        # Determine Appropriate Calendar & Market Hours
-        if exchange is not None:
-            exchange = exchange.lower()
-            if exchange in EXCHANGE_NAMES:
-                self.calendar = mcal.get_calendar(EXCHANGE_NAMES[exchange])
-            elif exchange in ALT_EXCHANGE_NAMES:
-                self.calendar = mcal.get_calendar(ALT_EXCHANGE_NAMES[exchange])
-            else:
-                logger.warning("Exchange '%s' doesn't match any calendars.", exchange)
-                self.calendar = mcal.get_calendar("24/7")
-        else:
-            self.calendar = mcal.get_calendar("24/7")
-
-        # Ensure Consistent Column Naming Convention
-        rename_dict = self._validate_names(pandas_df)
-        if len(rename_dict) > 0:
-            pandas_df.rename(columns=rename_dict, inplace=True)
-
-        # Ensure Consistent Time format (Pd.Timestamp, UTC, TZ Aware)
+        self._standardize_names(pandas_df)
+        # Set Consistent Time format (Pd.Timestamp, UTC, TZ Aware)
         pandas_df["time"] = pd.to_datetime(pandas_df["time"], utc=True)
+        self._pd_tf = determine_timedelta(pandas_df["time"])
+        self._tf = TF.from_timedelta(self._pd_tf)
+        self.calendar = CALENDARS.request_calendar(
+            exchange, pandas_df["time"].iloc[0], pandas_df["time"].iloc[-1]
+        )
+        self.df = pandas_df.set_index("time")
 
         # Data Type is used to simplify updating. Should be considered a constant
         self._data_type: sd.AnyBasicSeriesType = sd.SeriesType.data_type(pandas_df)
 
-        self._tf, self._pd_tf = self._determine_tf(pandas_df)
-        self.df = pandas_df.set_index("time")  # Set Time as index after TF check
-
-        # True if 'Time' is only days, or has an opening time
         if self._pd_tf >= pd.Timedelta(days=1):
+            # True if 'Time' lacks an opening Time
             self.only_days = (
                 self.curr_bar_open_time == self.curr_bar_open_time.normalize()
             )
         else:
             self.only_days = False
-        self._ext = False
 
-    def _init_from_series_df_(self, base_df: Series_DF):
-        "Copy the attributes (TF, Calendar) and time column of the given Series_DF into a new object"
-        self.df = pd.DataFrame({"time": base_df.df["time"]})
-        self._tf = base_df.timeframe
-        self._ext = base_df.ext
-        self._pd_tf = base_df.timedelta
-        self.calendar = base_df.calendar
-        self.only_days = base_df.only_days
-        self._data_type = base_df.data_type
+        # TODO: Implement ext. Probably need mcal.mark_session() for this
+        self._ext = False
+        self._next_bar_time = CALENDARS.next_timestamp(
+            self.calendar, self.df.index[-1], self.freq_code, self._ext
+        )
+        if self.only_days:
+            self._next_bar_time = self._next_bar_time.normalize()
+
+    # region --------- Properties --------- #
 
     @property
     def columns(self) -> set[str]:
@@ -169,6 +172,11 @@ class Series_DF:
     def ext(self) -> bool:
         "True if data given has Extended Trading Hours Data"
         return self._ext
+
+    @property
+    def freq_code(self) -> str | pd.Timedelta:
+        "Joint Timedelta / frequency string. Used w/ Calendars to generate HTF/LTF ranges."
+        return self._pd_tf if self._pd_tf <= pd.Timedelta("1D") else self._tf.toStr
 
     @property
     def timeframe(self) -> TF:
@@ -197,23 +205,24 @@ class Series_DF:
 
     @property
     def next_bar_time(self) -> pd.Timestamp:
-        "Open Time of the next Bar"  # TODO: Update this with calendar information.
-        return self.curr_bar_open_time + self._pd_tf
+        "Open Time of the next Bar"
+        return self._next_bar_time
 
     @property
-    def last_bar(self) -> sd.AnyBasicData:
+    def current_bar(self) -> sd.AnyBasicData:
         "The current bar (last entry in the dataframe) returned as AnyBasicType"
         data_dict = self.df.iloc[-1].to_dict()
         data_dict["time"] = self.df.index[-1]
-        return self._to_dataclass_instance_(data_dict)
+        return self.data_type.cls.from_dict(data_dict)
 
     @staticmethod
-    def _validate_names(df: pd.DataFrame) -> dict[str, str]:
+    def _standardize_names(df: pd.DataFrame):
         """
-        Standardize common column names.
+        Standardize the column names of the given dataframe to a consistent format for
+        OHLC and Single Value Time-series. Changes are made inplace.
 
-        Additional data fields,
-        (e.g. wickColor, lineColor, topFillColor1), must be entered verbatim to be used.
+        Niche data fields must be entered verbatim to be used.
+        (e.g. wickColor, lineColor, topFillColor1)
         """
         if isinstance(df.index, pd.DatetimeIndex):
             # In the event the timestamp is the index, reset it for naming
@@ -223,112 +232,29 @@ class Series_DF:
         df.columns = list(map(str.lower, df.columns))
         column_names = set(df.columns)
 
-        Series_DF._col_name_check(
+        # |= syntax merges the returned mapping into rename_map
+        rename_map |= _column_name_check(
             column_names,
-            rename_map,
             ["time", "t", "dt", "date", "datetime", "timestamp"],
             True,
         )
 
-        Series_DF._col_name_check(column_names, rename_map, ["open", "o", "first"])
-        Series_DF._col_name_check(column_names, rename_map, ["close", "c", "last"])
-        Series_DF._col_name_check(column_names, rename_map, ["high", "h", "max"])
-        Series_DF._col_name_check(column_names, rename_map, ["low", "l", "min"])
-        Series_DF._col_name_check(column_names, rename_map, ["volume", "v", "vol"])
-        Series_DF._col_name_check(
-            column_names, rename_map, ["tick", "count", "trade_count"]
-        )
-        Series_DF._col_name_check(
-            column_names, rename_map, ["value", "val", "data", "price"]
+        rename_map |= _column_name_check(column_names, ["open", "o", "first"])
+        rename_map |= _column_name_check(column_names, ["close", "c", "last"])
+        rename_map |= _column_name_check(column_names, ["high", "h", "max"])
+        rename_map |= _column_name_check(column_names, ["low", "l", "min"])
+        rename_map |= _column_name_check(column_names, ["volume", "v", "vol"])
+        rename_map |= _column_name_check(column_names, ["tick", "count", "trade_count"])
+        rename_map |= _column_name_check(
+            column_names, ["value", "val", "data", "price"]
         )
 
-        return rename_map
+        if len(rename_map) > 0:
+            return df.rename(columns=rename_map, inplace=True)
 
-    @staticmethod
-    def _col_name_check(
-        column_names: set[str],
-        rename_map: dict[str, str],
-        expected_names: list[str],
-        required: bool = False,
-    ):
-        """
-        Checks if the first name in 'expected_names' is present in column_names,
-        if it isn't then either an error is thrown or the rename map is updated
-        """
-        name_intersect = list(column_names.intersection(expected_names))
-        if required and len(name_intersect) == 0:
-            raise AttributeError(
-                f'Given data must have a "{" | ".join(expected_names)}" column'
-            )
-        if len(name_intersect) > 1:
-            raise AttributeError(
-                f'Given data can have only one "{" | ".join(expected_names)}" type of column'
-            )
-        if len(name_intersect) == 1 and name_intersect[0] != expected_names[0]:
-            # Remap if necessary
-            rename_map[name_intersect[0]] = expected_names[0]
+    # endregion
 
-    @staticmethod
-    def _determine_tf(df: pd.DataFrame) -> tuple[TF, pd.Timedelta]:
-        # Get the timedelta that appears most frequently in a sample of the data.
-        interval = pd.Timedelta(df["time"].iloc[0:250].diff().value_counts().idxmax())
-
-        errmsg = f"Interval [{interval}] invalid. Series Data must be a simple interval. (An integer multiple of a single period [D|h|m|s])"
-
-        comp = interval.components
-        if (comp.days + comp.hours + comp.minutes + comp.seconds) == 0:
-            raise ValueError(
-                "Series Data cannot be Tick Data, it must be aggrigated to at least 1 Second intervals first."
-            )
-        if comp.days > 0:
-            if comp.hours + comp.minutes + comp.seconds > 0:
-                raise ValueError(errmsg)
-            if comp.days < 7:
-                return TF(comp.days, "D"), interval
-            if comp.days < 28:
-                logger.info("Attempting to Classify Weekly Interval, %s", interval)
-                return TF(floor(comp.days / 7), "W"), interval
-            if comp.days < 365:
-                logger.info("Attempting to Classify Monthly Interval, %s", interval)
-                return TF(floor(comp.days / 28), "M"), interval
-            else:
-                logger.info("Attempting to Classify Yearly Interval, %s", interval)
-                return TF(floor(comp.days / 365), "Y"), interval
-        elif comp.hours > 0:
-            if comp.minutes + comp.seconds > 0:
-                raise ValueError(errmsg)
-            return TF(comp.hours, "h"), interval
-        elif comp.minutes > 0:
-            if comp.seconds > 0:
-                raise ValueError(errmsg)
-            return TF(comp.minutes, "m"), interval
-        elif comp.seconds > 0:
-            return TF(comp.seconds, "s"), interval
-
-        return TF(1, "E"), interval
-
-    def _to_dataclass_instance_(self, data_dict: dict) -> sd.AnyBasicData:
-        "Returns a Dataclass instance of the given data that matches the datatype of the Series_DF"
-        if self.data_type == sd.SeriesType.OHLC_Data:
-            return sd.OhlcData.from_dict(data_dict)
-        elif self.data_type == sd.SeriesType.SingleValueData:
-            return sd.SingleValueData.from_dict(data_dict)
-        else:
-            return sd.WhitespaceData.from_dict(data_dict)
-
-    def populate_ext_col(
-        self,
-        mkt_open: Optional[pd.Timestamp],
-        mkt_close: Optional[pd.Timestamp],
-        premkt_open: Optional[pd.Timestamp] = None,
-        postmkt_close: Optional[pd.Timestamp] = None,
-    ) -> None:
-        "Checks the sample times of the data set and determines if each datapoint is RTH, ETH or neither"
-        raise NotImplementedError
-
-    # Next line Silences a False-Positive Flag. Dunno why it thinks last_data's vars aren't initialized
-    # @pylint: disable=attribute-defined-outside-init
-    def update_from_tick(
+    def update_curr_bar(
         self, data: sd.AnyBasicData, accumulate: bool = False
     ) -> sd.AnyBasicData:
         """
@@ -340,56 +266,56 @@ class Series_DF:
         """
         if not isinstance(data, (sd.SingleValueData, sd.OhlcData)):
             return data  # Whitespace data, Nothing to update
-        last_data = self.last_bar
+        last_bar = self.current_bar
 
-        # Update price
-        match last_data, data:
+        # Update values in last_bar depending on the data-types given.
+        match last_bar, data:
             case sd.SingleValueData(), sd.SingleValueData():
-                last_data.value = data.value
+                last_bar.value = data.value
             case sd.OhlcData(), sd.SingleValueData():
-                last_data.high = max(
-                    (last_data.high if last_data.high is not None else -inf),
+                last_bar.high = max(
+                    (last_bar.high if last_bar.high is not None else -inf),
                     (data.value if data.value is not None else -inf),
                 )
-                last_data.low = min(
-                    (last_data.low if last_data.low is not None else inf),
+                last_bar.low = min(
+                    (last_bar.low if last_bar.low is not None else inf),
                     (data.value if data.value is not None else inf),
                 )
-                last_data.close = data.value
-                data.value = last_data.close
+                last_bar.close = data.value
+                data.value = last_bar.close
             case sd.OhlcData(), sd.OhlcData():
-                last_data.high = max(
-                    (last_data.high if last_data.high is not None else -inf),
+                last_bar.high = max(
+                    (last_bar.high if last_bar.high is not None else -inf),
                     (data.high if data.high is not None else -inf),
                 )
-                last_data.low = min(
-                    (last_data.low if last_data.low is not None else inf),
+                last_bar.low = min(
+                    (last_bar.low if last_bar.low is not None else inf),
                     (data.low if data.low is not None else inf),
                 )
-                last_data.close = data.close
+                last_bar.close = data.close
             # Last Two are VERY unlikely Scenarios
             case sd.SingleValueData(), sd.OhlcData():
-                last_data.value = data.close
+                last_bar.value = data.close
             case sd.WhitespaceData(), _:
-                last_data = data
+                last_bar = data
                 if accumulate:  # Needed as setup for volume accumulation
                     data.volume = 0
 
         # update volume
-        if last_data.volume is not None and data.volume is not None:
+        if last_bar.volume is not None and data.volume is not None:
             if accumulate:
-                last_data.volume += data.volume
+                last_bar.volume += data.volume
             else:
-                last_data.volume = data.volume
+                last_bar.volume = data.volume
 
         # Ensure time is constant, If not a new bar will be created on screen
-        last_data.time = self.curr_bar_open_time
-        update_dataframe(self.df, last_data)
+        last_bar.time = self.curr_bar_open_time
+        self.df = update_dataframe(self.df, last_bar)
 
         # The next line ensures the return dataclass matches the type stored by the Dataframe.
-        return self._to_dataclass_instance_(last_data.as_dict)
+        return self.data_type.cls.from_dict(last_bar.as_dict)
 
-    def update(self, data: sd.AnyBasicData) -> sd.AnyBasicData:
+    def append_new_bar(self, data: sd.AnyBasicData) -> sd.AnyBasicData:
         "Update the OHLC / Single Value DataFrame from a new bar. Data Assumed as next in sequence"
         data_dict = data.as_dict
         # Convert Data to proper format (if needed) then append. Unused values are popped so
@@ -411,10 +337,16 @@ class Series_DF:
                     data_dict.pop("low")
                 data_dict["value"] = data_dict.pop("close")
 
-        dataclass_inst = self._to_dataclass_instance_(data_dict)
+        dataclass_inst = self.data_type.cls.from_dict(data_dict)
 
         time = data_dict.pop("time")
         self.df = pd.concat([self.df, pd.DataFrame([data_dict], index=[time])])
+
+        self._next_bar_time = CALENDARS.next_timestamp(
+            self.calendar, time, self.freq_code, self._ext
+        )
+        if self.only_days:
+            self._next_bar_time = self._next_bar_time.normalize()
 
         return dataclass_inst
 
@@ -444,175 +376,304 @@ class Whitespace_DF:
     need to be continually re-calculated every time a data point received leaves a gap on the chart.
     """
 
+    BUFFER_LEN = 500  # Number of bars to project ahead of the data series
+
     def __init__(self, base_data: Series_DF):
         self.ext = base_data.ext
-        self.pd_tf = base_data._pd_tf
+        self.tf = base_data.freq_code
         self.calendar = base_data.calendar
         self.only_days = base_data.only_days
-        self.simple_override = self.calendar.name == "24/7"
-
-        if self.simple_override or self.pd_tf > pd.Timedelta(days=1):
-            # 24/7 Market. Don't bother with calendars. mcal also can't do > 1D time frames
-            self.df = self._simple_whitespace_df(base_data.curr_bar_open_time)
-            return
-
-        mkt_times = self.calendar.regular_market_times
-        if (
-            base_data.ext
-            and "pre" in self.calendar.market_times
-            and "post" in self.calendar.market_times
-        ):
-            self.mkt_start = "pre"
-            self.mkt_end = "post"
-        else:
-            self.mkt_start = "market_open"
-            self.mkt_end = "market_close"
-
-        # Calculate Length of a day from RTH / ETH
-        mkt_open = self._unpack_mcal_time_(*mkt_times[self.mkt_start][-1])
-        mkt_close = self._unpack_mcal_time_(*mkt_times[self.mkt_end][-1])
-
-        # Determine a rough end date given the # of bars per day
-        bars_per_day = ceil((mkt_close - mkt_open) / self.pd_tf)
-
-        # Get a smudge factor to artificially push out the end_date to ensure we make
-        # enough, but not too many, extra bars. (This accounts for weekends + Holidays)
-        if self.pd_tf >= pd.Timedelta(hours=4):
-            smudge_factor = 8 / 5  # = 1.6
-        elif self.pd_tf >= pd.Timedelta(minutes=30):
-            smudge_factor = 1.4
-        else:
-            smudge_factor = 1.2
-
-        start_date: pd.Timestamp = base_data.df.index[-1]
-        end_date = start_date + pd.Timedelta(
-            days=ceil(500 * smudge_factor / bars_per_day)
-        )
 
         # Create Datetime Index from the calendar given the known start_date and projected end_date
-        dt_index = mcal.date_range(
-            self.calendar.schedule(
-                start_date=start_date,
-                end_date=end_date,
-                market_times=[self.mkt_start, self.mkt_end],
-            ),
-            frequency=base_data.timeframe.toStr,
-            closed="left",  # Stupid. Just Absolutely Stupid. This whole function...
-            force_close=False,  # It's 4 Methods wearing a trench-coat that says "C̷l̷a̷s̷s̷  *Function*"
+        self.dt_index = CALENDARS.date_range(
+            self.calendar,
+            self.tf,
+            base_data.df.index[-1],
+            periods=self.BUFFER_LEN + 1,
+            include_ETH=base_data.ext,
         )
 
-        if self.only_days:  # False alarm Type Error? Its a DT_Index, not an Index[int]?
-            dt_index = dt_index.normalize()  # type: ignore
-
-        # TODO : Fix this once the ETH Information has been calculated. Currently it errors
-        # when data with ETH is given since it's expecting RTH Hours only
-        start_index = dt_index.get_indexer_for([start_date])[0]
-        if start_index == -1:
-            logger.warning(
-                """
-                Whitespace Extention switching to 24/7 since Expected and given Start time Differ. 
-                Given Start Time = %s, Expected Start Time = %s """,
-                start_date,
-                dt_index[0],
-            )
-            self.simple_override = True
-            self.df = self._simple_whitespace_df(base_data.curr_bar_open_time)
-            return
-
-        # mcal.date_range returns all bar times for all days requested.
-        # Trim off the overlapping start, and trim total length down to a consistent 500 bars
-        self.df = pd.DataFrame({"time": dt_index[start_index : 501 + start_index]})
-
-        if len(dt_index) < 500 + start_index:
-            # Log an Error, No need to raise an exception though, failure isn't THAT critical.
-            logger.error(
-                "Whitespace Dataframe under-estimated end-date!. len_df = %s",
-                len(self.df),
-            )
-
-    @staticmethod
-    def _unpack_mcal_time_(
-        _: Optional[str | pd.Timestamp], _time: dt_time, days: Optional[int] = None
-    ) -> pd.Timedelta:
-        # 1st argument is Effective Date. If None then it was the first time established.
-        if days is None:
-            days = 0
-        return pd.Timedelta(days=days, hours=_time.hour, minutes=_time.minute)
-
-    def _simple_extend(self) -> sd.AnyBasicData:
-        "Extend the dataframe by the current time step without checking against a calendar"
-        next_bar_time: pd.Timestamp = self.df["time"].iloc[-1] + self.pd_tf
         if self.only_days:
-            next_bar_time = next_bar_time.normalize()
+            self.dt_index = self.dt_index.normalize()
 
-        rtn_data = sd.WhitespaceData(next_bar_time)
-        self.df = pd.concat(
-            [self.df, pd.DataFrame([{"time": rtn_data.time}])], ignore_index=True
-        )
-        return rtn_data
+        if len(self.dt_index) < self.BUFFER_LEN:
+            # Log an Error, No need to raise an exception though, failure isn't that critical.
+            # I'm mostly just curious if the code i wrote in pandas_mcal works in all cases or not
+            log.error(
+                "Whitespace Dataframe under-estimated end-date!. len_df = %s",
+                len(self.dt_index),
+            )
 
-    def _simple_whitespace_df(self, start_time: pd.Timestamp) -> pd.DataFrame:
-        "Create a 500 datapoint whitespace extension without referencing a calendar"
-        whitespace = pd.date_range(start=start_time, periods=501, freq=self.pd_tf)
-        return pd.DataFrame({"time": whitespace})
+    @property
+    def df(self):
+        "Returns the underlying dt_index as a Dataframe for re-parsing into a list of records."
+        # Lightweight Charts requires the list of records since it stores everything as JSON.
+        return pd.DataFrame({"time": self.dt_index[-self.BUFFER_LEN :]})
 
     def next_timestamp(self, curr_time: pd.Timestamp) -> pd.Timestamp:
         "Returns the timestamp immediately after the timestamp given as an input"
-        if self.simple_override:  # Don't Bother with index look-up if 24/7 market
-            return curr_time + self.pd_tf
+        if curr_time < self.dt_index[0]:
+            raise ValueError(  # Don't think there's a need to handle this case
+                f"Requested next time from Whitespace_DF but {curr_time = } "
+                f"comes before the first index of the DF: {self.dt_index = }."
+            )
+        if curr_time < self.dt_index[-1]:
+            # avoid calculation if possible
+            return self.dt_index[curr_time < self.dt_index][0]
 
-        if self.only_days:
-            curr_time = curr_time.normalize()
+        time = CALENDARS.next_timestamp(
+            self.calendar, self.dt_index[-1], self.tf, self.ext
+        )
 
-        try:
-            curr_index = pd.Index(self.df["time"]).get_loc(curr_time)
-        except KeyError as e:
-            raise KeyError(f"Whitespace_DF did not contain {curr_time}.") from e
-
-        if isinstance(curr_index, int):
-            return self.df["time"].iloc[curr_index + 1]
-
-        raise KeyError(f"Whitespace DF contains multiple indexes of {curr_time}?")
+        return time.normalize() if self.only_days else time
 
     def extend(self) -> sd.AnyBasicData:
         "Extends the dataframe with one datapoint of whitespace. This whitespace datapoint is a valid trading time."
-        if self.simple_override:  # Don't Bother with calendar if 24/7 market
-            return self._simple_extend()
-
-        # TODO : Optimize this function... by optimizing pandas_market_calendars... :(
-        # The calendar function calls far above and a way the most inefficient code in all of
-        # the backend calculations that are done. Sadly it's also the library that probably
-        # slows down start-up the most. It just does everything I need it to do tho.
-
-        curr_bar_time: pd.Timestamp = self.df["time"].iloc[-1]
-        next_bar_time = curr_bar_time + self.pd_tf
-
-        day_offset = pd.Timedelta(days=5)
-        schedule = self.calendar.schedule(
-            curr_bar_time - day_offset,
-            curr_bar_time + day_offset,
-            market_times=[self.mkt_start, self.mkt_end],
+        next_bar_time = CALENDARS.next_timestamp(
+            self.calendar, self.dt_index[-1], self.tf, self.ext
         )
-
-        if self.calendar.open_at_time(schedule, next_bar_time):
-            # Ticking forward by the chart's timeframe kept us in trading hours. Use that.
-            rtn_data = sd.WhitespaceData(next_bar_time)
-        else:
-            # Next time step is outside of trading hours, grab next open
-            todays_ind = schedule.index.get_indexer_for(
-                [curr_bar_time.normalize().tz_localize(None)]
-            )[0]
-            if todays_ind == -1:
-                raise ValueError("Today not found... How does this happen????")
-
-            next_trade_day = schedule.iloc[todays_ind + 1]
-            rtn_data = sd.WhitespaceData(next_trade_day[self.mkt_start])
-
         if self.only_days:
-            rtn_data.time = rtn_data.time.normalize()  # type: ignore (time guaranteed to be a Timestamp)
+            next_bar_time = next_bar_time.normalize()
+        self.dt_index = self.dt_index.union([next_bar_time])
+        return sd.WhitespaceData(next_bar_time)
 
-        # Append new datapoint and return
-        self.df = pd.concat(
-            [self.df, pd.DataFrame([{"time": rtn_data.time}])], ignore_index=True
+
+# endregion
+
+# region --------------------------- Pandas_Market_Calendars Adapter --------------------------- #
+
+
+if TYPE_CHECKING:
+    import pandas_market_calendars as mcal
+    from pandas_market_calendars import MarketCalendar
+
+    schedule_error = mcal.calendar_utils.InsufficientScheduleWarning
+    parse_schedule_error = mcal.calendar_utils.parse_insufficient_schedule_warning
+else:
+    mcal: Optional[ModuleType] = None
+    schedule_error = None
+    parse_schedule_error = None
+
+EXCHANGE_NAMES = {}
+ALT_EXCHANGE_NAMES = {}
+
+
+def enable_market_calendars():
+    """
+    Enables the Use of Pandas_Market_Calendars for more complex behavior
+
+    It is suggested that this module is loaded after creating a window. This allows
+    for a slightly better loading time of this library.
+    """
+    # pylint: disable=global-statement
+    global mcal, EXCHANGE_NAMES, ALT_EXCHANGE_NAMES, schedule_error, parse_schedule_error
+    mcal = import_module("pandas_market_calendars")
+    EXCHANGE_NAMES = dict([(val.lower(), val) for val in mcal.get_calendar_names()])
+    # Hard-Coded Alternate Names that might be passed as Exchange arguments
+    ALT_EXCHANGE_NAMES = {
+        "xnas": "NASDAQ",
+        "arca": "NYSE",
+        "forex": "24/5",
+        "alpaca": "24/7",
+        "polygon": "24/7",
+        "polygon.io": "24/7",
+        "coinbase": "24/7",
+        "kraken": "24/7",
+        "crypto": "24/7",
+    }
+
+    # Actually import the vars defined in typing check above.
+    schedule_error = mcal.calendar_utils.InsufficientScheduleWarning
+    parse_schedule_error = mcal.calendar_utils.parse_insufficient_schedule_warning
+    # Raise Insufficient Schedule Warnings to Errors.
+    mcal.calendar_utils.filter_date_range_warnings("error", schedule_error)
+
+
+class Calendars:
+    """
+    Class to abstract and contain the functionality of pandas_market_calendars.
+
+    This allows for Pandas_Market_Calendars to be conditionally loaded, defaulting to a calendar
+    naive, 24/7 schedule, which is more performant for simple operations.
+
+    Additionally, Instantiating only a single instance reduces unnecessary redundancy by making
+    market schedules shared across all dataframes that utilize them. Considering that generating
+    schedules is easily the slowest part of analyzing a Market's Open/Close Session this equates
+    to a significant performance improvement.
+    """
+
+    def __init__(self):
+        self.mkt_cache: Dict[str, "MarketCalendar"] = {}
+        self.schedule_cache: Dict[str, pd.DataFrame] = {}
+        # TODO: Implement a last used time to clean out memory for stale schedules?
+        # self.mkt_cache_last_use_time = {}
+
+    def _date_range_ltf(
+        self,
+        calendar: str,
+        freq: pd.Timedelta,
+        start: pd.Timestamp,
+        end: Optional[pd.Timestamp],
+        periods: Optional[int],
+        include_ETH: bool = False,
+    ) -> pd.DatetimeIndex:
+        "private function to call mcal.date_range catching and handling any insufficient schedule errors."
+        for _ in range(3):
+            try:  # Exceedingly Rare, but this could be thrown twice in a row
+                schedule = self.schedule_cache[calendar]
+                return mcal.date_range(
+                    schedule,
+                    freq,
+                    "left",
+                    False,
+                    {"RTH", "ETH"} if include_ETH else {"RTH"},
+                    start=start,
+                    end=end,
+                    periods=periods,
+                )
+            except schedule_error as e:
+                # Schedule isn't long enough to create the needed range. Expand it and retry.
+                beginning, sched_strt, sched_end = parse_schedule_error(e)
+                if not beginning:
+                    sched_end += pd.Timedelta("16W")
+                extra_days = self.mkt_cache[calendar].schedule(
+                    sched_strt, sched_end, market_times="all"
+                )
+                if beginning:
+                    self.schedule_cache[calendar] = pd.concat([extra_days, schedule])
+                else:
+                    self.schedule_cache[calendar] = pd.concat([schedule, extra_days])
+
+        raise ValueError(
+            "Calendar.date_range couldn't form a proper schedule. "
+            f"{start = }, {end = }, {periods = }, schedule = {self.schedule_cache[calendar]}"
         )
-        return rtn_data
+
+    def request_calendar(
+        self, exchange: Optional[str], start: pd.Timestamp, end: pd.Timestamp
+    ) -> str:
+        "Request a Calendar & Schedule be Cached. Returns a token to access the cached calendar"
+        if mcal is None or exchange is None:
+            return "24/7"
+        exchange = exchange.lower()
+        if exchange in ALT_EXCHANGE_NAMES:
+            cal = mcal.get_calendar(ALT_EXCHANGE_NAMES[exchange])
+        elif exchange in EXCHANGE_NAMES:
+            cal = mcal.get_calendar(EXCHANGE_NAMES[exchange])
+        else:
+            cal = None
+            log.warning(
+                "Exchange '%s' doesn't match any exchanges. Using 24/7 Calendar.",
+                exchange,
+            )
+
+        if cal is None or cal.name == "24/7":
+            return "24/7"
+
+        start = start - pd.Timedelta("1W")
+        end = end + pd.Timedelta("1W")
+
+        if cal.name not in self.mkt_cache:  # New Calendar Requested
+            self.mkt_cache[cal.name] = cal
+            # Generate a Schedule with buffer dates on either side.
+            self.schedule_cache[cal.name] = cal.schedule(start, end, market_times="all")
+            return cal.name
+
+        # Cached Calendar Requested
+        sched = self.schedule_cache[cal.name]
+        if sched.index[0] > start.tz_localize(None):
+            # Extend Start of Schedule with an additional buffer
+            extra_dates = cal.schedule(
+                start, sched.index[0] - pd.Timedelta("1D"), market_times="all"
+            )
+            sched = pd.concat([extra_dates, sched])
+        if sched.index[-1] < end.normalize().tz_localize(None):
+            # Extend End of Schedule with an additional buffer
+            extra_dates = cal.schedule(
+                sched.index[-1] + pd.Timedelta("1D"), end, market_times="all"
+            )
+            sched = pd.concat([sched, extra_dates])
+
+        return cal.name
+
+    def date_range(
+        self,
+        calendar: str,
+        freq: str | pd.Timedelta,
+        start: pd.Timestamp,
+        end: Optional[pd.Timestamp] = None,
+        periods: Optional[int] = None,
+        include_ETH: bool = False,
+    ) -> pd.DatetimeIndex:
+        "Return a DateTimeIndex at the desired frequency only including valid market times."
+        if calendar == "24/7":
+            if isinstance(
+                freq, str
+            ):  # Need to define 'Start of period' for Month, Quarter, Year
+                freq = freq + "S" if freq[-1] in {"M", "Q", "Y"} else freq
+            return pd.date_range(start, end, freq=freq, periods=periods)
+        if calendar not in self.mkt_cache:
+            raise ValueError(f"{calendar = } is not loaded into the calendar cache.")
+
+        if isinstance(freq, pd.Timedelta):
+            # Only Given a Time Delta for LTF Date_Ranges
+            return self._date_range_ltf(
+                calendar, freq, start, end, periods, include_ETH
+            )
+
+        # For Time periods greater than 1D use HTF Date_Range.
+        mkt_calendar = self.mkt_cache[calendar]
+        days = mkt_calendar.date_range_htf(freq, start, end, periods, closed="left")
+        time = (
+            "pre"
+            if include_ETH and "pre" in mkt_calendar.market_times
+            else "market_open"
+        )
+        return pd.DatetimeIndex(
+            mkt_calendar.schedule_from_days(days, market_times=[time])[time],
+            dtype=None,  # Just shuts up Pylance, has no actual effect
+        )
+
+    def next_timestamp(
+        self,
+        calendar: str,
+        current_time: pd.Timestamp,
+        freq: str | pd.Timedelta,
+        include_ETH: bool = False,
+    ) -> pd.Timestamp:
+        "Returns the next bar's opening time from a given timestamp. Not always efficient, so store this result"
+        if isinstance(freq, str) and freq[-1] in {"M", "Q", "Y"}:
+            next_time = pd.date_range(current_time, freq=freq + "S", periods=2)[-1]
+        else:
+            next_time = current_time + pd.Timedelta(freq)
+
+        if calendar == "24/7":
+            return next_time
+
+        # Calculate Next date from LTF Date_Range.
+        if isinstance(freq, pd.Timedelta):
+            try:
+                if self.mkt_cache[calendar].open_at_time(
+                    self.schedule_cache[calendar], next_time, False, not include_ETH
+                ):
+                    return next_time
+            except ValueError:
+                # Schedule Doesn't Cover the Time Needed call Date_Range to generate more schedule.
+                pass
+
+            dt = self._date_range_ltf(
+                calendar, freq, current_time, None, 2, include_ETH
+            )
+            return dt[-1]
+
+        # Calculate Next date from HTF Date_Range.
+        mkt_cal = self.mkt_cache[calendar]
+        days = mkt_cal.date_range_htf(freq, start=current_time, periods=2)
+        time = "pre" if include_ETH and "pre" in mkt_cal.market_times else "market_open"
+        dt = mkt_cal.schedule_from_days(days, market_times=[time])[time]
+        return mkt_cal.schedule_from_days(days, market_times=[time])[time].iloc[-1]
+
+
+# Initialize the shared Calendars sudo-singleton instance
+CALENDARS = Calendars()
+# endregion

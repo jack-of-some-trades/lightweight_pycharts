@@ -15,7 +15,7 @@ setup(
     python_requires=">=3.12",
     install_requires=[
         "pandas>=2.2.2",
-        "pandas_market_calendars>=4.4.1",
+        "pandas_market_calendars>=4.6.0",
         "pywebview>=5.1",
     ],
     package_data={

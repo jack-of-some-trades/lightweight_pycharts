@@ -10,6 +10,8 @@ from functools import partial
 from dataclasses import asdict
 from typing import Literal, Optional
 
+from lightweight_pycharts.dataframe_ext import enable_market_calendars
+
 from . import orm
 from . import util
 
@@ -38,6 +40,7 @@ class Window:
         self,
         *,
         daemon: bool = True,
+        use_calendars: bool = True,
         events: Optional[Events] = None,
         log_level: Optional[logging._Level] = None,
         options: Optional[PyWebViewOptions] = None,
@@ -64,6 +67,11 @@ class Window:
         kwargs["mp_hooks"] = mp_hooks  # Pass the hooks along to PyWv
         self._view_process = mp.Process(target=PyWv, kwargs=kwargs, daemon=daemon)
         self._view_process.start()
+
+        # Only after the second process is launched, import pandas_market_calendars.
+        # No need to slow down the second process with an unused import
+        if use_calendars:
+            enable_market_calendars()
 
         # Wait for PyWebview to load before continuing
         # js_loaded_event set in PyWv._assign_callbacks()
