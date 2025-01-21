@@ -208,16 +208,16 @@ def set_frame_timeframe(frame_id: str, timeframe: TF) -> str:
     return f"{frame_id}.set_timeframe('{timeframe.toStr}');"
 
 
-def set_whitespace_data(frame_id: str, data: DataFrame, p_data: object) -> str:
-    return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')}, {dump(p_data)});"
+def set_whitespace_data(frame_id: str, data: DataFrame, curr_time: object) -> str:
+    return f"{frame_id}.set_whitespace_data({data.to_json(orient="records",date_unit='s')}, {dump(curr_time)});"
 
 
 def clear_whitespace_data(frame_id: str) -> str:
     return f"{frame_id}.set_whitespace_data([]);"
 
 
-def update_whitespace_data(frame_id: str, data: object, p_data: object) -> str:
-    return f"{frame_id}.update_whitespace_data({dump(data)}, {dump(p_data)});"
+def update_whitespace_data(frame_id: str, data: object, curr_time: object) -> str:
+    return f"{frame_id}.update_whitespace_data({dump(data)}, {dump(curr_time)});"
 
 
 def autoscale_time_axis(frame_id: str):

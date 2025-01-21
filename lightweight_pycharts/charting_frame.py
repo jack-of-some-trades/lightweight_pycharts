@@ -47,14 +47,16 @@ class ChartingFrame(win.Frame):
 
     # region ------------- Dunder Control Functions ------------- #
 
-    def __set_whitespace__(self, data: pd.DataFrame, p_data: SingleValueData):
-        self._fwd_queue.put((JS_CMD.SET_WHITESPACE_DATA, self._js_id, data, p_data))
+    def __set_whitespace__(self, data: pd.DataFrame, curr_time: SingleValueData):
+        self._fwd_queue.put((JS_CMD.SET_WHITESPACE_DATA, self._js_id, data, curr_time))
 
     def __clear_whitespace__(self):
         self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self._js_id))
 
-    def __update_whitespace__(self, data: AnyBasicData, p_data: SingleValueData):
-        self._fwd_queue.put((JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data, p_data))
+    def __update_whitespace__(self, data: AnyBasicData, curr_time: SingleValueData):
+        self._fwd_queue.put(
+            (JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data, curr_time)
+        )
 
     # endregion
 
