@@ -1,6 +1,7 @@
 """ Classes and functions that handle implementation of chart indicators """
 
 from dataclasses import field
+from importlib.metadata import entry_points
 from logging import getLogger
 from abc import abstractmethod
 from inspect import signature, _empty, currentframe
@@ -25,7 +26,7 @@ from . import series_common as sc
 from .util import ID_Dict, is_dunder
 from .js_cmd import JS_CMD
 
-logger = getLogger("lightweight-pycharts")
+log = getLogger("lightweight-pycharts")
 
 SeriesData: TypeAlias = Callable[[], pd.Series]
 DataframeData: TypeAlias = Callable[[], pd.DataFrame]
@@ -159,7 +160,7 @@ class IndicatorOptions(metaclass=OptionsMeta):
                     args[k] = getattr(ind, func_name)
                 except (IndexError, AttributeError):
                     args[k] = lambda: None
-                    logger.critical("Source link %s is invalid.", v)
+                    log.critical("Source link %s is invalid.", v)
                     # Critical Error since this will most likely cause an
                     # indicator's Set/Update_Data to throw an exception
 
@@ -291,7 +292,7 @@ class Watcher:
 
             if bound_cls_inst._watcher in parent._observers:
                 # Check that there isn't a Circular Dependence between Indicators
-                logger.critical(  # ATM this only protects against direct circular dependencies
+                log.critical(  # ATM this only protects against direct circular dependencies
                     "Circular Indicator dependency between %s & %s",
                     bound_cls_inst.cls_name,
                     parent.cls_name,
@@ -377,7 +378,8 @@ class Indicator(metaclass=IndicatorMeta):
     __exposed_outputs__: dict[str, str]
 
     # Dunder Cls Param referenced by all Sub-Classes of Indicator
-    __registered_indicators__: dict[str, "Indicator"]
+    __loaded_indicators__: dict[str, "type[Indicator]"] = {}
+    __registered_indicators__: dict = {}
 
     def __init__(
         self,
@@ -462,7 +464,7 @@ class Indicator(metaclass=IndicatorMeta):
         return self.parent_frame.main_series.close
 
     def __del__(self):
-        logger.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
+        log.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
 
     def __getitem__(self, index: int):
         "Syntactic sugar for accessing the time of a bar index"
@@ -490,7 +492,7 @@ class Indicator(metaclass=IndicatorMeta):
     def __update_options__(self, args: dict) -> Optional[IndicatorOptions]:
         "Parse a dictionary into an instance of self.__options__ and call self.update_options"
         if self.__options__ is None:
-            logger.error("Cannot load obj, %s needs an options Class", self.cls_name)
+            log.error("Cannot load obj, %s needs an options Class", self.cls_name)
             return
 
         recalculate = self.update_options(
@@ -585,10 +587,43 @@ class Indicator(metaclass=IndicatorMeta):
         """
         self._watcher.link_args(args, self)
 
+    def request_indicator(self, ind_pkg: str, ind_name: str):
+        "Request that an Indicator instance be loaded and connected to this Indicator Object"
+        ind_key = ind_pkg + "_" + ind_name
+
+        if ind_key in self.__loaded_indicators__:
+            # Indicator is already loaded, make a new Instance.
+            ind_cls = self.__loaded_indicators__[ind_key]
+            ind_cls(parent=self)
+            return
+
+        if ind_pkg not in self.__registered_indicators__:
+            log.warning("Requested Indicator but package [%s] is not known.", ind_pkg)
+            return
+        if ind_name not in self.__registered_indicators__["indicators"]:
+            log.warning(
+                "Requested Indicator [%s] but it is not in package [%s].",
+                ind_name,
+                ind_pkg,
+            )
+            return
+
+        # Indicator is known, but not loaded yet.
+        # drop in a temp label so IndicatorMeta doesn't load the class into 'User Indicators'
+        self.__loaded_indicators__["@new_" + ind_name] = Indicator
+
+        ind_entry_point = self.__registered_indicators__["indicators"][ind_name]
+        ind_cls: "type[Indicator]" = ind_entry_point.load()
+        self.__loaded_indicators__[ind_key] = ind_cls
+
+        # Create the new instance and remove the temp label
+        ind_cls(parent=self)
+        del self.__loaded_indicators__["@new_" + ind_name]
+
     def init_menu(self, opts: IndicatorOptions):
         "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"
         if self.__options__ is None:
-            logger.error("Cannot set Menu, %s needs an options Class", self.cls_name)
+            log.error("Cannot set Menu, %s needs an options Class", self.cls_name)
             return
 
         self._fwd_queue.put(
@@ -603,7 +638,7 @@ class Indicator(metaclass=IndicatorMeta):
     def update_menu(self, opts: IndicatorOptions):
         "Update the Options shown in the UI Menu. Only effective when called after init_menu()"
         if self.__options__ is None:
-            logger.error("Cannot set Menu, %s needs an options Class", self.cls_name)
+            log.error("Cannot set Menu, %s needs an options Class", self.cls_name)
             return
 
         self._fwd_queue.put((JS_CMD.SET_INDICATOR_OPTIONS, *self._ids, opts.to_dict()))
@@ -675,3 +710,67 @@ class Indicator(metaclass=IndicatorMeta):
 IndParent_T: TypeAlias = win.ChartingFrame | Indicator
 
 # endregion
+
+DEFAULT_METADATA = {"name": "User Indicators", "version": "", "summary": ""}
+# Default Metadata location is where imported indicators are registered
+Indicator.__registered_indicators__[DEFAULT_METADATA["name"]] = {
+    "pkg_key": DEFAULT_METADATA["name"].lower().replace(" ", "_"),
+    "pkg_name": DEFAULT_METADATA["name"],
+    "pkg_version": DEFAULT_METADATA["version"],
+    "description": DEFAULT_METADATA["summary"],
+    "indicators": {},
+}
+
+
+# Find all Installed Indicators and place them into __registered_indicators__
+# See Indictor.request_indictor above to see where these are loaded when needed.
+for entry_point in entry_points(group="lightweight_pycharts.indicators"):
+    metadata = DEFAULT_METADATA
+    if entry_point.dist is not None:
+        metadata |= entry_point.dist.metadata.json
+
+    if not isinstance(metadata["name"], str):
+        raise ValueError("Package Name must be a simple string")
+
+    pkg_key = metadata["name"].lower().replace(" ", "_")
+
+    # New Package, Add it's meta data
+    if pkg_key not in Indicator.__registered_indicators__:
+        Indicator.__registered_indicators__[pkg_key] = {
+            "pkg_key": pkg_key,
+            "pkg_name": metadata["name"],
+            "pkg_version": metadata["version"],
+            "description": metadata["summary"],
+            "indicators": {},
+        }
+
+    # Place the Indicator's Entry_point into the package's indicators dict
+    Indicator.__registered_indicators__[metadata["name"]]["indicators"] |= {
+        entry_point.name: entry_point
+    }
+
+# Format of __registered_indicators__ & __loaded__indicators
+# __registered_indictors__ = {
+#     "[pkg1_key]": {
+#         "pkg_key": "",
+#         "pkg_name": "",
+#         "pkg_version": "",
+#         "description": "",
+#         "indicators": {[name1]: Entry_Point, [name2]: Entry_Point},
+#     },
+#     "[pkg2_key]": {
+#         "pkg_key": "",
+#         "pkg_name": "",
+#         "pkg_version": "",
+#         "description": "",
+#         "indicators": {[name1]: Entry_Point, [name2]: Entry_Point},
+#     }
+# }
+
+# __loaded_indicators__ = {
+#     [pkg1_name]_[indicator1_name] = IndicatorCls1,
+#     [pkg1_name]_[indicator2_name] = IndicatorCls2,
+#     [pkg1_name]_[indicator3_name] = IndicatorCls3,
+#     [pkg2_name]_[indicator1_name] = IndicatorCls1,
+#     [pkg2_name]_[indicator2_name] = IndicatorCls2,
+# }

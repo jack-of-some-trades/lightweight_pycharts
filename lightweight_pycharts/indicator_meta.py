@@ -31,7 +31,6 @@ class IndicatorMeta(ABCMeta):
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
 
         if name == "Indicator":
-            setattr(cls, "__registered_indicators__", {})
             return cls
 
         # Place the Signatures of these functions into Class Attributes. These Attributes
@@ -60,10 +59,13 @@ class IndicatorMeta(ABCMeta):
         setattr(cls, "__exposed_outputs__", outputs)
         setattr(cls, "__default_output__", default_out)
 
-        # Dunder Defined by Indicator Base Class. Note: all dunders set via setattr() are subclass
-        # specific and don't cross contaminate __registered_indicators__, however, is a class var
-        # of Indicator so all subclasses are reading / writing to the same dict
-        cls.__registered_indicators__[name] = cls  # type: ignore
+        # All Dunders are defined by the Indicator Base Class.
+        # Note: all dunders set via setattr() are subclass specific and don't cross contaminate.
+        # __loaded_indicators__, however, is a class var of Indicator so all subclasses are
+        # reading / writing to the same dict. If '@new_[name]' is in the dict then the Indicator
+        # is being actively loaded by an EntryPoint, which will place the Class where needed
+        if "@new_" + name not in cls.__loaded_indicators__:  # type: ignore
+            cls.__loaded_indicators__["user_indicators_" + name] = cls  # type: ignore
 
         return cls
 

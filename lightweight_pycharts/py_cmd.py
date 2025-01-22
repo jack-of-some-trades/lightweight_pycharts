@@ -4,9 +4,12 @@ All Functions have been rolled-up into WIN_CMD_ROLODEX that Maps {PY_CMD: Functi
 """
 
 from enum import IntEnum, auto
+import logging
 from . import window as win
 
 # @pylint: disable=invalid-name, missing-function-docstring, protected-access
+
+log = logging.getLogger("lightweight_pycharts")
 
 
 class PY_CMD(IntEnum):
@@ -22,6 +25,7 @@ class PY_CMD(IntEnum):
     SYMBOL_SELECT = auto()
 
     TIMESERIES_REQUEST = auto()
+    INDICATOR_REQUEST = auto()
     # RANGE_CHANGE = auto() # Maybe?
     SERIES_CHANGE = auto()
     LAYOUT_CHANGE = auto()
@@ -48,6 +52,14 @@ def request_timeseries(window: "win.Window", c_id, f_id, symbol, tf):
     frame = window.get_container(c_id).frames[f_id]
     if isinstance(frame, win.ChartingFrame):
         frame.main_series.request_timeseries(symbol=symbol, timeframe=tf)
+    else:
+        log.warning("Can only request a Timeseries when a Charting Window is selected.")
+
+
+def request_indicator(window: "win.Window", c_id, f_id, ind_pkg, ind_name):
+    frame = window.get_container(c_id).frames[f_id]
+    if isinstance(frame, win.ChartingFrame):
+        frame.main_series.request_indicator(ind_pkg, ind_name)
 
 
 def layout_change(window: "win.Window", c_id, layout):
@@ -94,6 +106,7 @@ def reorder_containers(window: "win.Window", _from, _to):
 WIN_CMD_ROLODEX = {
     PY_CMD.SYMBOL_SEARCH: symbol_search,
     PY_CMD.TIMESERIES_REQUEST: request_timeseries,
+    PY_CMD.INDICATOR_REQUEST: request_indicator,
     PY_CMD.LAYOUT_CHANGE: layout_change,
     PY_CMD.SERIES_CHANGE: series_change,
     PY_CMD.SET_INDICATOR_OPTS: set_indicator_opts,

@@ -58,9 +58,7 @@ async def main():
         main_frame.main_series.symbol = lwc.Symbol(
             "LWPC", name="Update by Bar Test", exchange="NASDAQ"
         )
-        main_frame.main_series.set_data(
-            df, symbol=lwc.Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ")
-        )
+        main_frame.main_series.set_data(df)
 
         # indicators.Volume(main_frame)
         # opts = lwc.indicators.SMA.__options__(period=20)
