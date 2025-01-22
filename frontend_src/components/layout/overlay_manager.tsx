@@ -192,10 +192,18 @@ export function OverlayDiv(props:overlay_div_props){
             })
     }
     const mouseup = (e:MouseEvent) => {
-        if(e.button === 0) {
-            document.removeEventListener('mousemove', move)
-            document.removeEventListener('mouseup', mouseup)
+        if(e.button !== 0) return
+            
+        let div_ref = clientRef ?? divRef
+        if (div_ref != undefined && props.setLocation != undefined){
+            // Ensure the underlying location reference is where the Div is actually drawn at
+            // (Dragging off-screen can separate the two)
+            props.setLocation(
+                getReferenceLocation(props.location_ref, div_ref.getBoundingClientRect())
+            )
         }
+        document.removeEventListener('mousemove', move)
+        document.removeEventListener('mouseup', mouseup)
     }
 
     //#endregion
@@ -323,6 +331,28 @@ function getBoundedPositionFunc(display_ref:location_reference):(pt:point, rect:
                     left:`${Math.round(Math.min(Math.max(pt.x - left_offset, 0), right_bound))}px`
                 }
             }
+    }
+}
+
+/** A Function to return the location reference point (TOP-LEFT, CENTER, etc. ) of a div based
+ * on where the div is actually being drawn. Can be used to reset the Div location so it's 
+ * reference point is guaranteed to align with where it is drawn
+ * @returns The Reference Location Point of a given DIV where it is currently placed. 
+ * @param display_ref : The reference corner OverlayDiv is positioned from.
+ * @param rect : The DOM rect of the OverlayDiv's drag handle.
+ */
+function getReferenceLocation(display_ref:location_reference, rect:DOMRect): point {
+    switch(display_ref){
+        case (location_reference.TOP_LEFT):
+            return {x:rect.left, y:rect.top}
+        case (location_reference.BOTTOM_LEFT):
+            return {x:rect.left, y:rect.bottom}
+        case (location_reference.TOP_RIGHT):
+            return {x:rect.right, y:rect.top}
+        case (location_reference.BOTTOM_RIGHT):
+            return {x:rect.right, y:rect.bottom}
+        case (location_reference.CENTER):
+            return {x:rect.left + Math.floor(rect.width/2), y:rect.top + Math.floor(rect.height/2)}
     }
 }
 
