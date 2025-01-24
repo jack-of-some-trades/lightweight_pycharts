@@ -1,7 +1,8 @@
 """ Classes and functions that handle implementation of chart indicators """
 
+from __future__ import annotations
 from dataclasses import field
-from importlib.metadata import entry_points
+from importlib import import_module
 from logging import getLogger
 from abc import abstractmethod
 from inspect import signature, _empty, currentframe
@@ -17,7 +18,11 @@ import weakref
 
 import pandas as pd
 
-from lightweight_pycharts.indicator_meta import IndicatorMeta, OptionsMeta
+from lightweight_pycharts.indicator_meta import (
+    IndicatorMeta,
+    OptionsMeta,
+    IndicatorPackage,
+)
 from lightweight_pycharts.orm.types import Color
 
 from . import window as win
@@ -379,7 +384,7 @@ class Indicator(metaclass=IndicatorMeta):
 
     # Dunder Cls Param referenced by all Sub-Classes of Indicator
     __loaded_indicators__: dict[str, "type[Indicator]"] = {}
-    __registered_indicators__: dict = {}
+    __registered_indicators__: dict[str, IndicatorPackage] = {}
 
     def __init__(
         self,
@@ -587,38 +592,38 @@ class Indicator(metaclass=IndicatorMeta):
         """
         self._watcher.link_args(args, self)
 
-    def request_indicator(self, ind_pkg: str, ind_name: str):
+    def request_indicator(self, pkg_key: str, ind_key: str):
         "Request that an Indicator instance be loaded and connected to this Indicator Object"
-        ind_key = ind_pkg + "_" + ind_name
+        access_key = pkg_key + "_" + ind_key
 
-        if ind_key in self.__loaded_indicators__:
+        if access_key in self.__loaded_indicators__:
             # Indicator is already loaded, make a new Instance.
-            ind_cls = self.__loaded_indicators__[ind_key]
+            ind_cls = self.__loaded_indicators__[access_key]
             ind_cls(parent=self)
             return
 
-        if ind_pkg not in self.__registered_indicators__:
-            log.warning("Requested Indicator but package [%s] is not known.", ind_pkg)
+        if pkg_key not in self.__registered_indicators__:
+            log.warning("Requested Indicator but package [%s] is not known.", pkg_key)
             return
-        if ind_name not in self.__registered_indicators__["indicators"]:
+        if ind_key not in self.__registered_indicators__[pkg_key].indicators:
             log.warning(
                 "Requested Indicator [%s] but it is not in package [%s].",
-                ind_name,
-                ind_pkg,
+                ind_key,
+                pkg_key,
             )
             return
 
         # Indicator is known, but not loaded yet.
         # drop in a temp label so IndicatorMeta doesn't load the class into 'User Indicators'
-        self.__loaded_indicators__["@new_" + ind_name] = Indicator
+        self.__loaded_indicators__["@known"] = Indicator
 
-        ind_entry_point = self.__registered_indicators__["indicators"][ind_name]
-        ind_cls: "type[Indicator]" = ind_entry_point.load()
-        self.__loaded_indicators__[ind_key] = ind_cls
+        mdata = self.__registered_indicators__[pkg_key].indicators[ind_key]
+        ind_cls: "type[Indicator]" = import_module(*mdata.entry_point.split(":"))  # type: ignore
+        self.__loaded_indicators__[access_key] = ind_cls
 
         # Create the new instance and remove the temp label
         ind_cls(parent=self)
-        del self.__loaded_indicators__["@new_" + ind_name]
+        del self.__loaded_indicators__["@known"]
 
     def init_menu(self, opts: IndicatorOptions):
         "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"
@@ -707,70 +712,6 @@ class Indicator(metaclass=IndicatorMeta):
         return self.parent_frame.main_series.bar_time(index)
 
 
-IndParent_T: TypeAlias = win.ChartingFrame | Indicator
+IndParent_T: TypeAlias = "win.ChartingFrame | Indicator"
 
 # endregion
-
-DEFAULT_METADATA = {"name": "User Indicators", "version": "", "summary": ""}
-# Default Metadata location is where imported indicators are registered
-Indicator.__registered_indicators__[DEFAULT_METADATA["name"]] = {
-    "pkg_key": DEFAULT_METADATA["name"].lower().replace(" ", "_"),
-    "pkg_name": DEFAULT_METADATA["name"],
-    "pkg_version": DEFAULT_METADATA["version"],
-    "description": DEFAULT_METADATA["summary"],
-    "indicators": {},
-}
-
-
-# Find all Installed Indicators and place them into __registered_indicators__
-# See Indictor.request_indictor above to see where these are loaded when needed.
-for entry_point in entry_points(group="lightweight_pycharts.indicators"):
-    metadata = DEFAULT_METADATA
-    if entry_point.dist is not None:
-        metadata |= entry_point.dist.metadata.json
-
-    if not isinstance(metadata["name"], str):
-        raise ValueError("Package Name must be a simple string")
-
-    pkg_key = metadata["name"].lower().replace(" ", "_")
-
-    # New Package, Add it's meta data
-    if pkg_key not in Indicator.__registered_indicators__:
-        Indicator.__registered_indicators__[pkg_key] = {
-            "pkg_key": pkg_key,
-            "pkg_name": metadata["name"],
-            "pkg_version": metadata["version"],
-            "description": metadata["summary"],
-            "indicators": {},
-        }
-
-    # Place the Indicator's Entry_point into the package's indicators dict
-    Indicator.__registered_indicators__[metadata["name"]]["indicators"] |= {
-        entry_point.name: entry_point
-    }
-
-# Format of __registered_indicators__ & __loaded__indicators
-# __registered_indictors__ = {
-#     "[pkg1_key]": {
-#         "pkg_key": "",
-#         "pkg_name": "",
-#         "pkg_version": "",
-#         "description": "",
-#         "indicators": {[name1]: Entry_Point, [name2]: Entry_Point},
-#     },
-#     "[pkg2_key]": {
-#         "pkg_key": "",
-#         "pkg_name": "",
-#         "pkg_version": "",
-#         "description": "",
-#         "indicators": {[name1]: Entry_Point, [name2]: Entry_Point},
-#     }
-# }
-
-# __loaded_indicators__ = {
-#     [pkg1_name]_[indicator1_name] = IndicatorCls1,
-#     [pkg1_name]_[indicator2_name] = IndicatorCls2,
-#     [pkg1_name]_[indicator3_name] = IndicatorCls3,
-#     [pkg2_name]_[indicator1_name] = IndicatorCls1,
-#     [pkg2_name]_[indicator2_name] = IndicatorCls2,
-# }

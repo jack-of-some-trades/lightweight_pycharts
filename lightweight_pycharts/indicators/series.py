@@ -3,6 +3,7 @@
 from logging import getLogger
 from dataclasses import dataclass
 from typing import (
+    TYPE_CHECKING,
     Dict,
     Optional,
     Any,
@@ -23,7 +24,6 @@ from lightweight_pycharts import (
     SingleValueData,
 )
 from lightweight_pycharts import series_common as sc
-from lightweight_pycharts.charting_frame import ChartingFrame
 from lightweight_pycharts.dataframe_ext import LTF_DF, Series_DF, Whitespace_DF
 from lightweight_pycharts.indicator import (
     Indicator,
@@ -32,6 +32,9 @@ from lightweight_pycharts.indicator import (
     default_output_property,
     param,
 )
+
+if TYPE_CHECKING:
+    from lightweight_pycharts.charting_frame import ChartingFrame
 
 
 logger = getLogger("lightweight-pycharts")
@@ -113,7 +116,7 @@ class Series(Indicator):
 
     def __init__(
         self,
-        parent: ChartingFrame,
+        parent: "ChartingFrame",
         opts: Optional[SeriesIndicatorOptions] = None,
         *,
         js_id: Optional[str] = None,
