@@ -60,7 +60,6 @@ async def main():
         )
         main_frame.main_series.set_data(df)
 
-        # indicators.Volume(main_frame)
         # opts = lwc.indicators.SMA.__options__(period=20)
         sma20 = lwc.indicators.SMA(main_frame)
         lwc.indicators.SMA(sma20)

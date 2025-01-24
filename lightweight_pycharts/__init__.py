@@ -13,6 +13,8 @@ Copyright (с) 2023 TradingView, Inc. https://www.tradingview.com/
 
 import logging
 
+from .util import LazyModule
+
 from .orm import *
 from .orm.series_data import (
     AnyBasicData,
@@ -29,10 +31,9 @@ from .orm.series_data import (
     AnyBasicSeriesType,
 )
 
-# Funny enough, indicators needs to be imported before window
-from . import indicators
 from .window import Window, Container, Frame, ChartingFrame
 from .indicator import Indicator, IndicatorOptions
+from . import indicators
 
 __all__ = (
     "Window",
@@ -66,6 +67,7 @@ __all__ = (
     "AnyBasicSeriesType",
     #
     # SubModules,
+    "LazyModule",
     "indicators",
 )
 

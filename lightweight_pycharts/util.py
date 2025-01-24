@@ -1,9 +1,13 @@
 """ Utility functions and objects that are used across the library """
 
+import sys
+from types import ModuleType
+from typing import Dict, List, Optional
+from importlib import import_module
+
 from itertools import islice
 from random import choices
 from string import ascii_letters
-from typing import Optional
 
 
 # @pylint: disable=invalid-name
@@ -18,9 +22,9 @@ class ID_List(list[str]):
         self.prefix = prefix + "_"
         super().__init__()
 
-    def generate_id(self, len: int = 4) -> str:
+    def generate_id(self, _len: int = 4) -> str:
         "Generates a new ID, adds it to the list, and returns it for use."
-        _id = self.prefix + "".join(choices(ascii_letters, k=len))
+        _id = self.prefix + "".join(choices(ascii_letters, k=_len))
 
         if _id not in self:
             self.append(_id)
@@ -99,3 +103,54 @@ def is_sunder(key: str) -> bool:
 def is_dunder(key: str) -> bool:
     "Returns true if key is Double Underscore"
     return key.startswith("__") or key.endswith("__")
+
+
+class LazyModule(ModuleType):
+    """
+    ModuleType Subclass to Lazily Import attributes of a Module Upon Use.
+    For an Example of it being used see __init__.py of the indicators sub-module
+
+    Based on the werkzeug Library that implimented something similar in pre-release version 0.15.6.
+    https://github.com/pallets/werkzeug/blob/71eab19be2c83fb476de51275e2f9bdf69d5cc10/src/werkzeug/__init__.py
+    """
+
+    def __init__(
+        self,
+        name: str,
+        obj_origins: Dict[str, str],
+        all_by_module: Dict[str, List[str]],
+        docs: str | None = None,
+    ) -> None:
+        super().__init__(name, docs)
+        self.obj_origins = obj_origins
+        self.all_by_module = all_by_module
+
+        # Retain a reference to the old module so it isn't garbage collected
+        self.old_module = sys.modules[name]
+        # Then replace the Module reference so __getattr__ can be intercepted
+        sys.modules[name] = self
+
+    def __getattr__(self, name):
+        if name in self.obj_origins:
+            module = import_module(self.obj_origins[name], name)
+            for extra_name in self.all_by_module[module.__name__]:
+                setattr(self, extra_name, getattr(module, extra_name))
+            return getattr(module, name)
+        return ModuleType.__getattribute__(self, name)
+
+    def __dir__(self):
+        """Just show what we want to show."""
+        result = list(self.__all__)
+        result.extend(
+            (
+                "__file__",
+                "__doc__",
+                "__all__",
+                "__docformat__",
+                "__name__",
+                "__path__",
+                "__package__",
+                "__version__",
+            )
+        )
+        return result
