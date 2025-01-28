@@ -37,6 +37,7 @@ export function SymbolSearchBox(){
 
     window.topbar.setTicker = setTicker
 
+    // When the Symbol Button on the Topbar is cliked, not the menu itself.
     function onClk(e:MouseEvent, replace_symbol:boolean){
         setReplace(replace_symbol);
         setDisplay(!display());
@@ -55,8 +56,8 @@ export function SymbolSearchBox(){
     //These signals and stores are initlilized here so that their state isn't reset when the search menu disappears
     const [symbols, setSymbols] = createSignal<symbol_item[]>([])
     const [filters, setFilters] = createStore<select_filters>(default_sel_filters)
-
     window.api.set_search_filters = setFilters
+    window.api.populate_search_symbols = setSymbols
 
     OverlayCTX().attachOverlay(
         id,
@@ -74,8 +75,6 @@ export function SymbolSearchBox(){
         />,
         displaySignal,
     )
-    window.api.set_search_filters = setFilters
-    window.api.populate_search_symbols = setSymbols
     
     return <div class='topbar_container'>
         <div id='symbol_box' class='sel_highlight' ref={box_el}>

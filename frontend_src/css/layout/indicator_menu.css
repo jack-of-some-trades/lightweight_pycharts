@@ -4,3 +4,156 @@
     padding:4px;
     border-radius:5px
 }
+
+/* #region ---- Indicator Menu ---- */
+
+
+.indicator_menu {
+    width: 40%;
+    height: 60%;
+    user-select: none;
+}
+
+.indicator_title_bar {
+    display: flex;
+    align-items: center;
+    padding: 6px 0px;
+
+    border-bottom: 2px var(--separator-color);
+}
+
+#indicator_menu_drag {
+    flex-grow: 1;
+    height: 45px;
+}
+
+#indicator_info_container {
+    display: flex;
+    flex-direction: row;
+    height:calc(100% - 100px);
+    color: var(--text-color);
+    font: var(--font);
+}
+
+.indicator_title_separator {
+    width: 95%;
+    left: 2.5%;
+    height: 2px;
+    background-color: var(--separator-color);
+    margin: 0px 2px 16px 2px ;
+}
+
+.indicator_vert_separator {
+    width: 2px;
+    height: 100%;
+    margin: 0px 6px;
+    background-color: var(--separator-color);
+}
+
+/* #endregion */
+
+#indicator_info_container table {
+    height: -webkit-fill-available;
+    scrollbar-color: var(--accent-color) transparent;
+}
+
+#indicator_info_container table,
+#indicator_info_container tbody,
+#indicator_info_container tr{
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-flow: column;
+    width:-webkit-fill-available;
+}
+
+/* #region ---- Package List and Cards ---- */
+
+#indicator_packages_list {
+    display: flex;
+    flex-direction: column;
+    width:30%;
+    height:100%;
+    overflow: hidden;
+}
+
+
+#indicator_packages_list .pkg_card {
+    position:relative; /* Redefine the internal positioning  */
+    min-height: 36px;
+
+    cursor: pointer;
+    font-weight: bold;
+    font-size: smaller;
+    text-align: left;
+
+    border-radius: 6px;
+    padding: 0px 6px;
+    margin: 0px 12px;
+}
+
+#indicator_packages_list .pkg_card[active]{color: var(--accent-color);}
+#indicator_packages_list .pkg_card:hover{background-color: var(--hover-color);}
+
+#indicator_packages_list .version {
+    margin-top: 3px;
+    margin-left: 80%;
+    width: 20%;
+}
+
+/* #endregion */
+
+/* #region ---- Details List and Cards ---- */
+
+#indicator_details_list {
+    width:70%;
+    height:100%;
+    display: flex;
+    flex-direction: column;
+    padding-right: 12px;
+}
+
+#indicator_pkg_description {
+    text-align: right;
+    font-weight: lighter;
+    font-size: large;
+}
+
+#indicator_details_list .ind_card {
+    position: relative; /* Redefine the internal positioning  */
+    min-height: 36px;
+
+    cursor: pointer;
+    font-weight: bold;
+    font-size: smaller;
+    padding: 0px 6px;
+    text-align: left;
+}
+
+#indicator_details_list .ind_card:hover{
+    background-color: var(--hover-color);
+    border-radius: 6px;
+}
+
+#indicator_details_list .version {
+    margin-top: 3px;
+    margin-left: 90%;
+    width: 10%;
+}
+
+#indicator_details_list .description {
+    font-weight:100;
+    font-size:smaller;
+}
+
+/* #endregion */
+
+
+#indicator_info_container .version {
+    min-height: 13px;
+    border-bottom: 1px solid var(--text-dark-color);
+
+    color: var(--text-dark-color);
+    text-align: right;
+    font-size: xx-small;
+}

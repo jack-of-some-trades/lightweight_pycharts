@@ -1,5 +1,6 @@
 //Typescript API that interfaces with python.
 
+import { indicator_pkg } from "../components/layout/topbar/indicators_menu";
 import { Series_Type } from "./charting_frame/series-plugins/series-base";
 import { Container_Layouts, num_frames } from "./layouts";
 import { makeid, symbol_item } from "./types";
@@ -55,6 +56,9 @@ export class py_api {
     set_indicator_options = (container_id: string, frame_id: string, ind_id:string, obj: Object) => {
         console.log(`Set Indicator Options: ${container_id},${frame_id},${ind_id}`, obj)
     }
+    indicator_request = (container_id: string, frame_id: string, pkg_key:string, ind_key: string) => {
+        console.log(`Request Indicator: ${container_id},${frame_id},${pkg_key},${ind_key}`)
+    }
 
     update_series_options = (container_id: string, frame_id: string, ind_id:string, ser_id:string, opts:any) => {
         console.log(`Set Series Options: ${container_id},${frame_id},${ind_id},${ser_id}`, opts)
@@ -67,6 +71,8 @@ export class py_api {
 
     populate_search_symbols = (items:symbol_item[]) => {}
     set_search_filters = (category:string, opts:string[]) => {}
+
+    populate_indicator_pkgs = (packages:indicator_pkg[]) => {}
 
     update_series_topbar_opts = (opts:any) => console.log('Series opts:', opts)
     update_layout_topbar_opts = (opts:any) => console.log('Layout opts:', opts)
