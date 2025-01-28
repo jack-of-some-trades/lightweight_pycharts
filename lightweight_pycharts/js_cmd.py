@@ -94,6 +94,8 @@ class JS_CMD(IntEnum):
     SET_INDICATOR_MENU = auto()
     SET_INDICATOR_OPTIONS = auto()
     UPDATE_PRICE_SCALE_OPTS = auto()
+    UPDATE_IND_PKG = auto()
+    POPULATE_IND_PKGS = auto()
 
     # Series Commands
     SET_SERIES_DATA = auto()
@@ -171,8 +173,18 @@ def update_symbol_search_bubbles(category: str, opts: list[str]) -> str:
     return f"api.set_search_filters('{category}', {dump(opts)});"
 
 
-def set_user_colors(opts: list[Color]):
+def set_user_colors(opts: list[Color]) -> str:
     return f"api.set_user_colors({dumps([color.to_hex() for color in opts])});"
+
+
+def update_ind_pkg(pkg_key: str, pkg: object):
+    # The api func is a solidJS setStore func so address the relevant package to update.
+    print(f"called update w/ {dump(pkg)}")
+    return f'api.populate_indicator_pkgs("{pkg_key}", {dump(pkg)});'
+
+
+def populate_indicator_pkgs(pkgs: object) -> str:
+    return f"api.populate_indicator_pkgs({dump(pkgs)});"
 
 
 # endregion
@@ -549,6 +561,8 @@ VIEW_CMD_ROLODEX: dict[JS_CMD, Callable[..., str | None]] = {
     JS_CMD.UPDATE_IND_PRIMITIVE: update_ind_primitive,
     JS_CMD.SET_INDICATOR_MENU: indicator_set_menu,
     JS_CMD.SET_INDICATOR_OPTIONS: indicator_set_options,
+    JS_CMD.UPDATE_IND_PKG: update_ind_pkg,
+    JS_CMD.POPULATE_IND_PKGS: populate_indicator_pkgs,
     # ---- Series Commands ----
     JS_CMD.CLEAR_SERIES_DATA: clear_series_data,
     JS_CMD.UPDATE_SERIES_DATA: update_series_data,

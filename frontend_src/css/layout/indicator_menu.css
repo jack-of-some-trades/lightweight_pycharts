@@ -36,6 +36,7 @@
 }
 
 .indicator_title_separator {
+    position: relative;
     width: 95%;
     left: 2.5%;
     height: 2px;

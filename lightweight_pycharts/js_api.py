@@ -121,6 +121,13 @@ class js_api:
             (PY_CMD.SET_INDICATOR_OPTS, container_id, frame_id, indicator_id, obj)
         )
 
+    def indicator_request(
+        self, container_id: str, frame_id: str, pkg_id: str, ind_id: str
+    ):
+        self.rtn_queue.put(
+            (PY_CMD.INDICATOR_REQUEST, container_id, frame_id, pkg_id, ind_id)
+        )
+
     def update_series_options(
         self, c_id: str, f_id: str, i_id: str, s_id: str, opts: dict
     ):

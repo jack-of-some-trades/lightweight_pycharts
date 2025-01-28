@@ -23,7 +23,7 @@ export interface indicator_pkg {
     "pkg_name": string,
     "pkg_version": string | undefined,
     "description": string | undefined,
-    "indicators": indicator_details[],
+    "indicators": {[key: string]: indicator_details},
 }
 
 // Box that gets mounted to the Topbar
@@ -47,7 +47,7 @@ export function IndicatorsBox(){
     onCleanup(() => {window.removeEventListener('resize', position_menu)})
 
     //These signals and stores are initlilized here so that their state isn't reset when the menu disappears
-    const [packages, setPackages] = createStore<indicator_pkg[]>([])
+    const [packages, setPackages] = createStore<{[key: string]: indicator_pkg}>({})
     window.api.populate_indicator_pkgs = setPackages
 
     OverlayCTX().attachOverlay(
@@ -63,60 +63,6 @@ export function IndicatorsBox(){
         displaySignal,
     )
 
-    // #region ---- ---- ---- Tmp indicator packages  ---- ---- ---- 
-    setPackages([
-        {
-            "pkg_key": 'some_other_package',
-            "pkg_name": 'Some other Package',
-            "pkg_version": undefined,
-            "description": undefined,
-            "indicators": [
-                {
-                    "ind_key": 'myfirstindicator',
-                    "ind_name": 'MyFirstIndicator',
-                    "ind_version": 'v1.0',
-                    "unlisted": undefined,
-                    "entry_point": 'lightweight_pycharts.indicators.sma:SMA1',
-                    "description": "The first indicator of this package",
-                },
-                {
-                    "ind_key": 'mysecondindicator',
-                    "ind_name": 'MySecondIndicator',
-                    "ind_version": 'v0.0',
-                    "unlisted": undefined,
-                    "entry_point": 'lightweight_pycharts.indicators.sma:SMA2',
-                    "description": "The Second indicator of this package",
-                }
-            ],
-        },
-        {
-            "pkg_key": '__user_indicators',
-            "pkg_name": 'User Indicators',
-            "pkg_version": 'v1.0',
-            "description": "Indicators that are Imported at Runtime.",
-            "indicators": [
-                {
-                    "ind_key": 'user_indicator_1',
-                    "ind_name": 'User Indicator 1',
-                    "ind_version": 'v1.0',
-                    "unlisted": undefined,
-                    "entry_point": 'lightweight_pycharts.indicators.sma:SMA1',
-                    "description": "The first indicator of this package",
-                },
-                {
-                    "ind_key": 'user_indicator_2',
-                    "ind_name": 'User Indicator 2',
-                    "ind_version": 'v0.0',
-                    "unlisted": undefined,
-                    "entry_point": 'lightweight_pycharts.indicators.sma:SMA2',
-                    "description": undefined,
-                }
-            ],
-        },
-    ])
-    // #endregion
-
-
     return <div class="topbar_container">
         <div class="menu_selectable indicator_topbar_btn" ref={box_el}>
             <Icon icon={icons.indicator}/>
@@ -130,7 +76,7 @@ export function IndicatorsBox(){
 
 
 interface ind_menu_props extends Omit<overlay_div_props, "location_ref"> {
-    packages:indicator_pkg[]
+    packages:{[key: string]: indicator_pkg}
     setDisplay:Setter<boolean>,
 }
 
@@ -170,7 +116,7 @@ function IndicatorsMenu(props: ind_menu_props){
                 
                 <div id='indicator_packages_list'>
                     <table><tbody>
-                        <For each={props.packages}>{(pkg) => <PackageCard activePkgSig={activePkgSig} {...pkg}/>}</For>
+                        <For each={Object.values(props.packages)}>{(pkg) => <PackageCard activePkgSig={activePkgSig} {...pkg}/>}</For>
                     </tbody></table>
                 </div>
 
@@ -178,7 +124,7 @@ function IndicatorsMenu(props: ind_menu_props){
 
                 <div id='indicator_details_list'>
                     <table><tbody>
-                        <For each={activePkgSig[0]()?.indicators}>{ (details) => 
+                        <For each={Object.values(activePkgSig[0]()?.indicators ?? {})}>{ (details) => 
                             <IndicatorCard 
                                 {...details} 
                                 activePkgKey={activePkgSig[0]()?.pkg_key?? ''}

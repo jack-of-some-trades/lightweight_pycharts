@@ -25,8 +25,8 @@ INDICATORS = [
 # This is a single Dictionary formatted to match the indicatormeta.py:IndicatorPackage Dataclass
 # This loaded via EntryPoint in indicatormeta.py right after the Indicator Class is made.
 PKG_INFO = {
-    "name": "Built-in Indicators",
+    "name": "Built-In Indicators",
     "version": "v0.0.0",
-    "description": "Indicators that come pre-installed with Lightweight-pycharts.",
+    "description": "Pre-Installed Indicators for Lightweight-pycharts.",
     "indicators": INDICATORS,
 }

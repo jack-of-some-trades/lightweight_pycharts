@@ -1,4 +1,4 @@
-"""Sub-Module Init to make accessing the absurdly large ORM a bit more manageable"""
+"Sub-Module to make accessing the absurdly large T.V. lightweight-charts API a bit more manageable"
 
 from . import chart_options
 from . import series_data

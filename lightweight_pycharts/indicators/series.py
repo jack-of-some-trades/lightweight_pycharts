@@ -113,6 +113,7 @@ class Series(Indicator):
 
     __special_id__ = "XyzZy"
     __options__ = SeriesIndicatorOptions
+    __registered__ = True
 
     def __init__(
         self,

@@ -373,7 +373,7 @@ class Indicator(metaclass=IndicatorMeta):
     # ideal since you lose all type checking during object creation, and the owner of the object
     # isn't the one actually creating the object.
 
-    # Optional Definition of an Options Dataclasss; set by User
+    # Optional Definition of an Options Dataclass; set by User
     __options__: Optional[type[IndicatorOptions]] = None
     # Dunder Cls Params specific to each Sub-Class; set by MetaClass
     __set_args__: dict[str, tuple[type, Any]]
@@ -592,6 +592,23 @@ class Indicator(metaclass=IndicatorMeta):
         """
         self._watcher.link_args(args, self)
 
+    def __populate_ind_pkgs__(self):
+        "Transfer all indicator package metadata to the window."
+        self._fwd_queue.put((JS_CMD.POPULATE_IND_PKGS, self.__registered_indicators__))
+
+    def __update_ind_pkg__(self, pkg_key: str):
+        "Transfer all indicator package metadata to the window."
+        if pkg_key not in self.__registered_indicators__:
+            log.warning(
+                "Cannot update indicator package metadata. Package key '%s' is unknown.",
+                pkg_key,
+            )
+            return
+
+        self._fwd_queue.put(
+            (JS_CMD.UPDATE_IND_PKG, pkg_key, self.__registered_indicators__[pkg_key])
+        )
+
     def request_indicator(self, pkg_key: str, ind_key: str):
         "Request that an Indicator instance be loaded and connected to this Indicator Object"
         access_key = pkg_key + "_" + ind_key
@@ -613,17 +630,13 @@ class Indicator(metaclass=IndicatorMeta):
             )
             return
 
-        # Indicator is known, but not loaded yet.
-        # drop in a temp label so IndicatorMeta doesn't load the class into 'User Indicators'
-        self.__loaded_indicators__["@known"] = Indicator
-
         mdata = self.__registered_indicators__[pkg_key].indicators[ind_key]
-        ind_cls: "type[Indicator]" = import_module(*mdata.entry_point.split(":"))  # type: ignore
+        module_path, cls_name = mdata.entry_point.split(":")
+        ind_cls: "type[Indicator]" = getattr(import_module(module_path), cls_name)
         self.__loaded_indicators__[access_key] = ind_cls
 
         # Create the new instance and remove the temp label
         ind_cls(parent=self)
-        del self.__loaded_indicators__["@known"]
 
     def init_menu(self, opts: IndicatorOptions):
         "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"

@@ -38,6 +38,7 @@ class SMA(Indicator):
     "Simple Moving Average Indicator"
 
     __options__ = SMAOptions
+    __registered__ = True
 
     def __init__(
         self,

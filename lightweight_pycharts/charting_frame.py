@@ -39,6 +39,9 @@ class ChartingFrame(win.Frame):
         # Add main pane and Series, neither should ever be deleted
         self.add_pane(Pane.__special_id__)
         indicators.Series(self, js_id=indicators.Series.__special_id__)
+        # Populate the initial set of indicators. Odd place to put this, but it needs
+        # to be called after the window (and thus the queue) has been created.
+        self.main_series.__populate_ind_pkgs__()
 
     def __del__(self):
         for indicator in self.indicators.copy().values():

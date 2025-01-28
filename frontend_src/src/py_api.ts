@@ -72,7 +72,7 @@ export class py_api {
     populate_search_symbols = (items:symbol_item[]) => {}
     set_search_filters = (category:string, opts:string[]) => {}
 
-    populate_indicator_pkgs = (packages:indicator_pkg[]) => {}
+    populate_indicator_pkgs = (packages:{[key: string]: indicator_pkg}) => {}
 
     update_series_topbar_opts = (opts:any) => console.log('Series opts:', opts)
     update_layout_topbar_opts = (opts:any) => console.log('Layout opts:', opts)

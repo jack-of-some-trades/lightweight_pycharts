@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from enum import Enum
 from abc import ABCMeta
-from importlib import import_module
 from importlib.metadata import entry_points
 from logging import getLogger
 from inspect import Signature, signature, _empty
@@ -34,7 +33,8 @@ class IndicatorDetails:
     "JSON Formatting Dataclass for transferring indicator specific info to the screen"
     ind_key: str
     ind_name: str
-    ind_version: str
+    ind_version: str | None
+    unlisted: bool | None
     description: str | None
     entry_point: str
 
@@ -71,7 +71,7 @@ class IndicatorMeta(ABCMeta):
                 "__user_indicators",
                 "User Indicators",
                 "",
-                "Indicators Loaded by manually importing. Typically those designed by the User.",
+                "Indicators Manually Imported at Runtime",
                 {},
             )
         }
@@ -94,7 +94,7 @@ def parse_indicator_pkgs() -> dict[str, IndicatorPackage]:
         if pkg.dist is None:
             raise ModuleNotFoundError(
                 "Attempted to load Lightweight-Pycharts indicator package, but the "
-                "Package doesn't have a distribution?"
+                "package doesn't have a distribution?"
             )
 
         pkg_key = pkg.dist.name.lower().replace(" ", "_")
@@ -109,7 +109,8 @@ def parse_indicator_pkgs() -> dict[str, IndicatorPackage]:
             indicator_map[ind_key] = IndicatorDetails(
                 ind_key,
                 ind["name"],
-                ind["version"],
+                getattr(ind, "version", None),
+                getattr(ind, "unlisted", None),
                 getattr(ind, "description", None),
                 ind["entry_point"],
             )
@@ -164,9 +165,8 @@ def analyse_indicator_subclass(cls: type, name: str, namespace: dict):
     setattr(cls, "__exposed_outputs__", outputs)
     setattr(cls, "__default_output__", default_out)
 
-    if "@known" in cls.__loaded_indicators__:
-        # Flag placed into the __loaded_indicators__ dict to indicate this
-        # indicator was imported from a package and thus has metadata
+    if getattr(cls, "__registered__", False):
+        # Indictor flagges as part of a package, metadata already known
         return cls
 
     # No Metadata exists => a user imported their Indicator from a local path.
@@ -177,6 +177,7 @@ def analyse_indicator_subclass(cls: type, name: str, namespace: dict):
         ind_key,
         name,
         str(getattr(cls, "__version__", "")),
+        None,
         getattr(cls, "__doc__", None),
         "",  # No Entry Point needed since it's already loaded
     )
