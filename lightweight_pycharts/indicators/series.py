@@ -1,4 +1,4 @@
-"""Series Indicator that recieves raw Timeseries Data and filters it"""
+"""Series Indicator that receives raw Timeseries Data and filters it"""
 
 from logging import getLogger
 from dataclasses import dataclass

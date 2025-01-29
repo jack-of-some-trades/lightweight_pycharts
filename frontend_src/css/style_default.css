@@ -3,6 +3,8 @@
 
     --background-fill: #2a2e39;
     --layout-main-fill: #131722;
+    --background-fade-light: #252934;
+    --background-fade-dark: #191b23;
     --hover-color: #2a2e39;
     --hover-color-light: #454c5e;
 
@@ -78,5 +80,6 @@
 
     --indicator-border-color: #b2b5be;
     --indicator-group-text-color: var(--accent-color);
-    --indicator-background-fade: #00000020;
+    --indicator-background-fade: var(--background-fade-dark);
+    /* --indicator-background-fade: #00000020; */
 }

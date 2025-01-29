@@ -6,6 +6,7 @@ from importlib import import_module
 from logging import getLogger
 from abc import abstractmethod
 from inspect import signature, _empty, currentframe
+from multiprocessing import Queue
 from typing import (
     ClassVar,
     Optional,
@@ -373,6 +374,7 @@ class Indicator(metaclass=IndicatorMeta):
     # ideal since you lose all type checking during object creation, and the owner of the object
     # isn't the one actually creating the object.
 
+    _fwd_queue: Queue
     # Optional Definition of an Options Dataclass; set by User
     __options__: Optional[type[IndicatorOptions]] = None
     # Dunder Cls Params specific to each Sub-Class; set by MetaClass
@@ -417,7 +419,11 @@ class Indicator(metaclass=IndicatorMeta):
 
         # Tuple of Ids to make addressing through Queue easier: order = (frame, indicator)
         self._ids = self.parent_frame.js_id, self._js_id
-        self._fwd_queue = self.parent_frame._fwd_queue
+
+        if getattr(self, "_fwd_queue", None) is None:
+            # The first indicator since being launched is being initilized. Set the Indicator Menu
+            Indicator._fwd_queue = self.parent_frame._fwd_queue
+            self.__populate_ind_pkgs__()
 
         # Bind the default output function's 'self' to this instance
         if self.__default_output__ is not None:
@@ -592,51 +598,30 @@ class Indicator(metaclass=IndicatorMeta):
         """
         self._watcher.link_args(args, self)
 
-    def __populate_ind_pkgs__(self):
+    @classmethod
+    def __populate_ind_pkgs__(cls):
         "Transfer all indicator package metadata to the window."
-        self._fwd_queue.put((JS_CMD.POPULATE_IND_PKGS, self.__registered_indicators__))
+        cls._fwd_queue.put((JS_CMD.POPULATE_IND_PKGS, cls.__registered_indicators__))
 
-    def __update_ind_pkg__(self, pkg_key: str):
+    @classmethod
+    def __update_ind_pkg__(cls, pkg_key: str):
         "Transfer all indicator package metadata to the window."
-        if pkg_key not in self.__registered_indicators__:
+        if pkg_key not in cls.__registered_indicators__:
             log.warning(
                 "Cannot update indicator package metadata. Package key '%s' is unknown.",
                 pkg_key,
             )
             return
 
-        self._fwd_queue.put(
-            (JS_CMD.UPDATE_IND_PKG, pkg_key, self.__registered_indicators__[pkg_key])
+        cls._fwd_queue.put(
+            (JS_CMD.UPDATE_IND_PKG, pkg_key, cls.__registered_indicators__[pkg_key])
         )
 
     def request_indicator(self, pkg_key: str, ind_key: str):
         "Request that an Indicator instance be loaded and connected to this Indicator Object"
-        access_key = pkg_key + "_" + ind_key
-
-        if access_key in self.__loaded_indicators__:
-            # Indicator is already loaded, make a new Instance.
-            ind_cls = self.__loaded_indicators__[access_key]
-            ind_cls(parent=self)
-            return
-
-        if pkg_key not in self.__registered_indicators__:
-            log.warning("Requested Indicator but package [%s] is not known.", pkg_key)
-            return
-        if ind_key not in self.__registered_indicators__[pkg_key].indicators:
-            log.warning(
-                "Requested Indicator [%s] but it is not in package [%s].",
-                ind_key,
-                pkg_key,
-            )
-            return
-
-        mdata = self.__registered_indicators__[pkg_key].indicators[ind_key]
-        module_path, cls_name = mdata.entry_point.split(":")
-        ind_cls: "type[Indicator]" = getattr(import_module(module_path), cls_name)
-        self.__loaded_indicators__[access_key] = ind_cls
-
-        # Create the new instance and remove the temp label
-        ind_cls(parent=self)
+        cls = retrieve_indicator_cls(pkg_key, ind_key)
+        if cls is not None:
+            cls(parent=self)
 
     def init_menu(self, opts: IndicatorOptions):
         "Initilize Options Menu with the given Options. Must be called to use UI Options Menu"
@@ -725,6 +710,33 @@ class Indicator(metaclass=IndicatorMeta):
         return self.parent_frame.main_series.bar_time(index)
 
 
+# pylint: disable=invalid-name
 IndParent_T: TypeAlias = "win.ChartingFrame | Indicator"
 
 # endregion
+
+
+def retrieve_indicator_cls(pkg_key: str, ind_key: str) -> type[Indicator] | None:
+    "Return an Indicator Subclass from a given package and indicator key Lazy Loading as needed."
+    access_key = pkg_key + "_" + ind_key
+
+    if access_key in Indicator.__loaded_indicators__:
+        return Indicator.__loaded_indicators__[access_key]
+
+    if pkg_key not in Indicator.__registered_indicators__:
+        log.warning("Requested Indicator but package [%s] is not known.", pkg_key)
+        return
+    if ind_key not in Indicator.__registered_indicators__[pkg_key].indicators:
+        log.warning(
+            "Requested Indicator [%s] but it is not in package [%s].",
+            ind_key,
+            pkg_key,
+        )
+        return
+
+    mdata = Indicator.__registered_indicators__[pkg_key].indicators[ind_key]
+    module_path, cls_name = mdata.entry_point.split(":")
+    ind_cls: "type[Indicator]" = getattr(import_module(module_path), cls_name)
+    Indicator.__loaded_indicators__[access_key] = ind_cls
+
+    return ind_cls

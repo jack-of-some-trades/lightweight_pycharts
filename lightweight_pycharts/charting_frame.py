@@ -39,9 +39,6 @@ class ChartingFrame(win.Frame):
         # Add main pane and Series, neither should ever be deleted
         self.add_pane(Pane.__special_id__)
         indicators.Series(self, js_id=indicators.Series.__special_id__)
-        # Populate the initial set of indicators. Odd place to put this, but it needs
-        # to be called after the window (and thus the queue) has been created.
-        self.main_series.__populate_ind_pkgs__()
 
     def __del__(self):
         for indicator in self.indicators.copy().values():
@@ -103,6 +100,12 @@ class ChartingFrame(win.Frame):
             if isinstance(_ind, _type):
                 rtn_dict[_key] = _ind
         return rtn_dict
+
+    def request_indicator(self, pkg_key, ind_key):
+        "Request that an Indicator instance be loaded into this frame"
+        cls = ind.retrieve_indicator_cls(pkg_key, ind_key)
+        if cls is not None:
+            cls(parent=self)
 
     def remove_indicator(self, _id: str | int):
         "Remove and Delete an Indicator"

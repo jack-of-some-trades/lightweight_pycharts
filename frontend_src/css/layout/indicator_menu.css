@@ -33,6 +33,8 @@
     height:calc(100% - 100px);
     color: var(--text-color);
     font: var(--font);
+    padding-top: 16px;
+    background-image: linear-gradient(0deg, var(--overlay-fill) 0%, var(--overlay-fill) 85%, var(--background-fade-dark) 100%);
 }
 
 .indicator_title_separator {
@@ -41,7 +43,7 @@
     left: 2.5%;
     height: 2px;
     background-color: var(--separator-color);
-    margin: 0px 2px 16px 2px ;
+    margin: 0px 2px 0px 2px ;
 }
 
 .indicator_vert_separator {
@@ -76,6 +78,7 @@
     width:30%;
     height:100%;
     overflow: hidden;
+    padding-left: 12px;
 }
 
 
@@ -89,8 +92,7 @@
     text-align: left;
 
     border-radius: 6px;
-    padding: 0px 6px;
-    margin: 0px 12px;
+    padding: 0 6px;
 }
 
 #indicator_packages_list .pkg_card[active]{color: var(--accent-color);}

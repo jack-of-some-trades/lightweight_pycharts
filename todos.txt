@@ -81,8 +81,6 @@ Backend-Backend (Python):
 					indicators / series / primitive / etc. objects and the window.
 
 Cross-Architecture:
-	- Indicators: Search Menu + Python Import-Lib
-
 	- Replay : Incorperate a Replay like mode. This really would be a tool to test other systems/Indicators
 			   as they are developed.
 

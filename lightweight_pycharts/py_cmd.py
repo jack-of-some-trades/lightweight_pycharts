@@ -59,7 +59,7 @@ def request_timeseries(window: "win.Window", c_id, f_id, symbol, tf):
 def request_indicator(window: "win.Window", c_id, f_id, ind_pkg, ind_name):
     frame = window.get_container(c_id).frames[f_id]
     if isinstance(frame, win.ChartingFrame):
-        frame.main_series.request_indicator(ind_pkg, ind_name)
+        frame.request_indicator(ind_pkg, ind_name)
 
 
 def layout_change(window: "win.Window", c_id, layout):

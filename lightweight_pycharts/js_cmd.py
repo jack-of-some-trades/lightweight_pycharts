@@ -179,7 +179,6 @@ def set_user_colors(opts: list[Color]) -> str:
 
 def update_ind_pkg(pkg_key: str, pkg: object):
     # The api func is a solidJS setStore func so address the relevant package to update.
-    print(f"called update w/ {dump(pkg)}")
     return f'api.populate_indicator_pkgs("{pkg_key}", {dump(pkg)});'
 
 

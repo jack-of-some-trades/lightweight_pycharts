@@ -102,16 +102,16 @@ def parse_indicator_pkgs() -> dict[str, IndicatorPackage]:
         indicator_map = {}
 
         for ind in pkg_info["indicators"]:
-            if "unlisted" in ind and ind["unlisted"] is True:
+            if ind.get("unlisted") is True:
                 continue
 
             ind_key = ind["name"].lower().replace(" ", "_")
             indicator_map[ind_key] = IndicatorDetails(
                 ind_key,
                 ind["name"],
-                getattr(ind, "version", None),
-                getattr(ind, "unlisted", None),
-                getattr(ind, "description", None),
+                ind.get("version"),
+                ind.get("unlisted"),
+                ind.get("description"),
                 ind["entry_point"],
             )
 
@@ -184,6 +184,11 @@ def analyse_indicator_subclass(cls: type, name: str, namespace: dict):
 
     cls.__loaded_indicators__[access_key] = cls
     cls.__registered_indicators__["__user_indicators"].indicators[ind_key] = details
+
+    # pylint: disable=protected-access
+    # Indicator has been imported sometime after the window has been made. Update the window.
+    if cls._fwd_queue is not None:
+        cls.__update_ind_pkg__("__user_indicators")
 
     return cls
 

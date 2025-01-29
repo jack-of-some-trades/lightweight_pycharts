@@ -5,7 +5,7 @@
 import { Icon, icons } from "../../icons";
 import { location_reference, overlay_div_props, OverlayCTX, OverlayDiv, point } from "../overlay_manager";
 
-import { createSignal, For, onCleanup, onMount, Setter, Show, Signal, splitProps } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, onMount, Setter, Show, Signal, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
 import "../../../css/layout/indicator_menu.css";
 
@@ -39,7 +39,8 @@ export function IndicatorsBox(){
         displaySignal[1](!displaySignal[0]()) // Toggle Visibility
         e.stopPropagation();
     }
-    //Adding events manually makes it function as expected (it executes before prop events)
+    // Adding events manually makes it function as expected 
+    // (it executes before topbar prop events that would toggle the display state)
     onMount(() => {
         box_el.addEventListener('mousedown', (e) => onClk(e))
         window.addEventListener('resize', position_menu)
@@ -62,6 +63,7 @@ export function IndicatorsBox(){
         />,
         displaySignal,
     )
+    createEffect(()=> console.log(packages))
 
     return <div class="topbar_container">
         <div class="menu_selectable indicator_topbar_btn" ref={box_el}>
