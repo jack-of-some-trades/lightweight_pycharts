@@ -1,4 +1,4 @@
-""" Utility functions and objects that are used across the library """
+""" Core Machinery of the Event Call & Response System used primarily by indicators """
 
 from asyncio import iscoroutinefunction, create_task
 from typing import (
@@ -15,7 +15,6 @@ from pandas import DataFrame
 
 from .orm import types
 
-# prevent circular import
 if TYPE_CHECKING:
     from .indicators import Series
 
@@ -102,47 +101,50 @@ Socket_Close_Protocol: TypeAlias = Socket_Close_sync | Socket_close_async
 
 # endregion
 
-Emitter_Protocols: TypeAlias = (
-    Command_Protocol
-    | Symbol_Search_Protocol
-    | Data_Request_Protocol
-    | Socket_Open_Protocol
-    | Socket_Close_Protocol
-)
-
 
 # Pylint Thinks "T" is undefined.
 # pylint: disable=undefined-variable
-class Emitter[T: Emitter_Protocols](list[T]):
+class Emitter[T: Callable](list[T]):
     """
-    Emitter is a list type extension. It should be instantiated with one of the below
-    Protocol Type Aliases. Functions of that TypeAlias can be appended.
-    When an instance of this class is called it will create tasks
-    for all appended async functions, then sequentially run all non-coroutine functions.
+    Emitter is a list of Sync/Async Callables. It should be instantiated with a Protocol,
+    or a union of Protocols, that define the input and output args of the stored callables.
 
-    This class can be instantiated with a callable function. This function will be
-    called with the appended functions's return args as parameters if there are any.
+    By default the Emitter is a single emitter. This limits the length of the list to 1 function
+    and thus only the last function appended to the list though the '+=' operator will be called.
+
+    When there are multiple functions appended to the list all of the async functions will be
+    launched in tasks. The remaining blocking functions will then execute in order.
+
+    This class can be instantiated with a responder function. This function will be
+    called with the return args of each function called by the emit event. This responder
+    function can be provided static key-word arguments by populating the 'rsp_args' param
+    of the Emitter.__call__() function.
+    e.g.:
+    Emitter_inst() emits a call to all appended functions.
+    Emitter_inst(rsp_args={[my_arg]:[static_arg]}), calls all appended functions,
+    then once each function returns, calls responder_func(*[appended_function_return], **{rsp_args})
     """
 
     # TODO : Make this class track async tasks that it has created so they can be closed
     # This will likely entail making the class definitively only handle one response function
 
-    def __init__(self, responder: Optional[Callable] = None):
+    def __init__(self, responder: Optional[Callable] = None, single_emit: bool = True):
         super().__init__()
-        # A Caller is a function that is appended to this Object.
-        # Each caller gets called when an event it emitted
-        self.__single_caller__ = True
-
-        # The responder function called with the return products of each Caller
-        # There can only be one responder
+        self.__single_emitter__ = single_emit
         self.responder = responder
 
     def __iadd__(self, func: T) -> Self:
         if func not in self:
-            if self.__single_caller__:
+            if self.__single_emitter__:
                 self.clear()
-            self.append(func)
+            super().append(func)
         return self
+
+    def append(self, func: T):
+        if func not in self:
+            if self.__single_emitter__:
+                self.clear()
+            super().append(func)
 
     def __isub__(self, func: T) -> Self:
         if func in self:
