@@ -8,7 +8,7 @@ import asyncio
 import multiprocessing as mp
 from functools import partial
 from dataclasses import asdict
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional, Protocol
 
 from lightweight_pycharts.dataframe_ext import enable_market_calendars
 
@@ -20,7 +20,13 @@ from .js_cmd import JS_CMD
 from .py_cmd import WIN_CMD_ROLODEX
 from .js_api import PyWv, MpHooks, PyWebViewOptions
 
-logger = logging.getLogger("lightweight-pycharts")
+log = logging.getLogger("lightweight-pycharts")
+APIs = Literal["alpaca"]
+
+
+# pylint: disable=missing-class-docstring, missing-function-docstring, import-outside-toplevel
+class BrokerAPI(Protocol):
+    def setup_window(self, window: "Window"): ...
 
 
 class FrameTypes(Enum):
@@ -42,6 +48,7 @@ class Window:
         daemon: bool = True,
         use_calendars: bool = True,
         events: Optional[Events] = None,
+        broker_api: Optional[APIs | BrokerAPI] = None,
         log_level: Optional[logging._Level] = None,
         options: Optional[PyWebViewOptions] = None,
         **kwargs,
@@ -52,10 +59,10 @@ class Window:
             kwargs = asdict(options)
 
         if log_level is not None:
-            logger.setLevel(log_level)
+            log.setLevel(log_level)
             kwargs["log_level"] = log_level
         elif "debug" in kwargs.keys() and kwargs["debug"]:
-            logger.setLevel(logging.DEBUG)
+            log.setLevel(logging.DEBUG)
 
         # create and then unpack the hooks directly into class variables
         mp_hooks = MpHooks()
@@ -93,8 +100,24 @@ class Window:
         self._container_ids = util.ID_List("c")
         self.containers: list[Container] = []
 
+        if broker_api is None:
+            self.broker_api = None
+            return
+        if not isinstance(broker_api, str):
+            self.broker_api = broker_api
+            broker_api.setup_window(self)
+            return
+
+        if broker_api == "alpaca":
+            from lightweight_pycharts.broker_apis.alpaca_api import AlpacaAPI
+
+            self.broker_api = AlpacaAPI()
+            self.broker_api.setup_window(self)
+        else:
+            log.warning('Unknown Broker API: "%s"', broker_api)
+
     async def _manage_queue(self):
-        logger.debug("Entered Async Queue Manager")
+        log.debug("Entered Async Queue Manager")
         while not self._stop_event.is_set():
             if self._rtn_queue.empty():
                 # Sleep Time is to prioritize other Event Loop Calls.
@@ -103,8 +126,8 @@ class Window:
             else:
                 cmd, *args = self._rtn_queue.get()
                 WIN_CMD_ROLODEX[cmd](self, *args)
-                logger.debug("PY_CMD: %s: %s", cmd.name, str(args))
-        logger.debug("Exited Async Queue Manager")
+                log.debug("PY_CMD: %s: %s", cmd.name, str(args))
+        log.debug("Exited Async Queue Manager")
 
     # region ------------------------ Public Window Methods  ------------------------ #
 
@@ -135,6 +158,15 @@ class Window:
     async def await_close(self):
         "Await closure of the window's asyncio loop. (Window Closure)"
         await self._queue_manager
+
+        # Await Shutdown of Broker API if shutdown routine exists
+        shutdown_attr = getattr(self.broker_api, "shutdown", None)
+        if shutdown_attr is None:
+            return
+        elif asyncio.iscoroutinefunction(shutdown_attr):
+            await shutdown_attr()
+        elif isinstance(shutdown_attr, Callable):
+            shutdown_attr()
 
     def load_css(self, filepath: str):
         "Pass a .css file's absolute filepath to the window to load it"
@@ -244,7 +276,7 @@ class Container:
         self.set_layout(self._layout)  # Adds First Frame
 
     def __del__(self):
-        logger.debug("Deleteing Container: %s", self._js_id)
+        log.debug("Deleteing Container: %s", self._js_id)
 
     @property
     def js_id(self) -> str:
@@ -267,7 +299,7 @@ class Container:
         frame_diff = len(self.frames) - layout.num_frames
         if frame_diff < 0:
             for _ in range(-frame_diff):
-                logger.debug("Add Frame")
+                log.debug("Add Frame")
                 self.add_frame()
 
         self._fwd_queue.put((JS_CMD.SET_LAYOUT, self._js_id, layout))

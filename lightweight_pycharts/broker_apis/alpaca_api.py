@@ -5,8 +5,6 @@ import asyncio
 from itertools import islice
 from logging import getLogger
 from typing import Optional, Dict, Any, overload
-from dotenv import find_dotenv, load_dotenv
-
 
 from pandas import DataFrame, Timestamp
 
@@ -22,7 +20,6 @@ from alpaca.data.live.crypto import CryptoDataStream
 
 import lightweight_pycharts as lwc
 
-load_dotenv(find_dotenv())
 log = getLogger("lightweight-pycharts")
 
 MAX_SYMBOL_SEARCH_RETURN = 200
@@ -60,6 +57,11 @@ class AlpacaAPI:
     # _async_api: alpaca.AsyncRest
 
     def __init__(self):
+        if ALPACA_API_KEYS["api_key"] is None or ALPACA_API_KEYS["secret_key"] is None:
+            raise ValueError(
+                "ALPACA_API_KEY and/or ALPACA_SECRET_KEY were not loaded as env variables."
+            )
+
         self.stock_client = StockHistoricalDataClient(**ALPACA_API_KEYS)
         self.crypto_client = CryptoHistoricalDataClient(**ALPACA_API_KEYS)
         self.stock_stream = StockDataStream(**ALPACA_API_KEYS)
@@ -74,11 +76,15 @@ class AlpacaAPI:
 
         self._init_symbols()
 
-    @staticmethod
-    def set_window_filters(window: lwc.Window):
-        "Set the Pychart's Window Filters for Alpaca"
+    def setup_window(self, window: lwc.Window):
+        "Set a Pychart Window's Event Callbacks & Filters for use with Alpaca"
+        window.events.data_request += self.get_hist
+        window.events.symbol_search += self.search_symbols
+        window.events.open_socket += self.open_socket
+        window.events.close_socket += self.close_socket
+
         window.set_search_filters("security_type", ["Crypto", "Equity"])
-        window.set_search_filters("data_broker", ["Local", "Alpaca"])
+        window.set_search_filters("data_broker", ["Alpaca"])
         window.set_search_filters("exchange", [])
 
     async def shutdown(self):
@@ -269,7 +275,3 @@ def _lwc_to_alp(timeframe: lwc.TF) -> TimeFrame:
 
 
 # endregion
-
-
-if __name__ == "__main__":
-    api = AlpacaAPI()

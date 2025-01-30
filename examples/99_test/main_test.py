@@ -1,26 +1,24 @@
 "Simple Main Script to launch Lightweight-Pycharts sorcing data from the Alpaca API"
 import asyncio
+from dotenv import find_dotenv, load_dotenv
 
 import pandas as pd
 
-from alpaca_api import AlpacaAPI
-
 import lightweight_pycharts as lwc
+
+
+load_dotenv(find_dotenv(), override=True)
 
 
 async def main():
     # The Window is about twice as slow to load compared to the CSV main because of the Alpaca API
     # All symbols are loaded at the start and for some reason that API never decided to make that an
     # Async request so here we wait.
-    alpaca_api = AlpacaAPI()
 
-    window = lwc.Window(log_level="INFO", debug=True, frameless=False)
-    window.events.data_request += alpaca_api.get_hist
-    window.events.symbol_search += alpaca_api.search_symbols
-    window.events.open_socket += alpaca_api.open_socket
-    window.events.close_socket += alpaca_api.close_socket
+    window = lwc.Window(
+        log_level="INFO", debug=True, frameless=False, broker_api="alpaca"
+    )
 
-    AlpacaAPI.set_window_filters(window)
     window.set_layout_favs(
         [
             lwc.Layouts.SINGLE,
@@ -56,7 +54,7 @@ async def main():
         lwc.indicators.SMA(sma20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
-    await alpaca_api.shutdown()
+    # await alpaca_api.shutdown()
 
 
 if __name__ == "__main__":
