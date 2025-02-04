@@ -1,0 +1,22 @@
+[project]
+name = "lightweight_pycharts"
+version = "0.0.0"
+description = "Python based web-app for Viewing & Manipulating TimeSeries Data."
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [{ name = "jack_of_some_trades" }]
+license = { text = "TBD" }
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2.2",
+    "pandas_market_calendars>=4.6.0",
+    "pywebview>=5.1",
+]
+
+[tool.setuptools]
+packages = ["lightweight_pycharts"]
+
+[tool.setuptools.package-data]
+lightweight_pycharts = ["frontend/*"]
+
+[project.entry-points."lightweight_pycharts.indicator_pkg"]
+pkg_info = "lightweight_pycharts.indicators.__metadata__:PKG_INFO"
