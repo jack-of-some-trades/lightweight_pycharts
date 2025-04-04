@@ -95,7 +95,7 @@ class js_api:
                     PY_CMD.TIMESERIES_REQUEST,
                     c_id,
                     f_id,
-                    orm.Symbol(**symbol),
+                    orm.Symbol.from_dict(symbol),
                     orm.TF.fromStr(tf_str),
                 )
             )

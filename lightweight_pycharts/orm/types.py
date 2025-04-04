@@ -1,11 +1,11 @@
-""" Basic Types and TypeAliases """
+"""Basic Types and TypeAliases"""
 
 import logging
 from inspect import signature
 from math import floor
 from datetime import datetime
-from dataclasses import dataclass
-from typing import TypeAlias, Literal, Optional, Self
+from dataclasses import dataclass, field
+from typing import Any, TypeAlias, Literal, Optional, Self
 
 from pandas import Timestamp, Timedelta
 
@@ -27,19 +27,26 @@ logger = logging.getLogger("lightweight-pycharts")
 @dataclass(slots=True)
 class Symbol:
     "Dataclass interface used to send Symbol Search information to the Symbol Search Menu"
+
     ticker: str
     name: Optional[str] = None
-    broker: Optional[str] = None
+    source: Optional[str] = None
     sec_type: Optional[str] = None
     exchange: Optional[str] = None
+    attrs: dict = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, obj: dict, **kwargs) -> Self:
+    def from_dict(cls, obj: Optional[dict] = None, **kwargs) -> Self:
         """
-        Creates a Symbol populating what it can from the given dictionary.
-        Default arguments can be passed as keyword args to supplement missing dictionary keys.
+        Creates a Symbol populating what it can from the given dictionary or key-word args.
+        If duplicate keys are passed in the dictionary and key-word args, the dictionary is favored.
+        This allows Default arguments to be passed as kwargs to supplement missing dictionary keys.
+        Any additional keys will be placed in the attrs dictionary.
         """
-        if "ticker" not in obj:
+        args = {**obj} if obj is not None else {}
+        args = kwargs | args  # Merge Preferring keys from the 'obj' dictionary
+
+        if "ticker" not in args:
             logger.error(
                 'Symbol.from_dict() must be given a dictionary with a "ticker" key. Given: %s',
                 obj,
@@ -47,13 +54,24 @@ class Symbol:
             return cls("LWPC")
 
         params = signature(cls).parameters
-        return cls(**kwargs | {k: v for k, v in obj.items() if k in params})
+
+        attrs = {k: v for k, v in args.items() if k not in params}  # all extra keys
+        # Merge in an attrs dict if it was passed in the 'obj' dict
+        if "attrs" in args:
+            attrs.update(**args["attrs"])
+            args.pop("attrs", None)
+
+        return cls(**{k: v for k, v in args.items() if k in params}, attrs=attrs)
+
+    def __getitem__(self, name: str) -> Any:
+        "Accessor Forward to safely check the extra attributes of the symbol"
+        return self.attrs.get(name, None)
 
     def __eq__(self, other: Self) -> bool:
         # Not checking name field since a timeseries set can be unique defined by below criteria
         return (
             self.ticker.lower() == other.ticker.lower()
-            and _str_compare(self.broker, other.broker)
+            and _str_compare(self.source, other.source)
             and _str_compare(self.exchange, other.exchange)
             and _str_compare(self.sec_type, other.sec_type)
         )

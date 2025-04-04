@@ -56,16 +56,21 @@ class AlpacaAPI:
     # _api: alpaca.REST
     # _async_api: alpaca.AsyncRest
 
-    def __init__(self):
-        if ALPACA_API_KEYS["api_key"] is None or ALPACA_API_KEYS["secret_key"] is None:
+    def __init__(self, api_keys: dict[str, Any] = ALPACA_API_KEYS):
+        self.api_keys = api_keys
+
+        if (
+            self.api_keys.get("api_key", None) is None
+            or self.api_keys.get("secret_key", None) is None
+        ):
             raise ValueError(
                 "ALPACA_API_KEY and/or ALPACA_SECRET_KEY were not loaded as env variables."
             )
 
-        self.stock_client = StockHistoricalDataClient(**ALPACA_API_KEYS)
-        self.crypto_client = CryptoHistoricalDataClient(**ALPACA_API_KEYS)
-        self.stock_stream = StockDataStream(**ALPACA_API_KEYS)
-        self.crypto_stream = CryptoDataStream(**ALPACA_API_KEYS)
+        self.stock_client = StockHistoricalDataClient(**self.api_keys)
+        self.crypto_client = CryptoHistoricalDataClient(**self.api_keys)
+        self.stock_stream = StockDataStream(**self.api_keys)
+        self.crypto_stream = CryptoDataStream(**self.api_keys)
 
         evt_loop = asyncio.get_running_loop()
         self.stock_task = evt_loop.create_task(self.stock_stream._run_forever())
@@ -74,7 +79,24 @@ class AlpacaAPI:
         self.open_sockets: Dict[str, list[lwc.indicators.Series]] = {}
         self.series_ticker_map: Dict[int, str] = {}
 
-        self._init_symbols()
+        self._assets = None
+
+    @property
+    def assets(self) -> DataFrame:
+        "Lazy Loaded Asset List of Symbols available on Alpaca."
+        if self._assets is not None:
+            return self._assets
+
+        # Store Alpaca's Full asset list so it can be searched later without another API Request
+        client = TradingClient(**self.api_keys, paper=True)
+        # Why does this not have an Async Version? IT TAKES LIKE 3 DAMN SECONDS.
+        assets_json = client.get_all_assets()
+        self._assets = (
+            DataFrame(assets_json).rename(columns=_asset_rename_map).set_index("id")
+        )
+        # Drop All OTC since they aren't Tradable
+        self._assets = self._assets[self._assets.exchange != "OTC"]
+        return self._assets
 
     def setup_window(self, window: lwc.Window):
         "Set a Pychart Window's Event Callbacks & Filters for use with Alpaca"
@@ -97,27 +119,16 @@ class AlpacaAPI:
         self.crypto_stream.stop()
         await asyncio.gather(self.stock_task, self.crypto_task)
 
-    def _init_symbols(self):
-        # Store Alpaca's Full asset list so it can be searched later without another API Request
-        client = TradingClient(**ALPACA_API_KEYS, paper=True)
-        # Why does this not have an Async Version?
-        assets_json = client.get_all_assets()
-        self.assets = (
-            DataFrame(assets_json).rename(columns=_asset_rename_map).set_index("id")
-        )
-        # Drop All OTC since they aren't Tradable
-        self.assets = self.assets[self.assets.exchange != "OTC"]
-
     def search_symbols(self, ticker: str, **_) -> list[lwc.Symbol]:
         "Search the Active symbols on Alpaca. This ignores OTC Symbols"
         # Search Tickers
         matches = self.assets[self.assets["ticker"].str.contains(ticker, case=False)]
         if len(matches) > 0:
-            return symbols_from_df(matches, broker="alpaca")
+            return symbols_from_df(matches, source="alpaca")
 
         # Search Names if ticker search failed to return anything
         matches = self.assets[self.assets["name"].str.contains(ticker, case=False)]
-        return symbols_from_df(matches, broker="alpaca")
+        return symbols_from_df(matches, source="alpaca")
 
     def get_hist(self, symbol: lwc.Symbol, timeframe: lwc.TF) -> Optional[DataFrame]:
         "Return timeseries data for the given symbol"
