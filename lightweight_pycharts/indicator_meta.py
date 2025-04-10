@@ -1,4 +1,4 @@
-""" Meta Classes for Both the Indicator and IndicatorOptions Class """
+"""Meta Classes for Both the Indicator and IndicatorOptions Class"""
 
 from dataclasses import dataclass
 from enum import Enum
@@ -31,6 +31,7 @@ log = getLogger("lightweight-pycharts")
 @dataclass(slots=True)
 class IndicatorDetails:
     "JSON Formatting Dataclass for transferring indicator specific info to the screen"
+
     ind_key: str
     ind_name: str
     ind_version: str | None
@@ -42,6 +43,7 @@ class IndicatorDetails:
 @dataclass(slots=True)
 class IndicatorPackage:
     "JSON Formatting Dataclass for transferring indicator pkg info to the screen"
+
     pkg_key: str
     pkg_name: str
     pkg_version: str
@@ -279,9 +281,14 @@ class OptionsMeta(type):
             "__qualname__",
             "__module__",
             "__arg_params__",
+            "__static_attributes__",
+            "__firstlineno__",
         }
         if len(set(namespace.keys()).difference(set(args)).difference(std_dunders)) > 0:
-            raise AttributeError("Indicator Options cannot use Dunder Variable Names")
+            raise AttributeError(
+                "Indicator Options cannot use Dunder Variable Names, Found:"
+                f"{set(namespace.keys()).difference(set(args)).difference(std_dunders)}"
+            )
 
         # -------- Check that every non-dunder has a default value -------- #
         __annotations__ = namespace.get("__annotations__")
