@@ -1,3 +1,6 @@
+alpaca-py>=0.39.1
+dotenv>=0.9.9
 pandas>=2.2.2
 pandas_market_calendars>=4.6.0
+psycopg[binary,pool]>=3.2.6
 pywebview>=5.1

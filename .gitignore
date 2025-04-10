@@ -4,6 +4,7 @@ __pycache__
 *.cpython-311.pyc
 misc_resources
 node_modules
+build 
 
 # Compiled source #
 ###################
@@ -29,6 +30,7 @@ node_modules
 ######################
 *.log
 *.env
+*.venv
 
 
 # OS generated files #

@@ -18,10 +18,13 @@ lightweight_pycharts.egg-info/dependency_links.txt
 lightweight_pycharts.egg-info/entry_points.txt
 lightweight_pycharts.egg-info/requires.txt
 lightweight_pycharts.egg-info/top_level.txt
+lightweight_pycharts/broker_apis/__init__.py
+lightweight_pycharts/broker_apis/alpaca_api.py
 lightweight_pycharts/frontend/favicon.ico
 lightweight_pycharts/frontend/index.html
 lightweight_pycharts/frontend/svg-defs.svg
 lightweight_pycharts/indicators/__init__.py
+lightweight_pycharts/indicators/__metadata__.py
 lightweight_pycharts/indicators/series.py
 lightweight_pycharts/indicators/sma.py
 lightweight_pycharts/orm/__init__.py
