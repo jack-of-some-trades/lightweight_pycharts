@@ -1,4 +1,4 @@
-""" 
+"""
 Lightweight-pycharts is a locally executed Web-App constructed from Python and Typescript.
 The Web-App is Launched via PyWebView and builds heavily on TradingView's Lightweight Charts API.
 
@@ -34,6 +34,7 @@ from .orm.series_data import (
 from .window import Window, Container, Frame, ChartingFrame
 from .indicator import Indicator, IndicatorOptions
 from . import indicators
+from . import broker_apis
 
 __all__ = (
     "Window",
@@ -69,6 +70,7 @@ __all__ = (
     # SubModules,
     "LazyModule",
     "indicators",
+    "broker_apis",
 )
 
 _LOG_LVL = logging.WARNING

@@ -46,9 +46,12 @@ class Symbol:
         args = {**obj} if obj is not None else {}
         args = kwargs | args  # Merge Preferring keys from the 'obj' dictionary
 
+        if "symbol" in args and "ticker" not in args:
+            args["ticker"] = args.pop("symbol")
+
         if "ticker" not in args:
             logger.error(
-                'Symbol.from_dict() must be given a dictionary with a "ticker" key. Given: %s',
+                'Symbol.from_dict() must be given a dictionary with a "ticker" or "symbol" key. Given: %s',
                 obj,
             )
             return cls("LWPC")
