@@ -14,6 +14,17 @@ from .orm.types import TF
 
 log = logging.getLogger("lightweight-pycharts")
 
+# Trading Hours Integer Encoding
+EXT_MAP = {
+    "pre": 1,
+    "rth_pre_break": 0,
+    "rth": 0,
+    "break": 3,
+    "rth_post_break": 0,
+    "post": 2,
+    "closed": -1,
+}
+
 # pylint: disable=line-too-long, invalid-name
 # region ------------------------------ DataFrame Functions ------------------------------ #
 
@@ -66,6 +77,45 @@ def update_dataframe(
         return pd.concat([df, pd.DataFrame([data_dict], index=[time])])
 
 
+def _standardize_names(df: pd.DataFrame):
+    """
+    Standardize the column names of the given dataframe to a consistent format for
+    OHLC and Single Value Time-series. Changes are made inplace.
+
+    Niche data fields must be entered verbatim to be used.
+    (e.g. wickColor, lineColor, topFillColor1)
+    """
+    if isinstance(df.index, pd.DatetimeIndex):
+        # In the event the timestamp is the index, reset it for naming
+        df.reset_index(inplace=True, names="time")
+
+    rename_map = {}
+    df.columns = list(map(str.lower, df.columns))
+    column_names = set(df.columns)
+
+    # |= syntax merges the returned mapping into rename_map
+    rename_map |= _column_name_check(
+        column_names,
+        ["time", "t", "dt", "date", "datetime", "timestamp"],
+        True,
+    )
+
+    # These names are mostly chosen to match what Lightweight-Charts expects as input data
+    rename_map |= _column_name_check(column_names, ["open", "o", "first"])
+    rename_map |= _column_name_check(column_names, ["close", "c", "last"])
+    rename_map |= _column_name_check(column_names, ["high", "h", "max"])
+    rename_map |= _column_name_check(column_names, ["low", "l", "min"])
+    rename_map |= _column_name_check(column_names, ["volume", "v", "vol"])
+    rename_map |= _column_name_check(column_names, ["value", "val", "data", "price"])
+    rename_map |= _column_name_check(column_names, ["vwap", "vw"])
+    rename_map |= _column_name_check(
+        column_names, ["ticks", "tick", "count", "trade_count", "n"]
+    )
+
+    if len(rename_map) > 0:
+        return df.rename(columns=rename_map, inplace=True)
+
+
 def _column_name_check(
     column_names: set[str],
     aliases: list[str],
@@ -111,11 +161,11 @@ def _column_name_check(
 
 class Series_DF:
     """
-    Pandas DataFrame Extension to Store, Update, and Analyse Time-series data
+    Pandas DataFrame Extension to Store & Update Time-series data
 
     Primary function of this class is to standardize column names, Determine the
-    timeframe of the data, and aggregate realtime updates to the underlying timeframe
-    of the time-series.
+    timeframe of the data, aggregate realtime updates to the underlying timeframe
+    of the time-series, and determine the Trading Session of a given datapoint.
     """
 
     def __init__(
@@ -132,7 +182,7 @@ class Series_DF:
             # single point of data is pointless.
             return
 
-        self._standardize_names(pandas_df)
+        _standardize_names(pandas_df)
         # Set Consistent Time format (Pd.Timestamp, UTC, TZ Aware)
         pandas_df["time"] = pd.to_datetime(pandas_df["time"], utc=True)
         self._pd_tf = determine_timedelta(pandas_df["time"])
@@ -141,6 +191,7 @@ class Series_DF:
             exchange, pandas_df["time"].iloc[0], pandas_df["time"].iloc[-1]
         )
         self.df = pandas_df.set_index("time")
+        self._mark_ext()
 
         # Data Type is used to simplify updating. Should be considered a constant
         self._data_type: sd.AnyBasicSeriesType = sd.SeriesType.data_type(pandas_df)
@@ -153,8 +204,6 @@ class Series_DF:
         else:
             self.only_days = False
 
-        # TODO: Implement ext. Probably need mcal.mark_session() for this
-        self._ext = False
         self._next_bar_time = CALENDARS.next_timestamp(
             self.calendar, self.df.index[-1], self.freq_code, self._ext
         )
@@ -169,8 +218,8 @@ class Series_DF:
         return set(self.df.columns)
 
     @property
-    def ext(self) -> bool:
-        "True if data given has Extended Trading Hours Data"
+    def ext(self) -> bool | None:
+        "True if data has Extended Trading Hours Data, False if no ETH Data, None if undefined."
         return self._ext
 
     @property
@@ -215,44 +264,37 @@ class Series_DF:
         data_dict["time"] = self.df.index[-1]
         return self.data_type.cls.from_dict(data_dict)
 
-    @staticmethod
-    def _standardize_names(df: pd.DataFrame):
-        """
-        Standardize the column names of the given dataframe to a consistent format for
-        OHLC and Single Value Time-series. Changes are made inplace.
-
-        Niche data fields must be entered verbatim to be used.
-        (e.g. wickColor, lineColor, topFillColor1)
-        """
-        if isinstance(df.index, pd.DatetimeIndex):
-            # In the event the timestamp is the index, reset it for naming
-            df.reset_index(inplace=True)
-
-        rename_map = {}
-        df.columns = list(map(str.lower, df.columns))
-        column_names = set(df.columns)
-
-        # |= syntax merges the returned mapping into rename_map
-        rename_map |= _column_name_check(
-            column_names,
-            ["time", "t", "dt", "date", "datetime", "timestamp"],
-            True,
-        )
-
-        rename_map |= _column_name_check(column_names, ["open", "o", "first"])
-        rename_map |= _column_name_check(column_names, ["close", "c", "last"])
-        rename_map |= _column_name_check(column_names, ["high", "h", "max"])
-        rename_map |= _column_name_check(column_names, ["low", "l", "min"])
-        rename_map |= _column_name_check(column_names, ["volume", "v", "vol"])
-        rename_map |= _column_name_check(column_names, ["tick", "count", "trade_count"])
-        rename_map |= _column_name_check(
-            column_names, ["value", "val", "data", "price"]
-        )
-
-        if len(rename_map) > 0:
-            return df.rename(columns=rename_map, inplace=True)
+    @property
+    def _dt_index(self) -> pd.DatetimeIndex:
+        # Override the unknown index type with the known type
+        return self.df.index  # type:ignore
 
     # endregion
+
+    def _mark_ext(self, force_rth: bool = False):
+        if "rth" in self.columns:
+            # In case only part of the df has ext classification, fill the remainder
+            missing_rth = self._dt_index[self.df["rth"].isna()]
+            rth_col = CALENDARS.mark_session(self.calendar, missing_rth)
+            if rth_col is not None:
+                self.df.loc[rth_col.index, "rth"] = rth_col
+        else:
+            # Calculate the Full Trading Hours Session
+            rth_col = CALENDARS.mark_session(self.calendar, self._dt_index)
+            if rth_col is not None:
+                self.df["rth"] = rth_col
+
+        if "rth" not in self.columns:
+            self._ext = None
+        elif force_rth:
+            self.df = self.df[self.df["rth"] == EXT_MAP["rth"]]
+            self._ext = False
+        elif (self.df["rth"] == 0).all():
+            # Only RTH Sessions
+            self._ext = False
+        else:
+            # Some RTH, Some ETH Sessions
+            self._ext = True
 
     def update_curr_bar(
         self, data: sd.AnyBasicData, accumulate: bool = False
@@ -515,7 +557,7 @@ class Calendars:
         start: pd.Timestamp,
         end: Optional[pd.Timestamp],
         periods: Optional[int],
-        include_ETH: bool = False,
+        include_ETH: bool | None = False,
     ) -> pd.DatetimeIndex:
         "private function to call mcal.date_range catching and handling any insufficient schedule errors."
         for _ in range(3):
@@ -603,7 +645,7 @@ class Calendars:
         start: pd.Timestamp,
         end: Optional[pd.Timestamp] = None,
         periods: Optional[int] = None,
-        include_ETH: bool = False,
+        include_ETH: bool | None = False,
     ) -> pd.DatetimeIndex:
         "Return a DateTimeIndex at the desired frequency only including valid market times."
         if calendar == "24/7":
@@ -631,7 +673,7 @@ class Calendars:
         )
         return pd.DatetimeIndex(
             mkt_calendar.schedule_from_days(days, market_times=[time])[time],
-            dtype=None,  # Just shuts up Pylance, has no actual effect
+            dtype="datetime64[ns]",
         )
 
     def next_timestamp(
@@ -639,7 +681,7 @@ class Calendars:
         calendar: str,
         current_time: pd.Timestamp,
         freq: str | pd.Timedelta,
-        include_ETH: bool = False,
+        include_ETH: bool | None = False,
     ) -> pd.Timestamp:
         "Returns the next bar's opening time from a given timestamp. Not always efficient, so store this result"
         if isinstance(freq, str) and freq[-1] in {"M", "Q", "Y"}:
@@ -672,6 +714,34 @@ class Calendars:
         time = "pre" if include_ETH and "pre" in mkt_cal.market_times else "market_open"
         dt = mkt_cal.schedule_from_days(days, market_times=[time])[time]
         return mkt_cal.schedule_from_days(days, market_times=[time])[time].iloc[-1]
+
+    def mark_session(
+        self, calendar: str, time_index: pd.DatetimeIndex
+    ) -> pd.Series | None:
+        "Return a Series that denotes the appropriate Trading Hours Session for the given Calendar"
+        if mcal is None or calendar == "24/7":
+            return None
+
+        print(self.schedule_cache[calendar])
+        return mcal.mark_session(
+            self.schedule_cache[calendar], time_index, label_map=EXT_MAP, closed="left"
+        )
+
+    def session_at_time(self, calendar: str, dt: pd.Timestamp) -> int | None:
+        "Check what session the given timestamp is part of. Inherently closed ='left'"
+        if mcal is None or calendar == "24/7":
+            return None
+
+        # Unbelievable, but this truly is the easiest and most efficient way to determine the active session.
+        time_index = pd.DatetimeIndex([dt])
+        return int(
+            mcal.mark_session(
+                self.schedule_cache[calendar],
+                time_index,
+                label_map=EXT_MAP,
+                closed="left",
+            ).iloc[0]
+        )
 
 
 # Initialize the shared Calendars sudo-singleton instance
