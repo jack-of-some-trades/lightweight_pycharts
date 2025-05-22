@@ -11,7 +11,6 @@ dependencies = [
     "dotenv>=0.9.9",
     "pandas>=2.2.2",
     "pandas_market_calendars>=4.6.0",
-    "psycopg[binary,pool]>=3.2.6",
     "pywebview>=5.1",
 ]
 
@@ -20,6 +19,12 @@ packages = ["lightweight_pycharts"]
 
 [tool.setuptools.package-data]
 lightweight_pycharts = ["frontend/*", "indicators/*", "broker_apis/*", "orm/*"]
+
+[tool.black]
+line-length = 120
+
+[tool.pylint."MESSAGES CONTROL"]
+max-line-length=120
 
 [project.entry-points."lightweight_pycharts.indicator_pkg"]
 pkg_info = "lightweight_pycharts.indicators.__metadata__:PKG_INFO"

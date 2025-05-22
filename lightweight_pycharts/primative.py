@@ -47,9 +47,7 @@ class Primitive(metaclass=ABCMeta):
         self._ids = display_pane_id, parent.js_id, self._js_id
         self._fwd_queue = parent._fwd_queue
 
-        self._fwd_queue.put(
-            (JS_CMD.ADD_IND_PRIMITIVE, *self._ids, self.__class__.__name__, args)
-        )
+        self._fwd_queue.put((JS_CMD.ADD_IND_PRIMITIVE, *self._ids, self.__class__.__name__, args))
 
     def __del__(self):
         logger.debug("Deleteing %s: %s", self.__class__.__name__, self._js_id)
@@ -71,6 +69,7 @@ class Primitive(metaclass=ABCMeta):
     @dataclass
     class Options:
         "Inner Data-class Defining the Display Options of the Primitive"
+
         visible: Optional[bool] = None
         editable: Optional[bool] = False
 

@@ -109,9 +109,7 @@ def _standardize_names(df: pd.DataFrame):
     rename_map |= _column_name_check(column_names, ["volume", "v", "vol"])
     rename_map |= _column_name_check(column_names, ["value", "val", "data", "price"])
     rename_map |= _column_name_check(column_names, ["vwap", "vw"])
-    rename_map |= _column_name_check(
-        column_names, ["ticks", "tick", "count", "trade_count", "n"]
-    )
+    rename_map |= _column_name_check(column_names, ["ticks", "tick", "count", "trade_count", "n"])
 
     if len(rename_map) > 0:
         return df.rename(columns=rename_map, inplace=True)
@@ -132,15 +130,11 @@ def _column_name_check(
 
     if len(intersection) == 0:
         if required:
-            raise AttributeError(
-                f'Given data must have a "{" | ".join(aliases)}" column'
-            )
+            raise AttributeError(f'Given data must have a "{" | ".join(aliases)}" column')
         return {}
 
     if len(intersection) > 1:
-        raise AttributeError(
-            f'Given data can have only one "{" | ".join(aliases)}" type of column'
-        )
+        raise AttributeError(f'Given data can have only one "{" | ".join(aliases)}" type of column')
 
     return {intersection[0]: aliases[0]}
 
@@ -188,9 +182,7 @@ class Series_DF:
         pandas_df["time"] = pd.to_datetime(pandas_df["time"], utc=True)
         self._pd_tf = determine_timedelta(pandas_df["time"])
         self._tf = TF.from_timedelta(self._pd_tf)
-        self.calendar = CALENDARS.request_calendar(
-            exchange, pandas_df["time"].iloc[0], pandas_df["time"].iloc[-1]
-        )
+        self.calendar = CALENDARS.request_calendar(exchange, pandas_df["time"].iloc[0], pandas_df["time"].iloc[-1])
         self.df = pandas_df.set_index("time")
         self._mark_ext()
 
@@ -199,15 +191,11 @@ class Series_DF:
 
         if self._pd_tf >= pd.Timedelta(days=1):
             # True if 'Time' lacks an opening Time
-            self.only_days = (
-                self.curr_bar_open_time == self.curr_bar_open_time.normalize()
-            )
+            self.only_days = self.curr_bar_open_time == self.curr_bar_open_time.normalize()
         else:
             self.only_days = False
 
-        self._next_bar_time = CALENDARS.next_timestamp(
-            self.calendar, self.df.index[-1], self.freq_code, self._ext
-        )
+        self._next_bar_time = CALENDARS.next_timestamp(self.calendar, self.df.index[-1], self.freq_code, self._ext)
         if self.only_days:
             self._next_bar_time = self._next_bar_time.normalize()
 
@@ -297,9 +285,7 @@ class Series_DF:
             # Some RTH, Some ETH Sessions
             self._ext = True
 
-    def update_curr_bar(
-        self, data: sd.AnyBasicData, accumulate: bool = False
-    ) -> sd.AnyBasicData:
+    def update_curr_bar(self, data: sd.AnyBasicData, accumulate: bool = False) -> sd.AnyBasicData:
         """
         Updates the OHLC / Single Value DataFrame from the given bar. The Bar is assumed to be
         a tick update with the assumption a new bar should not be created.
@@ -385,9 +371,7 @@ class Series_DF:
         time = data_dict.pop("time")
         self.df = pd.concat([self.df, pd.DataFrame([data_dict], index=[time])])
 
-        self._next_bar_time = CALENDARS.next_timestamp(
-            self.calendar, time, self.freq_code, self._ext
-        )
+        self._next_bar_time = CALENDARS.next_timestamp(self.calendar, time, self.freq_code, self._ext)
         if self.only_days:
             self._next_bar_time = self._next_bar_time.normalize()
 
@@ -464,17 +448,13 @@ class Whitespace_DF:
             # avoid calculation if possible
             return self.dt_index[curr_time < self.dt_index][0]
 
-        time = CALENDARS.next_timestamp(
-            self.calendar, self.dt_index[-1], self.tf, self.ext
-        )
+        time = CALENDARS.next_timestamp(self.calendar, self.dt_index[-1], self.tf, self.ext)
 
         return time.normalize() if self.only_days else time
 
     def extend(self) -> sd.AnyBasicData:
         "Extends the dataframe with one datapoint of whitespace. This whitespace datapoint is a valid trading time."
-        next_bar_time = CALENDARS.next_timestamp(
-            self.calendar, self.dt_index[-1], self.tf, self.ext
-        )
+        next_bar_time = CALENDARS.next_timestamp(self.calendar, self.dt_index[-1], self.tf, self.ext)
         if self.only_days:
             next_bar_time = next_bar_time.normalize()
         self.dt_index = self.dt_index.union([next_bar_time])
@@ -590,9 +570,7 @@ class Calendars:
             f"{start = }, {end = }, {periods = }, schedule = {self.schedule_cache[calendar]}"
         )
 
-    def request_calendar(
-        self, exchange: Optional[str], start: pd.Timestamp, end: pd.Timestamp
-    ) -> str:
+    def request_calendar(self, exchange: Optional[str], start: pd.Timestamp, end: pd.Timestamp) -> str:
         "Request a Calendar & Schedule be Cached. Returns a token to access the cached calendar"
         if mcal is None or exchange is None:
             return "24/7"
@@ -616,9 +594,7 @@ class Calendars:
 
         if cal.name not in self.mkt_cache:  # New Calendar Requested
             # Bind the Market_times & special_times arguments to the schedule function
-            cal.schedule = partial(
-                cal.schedule, market_times="all", force_special_times=False
-            )
+            cal.schedule = partial(cal.schedule, market_times="all", force_special_times=False)
             self.mkt_cache[cal.name] = cal
             # Generate a Schedule with buffer dates on either side.
             self.schedule_cache[cal.name] = cal.schedule(start, end)
@@ -652,9 +628,7 @@ class Calendars:
     ) -> pd.DatetimeIndex:
         "Return a DateTimeIndex at the desired frequency only including valid market times."
         if calendar == "24/7":
-            if isinstance(
-                freq, str
-            ):  # Need to define 'Start of period' for Month, Quarter, Year
+            if isinstance(freq, str):  # Need to define 'Start of period' for Month, Quarter, Year
                 freq = freq + "S" if freq[-1] in {"M", "Q", "Y"} else freq
             return pd.date_range(start, end, freq=freq, periods=periods)
         if calendar not in self.mkt_cache:
@@ -662,18 +636,12 @@ class Calendars:
 
         if isinstance(freq, pd.Timedelta):
             # Only Given a Time Delta for LTF Date_Ranges
-            return self._date_range_ltf(
-                calendar, freq, start, end, periods, include_ETH
-            )
+            return self._date_range_ltf(calendar, freq, start, end, periods, include_ETH)
 
         # For Time periods greater than 1D use HTF Date_Range.
         mkt_calendar = self.mkt_cache[calendar]
         days = mkt_calendar.date_range_htf(freq, start, end, periods, closed="left")
-        time = (
-            "pre"
-            if include_ETH and "pre" in mkt_calendar.market_times
-            else "market_open"
-        )
+        time = "pre" if include_ETH and "pre" in mkt_calendar.market_times else "market_open"
         return pd.DatetimeIndex(
             mkt_calendar.schedule_from_days(days, market_times=[time])[time],
             dtype="datetime64[ns]",
@@ -706,9 +674,7 @@ class Calendars:
                 # Schedule Doesn't Cover the Time Needed call Date_Range to generate more schedule.
                 pass
 
-            dt = self._date_range_ltf(
-                calendar, freq, current_time, None, 2, include_ETH
-            )
+            dt = self._date_range_ltf(calendar, freq, current_time, None, 2, include_ETH)
             return dt[-1]
 
         # Calculate Next date from HTF Date_Range.
@@ -718,16 +684,12 @@ class Calendars:
         dt = mkt_cal.schedule_from_days(days, market_times=[time])[time]
         return mkt_cal.schedule_from_days(days, market_times=[time])[time].iloc[-1]
 
-    def mark_session(
-        self, calendar: str, time_index: pd.DatetimeIndex
-    ) -> pd.Series | None:
+    def mark_session(self, calendar: str, time_index: pd.DatetimeIndex) -> pd.Series | None:
         "Return a Series that denotes the appropriate Trading Hours Session for the given Calendar"
         if mcal is None or calendar == "24/7":
             return None
 
-        return mcal.mark_session(
-            self.schedule_cache[calendar], time_index, label_map=EXT_MAP, closed="left"
-        )
+        return mcal.mark_session(self.schedule_cache[calendar], time_index, label_map=EXT_MAP, closed="left")
 
     def session_at_time(self, calendar: str, dt: pd.Timestamp) -> int | None:
         "Check what session the given timestamp is part of. Inherently closed ='left'"

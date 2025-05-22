@@ -1,4 +1,4 @@
-""" Charting Frame Subclass. Supplies the necessary functions to update and manipulate a chart """
+"""Charting Frame Subclass. Supplies the necessary functions to update and manipulate a chart"""
 
 from __future__ import annotations
 import logging
@@ -54,9 +54,7 @@ class ChartingFrame(win.Frame):
         self._fwd_queue.put((JS_CMD.CLEAR_WHITESPACE_DATA, self._js_id))
 
     def __update_whitespace__(self, data: AnyBasicData, curr_time: SingleValueData):
-        self._fwd_queue.put(
-            (JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data, curr_time)
-        )
+        self._fwd_queue.put((JS_CMD.UPDATE_WHITESPACE_DATA, self._js_id, data, curr_time))
 
     # endregion
 
@@ -84,9 +82,7 @@ class ChartingFrame(win.Frame):
     @property
     def main_series(self) -> indicators.Series:
         "Series Indicator that contain's the Frame's main symbol data"
-        main_series = self.indicators[
-            self.indicators.prefix + indicators.Series.__special_id__
-        ]
+        main_series = self.indicators[self.indicators.prefix + indicators.Series.__special_id__]
         if isinstance(main_series, indicators.Series):
             return main_series
         raise AttributeError(f"Cannot find Main Series for Frame {self._js_id}")

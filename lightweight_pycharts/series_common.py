@@ -1,7 +1,7 @@
-""" 
-Classes that handle the implementation of Abstract and Specific Chart Series Objects 
+"""
+Classes that handle the implementation of Abstract and Specific Chart Series Objects
 
-(Classes known as ISeriesAPI in the Lightweight-Charts API) 
+(Classes known as ISeriesAPI in the Lightweight-Charts API)
 Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeriesApi
 """
 
@@ -51,9 +51,7 @@ logger = logging.getLogger("lightweight-pycharts")
 
 # region --------------------------- Marker and Priceline Objs --------------------------- #
 # pylint: disable = invalid-name
-MarkerSelectors = Literal[
-    "time", "id", "shape", "position", "id", "size", "color", "text"
-]
+MarkerSelectors = Literal["time", "id", "shape", "position", "id", "size", "color", "text"]
 
 PriceLineSelectors = Literal[
     "title",
@@ -255,10 +253,7 @@ class SeriesCommon:
     @staticmethod
     def _series_type_check_(series_type: sd.SeriesType) -> sd.SeriesType:
         "Set a default series_type for the display ambiguous series types"
-        if (
-            series_type == sd.SeriesType.SingleValueData
-            or series_type == sd.SeriesType.WhitespaceData
-        ):
+        if series_type == sd.SeriesType.SingleValueData or series_type == sd.SeriesType.WhitespaceData:
             return sd.SeriesType.Line
         elif series_type == sd.SeriesType.OHLC_Data:
             return sd.SeriesType.Candlestick
@@ -286,9 +281,7 @@ class SeriesCommon:
             _df = data
         else:
             if not is_datetime64_any_dtype(data.index):
-                raise AttributeError(
-                    "Pandas Series must have a datetimeindex to be displayed."
-                )
+                raise AttributeError("Pandas Series must have a datetimeindex to be displayed.")
             _df = data.rename("value")
             _df.index.set_names("time", inplace=True)
             _df = _df.reset_index()
@@ -326,9 +319,7 @@ class SeriesCommon:
                 tmp_df.index.set_names("time", inplace=True)
                 tmp_df.reset_index(inplace=True)
             else:
-                raise AttributeError(
-                    "Cannot Display Series_Common Data. Need a 'time' index or column"
-                )
+                raise AttributeError("Cannot Display Series_Common Data. Need a 'time' index or column")
 
         # Convert pd.Timestamp to Unix Epoch time (confirmed working w/ pre Jan 1, 1970 dates)
         tmp_df["time"] = tmp_df["time"].astype("int64") / 10**9
@@ -429,17 +420,13 @@ class SeriesCommon:
         else:
             marker._js_id = self._markers.generate_id(marker)
 
-        self._fwd_queue.put(
-            (JS_CMD.ADD_SERIES_MARKER, *self._ids, marker._js_id, marker)
-        )
+        self._fwd_queue.put((JS_CMD.ADD_SERIES_MARKER, *self._ids, marker._js_id, marker))
 
     def remove_marker(self, marker: Marker):
         "Remove the given Marker from the series"
         if marker._js_id is not None and marker._js_id in self._markers:
             self._markers.pop(marker._js_id)
-            self._fwd_queue.put(
-                (JS_CMD.REMOVE_SERIES_MARKER, *self._ids, marker._js_id)
-            )
+            self._fwd_queue.put((JS_CMD.REMOVE_SERIES_MARKER, *self._ids, marker._js_id))
 
     def update_marker(self, marker: Marker):
         "Update the Options of the given Marker"
@@ -484,9 +471,7 @@ class SeriesCommon:
         if priceline._js_id is not None and priceline._js_id in self._pricelines:
             # Exceedingly Rare, the only way this would happen is if Pricelines are very
             # frequency shared across multiple series objects.
-            logger.warning(
-                "Could not add Priceline, JS_ID Conflict with Obj: %s", priceline
-            )
+            logger.warning("Could not add Priceline, JS_ID Conflict with Obj: %s", priceline)
             return
 
         if priceline._js_id is not None:
@@ -494,17 +479,13 @@ class SeriesCommon:
         else:
             priceline._js_id = self._pricelines.generate_id(priceline)
 
-        self._fwd_queue.put(
-            (JS_CMD.ADD_SERIES_PRICELINE, *self._ids, priceline._js_id, priceline)
-        )
+        self._fwd_queue.put((JS_CMD.ADD_SERIES_PRICELINE, *self._ids, priceline._js_id, priceline))
 
     def remove_priceline(self, priceline: PriceLine):
         "Remove the given Priceline from the series"
         if priceline._js_id is not None and priceline._js_id in self._pricelines:
             self._pricelines.pop(priceline._js_id)
-            self._fwd_queue.put(
-                (JS_CMD.REMOVE_SERIES_PRICELINE, *self._ids, priceline._js_id)
-            )
+            self._fwd_queue.put((JS_CMD.REMOVE_SERIES_PRICELINE, *self._ids, priceline._js_id))
 
     def update_priceline(self, priceline: PriceLine):
         "Update the Options of the given Priceline"
@@ -585,9 +566,7 @@ class LineSeries(SeriesCommon):
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
         """
-        raise AttributeError(
-            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
-        )
+        raise AttributeError("Pre-defined Series Types are not type mutable. Use SeriesCommon instead.")
 
 
 class HistogramSeries(SeriesCommon):
@@ -615,9 +594,7 @@ class HistogramSeries(SeriesCommon):
     def options_obj(self) -> HistogramStyleOptions:
         return HistogramStyleOptions(**self._options)
 
-    def update_data(
-        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
-    ):
+    def update_data(self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
     def apply_options(self, options: HistogramStyleOptions | dict):
@@ -628,9 +605,7 @@ class HistogramSeries(SeriesCommon):
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
         """
-        raise AttributeError(
-            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
-        )
+        raise AttributeError("Pre-defined Series Types are not type mutable. Use SeriesCommon instead.")
 
 
 class AreaSeries(SeriesCommon):
@@ -669,9 +644,7 @@ class AreaSeries(SeriesCommon):
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
         """
-        raise AttributeError(
-            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
-        )
+        raise AttributeError("Pre-defined Series Types are not type mutable. Use SeriesCommon instead.")
 
 
 class BaselineSeries(SeriesCommon):
@@ -699,9 +672,7 @@ class BaselineSeries(SeriesCommon):
     def options_obj(self) -> BaselineStyleOptions:
         return BaselineStyleOptions(**self._options)
 
-    def update_data(
-        self, data: sd.WhitespaceData | sd.SingleValueData | sd.BaselineData
-    ):
+    def update_data(self, data: sd.WhitespaceData | sd.SingleValueData | sd.BaselineData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
     def apply_options(self, options: BaselineStyleOptions | dict):
@@ -712,9 +683,7 @@ class BaselineSeries(SeriesCommon):
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
         """
-        raise AttributeError(
-            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
-        )
+        raise AttributeError("Pre-defined Series Types are not type mutable. Use SeriesCommon instead.")
 
 
 class BarSeries(SeriesCommon):
@@ -742,9 +711,7 @@ class BarSeries(SeriesCommon):
     def options_obj(self) -> BarStyleOptions:
         return BarStyleOptions(**self._options)
 
-    def update_data(
-        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
-    ):
+    def update_data(self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
     def apply_options(self, options: BarStyleOptions | dict):
@@ -755,9 +722,7 @@ class BarSeries(SeriesCommon):
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
         """
-        raise AttributeError(
-            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
-        )
+        raise AttributeError("Pre-defined Series Types are not type mutable. Use SeriesCommon instead.")
 
 
 class CandlestickSeries(SeriesCommon):
@@ -785,9 +750,7 @@ class CandlestickSeries(SeriesCommon):
     def options_obj(self) -> CandlestickStyleOptions:
         return CandlestickStyleOptions(**self._options)
 
-    def update_data(
-        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
-    ):
+    def update_data(self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
     def apply_options(self, options: CandlestickStyleOptions | dict):
@@ -798,9 +761,7 @@ class CandlestickSeries(SeriesCommon):
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
         """
-        raise AttributeError(
-            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
-        )
+        raise AttributeError("Pre-defined Series Types are not type mutable. Use SeriesCommon instead.")
 
 
 class RoundedCandleSeries(SeriesCommon):
@@ -828,9 +789,7 @@ class RoundedCandleSeries(SeriesCommon):
     def options_obj(self) -> RoundedCandleStyleOptions:
         return RoundedCandleStyleOptions(**self._options)
 
-    def update_data(
-        self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData
-    ):
+    def update_data(self, data: sd.WhitespaceData | sd.SingleValueData | sd.HistogramData):
         self._fwd_queue.put((JS_CMD.UPDATE_SERIES_DATA, *self._ids, data))
 
     def apply_options(self, options: RoundedCandleStyleOptions | dict):
@@ -841,9 +800,7 @@ class RoundedCandleSeries(SeriesCommon):
         **Pre-defined Series Types are not type mutable.** Use SeriesCommon instead.
         Calling this function will raise an Attribute Error.
         """
-        raise AttributeError(
-            "Pre-defined Series Types are not type mutable. Use SeriesCommon instead."
-        )
+        raise AttributeError("Pre-defined Series Types are not type mutable. Use SeriesCommon instead.")
 
 
 # endregion

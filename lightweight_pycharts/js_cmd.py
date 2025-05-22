@@ -28,8 +28,7 @@ class ORM_JSONEncoder(JSONEncoder):
             )
         if isinstance(o, DataFrame):
             return [  # Drop NaNs & Nones (.to_json() leaves NaNs & Nones)
-                {k: v for k, v in m.items() if notnull(v)}
-                for m in o.to_dict(orient="records")
+                {k: v for k, v in m.items() if notnull(v)} for m in o.to_dict(orient="records")
             ]
         if isinstance(o, Color):
             return repr(o)
@@ -49,6 +48,7 @@ def dump(obj: Any) -> str:
 
 class JS_CMD(IntEnum):
     "Enumeration of the various commands that Python can send to Javascript"
+
     # Window Commands
     JS_CODE = auto()
     LOAD_CSS = auto()
@@ -255,12 +255,8 @@ def delete_indicator(frame_id: str, indicator_id: str) -> str:
     return f"{frame_id}.delete_indicator('{indicator_id}');"
 
 
-def add_primitive(
-    pane_id: str, primitive_id: str, primitive_type: str, args: dict[str, Any]
-) -> str:
-    return (
-        f"{pane_id}.add_primitive('{primitive_id}','{primitive_type}', {dump(args)});"
-    )
+def add_primitive(pane_id: str, primitive_id: str, primitive_type: str, args: dict[str, Any]) -> str:
+    return f"{pane_id}.add_primitive('{primitive_id}','{primitive_type}', {dump(args)});"
 
 
 def remove_primitive(pane_id: str, primitive_id: str) -> str:
@@ -280,23 +276,15 @@ def indicator_preamble(frame_id: str, indicator_id: str) -> str:
 # Retreives a series object from an indicator to manipulate
 def series_preamble(frame_id: str, indicator_id: str, series_id: str) -> str:
     # _ind is a workspace var defined at the window level in index.ts for use here
-    return (
-        f"_ser = {frame_id}.indicators.get('{indicator_id}').series.get('{series_id}');"
-    )
+    return f"_ser = {frame_id}.indicators.get('{indicator_id}').series.get('{series_id}');"
 
 
 def indicator_set_menu(frame_id: str, indicator_id: str, menu_struct, options) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.set_menu_struct({dump(menu_struct)}, {dump(options)});"
-    )
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.set_menu_struct({dump(menu_struct)}, {dump(options)});"
 
 
 def indicator_set_options(frame_id: str, indicator_id: str, options) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.applyOptions({dump(options)});"
-    )
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.applyOptions({dump(options)});"
 
 
 def set_legend_label(frame_id: str, indicator_id: str, label: str) -> str:
@@ -314,39 +302,23 @@ def add_series(
     series_type: Enum,
     name: Optional[str],
 ) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.add_series('{series_id}', {series_type}, {dump(name)});"
-    )
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.add_series('{series_id}', {series_type}, {dump(name)});"
 
 
 def remove_series(frame_id: str, indicator_id: str, series_id: str) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.remove_series('{series_id}');"
-    )
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.remove_series('{series_id}');"
 
 
-def set_series_data(
-    frame_id: str, indicator_id: str, series_id: str, data: DataFrame
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.setData({dump(data)});"
-    )
+def set_series_data(frame_id: str, indicator_id: str, series_id: str, data: DataFrame) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.setData({dump(data)});"
 
 
 def clear_series_data(frame_id: str, indicator_id: str, series_id: str) -> str:
     return series_preamble(frame_id, indicator_id, series_id) + "_ser.setData([]);"
 
 
-def update_series_data(
-    frame_id: str, indicator_id: str, series_id: str, data: object
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.update({dump(data)});"
-    )
+def update_series_data(frame_id: str, indicator_id: str, series_id: str, data: object) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.update({dump(data)});"
 
 
 def change_series_type(
@@ -356,64 +328,34 @@ def change_series_type(
     series_type: Enum,
     data: DataFrame,
 ) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.change_series_type({series_type}, {dump(data)});"
-    )
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.change_series_type({series_type}, {dump(data)});"
 
 
-def update_series_opts(
-    frame_id: str, indicator_id: str, series_id: str, opts: object
-) -> str:
-    return j_func.format(
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.applyOptions({dump(opts)});"
-    )
+def update_series_opts(frame_id: str, indicator_id: str, series_id: str, opts: object) -> str:
+    return j_func.format(series_preamble(frame_id, indicator_id, series_id) + f"_ser.applyOptions({dump(opts)});")
 
 
-def update_scale_opts(
-    frame_id: str, indicator_id: str, series_id: str, opts: object
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.priceScale().applyOptions({dump(opts)});"
-    )
+def update_scale_opts(frame_id: str, indicator_id: str, series_id: str, opts: object) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.priceScale().applyOptions({dump(opts)});"
 
 
 # region ------------------------ Series Markers ------------------------ #
 
 
-def remove_marker(
-    frame_id: str, indicator_id: str, series_id: str, mark_id: str
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.removeMarker('{mark_id}');"
-    )
+def remove_marker(frame_id: str, indicator_id: str, series_id: str, mark_id: str) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.removeMarker('{mark_id}');"
 
 
-def update_marker(
-    frame_id: str, indicator_id: str, series_id: str, mark_id: str, marker: object
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.updateMarker('{mark_id}', {dump(marker)});"
-    )
+def update_marker(frame_id: str, indicator_id: str, series_id: str, mark_id: str, marker: object) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.updateMarker('{mark_id}', {dump(marker)});"
 
 
-def filter_markers(
-    frame_id: str, indicator_id: str, series_id: str, mark_ids: list[str]
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.filterMarkers({dump(mark_ids)});"
-    )
+def filter_markers(frame_id: str, indicator_id: str, series_id: str, mark_ids: list[str]) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.filterMarkers({dump(mark_ids)});"
 
 
 def remove_all_markers(frame_id: str, indicator_id: str, series_id: str) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id) + "_ser.removeAllMarkers();"
-    )
+    return series_preamble(frame_id, indicator_id, series_id) + "_ser.removeAllMarkers();"
 
 
 # endregion
@@ -422,47 +364,24 @@ def remove_all_markers(frame_id: str, indicator_id: str, series_id: str) -> str:
 # region ------------------------ Series Pricelines ------------------------ #
 
 
-def add_priceline(
-    frame_id: str, indicator_id: str, series_id: str, line_id: str, line: object
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.createPriceLine('{line_id}', {dump(line)});"
-    )
+def add_priceline(frame_id: str, indicator_id: str, series_id: str, line_id: str, line: object) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.createPriceLine('{line_id}', {dump(line)});"
 
 
-def remove_priceline(
-    frame_id: str, indicator_id: str, series_id: str, line_id: str
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.removePriceLine('{line_id}');"
-    )
+def remove_priceline(frame_id: str, indicator_id: str, series_id: str, line_id: str) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.removePriceLine('{line_id}');"
 
 
-def update_priceline(
-    frame_id: str, indicator_id: str, series_id: str, line_id: str, line: object
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.updatePriceLine('{line_id}', {dump(line)});"
-    )
+def update_priceline(frame_id: str, indicator_id: str, series_id: str, line_id: str, line: object) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.updatePriceLine('{line_id}', {dump(line)});"
 
 
-def filter_pricelines(
-    frame_id: str, indicator_id: str, series_id: str, line_ids: list[str]
-) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + f"_ser.filterPriceLines({dump(line_ids)});"
-    )
+def filter_pricelines(frame_id: str, indicator_id: str, series_id: str, line_ids: list[str]) -> str:
+    return series_preamble(frame_id, indicator_id, series_id) + f"_ser.filterPriceLines({dump(line_ids)});"
 
 
 def remove_all_pricelines(frame_id: str, indicator_id: str, series_id: str) -> str:
-    return (
-        series_preamble(frame_id, indicator_id, series_id)
-        + "_ser.removeAllPriceLines();"
-    )
+    return series_preamble(frame_id, indicator_id, series_id) + "_ser.removeAllPriceLines();"
 
 
 # endregion
@@ -491,10 +410,7 @@ def remove_ind_primitive(
     indicator_id: str,
     primitive_id: str,
 ) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.remove_primitive('{primitive_id}');"
-    )
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.remove_primitive('{primitive_id}');"
 
 
 def update_ind_primitive(
@@ -503,10 +419,7 @@ def update_ind_primitive(
     primitive_id: str,
     args: dict[str, Any],
 ) -> str:
-    return (
-        indicator_preamble(frame_id, indicator_id)
-        + f"_ind.update_primitive('{primitive_id}', {dump(args)});"
-    )
+    return indicator_preamble(frame_id, indicator_id) + f"_ind.update_primitive('{primitive_id}', {dump(args)});"
 
 
 # endregion

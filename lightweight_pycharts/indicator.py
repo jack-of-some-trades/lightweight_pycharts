@@ -1,4 +1,4 @@
-""" Classes and functions that handle implementation of chart indicators """
+"""Classes and functions that handle implementation of chart indicators"""
 
 from __future__ import annotations
 from dataclasses import field
@@ -55,9 +55,7 @@ def default_output_property[T: Callable](func: T) -> T:
 
 
 # pylint: disable=redefined-builtin
-def param[
-    T
-](
+def param[T](
     default: T,
     title: Optional[str] = None,
     group: Optional[str] = None,
@@ -87,9 +85,7 @@ def param[
         if struct is None:
             struct = namespace["__arg_params__"] = {}
 
-        arg_name = "@arg" + str(
-            len([key for key in namespace.keys() if not is_dunder(key)])
-        )
+        arg_name = "@arg" + str(len([key for key in namespace.keys() if not is_dunder(key)]))
 
         struct[arg_name] = {
             "title": title,
@@ -126,6 +122,7 @@ def param[
 
 class IndicatorOptions(metaclass=OptionsMeta):
     "Inheritable Indicator Options Class"
+
     # Dunders populated by the OptionsMeta Class
     __arg_types__: ClassVar[dict] = {}
     __src_types__: ClassVar[dict] = {}
@@ -227,9 +224,7 @@ class Watcher:
         if all([ind._watcher.set for ind in self.set_notifiers]):
             # All indicator srcs Ready, Preform historical set_data calc.
             # Will Fire on Notifier = None, intentional so Watcher can self-fire on init
-            parent.set_data(
-                **dict([(name, func()) for name, func in self.set_args.items()])
-            )
+            parent.set_data(**dict([(name, func()) for name, func in self.set_args.items()]))
             self.set = True
             parent._notify_observers_set()
 
@@ -240,9 +235,7 @@ class Watcher:
 
         if all([ind._watcher.updated for ind in self.update_notifiers]):
             # Ready to Update, Fire Update then set updated Readiness State
-            parent.update_data(
-                **dict([(name, func()) for name, func in self.update_args.items()])
-            )
+            parent.update_data(**dict([(name, func()) for name, func in self.update_args.items()]))
             self.updated = True
             parent._notify_observers_update()
 
@@ -286,15 +279,11 @@ class Watcher:
 
             # --------- Type Check the Function Given ---------
             if not issubclass(arg_type, rtn_type):
-                raise TypeError(
-                    f"{parent.cls_name} Given {rtn_type} for parameter {name}. Expected {arg_type}"
-                )
+                raise TypeError(f"{parent.cls_name} Given {rtn_type} for parameter {name}. Expected {arg_type}")
 
             # --------- Give this Watcher Object to the indicator it is going to observe ---------
 
-            bound_cls_inst = args[
-                name
-            ].__self__  # Get the Indicator Instance bound to the desired output
+            bound_cls_inst = args[name].__self__  # Get the Indicator Instance bound to the desired output
 
             if bound_cls_inst._watcher in parent._observers:
                 # Check that there isn't a Circular Dependence between Indicators
@@ -427,8 +416,8 @@ class Indicator(metaclass=IndicatorMeta):
 
         # Bind the default output function's 'self' to this instance
         if self.__default_output__ is not None:
-            self.default_output: Optional[Callable[[], pd.Series]] = (
-                self.__default_output__.__get__(self, self.__class__)
+            self.default_output: Optional[Callable[[], pd.Series]] = self.__default_output__.__get__(
+                self, self.__class__
             )
         else:
             self.default_output = None
@@ -506,9 +495,7 @@ class Indicator(metaclass=IndicatorMeta):
             log.error("Cannot load obj, %s needs an options Class", self.cls_name)
             return
 
-        recalculate = self.update_options(
-            self.__options__.from_dict(args, self.parent_frame)
-        )
+        recalculate = self.update_options(self.__options__.from_dict(args, self.parent_frame))
 
         if recalculate:
             self.recalculate()
@@ -613,9 +600,7 @@ class Indicator(metaclass=IndicatorMeta):
             )
             return
 
-        cls._fwd_queue.put(
-            (JS_CMD.UPDATE_IND_PKG, pkg_key, cls.__registered_indicators__[pkg_key])
-        )
+        cls._fwd_queue.put((JS_CMD.UPDATE_IND_PKG, pkg_key, cls.__registered_indicators__[pkg_key]))
 
     def request_indicator(self, pkg_key: str, ind_key: str):
         "Request that an Indicator instance be loaded and connected to this Indicator Object"

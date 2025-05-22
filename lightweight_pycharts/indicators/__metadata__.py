@@ -1,4 +1,4 @@
-""" Metadata to Describe the Indicators Included in the Base Lightweight_pycharts Library. """
+"""Metadata to Describe the Indicators Included in the Base Lightweight_pycharts Library."""
 
 # These are the objects that are loaded to populate the Indicator's Menu.
 # They exist separately from the indicator's themselves so that only the information is

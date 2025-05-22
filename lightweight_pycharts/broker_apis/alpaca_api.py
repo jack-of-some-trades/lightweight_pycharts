@@ -60,13 +60,8 @@ class AlpacaAPI:
     def __init__(self, api_keys: dict[str, Any] = ALPACA_API_KEYS):
         self.api_keys = api_keys
 
-        if (
-            self.api_keys.get("api_key", None) is None
-            or self.api_keys.get("secret_key", None) is None
-        ):
-            raise ValueError(
-                "ALPACA_API_KEY and/or ALPACA_SECRET_KEY were not loaded as env variables."
-            )
+        if self.api_keys.get("api_key", None) is None or self.api_keys.get("secret_key", None) is None:
+            raise ValueError("ALPACA_API_KEY and/or ALPACA_SECRET_KEY were not loaded as env variables.")
 
         self.stock_client = StockHistoricalDataClient(**self.api_keys)
         self.crypto_client = CryptoHistoricalDataClient(**self.api_keys)
@@ -92,9 +87,7 @@ class AlpacaAPI:
         client = TradingClient(**self.api_keys, paper=True)
         # Why does this not have an Async Version? IT TAKES LIKE 3 DAMN SECONDS.
         assets_json = client.get_all_assets()
-        self._assets = (
-            DataFrame(assets_json).rename(columns=_asset_rename_map).set_index("id")
-        )
+        self._assets = DataFrame(assets_json).rename(columns=_asset_rename_map).set_index("id")
         # Drop All OTC since they aren't Tradable
         self._assets = self._assets[self._assets.exchange != "OTC"]
         return self._assets
@@ -160,9 +153,7 @@ class AlpacaAPI:
 
         try:
             if symbol.sec_type == AssetClass.CRYPTO:
-                rsp: Dict[str, Any] = self.crypto_client.get_crypto_bars(  # type: ignore
-                    CryptoBarsRequest(**args)
-                )
+                rsp: Dict[str, Any] = self.crypto_client.get_crypto_bars(CryptoBarsRequest(**args))  # type: ignore
                 return DataFrame(rsp[symbol.ticker]) if symbol in rsp else None
             else:
                 rsp: Dict[str, Any] = self.stock_client.get_stock_bars(  # type: ignore
@@ -241,10 +232,7 @@ class AlpacaAPI:
 
 def symbols_from_df(matches: DataFrame, **defaults) -> list[lwc.Symbol]:
     "Generate a list of Symbols from a dataframe of the relevant data"
-    generator = (
-        lwc.Symbol.from_dict(obj, **defaults)
-        for obj in matches.to_dict(orient="records")
-    )
+    generator = (lwc.Symbol.from_dict(obj, **defaults) for obj in matches.to_dict(orient="records"))
     # Return the Given Max number of entries from a generator expression
     return list(islice(generator, MAX_SYMBOL_SEARCH_RETURN))
 
@@ -270,11 +258,7 @@ def _format_time(timeframe: lwc.TF) -> TimeFrame: ...
 
 
 def _format_time(timeframe: lwc.TF | TimeFrame) -> lwc.TF | TimeFrame:
-    return (
-        _lwc_to_alp(timeframe)
-        if isinstance(timeframe, lwc.TF)
-        else _alp_to_lwc(timeframe)
-    )
+    return _lwc_to_alp(timeframe) if isinstance(timeframe, lwc.TF) else _alp_to_lwc(timeframe)
 
 
 def _alp_to_lwc(timeframe: TimeFrame) -> lwc.TF:

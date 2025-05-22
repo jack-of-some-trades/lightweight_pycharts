@@ -24,9 +24,7 @@ for module_name, items in all_by_module.items():
         object_origins[item] = module_name
 
 # setup the new module and patch it into the dict of loaded modules
-new_module = LazyModule(
-    "lightweight_pycharts.indicators", object_origins, all_by_module
-)
+new_module = LazyModule("lightweight_pycharts.indicators", object_origins, all_by_module)
 new_module.__dict__.update(
     {
         "__file__": __file__,

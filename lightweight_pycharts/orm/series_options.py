@@ -1,7 +1,7 @@
-""" 
-Classes that handle the implementation of Abstract and Specific Chart Series Objects 
+"""
+Classes that handle the implementation of Abstract and Specific Chart Series Objects
 
-(Classes known as ISeriesAPI in the Lightweight-Charts API) 
+(Classes known as ISeriesAPI in the Lightweight-Charts API)
 Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeriesApi
 """
 
@@ -125,9 +125,7 @@ class SeriesOptionsCommon:
     @property
     def as_dict(self) -> dict:
         "The Object in dictionary form with 'Nones' Dropped."
-        return asdict(  # Drop Nones
-            self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
-        )
+        return asdict(self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})  # Drop Nones
 
     @classmethod
     def from_dict(cls, obj: dict) -> Self:

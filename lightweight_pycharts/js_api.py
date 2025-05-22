@@ -1,4 +1,4 @@
-""" Classes and Functions that handle the interface between Python and Javascript """
+"""Classes and Functions that handle the interface between Python and Javascript"""
 
 import logging
 from os.path import dirname, abspath
@@ -84,9 +84,7 @@ class js_api:
                 )
             )
         except ValueError:
-            logger.warning(
-                "Couldn't Change Series_Type, '%s' isn't a valid series", series_type
-            )
+            logger.warning("Couldn't Change Series_Type, '%s' isn't a valid series", series_type)
 
     def data_request(self, c_id: str, f_id: str, symbol: dict[str, str], tf_str: str):
         try:
@@ -110,27 +108,15 @@ class js_api:
         exchanges: list[str],
         confirmed: bool,
     ):
-        self.rtn_queue.put(
-            (PY_CMD.SYMBOL_SEARCH, symbol, confirmed, types, brokers, exchanges)
-        )
+        self.rtn_queue.put((PY_CMD.SYMBOL_SEARCH, symbol, confirmed, types, brokers, exchanges))
 
-    def set_indicator_options(
-        self, container_id: str, frame_id: str, indicator_id: str, obj: dict
-    ):
-        self.rtn_queue.put(
-            (PY_CMD.SET_INDICATOR_OPTS, container_id, frame_id, indicator_id, obj)
-        )
+    def set_indicator_options(self, container_id: str, frame_id: str, indicator_id: str, obj: dict):
+        self.rtn_queue.put((PY_CMD.SET_INDICATOR_OPTS, container_id, frame_id, indicator_id, obj))
 
-    def indicator_request(
-        self, container_id: str, frame_id: str, pkg_id: str, ind_id: str
-    ):
-        self.rtn_queue.put(
-            (PY_CMD.INDICATOR_REQUEST, container_id, frame_id, pkg_id, ind_id)
-        )
+    def indicator_request(self, container_id: str, frame_id: str, pkg_id: str, ind_id: str):
+        self.rtn_queue.put((PY_CMD.INDICATOR_REQUEST, container_id, frame_id, pkg_id, ind_id))
 
-    def update_series_options(
-        self, c_id: str, f_id: str, i_id: str, s_id: str, opts: dict
-    ):
+    def update_series_options(self, c_id: str, f_id: str, i_id: str, s_id: str, opts: dict):
         self.rtn_queue.put((PY_CMD.UPDATE_SERIES_OPTS, c_id, f_id, i_id, s_id, opts))
 
 
@@ -140,6 +126,7 @@ class js_api:
 @dataclass
 class MpHooks:
     "All Multiprocessor Hooks required for the javascript Sub-Process interface"
+
     fwd_queue: mp.Queue = field(default_factory=mp.Queue)
     rtn_queue: mp.Queue = field(default_factory=mp.Queue)
     js_loaded_event: mp_EventClass = field(default_factory=mp.Event)
@@ -334,9 +321,7 @@ class PyWv(View):
             # runscript for pywebview is the evaluate_js() function
             self.pyweb_window.evaluate_js(cmd, callback=promise)
         except JavascriptException as e:
-            logger.error(
-                "JS Exception: %s\n\t\t\t\tscript: %s", e.args[0]["message"], cmd
-            )
+            logger.error("JS Exception: %s\n\t\t\t\tscript: %s", e.args[0]["message"], cmd)
 
     def _assign_callbacks(self):
         "Read all the functions that exist in the api and expose non-dunder methods to javascript"

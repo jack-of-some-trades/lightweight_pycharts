@@ -18,6 +18,7 @@ from lightweight_pycharts import series_common as sc
 
 class Method(Enum):
     "Calculation Methods"
+
     SMA = auto()
     EMA = auto()
     RMA = auto()
@@ -26,6 +27,7 @@ class Method(Enum):
 @dataclass
 class SMAOptions(IndicatorOptions):
     "Dataclass of Options for the SMA Indicator"
+
     src: Optional[SeriesData] = None
     method: Method = param(Method.SMA, "Calculation Method")
     period: int = param(9, "Period")
@@ -54,18 +56,14 @@ class SMA(Indicator):
         self.period = 0
         self._data = pd.Series()
         self.line_series = sc.LineSeries(self, name="My SMA")
-        self.line_series.apply_options(
-            sc.LineStyleOptions(lineStyle=sc.LineStyle.SparseDotted)
-        )
+        self.line_series.apply_options(sc.LineStyleOptions(lineStyle=sc.LineStyle.SparseDotted))
 
         self.update_options(opts)
         self.init_menu(opts)
         self.recalculate()
 
     def update_options(self, opts: SMAOptions) -> bool:
-        self.line_series.apply_options(
-            sc.LineStyleOptions(color=opts.color, lineWidth=opts.size)
-        )
+        self.line_series.apply_options(sc.LineStyleOptions(color=opts.color, lineWidth=opts.size))
 
         if self.period != opts.period:
             self.period = opts.period

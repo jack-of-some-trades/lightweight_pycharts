@@ -1,4 +1,4 @@
-""" Utility functions and objects that are used across the library """
+"""Utility functions and objects that are used across the library"""
 
 import sys
 from types import ModuleType
@@ -62,9 +62,9 @@ class ID_Dict[T](dict[str, T]):
 
         return super().__getitem__(key)
 
-    def generate_id(self, item: Optional[T] = None, len: int = 4) -> str:
+    def generate_id(self, item: Optional[T] = None, _len: int = 4) -> str:
         "Generates and returns a new Key. If an item is given it is added to the dictionary"
-        _id = self.prefix + "".join(choices(ascii_letters, k=len))
+        _id = self.prefix + "".join(choices(ascii_letters, k=_len))
 
         if _id not in self:
             if item is not None:

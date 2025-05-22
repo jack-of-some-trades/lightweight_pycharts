@@ -137,20 +137,10 @@ class Color:
         self._a = a
 
     def __eq__(self, other: Self):
-        return (
-            (self._r == other.r)
-            and (self._g == other.g)
-            and (self._b == other.b)
-            and (self._a == other.a)
-        )
+        return (self._r == other.r) and (self._g == other.g) and (self._b == other.b) and (self._a == other.a)
 
     def __neq__(self, other: Self):
-        return (
-            (self._r != other.r)
-            or (self._g != other.g)
-            or (self._b != other.b)
-            or (self._a != other.a)
-        )
+        return (self._r != other.r) or (self._g != other.g) or (self._b != other.b) or (self._a != other.a)
 
     @classmethod
     def from_color(
@@ -192,22 +182,14 @@ class Color:
 
         elif len(hex_value) == 3 or len(hex_value) == 4:
             # Hex String of 3 or 4 Chars
-            r, g, b = [
-                ((int(char, 16) << 4) + (int(char, 16))) for char in hex_value[0:3]
-            ]
-            alpha = (
-                1
-                if (len(hex_value) != 4)
-                else ((int(hex_value[3], 16) << 4) + int(hex_value[3], 16)) / 255
-            )
+            r, g, b = [((int(char, 16) << 4) + (int(char, 16))) for char in hex_value[0:3]]
+            alpha = 1 if (len(hex_value) != 4) else ((int(hex_value[3], 16) << 4) + int(hex_value[3], 16)) / 255
         else:
             raise ValueError(f"Hex Color of length {len(hex_value)} is not valid.")
         return cls(r, g, b, alpha)
 
     @classmethod
-    def from_gradient(
-        cls, value: float, from_val: float, to_val: float, from_col: Self, to_col: Self
-    ) -> Self:
+    def from_gradient(cls, value: float, from_val: float, to_val: float, from_col: Self, to_col: Self) -> Self:
         "Returns a color based on the relative position of value in the [bot, top] Range."
         if value <= from_val:
             return from_col
@@ -432,13 +414,9 @@ class TF:
         if amount == 0:
             amount = 1
         elif amount < 0:
-            raise ValueError(
-                f"Timeframe Period Multiplier,{amount}, must be a positive value."
-            )
+            raise ValueError(f"Timeframe Period Multiplier,{amount}, must be a positive value.")
         if amount != round(amount):
-            raise ValueError(
-                f"Timeframe Period Multiplier,{amount}, must be an integer value."
-            )
+            raise ValueError(f"Timeframe Period Multiplier,{amount}, must be an integer value.")
 
         match unit:
             case "s" | "m":

@@ -1,4 +1,4 @@
-""" Python Classes that are analogs of, and control, the Main Window Components """
+"""Python Classes that are analogs of, and control, the Main Window Components"""
 
 from __future__ import annotations
 from abc import abstractmethod, ABC
@@ -83,18 +83,14 @@ class Window:
         # Wait for PyWebview to load before continuing
         # js_loaded_event set in PyWv._assign_callbacks()
         if not self._js_loaded_event.wait(timeout=10):
-            raise TimeoutError(
-                "Failed to load PyWebView in a reasonable amount of time."
-            )
+            raise TimeoutError("Failed to load PyWebView in a reasonable amount of time.")
 
         # Begin Listening for any responses from PyWV Process
         self._queue_manager = asyncio.create_task(self._manage_queue())
 
         # -------- Create Subobjects  -------- #
         self.events = Events() if events is None else events
-        self.events.symbol_search.responder = partial(
-            _symbol_search_rsp, fwd_queue=self._fwd_queue
-        )
+        self.events.symbol_search.responder = partial(_symbol_search_rsp, fwd_queue=self._fwd_queue)
 
         # Using ID_List over ID_Dict so element order is mutable for PY_CMD.REORDER_CONTAINERS
         self._container_ids = util.ID_List("c")
@@ -283,9 +279,7 @@ class Container:
         "Immutable Copy of the Object's Javascript_ID"
         return self._js_id
 
-    def add_frame(
-        self, _js_id: Optional[str] = None, _type: FrameTypes = FrameTypes.CHART
-    ) -> Frame:
+    def add_frame(self, _js_id: Optional[str] = None, _type: FrameTypes = FrameTypes.CHART) -> Frame:
         "Creates a new Frame. Frame will only be displayed once the layout supports a new frame."
         match _type:
             case FrameTypes.CHART:
@@ -346,9 +340,7 @@ class Frame(ABC):
         self._window = parent._window
         self._fwd_queue = parent._fwd_queue
 
-        self._fwd_queue.put(
-            (JS_CMD.ADD_FRAME, parent._js_id, self._js_id, self.Frame_Type)
-        )
+        self._fwd_queue.put((JS_CMD.ADD_FRAME, parent._js_id, self._js_id, self.Frame_Type))
 
     @property
     def js_id(self) -> str:
@@ -367,7 +359,6 @@ class Frame(ABC):
 
     # Little bit awkward that these exist on the Base Class an not on just the Charting Frames
     # This is because these are displayed by the window so all frames should define them
-    # though this may change in the future.
 
     def __set_displayed_symbol__(self, symbol: orm.Symbol):
         "*Does not change underlying data Symbol*"

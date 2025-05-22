@@ -79,9 +79,7 @@ _LOG_LVL = logging.WARNING
 
 logger = logging.getLogger("lightweight-pycharts")
 handler = logging.StreamHandler(None)
-formatter = logging.Formatter(
-    "[pycharts] - [.\\%(filename)s Line: %(lineno)d] - %(levelname)s: %(message)s"
-)
+formatter = logging.Formatter("[pycharts] - [.\\%(filename)s Line: %(lineno)d] - %(levelname)s: %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(_LOG_LVL)

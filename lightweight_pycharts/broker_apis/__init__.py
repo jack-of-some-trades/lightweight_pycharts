@@ -1,4 +1,4 @@
-" LazyModule of DataBroker APIs that can be imported and used desired "
+"LazyModule of DataBroker APIs that can be imported and used desired"
 
 from typing import TYPE_CHECKING
 
@@ -22,9 +22,7 @@ for module_name, items in all_by_module.items():
         object_origins[item] = module_name
 
 # setup the new module and patch it into the dict of loaded modules
-new_module = LazyModule(
-    "lightweight_pycharts.broker_apis", object_origins, all_by_module
-)
+new_module = LazyModule("lightweight_pycharts.broker_apis", object_origins, all_by_module)
 new_module.__dict__.update(
     {
         "__file__": __file__,

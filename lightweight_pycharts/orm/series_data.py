@@ -1,7 +1,7 @@
-""" 
-Classes that handle the implementation of Abstract and Specific Chart Series Objects 
+"""
+Classes that handle the implementation of Abstract and Specific Chart Series Objects
 
-(Classes known as ISeriesAPI in the Lightweight-Charts API) 
+(Classes known as ISeriesAPI in the Lightweight-Charts API)
 Docs: https://tradingview.github.io/lightweight-charts/docs/api/interfaces/ISeriesApi
 """
 
@@ -125,9 +125,7 @@ class SeriesType(IntEnum):
         return set(signature(self.cls).parameters.keys())
 
 
-AnyBasicSeriesType = Literal[
-    SeriesType.WhitespaceData, SeriesType.SingleValueData, SeriesType.OHLC_Data
-]
+AnyBasicSeriesType = Literal[SeriesType.WhitespaceData, SeriesType.SingleValueData, SeriesType.OHLC_Data]
 
 
 # region ---------------------------------- Series Data Types ---------------------------------- #
@@ -159,9 +157,7 @@ class WhitespaceData:
     @property
     def as_dict(self) -> dict:
         "The Object in dictionary form with 'Nones' Dropped."
-        return asdict(  # Drop Nones
-            self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None}
-        )
+        return asdict(self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})  # Drop Nones
 
     @classmethod
     def from_dict(cls, obj: dict) -> Self:
@@ -330,16 +326,19 @@ class ArgMap:
 
 class BarArgMap(ArgMap):
     "Value Map Extention for Candlestick and Rounded Candlestick Series"
+
     wickColor: Optional[str] = None
 
 
 class CandleArgMap(BarArgMap):
     "Value Map Extention for Candlestick and Rounded Candlestick Series"
+
     borderColor: Optional[str] = None
 
 
 class AreaArgMap(ArgMap):
     "Value Map Extention for an Area Series"
+
     lineColor: Optional[str] = None
     topColor: Optional[str] = None
     bottomColor: Optional[str] = None
@@ -347,6 +346,7 @@ class AreaArgMap(ArgMap):
 
 class BaselineArgMap(ArgMap):
     "Value Map Extention for a Baseline Series"
+
     topLineColor: Optional[str] = None
     topFillColor1: Optional[str] = None
     topFillColor2: Optional[str] = None

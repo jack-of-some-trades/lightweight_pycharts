@@ -13,6 +13,7 @@ from .types import JS_Color, j_func
 
 class Layouts(IntEnum):
     "1:1 Mapping of layout.ts Container_Layouts Enum"
+
     SINGLE = 0
     DOUBLE_VERT = auto()
     DOUBLE_HORIZ = auto()

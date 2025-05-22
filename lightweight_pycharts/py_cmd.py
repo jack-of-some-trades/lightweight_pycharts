@@ -14,6 +14,7 @@ log = logging.getLogger("lightweight_pycharts")
 
 class PY_CMD(IntEnum):
     "Enumeration of the various commands that javascript can send to python"
+
     ADD_CONTAINER = auto()
     REMOVE_CONTAINER = auto()
     REORDER_CONTAINERS = auto()

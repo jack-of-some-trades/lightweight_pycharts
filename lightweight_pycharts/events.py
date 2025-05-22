@@ -1,4 +1,4 @@
-""" Core Machinery of the Event Call & Response System used primarily by indicators """
+"""Core Machinery of the Event Call & Response System used primarily by indicators"""
 
 from asyncio import iscoroutinefunction, create_task
 from typing import (
@@ -41,13 +41,9 @@ class Command_async(Protocol):
 
 
 class Data_request_sync(Protocol):
-    def __call__(
-        self, symbol: types.Symbol, timeframe: types.TF
-    ) -> DataFrame | list[dict[str, Any]] | None: ...
+    def __call__(self, symbol: types.Symbol, timeframe: types.TF) -> DataFrame | list[dict[str, Any]] | None: ...
 class Data_request_async(Protocol):
-    def __call__(
-        self, symbol: types.Symbol, timeframe: types.TF
-    ) -> DataFrame | list[dict[str, Any]] | None: ...
+    def __call__(self, symbol: types.Symbol, timeframe: types.TF) -> DataFrame | list[dict[str, Any]] | None: ...
 
 
 # Symbol Search Request Protocol
@@ -90,10 +86,7 @@ class Socket_close_async(Protocol):
 # Type Aliases to congregate various different Protocol Signatures into Groups
 Command_Protocol: TypeAlias = Command_sync | Command_async
 Symbol_Search_Protocol: TypeAlias = (
-    Symbol_search_sync_1
-    | Symbol_search_sync_2
-    | Symbol_search_async_1
-    | Symbol_search_async_2
+    Symbol_search_sync_1 | Symbol_search_sync_2 | Symbol_search_async_1 | Symbol_search_async_2
 )
 Data_Request_Protocol: TypeAlias = Data_request_sync | Data_request_async
 Socket_Open_Protocol: TypeAlias = Socket_Open_sync | Socket_Open_async
@@ -160,11 +153,7 @@ class Emitter[T: Callable](list[T]):
         for caller in self:
             if iscoroutinefunction(caller):
                 # Run Self, Asynchronously
-                create_task(
-                    self._async_response_wrap_(
-                        caller, *args, **kwargs, rsp_kwargs=rsp_kwargs
-                    )
-                )
+                create_task(self._async_response_wrap_(caller, *args, **kwargs, rsp_kwargs=rsp_kwargs))
             else:
                 # Run Self, Synchronously
                 rsp = caller(*args, **kwargs)
@@ -176,9 +165,7 @@ class Emitter[T: Callable](list[T]):
                     **rsp_kwargs if rsp_kwargs is not None else {},
                 )
 
-    async def _async_response_wrap_(
-        self, call, *args, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs
-    ):
+    async def _async_response_wrap_(self, call, *args, rsp_kwargs: Optional[dict[str, Any]] = None, **kwargs):
         "Simple Wrapper to await the initial caller function."
         rsp = await call(*args, **kwargs)
         if self.responder is None:

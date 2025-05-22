@@ -156,9 +156,7 @@ def analyse_indicator_subclass(cls: type, name: str, namespace: dict):
 
     for _param in set(set_args.keys()).intersection(update_args.keys()):
         if set_args[_param][0] != update_args[_param][0]:
-            raise TypeError(
-                f"{cls} reused input argument name '{_param}' but changed the argument type."
-            )
+            raise TypeError(f"{cls} reused input argument name '{_param}' but changed the argument type.")
     setattr(cls, "__input_args__", dict(set_args, **update_args))
 
     # Populate Dunders, Note: all Dunders are defined by the Indicator Base Class.
@@ -200,11 +198,7 @@ def parse_input_args(sig: Signature) -> dict[str, tuple[type, Any]]:
     args = {}
     for pos, (name, _param) in enumerate(sig.parameters.items()):
 
-        if (
-            _param.kind == _param.VAR_POSITIONAL
-            or _param.kind == _param.VAR_KEYWORD
-            or pos == 0
-        ):
+        if _param.kind == _param.VAR_POSITIONAL or _param.kind == _param.VAR_KEYWORD or pos == 0:
             continue  # Skip the Self Parameter & Variadics
 
         if _param.kind == _param.POSITIONAL_ONLY:
@@ -213,18 +207,14 @@ def parse_input_args(sig: Signature) -> dict[str, tuple[type, Any]]:
             )  # Look, i'm not gonna code the Watcher to dance around that shit.
 
         param_default = _param.default
-        param_type = (
-            object if isinstance(_param.annotation, _empty) else _param.annotation
-        )
+        param_type = object if isinstance(_param.annotation, _empty) else _param.annotation
 
         args[name] = (param_type, param_default)
 
     return args
 
 
-def parse_output_type(
-    cls_name, namespace
-) -> Tuple[dict[str, type], Optional[Callable]]:
+def parse_output_type(cls_name, namespace) -> Tuple[dict[str, type], Optional[Callable]]:
     "Parse the return signatures of output properties"
     outputs = {}
     __default_output__ = None
@@ -296,9 +286,7 @@ class OptionsMeta(type):
             __annotations__ = {}
 
         if not set(args).issuperset(set(__annotations__)):
-            raise AttributeError(
-                f"Cannot init '{name}' All Parameters must have a default value."
-            )
+            raise AttributeError(f"Cannot init '{name}' All Parameters must have a default value.")
         if not set(args).issubset(set(__annotations__)):
             raise AttributeError(
                 f"""
@@ -331,9 +319,7 @@ class OptionsMeta(type):
             elif arg := getattr(namespace[arg_key], "default", None):
                 namespace[arg_key] = arg
 
-            arg_type, src_type = _process_type(
-                namespace[arg_key], __annotations__[arg_key]
-            )
+            arg_type, src_type = _process_type(namespace[arg_key], __annotations__[arg_key])
 
             __arg_types__[arg_key] = arg_type
             if arg_type == "source":
@@ -350,9 +336,7 @@ class OptionsMeta(type):
 
             # Param() call on this arg. Fetch the Param() Options
             arg_param = arg_params[alt_arg_name]
-            arg_struct = _parse_arg_param(
-                arg_key, namespace[arg_key], arg_type, src_type, arg_param
-            )
+            arg_struct = _parse_arg_param(arg_key, namespace[arg_key], arg_type, src_type, arg_param)
 
             # region  -- Place the argument at appropriate inline and group position --
             group = arg_param["group"]
@@ -414,9 +398,7 @@ def _parse_arg_param(
         "autosend": arg_params["autosend"],
     }
 
-    rtn_struct["title"] = (
-        arg_key if arg_params["title"] is None else arg_params["title"]
-    )
+    rtn_struct["title"] = arg_key if arg_params["title"] is None else arg_params["title"]
 
     if arg_type == "source":  # ------------------------------------------------
         rtn_struct["src_type"] = src_arg
@@ -505,18 +487,14 @@ def _process_type(arg: Any, arg_type: type) -> Tuple[str, str]:
     elif len(type_bases) == 1:
         inputs, outputs = get_args(arg_type)
         if len(inputs) > 0:
-            raise TypeError(
-                "Indicator Callables/Sources cannot require an input argument"
-            )
+            raise TypeError("Indicator Callables/Sources cannot require an input argument")
         type_str = "source"
         src_type = str(outputs)
     else:
         raise TypeError(f"Unknown Indicator Option Type: {arg_type = }")
 
     if (is_optional or arg is None) and type_str != "source":
-        raise TypeError(
-            "Indicator Option Default Value/Type cannot be None/Optional unless it's a callable"
-        )
+        raise TypeError("Indicator Option Default Value/Type cannot be None/Optional unless it's a callable")
 
     return type_str, src_type
 
