@@ -1,6 +1,7 @@
 "Pandas Dataframe extensions to manage Series Data and Market Calendars"
 
 from __future__ import annotations
+from functools import partial
 from importlib import import_module
 import logging
 from math import inf
@@ -578,9 +579,7 @@ class Calendars:
                 beginning, sched_strt, sched_end = parse_schedule_error(e)
                 if not beginning:
                     sched_end += pd.Timedelta("16W")
-                extra_days = self.mkt_cache[calendar].schedule(
-                    sched_strt, sched_end, market_times="all"
-                )
+                extra_days = self.mkt_cache[calendar].schedule(sched_strt, sched_end)
                 if beginning:
                     self.schedule_cache[calendar] = pd.concat([extra_days, schedule])
                 else:
@@ -605,7 +604,7 @@ class Calendars:
         else:
             cal = None
             log.warning(
-                "Exchange '%s' doesn't match any exchanges. Using 24/7 Calendar.",
+                "Exchange '%s' doesn't match any known exchanges. Using 24/7 Calendar.",
                 exchange,
             )
 
@@ -616,25 +615,29 @@ class Calendars:
         end = end + pd.Timedelta("1W")
 
         if cal.name not in self.mkt_cache:  # New Calendar Requested
+            # Bind the Market_times & special_times arguments to the schedule function
+            cal.schedule = partial(
+                cal.schedule, market_times="all", force_special_times=False
+            )
             self.mkt_cache[cal.name] = cal
             # Generate a Schedule with buffer dates on either side.
-            self.schedule_cache[cal.name] = cal.schedule(start, end, market_times="all")
+            self.schedule_cache[cal.name] = cal.schedule(start, end)
             return cal.name
 
         # Cached Calendar Requested
+        extra_dates = None
         sched = self.schedule_cache[cal.name]
         if sched.index[0] > start.tz_localize(None):
             # Extend Start of Schedule with an additional buffer
-            extra_dates = cal.schedule(
-                start, sched.index[0] - pd.Timedelta("1D"), market_times="all"
-            )
+            extra_dates = cal.schedule(start, sched.index[0] - pd.Timedelta("1D"))
             sched = pd.concat([extra_dates, sched])
         if sched.index[-1] < end.normalize().tz_localize(None):
             # Extend End of Schedule with an additional buffer
-            extra_dates = cal.schedule(
-                sched.index[-1] + pd.Timedelta("1D"), end, market_times="all"
-            )
+            extra_dates = cal.schedule(sched.index[-1] + pd.Timedelta("1D"), end)
             sched = pd.concat([sched, extra_dates])
+
+        if extra_dates is not None:  # Update the Cached schedule.
+            self.schedule_cache[cal.name] = sched
 
         return cal.name
 
@@ -722,7 +725,6 @@ class Calendars:
         if mcal is None or calendar == "24/7":
             return None
 
-        print(self.schedule_cache[calendar])
         return mcal.mark_session(
             self.schedule_cache[calendar], time_index, label_map=EXT_MAP, closed="left"
         )

@@ -1,5 +1,6 @@
 """Realtime and Historical data stream access through alpaca"""
 
+from datetime import datetime
 import os
 import asyncio
 from itertools import islice
@@ -130,31 +131,44 @@ class AlpacaAPI:
         matches = self.assets[self.assets["name"].str.contains(ticker, case=False)]
         return symbols_from_df(matches, source="alpaca")
 
-    def get_hist(self, symbol: lwc.Symbol, timeframe: lwc.TF) -> Optional[DataFrame]:
+    def get_hist(
+        self,
+        symbol: lwc.Symbol,
+        timeframe: lwc.TF,
+        start: Optional[str | datetime] = None,
+        end: Optional[str | datetime] = None,
+        limit: Optional[int] = 50_000,
+    ) -> Optional[DataFrame]:
         "Return timeseries data for the given symbol"
         args = {
             "symbol_or_symbols": symbol.ticker,
             "timeframe": _format_time(timeframe),
-            # Grab 50K Bars Starting 50K bars ago so Current time is always shown
-            "start": str(Timestamp.now() - (50_000 * timeframe.as_timedelta())),
-            "limit": 50_000,
         }
+        if limit is not None:
+            args["limit"] = limit
+            # Start @ # Number of bars back so a current time is always shown
+            args["start"] = str(Timestamp.now() - (50_000 * timeframe.as_timedelta()))
+        if start is not None:
+            args["start"] = start
+        if end is not None:
+            args["end"] = end
 
         # This library currently doesn't support async requests on history fetches.
         # To make matters worse, there's is a 3 second sleep timer in the request call
-        # that gets invoked when the request limit is reached. That timer could be why
+        # that gets invoked when the request limit is reached. That timer probably why
         # this is painfully slow when requesting large sets of data.
+
         try:
             if symbol.sec_type == AssetClass.CRYPTO:
                 rsp: Dict[str, Any] = self.crypto_client.get_crypto_bars(  # type: ignore
                     CryptoBarsRequest(**args)
                 )
-                return DataFrame(rsp[symbol.ticker]) if symbol.ticker in rsp else None
+                return DataFrame(rsp[symbol.ticker]) if symbol in rsp else None
             else:
                 rsp: Dict[str, Any] = self.stock_client.get_stock_bars(  # type: ignore
                     StockBarsRequest(**args, adjustment=Adjustment.ALL)
                 )
-                return DataFrame(rsp[symbol.ticker]) if symbol.ticker in rsp else None
+                return DataFrame(rsp[symbol.ticker]) if symbol in rsp else None
         except APIError as e:
             log.error("get_bars() APIError: %s", e)
             return None

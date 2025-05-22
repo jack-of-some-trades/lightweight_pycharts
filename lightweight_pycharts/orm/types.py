@@ -66,9 +66,16 @@ class Symbol:
 
         return cls(**{k: v for k, v in args.items() if k in params}, attrs=attrs)
 
-    def __getitem__(self, name: str) -> Any:
+    def get(self, attr: str, default: Any) -> Any | None:
+        "Safely get an attribute from the symbol return None if not found"
+        if attr in {"ticker", "name", "source", "sec_type", "exchange", "attrs"}:
+            return getattr(self, attr)
+        else:
+            return self.attrs.get(attr, default)
+
+    def __getitem__(self, attr: str) -> Any | None:
         "Accessor Forward to safely check the extra attributes of the symbol"
-        return self.attrs.get(name, None)
+        return self.attrs.get(attr, None)
 
     def __eq__(self, other: Self) -> bool:
         # Not checking name field since a timeseries set can be unique defined by below criteria
@@ -477,9 +484,7 @@ class TF:
             case "Y":
                 return self._mult * 31556926
             case _:
-                # logger.warning("Attempting to get length of an invalid Timeframe.")
                 raise ValueError("Attempting to get length of an invalid Timeframe.")
-                return 0
 
     def as_timedelta(self) -> Timedelta:
         """
