@@ -1,2 +1,0 @@
-[lightweight_pycharts.indicator_pkg]
-pkg_info = lightweight_pycharts.indicators.__metadata__:PKG_INFO

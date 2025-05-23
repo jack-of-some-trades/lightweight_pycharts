@@ -137,25 +137,7 @@ wheels = [
 ]
 
 [[package]]
-name = "idna"
-version = "3.10"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9", size = 190490 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442 },
-]
-
-[[package]]
-name = "korean-lunar-calendar"
-version = "0.3.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5a/93/a0bd2bd53ab19330e83ecc5652b7774ae86fd2fee19bc05ad220cf9db08b/korean_lunar_calendar-0.3.1.tar.gz", hash = "sha256:eb2c485124a061016926bdea6d89efdf9b9fdbf16db55895b6cf1e5bec17b857", size = 9877 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/96/30f3fe51b336bb6da4714f4fdad7bbdce8f13af79af2eb75e22908f3f9f4/korean_lunar_calendar-0.3.1-py3-none-any.whl", hash = "sha256:392757135c492c4f42a604e6038042953c35c6f449dda5f27e3f86a7f9c943e5", size = 9033 },
-]
-
-[[package]]
-name = "lightweight-pycharts"
+name = "fracta"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
@@ -173,6 +155,24 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2.2" },
     { name = "pandas-market-calendars", specifier = ">=4.6.0" },
     { name = "pywebview", specifier = ">=5.1" },
+]
+
+[[package]]
+name = "idna"
+version = "3.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9", size = 190490 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442 },
+]
+
+[[package]]
+name = "korean-lunar-calendar"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/93/a0bd2bd53ab19330e83ecc5652b7774ae86fd2fee19bc05ad220cf9db08b/korean_lunar_calendar-0.3.1.tar.gz", hash = "sha256:eb2c485124a061016926bdea6d89efdf9b9fdbf16db55895b6cf1e5bec17b857", size = 9877 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9c/96/30f3fe51b336bb6da4714f4fdad7bbdce8f13af79af2eb75e22908f3f9f4/korean_lunar_calendar-0.3.1-py3-none-any.whl", hash = "sha256:392757135c492c4f42a604e6038042953c35c6f449dda5f27e3f86a7f9c943e5", size = 9033 },
 ]
 
 [[package]]

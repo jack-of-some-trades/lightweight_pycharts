@@ -15,5 +15,5 @@ The './css' Folder Contains all the Base .css files referenced by the typescript
 
 # Compilation:
 
-The Typescript is compiled and minified into a index.js file under the '../lightweight_pycharts/frontend/assets' folder. This minified javascript file is
+The Typescript is compiled and minified into a index.js file under the '../fracta/frontend/assets' folder. This minified javascript file is
 loaded at runtime by pywebview whenever python launches, hence it's location under the Python sub-directory of this repository.

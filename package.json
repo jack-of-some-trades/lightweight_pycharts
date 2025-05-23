@@ -1,8 +1,8 @@
 {
-  "name": "lightweight-pycharts-frontend",
+  "name": "fracta-frontend",
   "version": "1.0.0",
   "description": "Frontend Web-app deployable from Python that implements Lightweight Charts by TradingView",
-  "main": "lightweight_pycharts/frontend/dist/index.js",
+  "main": "fracta/frontend/dist/index.js",
   "directories": {
     "example": "examples"
   },
@@ -15,13 +15,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jack-of-some-trades/lightweight-pycharts"
+    "url": "https://github.com/jack-of-some-trades/fracta"
   },
   "keywords": [
     "lightweight-charts",
     "fancy-canvas",
     "pywebview",
-    "pandas",
     "SolidJS"
   ],
   "author": "Bryce Hawk",

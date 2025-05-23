@@ -1,11 +1,12 @@
-"Simple Main script to run Lightweight-Pycharts sourcing data from local csv files."
+"Simple Main script to run Fracta sourcing data from local csv files."
+
 import asyncio
 
 import pandas as pd
 
 import csv_reader as csv
 
-import lightweight_pycharts as lwc
+import fracta as fta
 
 
 async def main():
@@ -22,7 +23,7 @@ async def main():
     the use of a [ if __name__ == "__main__": ] block.
     """
 
-    window = lwc.Window(log_level="INFO", debug=True, frameless=False)
+    window = fta.Window(log_level="INFO", debug=True, frameless=False)
     window.events.data_request += csv.data_request_handler
     window.events.symbol_search += csv.symbol_search_handler
     window.events.open_socket += csv.socket_request_handler
@@ -32,36 +33,34 @@ async def main():
     window.set_search_filters("exchange", [])
     window.set_layout_favs(
         [
-            lwc.Layouts.SINGLE,
-            lwc.Layouts.DOUBLE_VERT,
-            lwc.Layouts.TRIPLE_VERT_LEFT,
-            lwc.Layouts.QUAD_SQ_H,
+            fta.Layouts.SINGLE,
+            fta.Layouts.DOUBLE_VERT,
+            fta.Layouts.TRIPLE_VERT_LEFT,
+            fta.Layouts.QUAD_SQ_H,
         ]
     )
     window.set_series_favs(
         [
-            lwc.SeriesType.Candlestick,
-            lwc.SeriesType.Rounded_Candle,
-            lwc.SeriesType.Line,
-            lwc.SeriesType.Area,
+            fta.SeriesType.Candlestick,
+            fta.SeriesType.Rounded_Candle,
+            fta.SeriesType.Line,
+            fta.SeriesType.Area,
         ]
     )
     window.set_timeframes(
-        favs=[lwc.TF(1, "m"), lwc.TF(5, "m"), lwc.TF(30, "m")],
+        favs=[fta.TF(1, "m"), fta.TF(5, "m"), fta.TF(30, "m")],
     )
 
     window.new_tab()
     main_frame = window.containers[0].frames[0]
     df = pd.read_csv("examples/data/ohlcv.csv")
 
-    if isinstance(main_frame, lwc.ChartingFrame):
-        main_frame.main_series.symbol = lwc.Symbol(
-            "LWPC", name="Update by Bar Test", exchange="NASDAQ"
-        )
+    if isinstance(main_frame, fta.ChartingFrame):
+        main_frame.main_series.symbol = fta.Symbol("FRACTA", name="Update by Bar Test", exchange="NASDAQ")
         main_frame.main_series.set_data(df)
 
-        sma20 = lwc.indicators.SMA(main_frame)
-        lwc.indicators.SMA(sma20)
+        sma20 = fta.indicators.SMA(main_frame)
+        fta.indicators.SMA(sma20)
 
     await window.await_close()  # Useful to make Ctrl-C in the terminal kill the window.
 

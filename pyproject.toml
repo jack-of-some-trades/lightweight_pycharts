@@ -1,7 +1,7 @@
 [project]
-name = "lightweight_pycharts"
+name = "fracta"
 version = "0.0.0"
-description = "Python based web-app for Viewing & Manipulating TimeSeries Data."
+description = "Python based web-app for Viewing & Manipulating Timeseries Data."
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "jack_of_some_trades" }]
 license = { text = "TBD" }
@@ -10,15 +10,24 @@ dependencies = [
     "alpaca-py>=0.39.1",
     "dotenv>=0.9.9",
     "pandas>=2.2.2",
-    "pandas_market_calendars>=4.6.0",
+    "pandas-market-calendars>=4.6.0",
     "pywebview>=5.1",
 ]
 
 [tool.setuptools]
-packages = ["lightweight_pycharts"]
+packages = ["fracta", "fracta.orm", "fracta.indicators", "fracta.broker_apis"]
+include-package-data = true
 
 [tool.setuptools.package-data]
-lightweight_pycharts = ["frontend/*", "indicators/*", "broker_apis/*", "orm/*"]
+fracta = ["frontend/*", "indicators/*", "broker_apis/*", "orm/*"]
+
+[project.optional-dependencies]
+dist = [
+    "setuptools>=80.7.1",
+    "twine>=6.1.0",
+    "wheel>=0.45.1",
+    "build>=1.2.2.post1",
+]
 
 [tool.black]
 line-length = 120
@@ -26,5 +35,5 @@ line-length = 120
 [tool.pylint."MESSAGES CONTROL"]
 max-line-length=120
 
-[project.entry-points."lightweight_pycharts.indicator_pkg"]
-pkg_info = "lightweight_pycharts.indicators.__metadata__:PKG_INFO"
+[project.entry-points."fracta.indicator_pkg"]
+pkg_info = "fracta.indicators.__metadata__:PKG_INFO"

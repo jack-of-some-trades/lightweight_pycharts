@@ -10,7 +10,7 @@ export default defineConfig({
     {
       name: "Clean assets folder",
       async buildStart() {
-        await rm(resolve(__dirname, '../lightweight_pycharts/frontend/assets'), {recursive:true, force:true}); 
+        await rm(resolve(__dirname, '../fracta/frontend/assets'), {recursive:true, force:true}); 
       }
     },
     /* 
@@ -28,7 +28,7 @@ export default defineConfig({
   build: {
     minify: true,
     target: 'esnext',
-    outDir: '../lightweight_pycharts/frontend'
+    outDir: '../fracta/frontend'
   },
 });
 

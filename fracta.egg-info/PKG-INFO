@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: fracta
+Version: 0.0.0
+Summary: Python based web-app for Viewing & Manipulating TimeSeries Data.
+Author: jack_of_some_trades
+License: TBD
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: alpaca-py>=0.39.1
+Requires-Dist: dotenv>=0.9.9
+Requires-Dist: pandas>=2.2.2
+Requires-Dist: pandas-market-calendars>=4.6.0
+Requires-Dist: pywebview>=5.1

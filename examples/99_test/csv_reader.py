@@ -3,7 +3,7 @@ import asyncio
 
 import pandas as pd
 
-from lightweight_pycharts import Symbol, TF, indicators, OhlcData, SingleValueData
+from fracta import Symbol, TF, indicators, OhlcData, SingleValueData
 
 
 def symbol_search_handler(ticker: str, **_) -> Optional[list[Symbol]]:
@@ -22,8 +22,8 @@ def symbol_search_handler(ticker: str, **_) -> Optional[list[Symbol]]:
         Symbol("AAPL", name="Apple", exchange="NASDAQ"),
         Symbol("GOOGL", name="Google", exchange="NASDAQ"),
         Symbol("TSLA", name="Tesla", exchange="NASDAQ"),
-        Symbol("LWPC", name="Update by Bar Test", exchange="NASDAQ"),
-        Symbol("LWPC-TICK", name="Update by Tick Test", exchange="NASDAQ"),
+        Symbol("FRACTA", name="Update by Bar Test", exchange="NASDAQ"),
+        Symbol("FRACTA-TICK", name="Update by Tick Test", exchange="NASDAQ"),
     ]
 
 
@@ -49,18 +49,18 @@ async def socket_request_handler(symbol: Symbol, series: indicators.Series):
     and the frame.socket_open Boolean. The user should keep this Boolean as up-to-date as possible.
 
     #Note: The implementation below, while simple and functional, is actually bugged. If a symbol
-    change from LWPC to LWPC-TICK (or vise-versa) is requested, this function has no way of
+    change from FRACTA to FRACTA-TICK (or vise-versa) is requested, this function has no way of
     breaking the for-loop. Hence, data from one loop is sent to the other. This would be fixed by
     allowing this function to spawn an Async Task and return. On the Symbol change the task could
     then be killed when this function is called w/ the state = 'close' parameter.
     """
-    if symbol.ticker == "LWPC":
+    if symbol.ticker == "FRACTA":
         df = pd.read_csv("examples/data/lwpc_next_ohlcv.csv")
         for _, _, t, o, h, l, c, v in df.itertuples():
             series.update_data(OhlcData(t, o, h, l, c, v))
             await asyncio.sleep(0.04)
 
-    if symbol.ticker == "LWPC-TICK":
+    if symbol.ticker == "FRACTA-TICK":
         df = pd.read_csv("examples/data/lwpc_ticks.csv")
         for _, _, t, p in df.itertuples():
             series.update_data(SingleValueData(t, p))

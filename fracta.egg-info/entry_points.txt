@@ -1,0 +1,2 @@
+[fracta.indicator_pkg]
+pkg_info = fracta.indicators.__metadata__:PKG_INFO
